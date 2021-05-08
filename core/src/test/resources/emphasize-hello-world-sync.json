@@ -1,0 +1,16 @@
+{
+  "transformers": [
+    {
+      "transformer": "Generate",
+      "parameters": {
+        "payload": "Hello, World",
+        "count": 1
+      },
+      "links": ["Emphasize"],
+      "syncs": ["Emphasize"]
+    },
+    {
+      "transformer": "Emphasize"
+    }
+  ]
+}

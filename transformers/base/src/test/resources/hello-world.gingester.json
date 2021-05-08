@@ -1,0 +1,35 @@
+{
+  "transformers": [
+    {
+      "transformer": "InputStream.Gunzip",
+      "links": [
+        "InputStream.ToString"
+      ]
+    },
+    {
+      "transformer": "InputStream.ToString",
+      "parameters": {
+        "delimiter": "\n"
+      },
+      "links": [
+        "AlternativeName"
+      ]
+    },
+    {
+      "id": "AlternativeName",
+      "transformer": "String.ToJson",
+      "links": [
+        "Json.Wrap"
+      ]
+    },
+    {
+      "transformer": "Json.Wrap",
+      "links": [
+        "Json.AddContext"
+      ]
+    },
+    {
+      "transformer": "Json.AddContext"
+    }
+  ]
+}
