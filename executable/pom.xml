@@ -13,7 +13,7 @@
     </parent>
 
     <artifactId>executable</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
@@ -29,6 +29,7 @@
     </dependencies>
 
     <build>
+        <finalName>gingester-${project.parent.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -58,6 +59,35 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer" />
                             </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>deploy-file</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy-file</goal>
+                        </goals>
+                        <configuration>
+                            <repositoryId>github</repositoryId>
+                            <url>https://maven.pkg.github.com/binokkio/gingester</url>
+                            <file>${project.build.directory}/${project.build.finalName}.${project.packaging}</file>
+                            <generatePom>false</generatePom>
+                            <groupId>b.nana.technology</groupId>
+                            <artifactId>gingester</artifactId>
+                            <version>${project.parent.version}</version>
                         </configuration>
                     </execution>
                 </executions>

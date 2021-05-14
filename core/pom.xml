@@ -39,6 +39,16 @@
                     </archive>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase><!-- overriding "none" set in parent pom -->
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
