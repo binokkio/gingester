@@ -3,7 +3,6 @@ package b.nana.technology.gingester.transformers.base.transformers.cron;
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -84,14 +83,11 @@ public class Job extends Transformer<Void, Void> {
         public boolean skips;
 
         @JsonCreator
-        public Parameters(String schedule) {
-            this.schedule = schedule;
-        }
+        public Parameters() {}
 
         @JsonCreator
-        public Parameters(@JsonProperty("schedule") String schedule, @JsonProperty("skips") boolean skips) {
+        public Parameters(String schedule) {
             this.schedule = schedule;
-            this.skips = skips;
         }
     }
 }

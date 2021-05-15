@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -77,7 +78,16 @@ public class Search extends Transformer<Void, Path> {
     }
 
     public static class Parameters {
+
         public String root;
         public String[] globs = new String[] { "**/*" };
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(String root) {
+            this.root = root;
+        }
     }
 }

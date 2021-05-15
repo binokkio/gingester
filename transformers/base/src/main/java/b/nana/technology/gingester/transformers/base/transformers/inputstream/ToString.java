@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -43,6 +44,15 @@ public class ToString extends Transformer<InputStream, String> {
     }
 
     public static class Parameters {
+
         public String delimiter;
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(String delimiter) {
+            this.delimiter = delimiter;
+        }
     }
 }

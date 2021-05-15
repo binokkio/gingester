@@ -22,7 +22,7 @@ public final class Configuration {
     static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
-            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
     private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
 
