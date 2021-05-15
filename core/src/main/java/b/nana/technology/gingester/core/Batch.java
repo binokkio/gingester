@@ -20,6 +20,11 @@ final class Batch<T> implements Iterable<Batch.Entry<T>> {
         this.values = capacity == 0 ? null : new ArrayList<>(capacity);
     }
 
+    Batch(Context context, T value) {
+        this.capacity = 1;
+        this.values = List.of(new Entry<>(context, value));
+    }
+
     boolean addAndIndicateFull(Context context, T value) {
         int space = capacity - values.size();
         if (space == 1) {

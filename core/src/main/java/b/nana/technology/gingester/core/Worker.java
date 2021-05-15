@@ -18,28 +18,21 @@ final class Worker extends Thread {
 
     @Override
     public void run() {
-
         try {
-            if (link.from == null) {
-                seed(link);
-            } else {
-                work(link);
-            }
+            work(link);
+            flushAll();
         } catch (Throwable t) {
             t.printStackTrace();  // TODO
+        } finally {
+            gingester.signalQuit(this);
         }
-
-        flushAll();
-        gingester.signalQuit(this);
-    }
-
-    private <T> void seed(Link<T> link) {
-        transform(link.to, link.remove());
     }
 
     private <T> void work(Link<T> link) {
         while (true) {
+
             Batch<T> batch = link.poll();
+
             if (batch == null) {
                 synchronized (lock) {
                     starving = true;
@@ -55,14 +48,10 @@ final class Worker extends Thread {
                     }
                 }
             }
-            transform(link.to, batch);
-        }
-    }
 
-    private <T> void transform(Transformer<? super T, ?> transformer, Batch<T> values) {
-        // TODO timing
-        for (Batch.Entry<T> value : values) {
-            transform(transformer, value.context, value.value);
+            for (Batch.Entry<T> value : batch) {
+                transform(link.to, value.context, value.value);
+            }
         }
     }
 
@@ -70,6 +59,8 @@ final class Worker extends Thread {
         // TODO timing
         try {
             transformer.transform(context, value);
+        } catch (InterruptedException e) {
+            System.err.println(Provider.name(transformer).orElse("Worker") + " interrupted");
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO
         }
@@ -84,12 +75,12 @@ final class Worker extends Thread {
             if (context.transformer != transformer) {  // TODO this misses the case where a transformer is linked to itself
                 context = context.extend(transformer).build();
             }
-            transform(link.to, context, value);  // TODO could call transform directly on link.to
+            transform(link.to, context, value);
             for (Transformer<?, ?> sync : transformer.syncs) {
                 sync.finish(context);
             }
         } else if (link.sync) {
-            transform(link.to, context, value);  // TODO could call transform directly on link.to
+            transform(link.to, context, value);
         } else {
 
             Batch<T> batch = (Batch<T>) batches.get(link);

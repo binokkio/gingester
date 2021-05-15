@@ -38,7 +38,7 @@ public final class Link<T> {
      * immediately after each `emit(..)` by the upstream transformer.
      */
     public void sync() {
-        if (gingester.getState() != Gingester.State.LINKING) throw new IllegalStateException();
+        if (gingester.state != Gingester.State.SETUP) throw new IllegalStateException();
         sync = true;
     }
 

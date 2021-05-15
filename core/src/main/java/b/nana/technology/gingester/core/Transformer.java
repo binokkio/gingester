@@ -118,9 +118,6 @@ public abstract class Transformer<I, O> {
 
     public class Setup {
 
-//        public final List<Link<I>> inputs = Collections.unmodifiableList(Transformer.this.inputs);
-//        public final List<Link<O>> outputs = Collections.unmodifiableList(Transformer.this.outputs);
-
         public void syncInputs() {
             inputs.forEach(Link::sync);
         }

@@ -7,7 +7,22 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 public class Main {
 
     public static void main(String[] args) {
-        Gingester gingester = fromArgs(args);
+
+        final Gingester gingester = fromArgs(args);
+        final Thread main = Thread.currentThread();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+
+            System.err.println("\nShutdown started");
+
+            gingester.signalShutdown();
+            try {
+                main.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }));
+
         gingester.run();
     }
 
