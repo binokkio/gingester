@@ -69,7 +69,7 @@ public class Job extends Transformer<Void, Void> {
 
             ZonedDateTime now = ZonedDateTime.now();
 
-            if (now.isBefore(next) || skips) {
+            if (now.isBefore(next) || !skips) {
                 anchor = next;
             } else {
                 anchor = now;
@@ -87,7 +87,7 @@ public class Job extends Transformer<Void, Void> {
     public static class Parameters {
 
         public String schedule;
-        public boolean skips;
+        public boolean skips = true;
 
         @JsonCreator
         public Parameters() {}
