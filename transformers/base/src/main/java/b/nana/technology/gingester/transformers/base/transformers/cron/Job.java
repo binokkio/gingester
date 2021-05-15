@@ -35,12 +35,13 @@ public class Job extends Transformer<Void, Void> {
     protected void transform(Context context, Void input) throws Exception {
 
         CronExpression cronExpression = CronExpression.create(schedule);
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime anchor = ZonedDateTime.now();
 
         while (true) {
 
-            ZonedDateTime next = cronExpression.nextTimeAfter(now);
-            long durationSeconds = Duration.between(Instant.now(), next.toInstant()).getSeconds();
+            ZonedDateTime next = cronExpression.nextTimeAfter(anchor);
+            Duration duration = Duration.between(Instant.now(), next.toInstant());
+            long durationSeconds = Math.round(duration.getSeconds() + duration.getNano() / 1_000_000_000f);
 
             if (durationSeconds > 0) {
 
@@ -66,7 +67,13 @@ public class Job extends Transformer<Void, Void> {
                     null
             );
 
-            now = skips ? ZonedDateTime.now() : next;
+            ZonedDateTime now = ZonedDateTime.now();
+
+            if (now.isBefore(next) || skips) {
+                anchor = next;
+            } else {
+                anchor = now;
+            }
         }
     }
 
