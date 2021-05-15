@@ -59,14 +59,14 @@ final class Worker extends Thread {
         }
     }
 
-    private <T> void transform(Transformer<T, ?> transformer, Batch<T> values) {
+    private <T> void transform(Transformer<? super T, ?> transformer, Batch<T> values) {
         // TODO timing
         for (Batch.Entry<T> value : values) {
             transform(transformer, value.context, value.value);
         }
     }
 
-    private <T> void transform(Transformer<T, ?> transformer, Context context, T value) {
+    private <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
         // TODO timing
         try {
             transformer.transform(context, value);
