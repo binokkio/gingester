@@ -5,6 +5,7 @@ import java.util.Map;
 
 final class Worker extends Thread {
 
+    final Object lock = new Object();
     private final Gingester gingester;
     final Link<?> link;
     private final Map<Link<?>, Batch<?>> batches = new HashMap<>();
@@ -40,14 +41,19 @@ final class Worker extends Thread {
         while (true) {
             Batch<T> batch = link.poll();
             if (batch == null) {
-                starving = true;
-                gingester.signalStarving(this);
-                try {
-                    batch = link.take();
-                } catch (InterruptedException e) {
-                    break;
+                synchronized (lock) {
+                    starving = true;
+                    try {
+                        while ((batch = link.poll()) == null) {
+                            gingester.signalStarving(this);
+                            lock.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        break;
+                    } finally {
+                        starving = false;
+                    }
                 }
-                starving = false;
             }
             transform(link.to, batch);
         }

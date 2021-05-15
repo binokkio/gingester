@@ -219,7 +219,22 @@ public final class Gingester {
         signal(() -> {
             if (link.workers.isEmpty()) {
                 addWorker(link);
-           }
+            } else {
+                for (Worker worker : link.workers) {
+                    if (worker.starving) {
+                        synchronized (worker.lock) {
+                            worker.lock.notify();
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    void signalGorged(Link<?> link) {
+        signal(() -> {
+            // TODO
         });
     }
 
@@ -231,21 +246,17 @@ public final class Gingester {
         });
     }
 
-    void signalGorged(Link<?> link) {
+    void signalQuit(Worker quiter) {
         signal(() -> {
-            // TODO
-        });
-    }
-
-    void signalQuit(Worker worker) {
-        signal(() -> {
-            removeWorker(worker);
+            removeWorker(quiter);
             if (workers.isEmpty()) {
                 state = State.DONE;
             } else {
-                workers.stream()
-                        .filter(Gingester::isWorkerRedundant)
-                        .forEach(Worker::interrupt);
+                for (Worker worker : workers) {
+                    if (isWorkerRedundant(worker)) {
+                        worker.interrupt();
+                    }
+                }
             }
         });
     }
@@ -256,7 +267,16 @@ public final class Gingester {
     }
 
     private static boolean isWorkerRedundant(Worker worker) {
-        return worker.link.upstream.stream().allMatch(Link::isEmpty) && worker.starving;
+
+        // a worker is redundant if all its upstream links are empty...
+        for (Link<?> link : worker.link.upstream) {
+            if (!link.isEmpty()) return false;
+        }
+
+        // ... and it is starving
+        synchronized (worker.lock) {
+            return worker.starving;
+        }
     }
 
     enum State {
