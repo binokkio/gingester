@@ -12,7 +12,7 @@ public final class Link<T> {
     private final Gingester gingester;
     final Transformer<?, T> from;
     final Set<Link<?>> upstream = new HashSet<>();
-    final Transformer<T, ?> to;
+    final Transformer<? super T, ?> to;
     final Set<Link<?>> downstream = new HashSet<>();
     final Set<Link<?>> syncedDownstream = new HashSet<>();
     final Set<Worker> workers = new HashSet<>();
@@ -25,7 +25,7 @@ public final class Link<T> {
         this(gingester, null, to);
     }
 
-    Link(Gingester gingester, Transformer<?, T> from, Transformer<T, ?> to) {
+    Link(Gingester gingester, Transformer<?, T> from, Transformer<? super T, ?> to) {
         this.gingester = gingester;
         this.from = from;
         this.to = to;

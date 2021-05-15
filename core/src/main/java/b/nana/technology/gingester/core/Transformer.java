@@ -8,7 +8,7 @@ public abstract class Transformer<I, O> {
 
     final Class<I> inputClass;
     final Class<O> outputClass;
-    final List<Link<I>> inputs = new ArrayList<>();
+    final List<Link<? extends I>> inputs = new ArrayList<>();
     final List<Link<O>> outputs = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final Object parameters;

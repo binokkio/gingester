@@ -63,14 +63,14 @@ public final class Gingester {
     @SuppressWarnings("unchecked")  // checked at runtime
     public <T> Link<T> link(String fromName, String toName) {
         Transformer<?, T> from = (Transformer<?, T>) getTransformer(fromName);
-        Transformer<T, ?> to = (Transformer<T, ?>) getTransformer(toName);
+        Transformer<? super T, ?> to = (Transformer<? super T, ?>) getTransformer(toName);
         if (!to.inputClass.isAssignableFrom(from.outputClass)) {
             throw new IllegalArgumentException("Incompatible transformers");
         }
         return link(from, to);
     }
 
-    public <T> Link<T> link(Transformer<?, T> from, Transformer<T, ?> to) {  // TODO ? extends T, ? super T
+    public <T> Link<T> link(Transformer<?, T> from, Transformer<? super T, ?> to) {
 
         if (state != State.LINKING) {
             throw new IllegalStateException();  // TODO
@@ -86,7 +86,7 @@ public final class Gingester {
         return link;
     }
 
-    public <T> Link<T> link(Transformer<?, T> from, Consumer<T> consumer) {
+    public <T> Link<T> link(Transformer<?, T> from, Consumer<? super T> consumer) {
         return link(from, new Transformer<>(from.outputClass, Void.class) {
             @Override
             protected void transform(Context context, T input) {
@@ -95,7 +95,7 @@ public final class Gingester {
         });
     }
 
-    public <T> Link<T> link(Transformer<?, T> from, BiConsumer<Context, T> consumer) {
+    public <T> Link<T> link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer) {
         return link(from, new Transformer<>(from.outputClass, Void.class) {
             @Override
             protected void transform(Context context, T input) {
@@ -219,7 +219,22 @@ public final class Gingester {
         signal(() -> {
             if (link.workers.isEmpty()) {
                 addWorker(link);
-           }
+            } else {
+                for (Worker worker : link.workers) {
+                    if (worker.starving) {
+                        synchronized (worker.lock) {
+                            worker.lock.notify();
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    void signalGorged(Link<?> link) {
+        signal(() -> {
+            // TODO
         });
     }
 
@@ -231,21 +246,17 @@ public final class Gingester {
         });
     }
 
-    void signalGorged(Link<?> link) {
+    void signalQuit(Worker quiter) {
         signal(() -> {
-            // TODO
-        });
-    }
-
-    void signalQuit(Worker worker) {
-        signal(() -> {
-            removeWorker(worker);
+            removeWorker(quiter);
             if (workers.isEmpty()) {
                 state = State.DONE;
             } else {
-                workers.stream()
-                        .filter(Gingester::isWorkerRedundant)
-                        .forEach(Worker::interrupt);
+                for (Worker worker : workers) {
+                    if (isWorkerRedundant(worker)) {
+                        worker.interrupt();
+                    }
+                }
             }
         });
     }
@@ -256,7 +267,16 @@ public final class Gingester {
     }
 
     private static boolean isWorkerRedundant(Worker worker) {
-        return worker.link.upstream.stream().allMatch(Link::isEmpty) && worker.starving;
+
+        // a worker is redundant if all its upstream links are empty...
+        for (Link<?> link : worker.link.upstream) {
+            if (!link.isEmpty()) return false;
+        }
+
+        // ... and it is starving
+        synchronized (worker.lock) {
+            return worker.starving;
+        }
     }
 
     enum State {

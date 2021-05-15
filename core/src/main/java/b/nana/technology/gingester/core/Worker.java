@@ -5,6 +5,7 @@ import java.util.Map;
 
 final class Worker extends Thread {
 
+    final Object lock = new Object();
     private final Gingester gingester;
     final Link<?> link;
     private final Map<Link<?>, Batch<?>> batches = new HashMap<>();
@@ -40,27 +41,32 @@ final class Worker extends Thread {
         while (true) {
             Batch<T> batch = link.poll();
             if (batch == null) {
-                starving = true;
-                gingester.signalStarving(this);
-                try {
-                    batch = link.take();
-                } catch (InterruptedException e) {
-                    break;
+                synchronized (lock) {
+                    starving = true;
+                    try {
+                        while ((batch = link.poll()) == null) {
+                            gingester.signalStarving(this);
+                            lock.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        break;
+                    } finally {
+                        starving = false;
+                    }
                 }
-                starving = false;
             }
             transform(link.to, batch);
         }
     }
 
-    private <T> void transform(Transformer<T, ?> transformer, Batch<T> values) {
+    private <T> void transform(Transformer<? super T, ?> transformer, Batch<T> values) {
         // TODO timing
         for (Batch.Entry<T> value : values) {
             transform(transformer, value.context, value.value);
         }
     }
 
-    private <T> void transform(Transformer<T, ?> transformer, Context context, T value) {
+    private <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
         // TODO timing
         try {
             transformer.transform(context, value);
