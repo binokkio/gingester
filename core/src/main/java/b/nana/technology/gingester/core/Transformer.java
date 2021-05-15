@@ -124,6 +124,7 @@ public abstract class Transformer<I, O> {
         public void syncInputs() {
             inputs.forEach(Link::sync);
         }
+
         public void syncOutputs() {
             outputs.forEach(Link::sync);
         }
@@ -132,6 +133,10 @@ public abstract class Transformer<I, O> {
             if (!inputs.isEmpty()) {
                 throw new IllegalStateException("inputs");  // TODO
             }
+        }
+
+        public void maxBatchSize(int maxBatchSize) {
+            // TODO
         }
     }
 }
