@@ -127,5 +127,11 @@ public abstract class Transformer<I, O> {
         public void syncOutputs() {
             outputs.forEach(Link::sync);
         }
+
+        public void assertNoInputs() {
+            if (!inputs.isEmpty()) {
+                throw new IllegalStateException("inputs");  // TODO
+            }
+        }
     }
 }
