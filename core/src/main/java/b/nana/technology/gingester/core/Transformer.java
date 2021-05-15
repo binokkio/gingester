@@ -130,7 +130,7 @@ public abstract class Transformer<I, O> {
         }
 
         public void assertNoInputs() {
-            if (!inputs.isEmpty()) {
+            if (inputs.stream().anyMatch(link -> link.from != null)) {
                 throw new IllegalStateException("inputs");  // TODO
             }
         }
