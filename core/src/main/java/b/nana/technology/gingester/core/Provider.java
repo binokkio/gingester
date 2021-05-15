@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
-public class Provider {
+final class Provider {
 
     private static final List<Resolver> RESOLVERS = ServiceLoader.load(Resolver.class)
             .stream()
@@ -22,30 +22,22 @@ public class Provider {
         String canonicalName = transformer.getClass().getCanonicalName();
         if (canonicalName == null) return Optional.empty();
 
-        List<String> names = RESOLVERS.stream()
+        return Optional.of(RESOLVERS.stream()
                 .map(r -> r.name(transformer))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
-
-        if (names.isEmpty()) throw new NoSuchElementException("No name for " + transformer.getClass().getCanonicalName());
-        else if (names.size() > 1) throw new IllegalStateException("Multiple names for " + transformer.getClass().getCanonicalName());
-
-        return Optional.of(names.get(0));
+                .reduce((a, b) -> { throw new IllegalStateException("Multiple names for " + canonicalName); })
+                .orElseThrow(() -> new NoSuchElementException("No name for " + canonicalName)));
     }
 
     static Transformer<?, ?> instance(String name, JsonNode jsonParameters) {
 
-        List<Class<Transformer<?, ?>>> transformerClasses = RESOLVERS.stream()
+        Class<Transformer<?, ?>> transformerClass = RESOLVERS.stream()
                 .map(resolver -> resolver.resolve(name))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
-
-        if (transformerClasses.isEmpty()) throw new NoSuchElementException("No transformer named " + name);
-        else if (transformerClasses.size() > 1) throw new IllegalStateException("Multiple transformers named " + name);
-
-        Class<Transformer<?, ?>> transformerClass = transformerClasses.get(0);
+                .reduce((a, b) -> { throw new IllegalStateException("Multiple transformers named " + name); })
+                .orElseThrow(() -> new NoSuchElementException("No transformer named " + name));
 
         if (jsonParameters != null) {
 
