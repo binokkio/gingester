@@ -2,16 +2,22 @@ package b.nana.technology.gingester.core;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
 public abstract class Transformer<I, O> {
 
+    Gingester gingester;
+    final Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
     final List<Link<? extends I>> inputs = new ArrayList<>();
     final List<Link<O>> outputs = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
-    final Object parameters;
+    final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
+    final Set<Worker> workers = new HashSet<>();
+    boolean mustQueue;
 
     protected Transformer() {
         this(null);
@@ -32,13 +38,21 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
+    void put(Batch<? extends I> batch) throws InterruptedException {
+        boolean accepted = queue.offer(batch);
+        if (!accepted) {
+            gingester.signalFull(this);
+            queue.put(batch);
+        }
+        gingester.signalNewBatch(this);
+    }
+
     void setup() {
         setup(new Setup());
     }
 
     /**
      * Called after all transformers been linked.
-     * @param setup
      */
     protected void setup(Setup setup) {
 
@@ -85,6 +99,10 @@ public abstract class Transformer<I, O> {
         for (Transformer<?, ?> sync : syncs) {
             sync.finish(context);
         }
+    }
+
+    boolean isEmpty() {
+        return queue.isEmpty() && workers.isEmpty();
     }
 
     /**

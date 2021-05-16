@@ -3,8 +3,6 @@ package b.nana.technology.gingester.core;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.function.Predicate;
 
 public final class Link<T> {
@@ -15,15 +13,8 @@ public final class Link<T> {
     final Transformer<? super T, ?> to;
     final Set<Link<?>> downstream = new HashSet<>();
     final Set<Link<?>> syncedDownstream = new HashSet<>();
-    final Set<Worker> workers = new HashSet<>();
-    private final BlockingQueue<Batch<T>> queue = new ArrayBlockingQueue<>(100);
     boolean sync = false;
     volatile int batchSize = 1;
-    volatile boolean gorged;
-
-    Link(Gingester gingester, Transformer<T, ?> to) {
-        this(gingester, null, to);
-    }
 
     Link(Gingester gingester, Transformer<?, T> from, Transformer<? super T, ?> to) {
         this.gingester = gingester;
@@ -46,37 +37,6 @@ public final class Link<T> {
         discover(true, this, l -> true, upstream);
         discover(false, this, l -> true, downstream);
         discover(false, this, l -> l.sync, syncedDownstream);
-    }
-
-    boolean add(Batch<T> batch) {
-        return queue.add(batch);
-    }
-
-    void put(Batch<T> batch) throws InterruptedException {
-        boolean accepted = queue.offer(batch);
-        if (!accepted) {
-            gorged = true;
-            gingester.signalGorged(this);
-            queue.put(batch);
-            gorged = false;
-        }
-        gingester.signalNewBatch(this);
-    }
-
-    Batch<T> poll() {
-        return queue.poll();
-    }
-
-    Batch<T> remove() {
-        return queue.remove();
-    }
-
-    Batch<T> take() throws InterruptedException {
-        return queue.take();
-    }
-
-    boolean isEmpty() {
-        return queue.isEmpty() && workers.isEmpty();
     }
 
     @Override

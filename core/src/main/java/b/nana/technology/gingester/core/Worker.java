@@ -5,21 +5,21 @@ import java.util.Map;
 
 final class Worker extends Thread {
 
-    final Object lock = new Object();
     private final Gingester gingester;
-    final Link<?> link;
+    final Transformer<?, ?> transformer;
+    final Object lock = new Object();
     private final Map<Link<?>, Batch<?>> batches = new HashMap<>();
     volatile boolean starving;
 
-    Worker(Gingester gingester, Link<?> link) {
+    Worker(Gingester gingester, Transformer<?, ?> transformer) {
         this.gingester = gingester;
-        this.link = link;
+        this.transformer = transformer;
     }
 
     @Override
     public void run() {
         try {
-            work(link);
+            work(transformer);
             flushAll();
         } catch (Throwable t) {
             t.printStackTrace();  // TODO
@@ -28,16 +28,16 @@ final class Worker extends Thread {
         }
     }
 
-    private <T> void work(Link<T> link) {
+    private <I, O> void work(Transformer<I, O> transformer) {
         while (true) {
 
-            Batch<T> batch = link.poll();
+            Batch<? extends I> batch = transformer.queue.poll();
 
             if (batch == null) {
                 synchronized (lock) {
                     starving = true;
                     try {
-                        while ((batch = link.poll()) == null) {
+                        while ((batch = transformer.queue.poll()) == null) {
                             gingester.signalStarving(this);
                             lock.wait();
                         }
@@ -49,14 +49,14 @@ final class Worker extends Thread {
                 }
             }
 
-            for (Batch.Entry<T> value : batch) {
-                transform(link.to, value.context, value.value);
+            for (Batch.Entry<? extends I> value : batch) {
+                transform(transformer, value.context, value.value);
+                batch.maybeNotify();
             }
         }
     }
 
     private <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
-        // TODO timing
         try {
             transformer.transform(context, value);
         } catch (InterruptedException e) {
@@ -72,15 +72,15 @@ final class Worker extends Thread {
         Link<T> link = transformer.outputs.get(direction);
 
         if (!transformer.syncs.isEmpty()) {
-            if (context.transformer != transformer) {  // TODO this misses the case where a transformer is linked to itself
+            if (context.transformer != transformer) {  // TODO this misses the case where a transformer is linked to itself, maybe make that illegal?
                 context = context.extend(transformer).build();
             }
-            transform(link.to, context, value);
+            transformSync(link.to, context, value);
             for (Transformer<?, ?> sync : transformer.syncs) {
                 sync.finish(context);
             }
         } else if (link.sync) {
-            transform(link.to, context, value);
+            transformSync(link.to, context, value);
         } else {
 
             Batch<T> batch = (Batch<T>) batches.get(link);
@@ -99,6 +99,20 @@ final class Worker extends Thread {
         }
     }
 
+    private <T> void transformSync(Transformer<? super T, ?> to, Context context, T value) {
+        if (to.mustQueue) {
+            Batch<T> batch = new Batch<>(context, value);
+            try {
+                to.put(batch);
+                batch.awaitDone();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);  // TODO
+            }
+        } else {
+            transform(to, context, value);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private <T> void flushAll() {
         for (Map.Entry<Link<?>, Batch<?>> linkBatchEntry : batches.entrySet()) {
@@ -106,9 +120,9 @@ final class Worker extends Thread {
         }
     }
 
-    private <T> void flush(Link<T> link, Batch<T> batch) {
+    private <T> void flush(Link<T> link, Batch<? extends T> batch) {
         try {
-            link.put(batch);
+            link.to.put(batch);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -116,6 +130,6 @@ final class Worker extends Thread {
 
     @Override
     public String toString() {
-        return "Worker { link: " + link + " }";
+        return "Worker { transformer: " + Provider.name(transformer) + " }";
     }
 }
