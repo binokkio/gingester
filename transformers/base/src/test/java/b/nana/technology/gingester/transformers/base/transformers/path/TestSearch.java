@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,7 +27,7 @@ class TestSearch {
 
         try {
 
-            Queue<Path> results = new ArrayDeque<>();
+            Queue<Path> results = new LinkedBlockingQueue<>();
 
             Search.Parameters fileSearchParameters = new Search.Parameters();
             fileSearchParameters.root = tempDir.toString();

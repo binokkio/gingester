@@ -8,6 +8,11 @@ public class Generate extends Transformer<Void, String> {
     private final String payload;
     private final int count;
 
+    public Generate(String payload) {
+        this.payload = payload;
+        this.count = 1;
+    }
+
     public Generate(Parameters parameters) {
         super(parameters);
         payload = parameters.payload;

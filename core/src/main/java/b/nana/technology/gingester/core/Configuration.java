@@ -3,7 +3,6 @@ package b.nana.technology.gingester.core;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -82,6 +81,7 @@ public final class Configuration {
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String name = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
             Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
+            transformer.apply(transformerConfiguration);
             gingester.name(name, transformer);
         }
 
@@ -111,6 +111,7 @@ public final class Configuration {
     static class TransformerConfiguration {
         public String id;
         public String transformer;
+        public Integer maxWorkers;
         public JsonNode parameters;
         public List<String> hosts = new ArrayList<>();
         public List<String> links = new ArrayList<>();

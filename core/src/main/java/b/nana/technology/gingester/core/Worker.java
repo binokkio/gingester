@@ -5,6 +5,8 @@ import java.util.Map;
 
 final class Worker extends Thread {
 
+    private static int counter = 0;
+
     private final Gingester gingester;
     final Transformer<?, ?> transformer;
     final Object lock = new Object();
@@ -14,6 +16,7 @@ final class Worker extends Thread {
     Worker(Gingester gingester, Transformer<?, ?> transformer) {
         this.gingester = gingester;
         this.transformer = transformer;
+        setName("Gingester-Worker-" + ++counter);
     }
 
     @Override
@@ -51,7 +54,6 @@ final class Worker extends Thread {
 
             for (Batch.Entry<? extends I> value : batch) {
                 transform(transformer, value.context, value.value);
-                batch.maybeNotify();
             }
         }
     }
@@ -77,7 +79,13 @@ final class Worker extends Thread {
             }
             transformSync(link.to, context, value);
             for (Transformer<?, ?> sync : transformer.syncs) {
-                sync.finish(context);
+                sync.acquirePermit();
+                try {
+                    sync.finish(context);
+                } catch (Exception e) {
+                    context.exception(e);
+                }
+                sync.releasePermit();
             }
         } else if (link.sync) {
             transformSync(link.to, context, value);
@@ -100,17 +108,10 @@ final class Worker extends Thread {
     }
 
     private <T> void transformSync(Transformer<? super T, ?> to, Context context, T value) {
-        if (to.mustQueue) {
-            Batch<T> batch = new Batch<>(context, value);
-            try {
-                to.put(batch);
-                batch.awaitDone();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);  // TODO
-            }
-        } else {
-            transform(to, context, value);
-        }
+        to.acquirePermit();
+        transform(to, context, value);
+        to.releasePermit();
+
     }
 
     @SuppressWarnings("unchecked")

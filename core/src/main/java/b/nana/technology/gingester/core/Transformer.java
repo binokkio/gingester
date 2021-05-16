@@ -1,9 +1,11 @@
 package b.nana.technology.gingester.core;
 
-import java.lang.reflect.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 public abstract class Transformer<I, O> {
@@ -17,7 +19,7 @@ public abstract class Transformer<I, O> {
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker> workers = new HashSet<>();
-    boolean mustQueue;
+    private Semaphore gate;
 
     protected Transformer() {
         this(null);
@@ -38,6 +40,32 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
+    void apply(Configuration.TransformerConfiguration configuration) {
+        if (configuration.maxWorkers != null) limitPermits(configuration.maxWorkers);
+    }
+
+    void setup() {
+        setup(new Setup());
+    }
+
+    private void limitPermits(int limit) {
+        if (gate == null || limit < gate.availablePermits()) {
+            gate = new Semaphore(limit);
+        }
+    }
+
+    void acquirePermit() {
+        if (gate != null) {
+            gate.acquireUninterruptibly();
+        }
+    }
+
+    void releasePermit() {
+        if (gate != null) {
+            gate.release();
+        }
+    }
+
     void put(Batch<? extends I> batch) throws InterruptedException {
         boolean accepted = queue.offer(batch);
         if (!accepted) {
@@ -47,16 +75,10 @@ public abstract class Transformer<I, O> {
         gingester.signalNewBatch(this);
     }
 
-    void setup() {
-        setup(new Setup());
-    }
-
     /**
      * Called after all transformers been linked.
      */
-    protected void setup(Setup setup) {
-
-    }
+    protected void setup(Setup setup) {}
 
     /**
      * Can be called concurrently!
@@ -70,7 +92,7 @@ public abstract class Transformer<I, O> {
      * with this transformer, i.e. those for which {@link Gingester#sync(Transformer, Transformer)} sync}
      * was called with the upstream transformer as first and this transformer as second argument.
      */
-    protected void finish(Context context) {
+    protected void finish(Context context) throws Exception {
 
     }
 
@@ -145,13 +167,17 @@ public abstract class Transformer<I, O> {
         }
 
         public void assertNoInputs() {
-            if (inputs.stream().anyMatch(link -> link.from != null)) {
+            if (!inputs.isEmpty()) {
                 throw new IllegalStateException("inputs");  // TODO
             }
         }
 
-        public void maxBatchSize(int maxBatchSize) {
-            // TODO
+        public void limitBatchSize(int limit) {
+            outputs.forEach(link -> link.limitBatchSize(limit));
+        }
+
+        public void limitMaxWorkers(int limit) {
+            limitPermits(limit);
         }
     }
 }

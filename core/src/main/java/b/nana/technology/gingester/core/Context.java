@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public final class Context implements Iterable<Context> {
 
@@ -10,21 +11,24 @@ public final class Context implements Iterable<Context> {
     final Transformer<?, ?> transformer;
     final String description;
     final List<Object> attachments;
+    final Consumer<Exception> exceptionListener;
 
     private Context() {
         parent = null;
         transformer = null;
         description = null;
         attachments = null;
+        exceptionListener = null;
     }
 
     private Context(Builder builder) {
-        this.parent = builder.parent != SEED ? builder.parent : null;
-        this.transformer = builder.transformer;
-        this.description = builder.description;
-        this.attachments = builder.attachments != null ?
+        parent = builder.parent != SEED ? builder.parent : null;
+        transformer = builder.transformer;
+        description = builder.description;
+        attachments = builder.attachments != null ?
                 Collections.unmodifiableList(builder.attachments) :
                 Collections.emptyList();
+        exceptionListener = builder.exceptionListener;
     }
 
     public Context.Builder extend(Transformer<?, ?> transformer) {
@@ -70,12 +74,23 @@ public final class Context implements Iterable<Context> {
         return "Context { " + super.toString() + " :: " + getDescription() + " }";
     }
 
+    void exception(Exception e) {
+        Context pointer = this;
+        do {
+            if (pointer.exceptionListener != null) {
+                pointer.exceptionListener.accept(e);
+            }
+            pointer = pointer.parent;
+        } while (pointer != null);
+    }
+
     public static class Builder {
 
         private final Context parent;
         private final Transformer<?, ?> transformer;
         private String description;
         private List<Object> attachments;
+        private Consumer<Exception> exceptionListener;
 
         private Builder(Context parent, Transformer<?, ?> transformer) {
             this.parent = parent;
@@ -102,6 +117,11 @@ public final class Context implements Iterable<Context> {
                 attachments = new ArrayList<>();
             }
             attachments.add(attachment);
+            return this;
+        }
+
+        public Builder onException(Consumer<Exception> exceptionListener) {
+            this.exceptionListener = exceptionListener;
             return this;
         }
 

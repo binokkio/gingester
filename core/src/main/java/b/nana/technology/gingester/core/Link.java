@@ -14,6 +14,7 @@ public final class Link<T> {
     final Set<Link<?>> downstream = new HashSet<>();
     final Set<Link<?>> syncedDownstream = new HashSet<>();
     boolean sync = false;
+    int maxBatchSize = 10000;
     volatile int batchSize = 1;
 
     Link(Gingester gingester, Transformer<?, T> from, Transformer<? super T, ?> to) {
@@ -37,6 +38,10 @@ public final class Link<T> {
         discover(true, this, l -> true, upstream);
         discover(false, this, l -> true, downstream);
         discover(false, this, l -> l.sync, syncedDownstream);
+    }
+
+    void limitBatchSize(int maxBatchSize) {
+        this.maxBatchSize = Math.min(this.maxBatchSize, maxBatchSize);
     }
 
     @Override
