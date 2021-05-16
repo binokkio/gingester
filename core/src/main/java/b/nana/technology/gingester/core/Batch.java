@@ -3,16 +3,11 @@ package b.nana.technology.gingester.core;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-/*
- * TODO also restrict the length of time a batch accepts new values
- *      or somehow support preventing batches from building up too long and
- *      downstream transformers being idle
- */
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class Batch<T> implements Iterable<Batch.Entry<T>> {
 
-    final int capacity;
+    private final int capacity;
     private final List<Entry<T>> values;
 
     Batch(int capacity) {

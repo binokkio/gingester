@@ -28,7 +28,7 @@ public class Job extends Transformer<Void, Void> {
     @Override
     protected void setup(Setup setup) {
         setup.assertNoInputs();
-        setup.maxBatchSize(1);
+        setup.limitBatchSize(1);
     }
 
     @Override
