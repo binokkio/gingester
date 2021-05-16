@@ -29,7 +29,6 @@ class TestToInputStream {
             gingester.run();
             assertEquals("Hello, World!\n", new String(result.get().readAllBytes()));
 
-
         } finally {
             Files.delete(helloWorld);
             Files.delete(tempDir);

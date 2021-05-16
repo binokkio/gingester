@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.test.transformers.Emphasize;
+import b.nana.technology.gingester.test.transformers.Generate;
+import b.nana.technology.gingester.test.transformers.YieldThreadName;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -82,5 +84,31 @@ class TestGingester {
     @Test
     void testSyncBeforeLinkThrows() {
         assertThrows(IllegalStateException.class, () -> new Gingester().sync(new Emphasize(), new Emphasize()));
+    }
+
+    @Test
+    void testTransformCalledByDedicatedWorkerByDefault() {
+        Set<String> names = Collections.synchronizedSet(new HashSet<>());
+        Gingester gingester = new Gingester();
+        YieldThreadName yieldThreadName = new YieldThreadName(false);
+        gingester.link(yieldThreadName, names::add);
+        gingester.link(new Generate("Hello!"), yieldThreadName);
+        gingester.link(new Generate("Hello!"), yieldThreadName);
+        gingester.link(new Generate("Hello!"), yieldThreadName);
+        gingester.run();
+        assertEquals(1, names.size());
+    }
+
+    @Test
+    void testTransformCalledByDownstreamWorkerWhenLinkIsSynced() {
+        Set<String> names = Collections.synchronizedSet(new HashSet<>());
+        Gingester gingester = new Gingester();
+        YieldThreadName yieldThreadName = new YieldThreadName(false);
+        gingester.link(yieldThreadName, names::add);
+        gingester.link(new Generate("Hello!"), yieldThreadName).sync();
+        gingester.link(new Generate("Hello!"), yieldThreadName).sync();
+        gingester.link(new Generate("Hello!"), yieldThreadName).sync();
+        gingester.run();
+        assertEquals(3, names.size());
     }
 }

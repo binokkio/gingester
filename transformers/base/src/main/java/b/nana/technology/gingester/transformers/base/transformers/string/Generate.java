@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.string;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class Generate extends Transformer<Object, String> {
 
@@ -22,7 +23,16 @@ public class Generate extends Transformer<Object, String> {
     }
 
     public static class Parameters {
+
         public String payload;
-        public int count;
+        public int count = 1;
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(String payload) {
+            this.payload = payload;
+        }
     }
 }

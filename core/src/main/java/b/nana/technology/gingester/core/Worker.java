@@ -5,46 +5,43 @@ import java.util.Map;
 
 final class Worker extends Thread {
 
-    final Object lock = new Object();
+    private static int counter = 0;
+
     private final Gingester gingester;
-    final Link<?> link;
+    final Transformer<?, ?> transformer;
+    final Object lock = new Object();
     private final Map<Link<?>, Batch<?>> batches = new HashMap<>();
     volatile boolean starving;
 
-    Worker(Gingester gingester, Link<?> link) {
+    Worker(Gingester gingester, Transformer<?, ?> transformer) {
         this.gingester = gingester;
-        this.link = link;
+        this.transformer = transformer;
+        setName("Gingester-Worker-" + ++counter);
     }
 
     @Override
     public void run() {
-
         try {
-            if (link.from == null) {
-                seed(link);
-            } else {
-                work(link);
-            }
+            work(transformer);
+            flushAll();
         } catch (Throwable t) {
             t.printStackTrace();  // TODO
+            throw t;
+        } finally {
+            gingester.signalQuit(this);
         }
-
-        flushAll();
-        gingester.signalQuit(this);
     }
 
-    private <T> void seed(Link<T> link) {
-        transform(link.to, link.remove());
-    }
+    private <I, O> void work(Transformer<I, O> transformer) {
 
-    private <T> void work(Link<T> link) {
         while (true) {
-            Batch<T> batch = link.poll();
+
+            Batch<? extends I> batch = transformer.queue.poll();
             if (batch == null) {
                 synchronized (lock) {
                     starving = true;
                     try {
-                        while ((batch = link.poll()) == null) {
+                        while ((batch = transformer.queue.poll()) == null) {
                             gingester.signalStarving(this);
                             lock.wait();
                         }
@@ -55,23 +52,10 @@ final class Worker extends Thread {
                     }
                 }
             }
-            transform(link.to, batch);
-        }
-    }
 
-    private <T> void transform(Transformer<? super T, ?> transformer, Batch<T> values) {
-        // TODO timing
-        for (Batch.Entry<T> value : values) {
-            transform(transformer, value.context, value.value);
-        }
-    }
-
-    private <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
-        // TODO timing
-        try {
-            transformer.transform(context, value);
-        } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO
+            for (Batch.Entry<? extends I> value : batch) {
+                transform(transformer, value.context, value.value);
+            }
         }
     }
 
@@ -80,16 +64,16 @@ final class Worker extends Thread {
 
         Link<T> link = transformer.outputs.get(direction);
 
-        if (!transformer.syncs.isEmpty()) {
-            if (context.transformer != transformer) {  // TODO this misses the case where a transformer is linked to itself
+        if (link.sync) {
+
+            // TODO this if misses the case where a transformer is linked to itself, maybe make that illegal?
+            if (!transformer.syncs.isEmpty() && context.transformer != transformer) {
                 context = context.extend(transformer).build();
             }
-            transform(link.to, context, value);  // TODO could call transform directly on link.to
-            for (Transformer<?, ?> sync : transformer.syncs) {
-                sync.finish(context);
-            }
-        } else if (link.sync) {
-            transform(link.to, context, value);  // TODO could call transform directly on link.to
+
+            transform(link.to, context, value);
+            finish(link.to, context);
+
         } else {
 
             Batch<T> batch = (Batch<T>) batches.get(link);
@@ -108,6 +92,32 @@ final class Worker extends Thread {
         }
     }
 
+    static <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
+        try {
+            transformer.transform(context, value);
+        } catch (InterruptedException e) {
+            System.err.println(Provider.name(transformer).orElse("Worker") + " transform interrupted");
+            context.handleException(e);
+            Thread.currentThread().interrupt();
+        } catch (Throwable t) {
+            context.handleException(t);
+        }
+    }
+
+    static void finish(Transformer<?, ?> transformer, Context context) {
+        for (Transformer<?, ?> sync : transformer.syncs) {
+            try {
+                sync.finish(context);
+            } catch (InterruptedException e) {
+                System.err.println(Provider.name(transformer).orElse("Worker") + " finish interrupted");
+                context.handleException(e);
+                Thread.currentThread().interrupt();
+            } catch (Throwable t) {
+                context.handleException(t);
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private <T> void flushAll() {
         for (Map.Entry<Link<?>, Batch<?>> linkBatchEntry : batches.entrySet()) {
@@ -115,16 +125,19 @@ final class Worker extends Thread {
         }
     }
 
-    private <T> void flush(Link<T> link, Batch<T> batch) {
+    private <T> void flush(Link<T> link, Batch<? extends T> batch) {
         try {
-            link.put(batch);
+            link.to.put(batch);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            for (Batch.Entry<? extends T> entry : batch) {
+                entry.context.handleException(e);
+            }
+            Thread.currentThread().interrupt();
         }
     }
 
     @Override
     public String toString() {
-        return "Worker { link: " + link + " }";
+        return "Worker { transformer: " + Provider.name(transformer) + " }";
     }
 }

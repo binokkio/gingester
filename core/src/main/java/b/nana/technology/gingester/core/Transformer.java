@@ -1,17 +1,24 @@
 package b.nana.technology.gingester.core;
 
-import java.lang.reflect.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
 public abstract class Transformer<I, O> {
 
+    Gingester gingester;
+    final Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
     final List<Link<? extends I>> inputs = new ArrayList<>();
     final List<Link<O>> outputs = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
-    final Object parameters;
+    final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
+    final Set<Worker> workers = new HashSet<>();
+    int maxWorkers = Integer.MAX_VALUE;
 
     protected Transformer() {
         this(null);
@@ -19,11 +26,23 @@ public abstract class Transformer<I, O> {
 
     @SuppressWarnings("unchecked")
     protected Transformer(Object parameters) {
-        // TODO don't assume "we" are the immediate super class, traverse up the hierarchy until we find ourselves
-        Type[] actualTypeArguments = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments();
-        inputClass = (Class<I>) actualTypeArguments[0];
-        outputClass = (Class<O>) actualTypeArguments[1];
         this.parameters = parameters;
+
+        // TODO this is very very fragile
+        ArrayDeque<Class<?>> found = new ArrayDeque<>();
+        Class<?> pointer = getClass();
+        while (!pointer.getSuperclass().equals(Transformer.class)) {
+            Type[] actualTypeArguments = ((ParameterizedType) pointer.getGenericSuperclass()).getActualTypeArguments();
+            for (Type actualTypeArgument : actualTypeArguments) {
+                if (actualTypeArgument instanceof Class) {
+                    found.add((Class<?>) actualTypeArgument);
+                }
+            }
+            pointer = pointer.getSuperclass();
+        }
+        Type[] actualTypeArguments = ((ParameterizedType) pointer.getGenericSuperclass()).getActualTypeArguments();
+        inputClass = actualTypeArguments[0] instanceof Class ? (Class<I>) actualTypeArguments[0] : (Class<I>) found.removeFirst();
+        outputClass = actualTypeArguments[1] instanceof Class ? (Class<O>) actualTypeArguments[1] : (Class<O>) found.removeFirst();
     }
 
     Transformer(Class<I> inputClass, Class<O> outputClass) {
@@ -32,17 +51,29 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
+    void apply(Configuration.TransformerConfiguration configuration) {
+        if (configuration.maxWorkers != null) {
+            maxWorkers = Math.min(maxWorkers, configuration.maxWorkers);
+        }
+    }
+
     void setup() {
         setup(new Setup());
     }
 
+    void put(Batch<? extends I> batch) throws InterruptedException {
+        boolean accepted = queue.offer(batch);
+        if (!accepted) {
+            gingester.signalFull(this);
+            queue.put(batch);
+        }
+        gingester.signalNewBatch(this);
+    }
+
     /**
      * Called after all transformers been linked.
-     * @param setup
      */
-    protected void setup(Setup setup) {
-
-    }
+    protected void setup(Setup setup) {}
 
     /**
      * Can be called concurrently!
@@ -56,7 +87,7 @@ public abstract class Transformer<I, O> {
      * with this transformer, i.e. those for which {@link Gingester#sync(Transformer, Transformer)} sync}
      * was called with the upstream transformer as first and this transformer as second argument.
      */
-    protected void finish(Context context) {
+    protected void finish(Context context) throws Exception {
 
     }
 
@@ -79,12 +110,16 @@ public abstract class Transformer<I, O> {
         worker.accept(this, context, output, direction);
     }
 
-    protected final void recurse(Context.Builder contextBuilder, I value) throws Exception {
+    protected final <T extends I>  void recurse(Context.Builder contextBuilder, T value) {
         Context context = contextBuilder.build();
-        transform(context, value);
-        for (Transformer<?, ?> sync : syncs) {
-            sync.finish(context);
+        Worker.transform(this, context, value);
+        if (!syncs.isEmpty()) {
+            Worker.finish(this, context);
         }
+    }
+
+    boolean isEmpty() {
+        return queue.isEmpty() && workers.isEmpty();
     }
 
     /**
@@ -118,14 +153,26 @@ public abstract class Transformer<I, O> {
 
     public class Setup {
 
-//        public final List<Link<I>> inputs = Collections.unmodifiableList(Transformer.this.inputs);
-//        public final List<Link<O>> outputs = Collections.unmodifiableList(Transformer.this.outputs);
-
         public void syncInputs() {
             inputs.forEach(Link::sync);
         }
+
         public void syncOutputs() {
             outputs.forEach(Link::sync);
+        }
+
+        public void assertNoInputs() {
+            if (!inputs.isEmpty()) {
+                throw new IllegalStateException("inputs");  // TODO
+            }
+        }
+
+        public void limitBatchSize(int limit) {
+            outputs.forEach(link -> link.limitBatchSize(limit));
+        }
+
+        public void limitMaxWorkers(int limit) {
+            maxWorkers = Math.min(maxWorkers, limit);
         }
     }
 }

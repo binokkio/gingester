@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +19,9 @@ import java.util.List;
 public final class Configuration {
 
     static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+            .enable(JsonParser.Feature.ALLOW_COMMENTS)
+            .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
+            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
     private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
 
@@ -51,6 +54,7 @@ public final class Configuration {
         return configuration;
     }
 
+    public Integer maxWorkers;
     public List<HostConfiguration> hosts = new ArrayList<>();
     public List<TransformerConfiguration> transformers = new ArrayList<>();
 
@@ -78,6 +82,7 @@ public final class Configuration {
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String name = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
             Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
+            transformer.apply(transformerConfiguration);
             gingester.name(name, transformer);
         }
 
@@ -107,6 +112,7 @@ public final class Configuration {
     static class TransformerConfiguration {
         public String id;
         public String transformer;
+        public Integer maxWorkers;
         public JsonNode parameters;
         public List<String> hosts = new ArrayList<>();
         public List<String> links = new ArrayList<>();

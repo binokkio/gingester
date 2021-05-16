@@ -8,19 +8,33 @@ import java.util.stream.Collectors;
 
 public final class Gingester {
 
-    private final Map<String, Transformer<?, ?>> transformerMap = new HashMap<>();
+    enum State {
+        SETUP,
+        RUNNING,
+        DONE
+    }
+
     private final Set<Transformer<?, ?>> transformers = new LinkedHashSet<>();
+    private final Map<String, Transformer<?, ?>> transformerMap = new HashMap<>();
     private final Set<Link<?>> links = new LinkedHashSet<>();
+    private final Set<Worker> seeders = new HashSet<>();
     private final Set<Worker> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
-    private State state = State.LINKING;
+
+    State state = State.SETUP;
+
+    private void addTransformer(Transformer<?, ?> transformer) {
+
+        if (transformer.gingester != null && transformer.gingester != this) {
+            throw new IllegalArgumentException("Transformers can not be associated with multiple Gingesters");
+        }
+
+        transformer.gingester = this;
+        transformers.add(transformer);
+    }
 
     Set<Transformer<?, ?>> getTransformers() {
         return transformers;
-    }
-
-    State getState() {
-        return state;
     }
 
     /**
@@ -31,7 +45,7 @@ public final class Gingester {
      */
     public void name(String name, Transformer<?, ?> transformer) {
         if (transformerMap.containsValue(transformer)) throw new IllegalArgumentException("Transformer was already named");
-        transformers.add(transformer);
+        addTransformer(transformer);
         Transformer<?, ?> collision = transformerMap.put(name, transformer);
         if (collision != null) throw new IllegalArgumentException("Transformer name not unique: " + name);
     }
@@ -72,12 +86,10 @@ public final class Gingester {
 
     public <T> Link<T> link(Transformer<?, T> from, Transformer<? super T, ?> to) {
 
-        if (state != State.LINKING) {
-            throw new IllegalStateException();  // TODO
-        }
+        if (state != State.SETUP) throw new IllegalStateException();  // TODO
 
-        transformers.add(from);
-        transformers.add(to);
+        addTransformer(from);
+        addTransformer(to);
 
         Link<T> link = new Link<>(this, from, to);
         from.outputs.add(link);
@@ -124,7 +136,7 @@ public final class Gingester {
      */
     public void sync(Transformer<?, ?> from, Transformer<?, ?> to) {
 
-        if (state != State.LINKING) {
+        if (state != State.SETUP) {
             throw new IllegalStateException();  // TODO
         }
 
@@ -147,13 +159,8 @@ public final class Gingester {
     }
 
     public <T> void seed(Transformer<T, ?> transformer, T seed) {
-        transformers.add(transformer);
-        Link<T> link = new Link<>(this, transformer);
-        links.add(link);
-        transformer.inputs.add(link);
-        Batch<T> batch = new Batch<>(1);
-        batch.addAndIndicateFull(Context.SEED, seed);
-        link.add(batch);
+        addTransformer(transformer);
+        transformer.queue.add(new Batch<>(Context.SEED, seed));
     }
 
     public Configuration toConfiguration() {
@@ -162,17 +169,23 @@ public final class Gingester {
 
     public void run() {
 
-        if (state != State.LINKING) {
+        if (state != State.SETUP) {
             throw new IllegalStateException();  // TODO
         }
 
-        transformers.stream().filter(t -> t.inputs.isEmpty()).forEach(this::seed);
         links.forEach(Link::setup);
         transformers.forEach(Transformer::setup);
+        transformers.stream()
+                .filter(Transformer::isEmpty)
+                .filter(transformer -> transformer.inputs.isEmpty())
+                .forEach(this::seed);
 
         state = State.RUNNING;
 
-        links.stream().filter(l -> !l.isEmpty()).forEach(this::addWorker);
+        transformers.stream()
+                .filter(transformer -> !transformer.queue.isEmpty())
+                .map(this::addWorker)
+                .forEach(seeders::add);
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
@@ -190,23 +203,6 @@ public final class Gingester {
         scheduler.shutdown();
     }
 
-    private void addWorker(Link<?> link) {
-        Worker worker = new Worker(this, link);
-        workers.add(worker);
-        link.workers.add(worker);
-        worker.start();
-    }
-
-    private void removeWorker(Worker worker) {
-        try {
-            worker.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
-        }
-        workers.remove(worker);
-        worker.link.workers.remove(worker);
-    }
-
     private void report() {
 
     }
@@ -215,12 +211,12 @@ public final class Gingester {
 
     }
 
-    void signalNewBatch(Link<?> link) {
+    void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
-            if (link.workers.isEmpty()) {
-                addWorker(link);
+            if (transformer.workers.isEmpty()) {
+                addWorker(transformer);
             } else {
-                for (Worker worker : link.workers) {
+                for (Worker worker : transformer.workers) {
                     if (worker.starving) {
                         synchronized (worker.lock) {
                             worker.lock.notify();
@@ -232,7 +228,7 @@ public final class Gingester {
         });
     }
 
-    void signalGorged(Link<?> link) {
+    void signalFull(Transformer<?, ?> transformer) {
         signal(() -> {
             // TODO
         });
@@ -248,7 +244,8 @@ public final class Gingester {
 
     void signalQuit(Worker quiter) {
         signal(() -> {
-            removeWorker(quiter);
+            workers.remove(quiter);
+            quiter.transformer.workers.remove(quiter);
             if (workers.isEmpty()) {
                 state = State.DONE;
             } else {
@@ -261,27 +258,35 @@ public final class Gingester {
         });
     }
 
+    void signalShutdown() {
+        signal(() -> seeders.forEach(Worker::interrupt));
+    }
+
     private void signal(Runnable runnable) {
         boolean result = signals.offer(runnable);
         if (!result) throw new IllegalStateException("Too many signals");
     }
 
+    private Worker addWorker(Transformer<?, ?> transformer) {
+        Worker worker = new Worker(this, transformer);
+        workers.add(worker);
+        transformer.workers.add(worker);
+        worker.start();
+        return worker;
+    }
+
     private static boolean isWorkerRedundant(Worker worker) {
 
-        // a worker is redundant if all its upstream links are empty...
-        for (Link<?> link : worker.link.upstream) {
-            if (!link.isEmpty()) return false;
+        // a worker is redundant if all its upstream transformers are empty...
+        for (Link<?> input : worker.transformer.inputs) {
+            for (Link<?> link : input.upstream) {
+                if (!link.to.isEmpty()) return false;
+            }
         }
 
         // ... and it is starving
         synchronized (worker.lock) {
             return worker.starving;
         }
-    }
-
-    enum State {
-        LINKING,
-        RUNNING,
-        DONE
     }
 }

@@ -2,15 +2,31 @@ package b.nana.technology.gingester.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 public class Main {
 
-    public static void main(String[] args) throws JsonProcessingException {
-        Gingester gingester = fromArgs(args);
+    public static void main(String[] args) {
+
+        final Gingester gingester = fromArgs(args);
+        final Thread main = Thread.currentThread();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+
+            System.err.println("\nShutdown started");
+
+            gingester.signalShutdown();
+            try {
+                main.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }));
+
         gingester.run();
     }
 
-    static Gingester fromArgs(String[] args) throws JsonProcessingException {
+    static Gingester fromArgs(String[] args) {
 
         Gingester gingester = new Gingester();
         Transformer<?, ?> upstream = null;
@@ -23,7 +39,13 @@ public class Main {
 
                     String transformerName = args[++i];
                     JsonNode parameters = null;
-                    if (args.length > i + 1 && !args[i + 1].startsWith("-")) parameters = Configuration.OBJECT_MAPPER.readTree(args[++i]);
+                    if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
+                        try {
+                            parameters = Configuration.OBJECT_MAPPER.readTree(args[++i]);
+                        } catch (JsonProcessingException e) {
+                            parameters = JsonNodeFactory.instance.textNode(args[i]);
+                        }
+                    }
                     Transformer<?, ?> transformer = Provider.instance(transformerName, parameters);
                     if (upstream != null) {
                         link(gingester, upstream, transformer);
