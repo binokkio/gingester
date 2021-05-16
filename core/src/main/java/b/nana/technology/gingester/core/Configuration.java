@@ -54,6 +54,7 @@ public final class Configuration {
         return configuration;
     }
 
+    public Integer maxWorkers;
     public List<HostConfiguration> hosts = new ArrayList<>();
     public List<TransformerConfiguration> transformers = new ArrayList<>();
 

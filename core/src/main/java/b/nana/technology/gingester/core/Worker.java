@@ -26,16 +26,17 @@ final class Worker extends Thread {
             flushAll();
         } catch (Throwable t) {
             t.printStackTrace();  // TODO
+            throw t;
         } finally {
             gingester.signalQuit(this);
         }
     }
 
     private <I, O> void work(Transformer<I, O> transformer) {
+
         while (true) {
 
             Batch<? extends I> batch = transformer.queue.poll();
-
             if (batch == null) {
                 synchronized (lock) {
                     starving = true;
@@ -58,37 +59,21 @@ final class Worker extends Thread {
         }
     }
 
-    private <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
-        try {
-            transformer.transform(context, value);
-        } catch (InterruptedException e) {
-            System.err.println(Provider.name(transformer).orElse("Worker") + " interrupted");
-        } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO
-        }
-    }
-
     @SuppressWarnings("unchecked")
     <T> void accept(Transformer<?, T> transformer, Context context, T value, int direction) {
 
         Link<T> link = transformer.outputs.get(direction);
 
-        if (!transformer.syncs.isEmpty()) {
-            if (context.transformer != transformer) {  // TODO this misses the case where a transformer is linked to itself, maybe make that illegal?
+        if (link.sync) {
+
+            // TODO this if misses the case where a transformer is linked to itself, maybe make that illegal?
+            if (!transformer.syncs.isEmpty() && context.transformer != transformer) {
                 context = context.extend(transformer).build();
             }
-            transformSync(link.to, context, value);
-            for (Transformer<?, ?> sync : transformer.syncs) {
-                sync.acquirePermit();
-                try {
-                    sync.finish(context);
-                } catch (Exception e) {
-                    context.exception(e);
-                }
-                sync.releasePermit();
-            }
-        } else if (link.sync) {
-            transformSync(link.to, context, value);
+
+            transform(link.to, context, value);
+            finish(link.to, context);
+
         } else {
 
             Batch<T> batch = (Batch<T>) batches.get(link);
@@ -107,11 +92,30 @@ final class Worker extends Thread {
         }
     }
 
-    private <T> void transformSync(Transformer<? super T, ?> to, Context context, T value) {
-        to.acquirePermit();
-        transform(to, context, value);
-        to.releasePermit();
+    static <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
+        try {
+            transformer.transform(context, value);
+        } catch (InterruptedException e) {
+            System.err.println(Provider.name(transformer).orElse("Worker") + " transform interrupted");
+            context.handleException(e);
+            Thread.currentThread().interrupt();
+        } catch (Throwable t) {
+            context.handleException(t);
+        }
+    }
 
+    static void finish(Transformer<?, ?> transformer, Context context) {
+        for (Transformer<?, ?> sync : transformer.syncs) {
+            try {
+                sync.finish(context);
+            } catch (InterruptedException e) {
+                System.err.println(Provider.name(transformer).orElse("Worker") + " finish interrupted");
+                context.handleException(e);
+                Thread.currentThread().interrupt();
+            } catch (Throwable t) {
+                context.handleException(t);
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -125,7 +129,10 @@ final class Worker extends Thread {
         try {
             link.to.put(batch);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            for (Batch.Entry<? extends T> entry : batch) {
+                entry.context.handleException(e);
+            }
+            Thread.currentThread().interrupt();
         }
     }
 

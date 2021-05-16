@@ -175,12 +175,15 @@ public final class Gingester {
 
         links.forEach(Link::setup);
         transformers.forEach(Transformer::setup);
-        transformers.stream().filter(transformer -> transformer.isEmpty() && transformer.inputs.isEmpty())
+        transformers.stream()
+                .filter(Transformer::isEmpty)
+                .filter(transformer -> transformer.inputs.isEmpty())
                 .forEach(this::seed);
 
         state = State.RUNNING;
 
-        transformers.stream().filter(transformer -> !transformer.queue.isEmpty())
+        transformers.stream()
+                .filter(transformer -> !transformer.queue.isEmpty())
                 .map(this::addWorker)
                 .forEach(seeders::add);
 

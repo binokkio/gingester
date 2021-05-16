@@ -10,8 +10,8 @@ public final class Context implements Iterable<Context> {
     final Context parent;
     final Transformer<?, ?> transformer;
     final String description;
-    final List<Object> attachments;
-    final Consumer<Exception> exceptionListener;
+    private final List<Object> attachments;
+    private final Consumer<Throwable> exceptionListener;
 
     private Context() {
         parent = null;
@@ -74,11 +74,11 @@ public final class Context implements Iterable<Context> {
         return "Context { " + super.toString() + " :: " + getDescription() + " }";
     }
 
-    void exception(Exception e) {
+    void handleException(Throwable exception) {
         Context pointer = this;
         do {
             if (pointer.exceptionListener != null) {
-                pointer.exceptionListener.accept(e);
+                pointer.exceptionListener.accept(exception);
             }
             pointer = pointer.parent;
         } while (pointer != null);
@@ -90,7 +90,7 @@ public final class Context implements Iterable<Context> {
         private final Transformer<?, ?> transformer;
         private String description;
         private List<Object> attachments;
-        private Consumer<Exception> exceptionListener;
+        private Consumer<Throwable> exceptionListener;
 
         private Builder(Context parent, Transformer<?, ?> transformer) {
             this.parent = parent;
@@ -120,7 +120,7 @@ public final class Context implements Iterable<Context> {
             return this;
         }
 
-        public Builder onException(Consumer<Exception> exceptionListener) {
+        public Builder onException(Consumer<Throwable> exceptionListener) {
             this.exceptionListener = exceptionListener;
             return this;
         }

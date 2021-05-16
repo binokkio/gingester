@@ -5,7 +5,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 public abstract class Transformer<I, O> {
@@ -19,7 +18,7 @@ public abstract class Transformer<I, O> {
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker> workers = new HashSet<>();
-    private Semaphore gate;
+    int maxWorkers = Integer.MAX_VALUE;
 
     protected Transformer() {
         this(null);
@@ -41,29 +40,13 @@ public abstract class Transformer<I, O> {
     }
 
     void apply(Configuration.TransformerConfiguration configuration) {
-        if (configuration.maxWorkers != null) limitPermits(configuration.maxWorkers);
+        if (configuration.maxWorkers != null) {
+            maxWorkers = Math.min(maxWorkers, configuration.maxWorkers);
+        }
     }
 
     void setup() {
         setup(new Setup());
-    }
-
-    private void limitPermits(int limit) {
-        if (gate == null || limit < gate.availablePermits()) {
-            gate = new Semaphore(limit);
-        }
-    }
-
-    void acquirePermit() {
-        if (gate != null) {
-            gate.acquireUninterruptibly();
-        }
-    }
-
-    void releasePermit() {
-        if (gate != null) {
-            gate.release();
-        }
     }
 
     void put(Batch<? extends I> batch) throws InterruptedException {
@@ -115,11 +98,11 @@ public abstract class Transformer<I, O> {
         worker.accept(this, context, output, direction);
     }
 
-    protected final void recurse(Context.Builder contextBuilder, I value) throws Exception {
+    protected final <T extends I>  void recurse(Context.Builder contextBuilder, T value) {
         Context context = contextBuilder.build();
-        transform(context, value);
-        for (Transformer<?, ?> sync : syncs) {
-            sync.finish(context);
+        Worker.transform(this, context, value);
+        if (!syncs.isEmpty()) {
+            Worker.finish(this, context);
         }
     }
 
@@ -177,7 +160,7 @@ public abstract class Transformer<I, O> {
         }
 
         public void limitMaxWorkers(int limit) {
-            limitPermits(limit);
+            maxWorkers = Math.min(maxWorkers, limit);
         }
     }
 }
