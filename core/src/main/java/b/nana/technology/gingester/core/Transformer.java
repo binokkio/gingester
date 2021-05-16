@@ -26,11 +26,23 @@ public abstract class Transformer<I, O> {
 
     @SuppressWarnings("unchecked")
     protected Transformer(Object parameters) {
-        // TODO don't assume "we" are the immediate super class, traverse up the hierarchy until we find ourselves
-        Type[] actualTypeArguments = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments();
-        inputClass = (Class<I>) actualTypeArguments[0];
-        outputClass = (Class<O>) actualTypeArguments[1];
         this.parameters = parameters;
+
+        // TODO this is very very fragile
+        ArrayDeque<Class<?>> found = new ArrayDeque<>();
+        Class<?> pointer = getClass();
+        while (!pointer.getSuperclass().equals(Transformer.class)) {
+            Type[] actualTypeArguments = ((ParameterizedType) pointer.getGenericSuperclass()).getActualTypeArguments();
+            for (Type actualTypeArgument : actualTypeArguments) {
+                if (actualTypeArgument instanceof Class) {
+                    found.add((Class<?>) actualTypeArgument);
+                }
+            }
+            pointer = pointer.getSuperclass();
+        }
+        Type[] actualTypeArguments = ((ParameterizedType) pointer.getGenericSuperclass()).getActualTypeArguments();
+        inputClass = actualTypeArguments[0] instanceof Class ? (Class<I>) actualTypeArguments[0] : (Class<I>) found.removeFirst();
+        outputClass = actualTypeArguments[1] instanceof Class ? (Class<O>) actualTypeArguments[1] : (Class<O>) found.removeFirst();
     }
 
     Transformer(Class<I> inputClass, Class<O> outputClass) {
