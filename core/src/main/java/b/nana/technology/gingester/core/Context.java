@@ -39,25 +39,6 @@ public final class Context implements Iterable<Context> {
         // TODO
     }
 
-    @Override
-    public Iterator<Context> iterator() {
-        return new Iterator<>() {
-
-            private Context pointer = Context.this;
-
-            @Override
-            public boolean hasNext() {
-                return pointer.parent != null;
-            }
-
-            @Override
-            public Context next() {
-                pointer = pointer.parent;
-                return pointer;
-            }
-        };
-    }
-
     public String getDescription() {
         List<String> descriptions = new LinkedList<>();
         Context pointer = this;
@@ -67,6 +48,37 @@ public final class Context implements Iterable<Context> {
             pointer = pointer.parent;
         } while (pointer != null);
         return String.join(" :: ", descriptions);
+    }
+
+    public List<Object> getAttachments(Class<? extends Transformer<?, ?>> fromClass) {
+        if (this != SEED) {
+            for (Context context : this) {
+                if (context.transformer.getClass().equals(fromClass)) {
+                    return context.attachments;
+                }
+            }
+        }
+        return List.of();
+    }
+
+    @Override
+    public Iterator<Context> iterator() {
+        return new Iterator<>() {
+
+            private Context pointer = Context.this;
+
+            @Override
+            public boolean hasNext() {
+                return pointer != null;
+            }
+
+            @Override
+            public Context next() {
+                Context self = pointer;
+                pointer = pointer.parent;
+                return self;
+            }
+        };
     }
 
     @Override
@@ -82,6 +94,7 @@ public final class Context implements Iterable<Context> {
             }
             pointer = pointer.parent;
         } while (pointer != null);
+        exception.printStackTrace();  // TODO
     }
 
     public static class Builder {
