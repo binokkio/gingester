@@ -8,11 +8,9 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Optional;
 
 public class ToInputStream extends Transformer<Path, InputStream> {
 
@@ -24,10 +22,9 @@ public class ToInputStream extends Transformer<Path, InputStream> {
     @Override
     protected void transform(Context context, Path input) throws IOException, InterruptedException {
         try (InputStream inputStream = Files.newInputStream(input)) {
-            List<Object> attachments = context.getAttachments(ToPath.class);
-            if (!attachments.isEmpty()) {
-                ToPath.Monitor monitor = (ToPath.Monitor) attachments.get(0);
-                emit(context, new InputStreamWrapper(inputStream, monitor));
+            Optional<Object> monitor = context.getDetail("monitor");
+            if (monitor.isPresent()) {
+                emit(context, new InputStreamWrapper(inputStream, (ToPath.Monitor) monitor.get()));
             } else {
                 emit(context, inputStream);
             }

@@ -2,6 +2,8 @@ package b.nana.technology.gingester.core;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class Context implements Iterable<Context> {
@@ -12,7 +14,7 @@ public final class Context implements Iterable<Context> {
     final int depth;
     final Transformer<?, ?> transformer;
     final String description;
-    private final List<Object> attachments;
+    private final Map<String, Object> details;
     private final Consumer<Throwable> exceptionListener;
 
     private Context() {
@@ -20,7 +22,7 @@ public final class Context implements Iterable<Context> {
         depth = 0;
         transformer = null;
         description = null;
-        attachments = null;
+        details = Map.of();
         exceptionListener = null;
     }
 
@@ -29,9 +31,7 @@ public final class Context implements Iterable<Context> {
         depth = builder.parent != SEED ? builder.parent.depth + 1 : 0;
         transformer = builder.transformer;
         description = builder.description;
-        attachments = builder.attachments != null ?
-                Collections.unmodifiableList(builder.attachments) :
-                Collections.emptyList();
+        details = builder.details != null ? builder.details : Collections.emptyMap();
         exceptionListener = builder.exceptionListener;
     }
 
@@ -59,15 +59,12 @@ public final class Context implements Iterable<Context> {
                 .collect(Collectors.joining(" :: "));
     }
 
-    public List<Object> getAttachments(Class<? extends Transformer<?, ?>> fromClass) {
-        if (this != SEED) {
-            for (Context context : this) {
-                if (context.transformer.getClass().equals(fromClass)) {
-                    return context.attachments;
-                }
-            }
+    public Optional<Object> getDetail(String name) {
+        for (Context context : this) {
+            Object detail = context.details.get(name);
+            if (detail != null) return Optional.of(detail);
         }
-        return List.of();
+        return Optional.empty();
     }
 
     @Override
@@ -111,7 +108,7 @@ public final class Context implements Iterable<Context> {
         private final Context parent;
         private final Transformer<?, ?> transformer;
         private String description;
-        private List<Object> attachments;
+        private Map<String, Object> details;
         private Consumer<Throwable> exceptionListener;
 
         private Builder(Context parent, Transformer<?, ?> transformer) {
@@ -134,11 +131,8 @@ public final class Context implements Iterable<Context> {
             return this;
         }
 
-        public Builder attachment(Object attachment) {
-            if (attachments == null) {
-                attachments = new ArrayList<>();
-            }
-            attachments.add(attachment);
+        public Builder details(Map<String, Object> details) {
+            this.details = details;
             return this;
         }
 
@@ -149,6 +143,39 @@ public final class Context implements Iterable<Context> {
 
         Context build() {
             return new Context(this);
+        }
+    }
+
+
+    private static final Pattern STRING_FORMAT_SPECIFIER = Pattern.compile("\\{(.*?[^\\\\])}");
+
+    public static class StringFormat {
+
+        private final List<String> strings = new ArrayList<>();
+        private final List<String> detailNames = new ArrayList<>();
+
+        public StringFormat(String format) {
+            Matcher matcher = STRING_FORMAT_SPECIFIER.matcher(format);
+            int pointer = 0;
+            while (matcher.find()) {
+                strings.add(format.substring(pointer, matcher.start(0)));
+                detailNames.add(matcher.group(1));
+                pointer = matcher.end(0);
+            }
+            strings.add(format.substring(pointer));
+        }
+
+        public String format(Context context) {
+            StringBuilder stringBuilder = new StringBuilder();
+            int i = 0;
+            for (; i < detailNames.size(); i++) {
+                String detailName = detailNames.get(i);
+                stringBuilder
+                        .append(strings.get(i))
+                        .append(context.getDetail(detailNames.get(i)).orElse(detailName));
+            }
+            stringBuilder.append(strings.get(i));
+            return stringBuilder.toString();
         }
     }
 }

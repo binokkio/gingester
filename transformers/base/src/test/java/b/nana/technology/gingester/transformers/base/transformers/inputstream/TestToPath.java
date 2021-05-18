@@ -45,7 +45,7 @@ class TestToPath {
         ToInputStream stringToInputStream = new ToInputStream();
 
         Path tempDirectory = Files.createTempDirectory("gingester-inputstream-test-to-path-");
-        ToPath toPath = new ToPath(new ToPath.Parameters(tempDirectory.resolve("test-%1$s.txt").toString()));
+        ToPath toPath = new ToPath(new ToPath.Parameters(tempDirectory.resolve("test-{generate-counter}.txt").toString()));
 
         Gingester gingester = new Gingester();
         gingester.link(generate, stringToInputStream);
