@@ -62,10 +62,7 @@ public class Job extends Transformer<Void, Void> {
                 }
             }
 
-            emit(
-                    context.extend(this).description(schedule + " :: " + next),
-                    null
-            );
+            emit(context.extend(this).description(next.toString()), null);
 
             ZonedDateTime now = ZonedDateTime.now();
 

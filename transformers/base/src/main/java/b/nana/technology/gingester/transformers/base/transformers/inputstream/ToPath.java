@@ -11,17 +11,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ToPath extends Transformer<InputStream, Path> {
 
-    private final Path path;
+    private final String pathFormat;
     private final boolean emitEarly;
     private final int bufferSize;
 
     public ToPath(Parameters parameters) {
         super(parameters);
-        path = Paths.get(parameters.path);
+        pathFormat = parameters.path;
         emitEarly = parameters.emitEarly;
         bufferSize = parameters.bufferSize;
     }
@@ -29,10 +30,22 @@ public class ToPath extends Transformer<InputStream, Path> {
     @Override
     protected void transform(Context context, InputStream input) throws Exception {
 
-        Path path = this.path;  // TODO
+        String[] descriptions = context.getDescriptions();
+        for (int i = 0; i < descriptions.length; i++) {
+            if (descriptions[i] != null) {
+                descriptions[i] = descriptions[i].replaceAll("[^a-zA-Z0-9-_.]", "_");  // TODO use static final pattern
+            }
+        }
 
-        Context.Builder contextBuilder = context.extend(this)
-                .description(path.toString());
+        String pathString = String.format(pathFormat, (Object[]) descriptions);
+        Path path = Paths.get(pathString);
+
+        Path parent = path.getParent();
+        if (!Files.isDirectory(path.getParent())) {
+            Files.createDirectories(parent);
+        }
+
+        Context.Builder contextBuilder = context.extend(this).description(pathString);
 
         // TODO make options configurable
         try (OutputStream output = Files.newOutputStream(path, StandardOpenOption.CREATE_NEW)) {

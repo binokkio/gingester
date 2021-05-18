@@ -2,12 +2,14 @@ package b.nana.technology.gingester.core;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public final class Context implements Iterable<Context> {
 
     static final Context SEED = new Context();
 
     final Context parent;
+    final int depth;
     final Transformer<?, ?> transformer;
     final String description;
     private final List<Object> attachments;
@@ -15,6 +17,7 @@ public final class Context implements Iterable<Context> {
 
     private Context() {
         parent = null;
+        depth = 0;
         transformer = null;
         description = null;
         attachments = null;
@@ -23,6 +26,7 @@ public final class Context implements Iterable<Context> {
 
     private Context(Builder builder) {
         parent = builder.parent != SEED ? builder.parent : null;
+        depth = builder.parent != SEED ? builder.parent.depth + 1 : 0;
         transformer = builder.transformer;
         description = builder.description;
         attachments = builder.attachments != null ?
@@ -39,15 +43,20 @@ public final class Context implements Iterable<Context> {
         // TODO
     }
 
-    public String getDescription() {
-        List<String> descriptions = new LinkedList<>();
+    public String[] getDescriptions() {
         Context pointer = this;
-        do {
-            String description = pointer.description;
-            if (description != null) descriptions.add(0, description);
+        String[] descriptions = new String[depth + 1];
+        for (int i = descriptions.length - 1; i >= 0; i--) {
+            descriptions[i] = pointer.description;
             pointer = pointer.parent;
-        } while (pointer != null);
-        return String.join(" :: ", descriptions);
+        }
+        return descriptions;
+    }
+
+    public String getDescription() {
+        return Arrays.stream(getDescriptions())
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" :: "));
     }
 
     public List<Object> getAttachments(Class<? extends Transformer<?, ?>> fromClass) {

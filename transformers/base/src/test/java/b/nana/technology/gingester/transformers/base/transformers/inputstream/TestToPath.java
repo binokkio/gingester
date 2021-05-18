@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
 import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.transformers.base.transformers.string.Generate;
+import b.nana.technology.gingester.transformers.base.transformers.string.ToInputStream;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +31,34 @@ class TestToPath {
         assertEquals(write, read);
 
         Files.delete(tempFile);
+        Files.delete(tempDirectory);
+    }
+
+    @Test
+    void testWithFormat() throws IOException {
+
+        Generate.Parameters generateParameters = new Generate.Parameters();
+        generateParameters.payload = "Hello, World!";
+        generateParameters.count = 3;
+        Generate generate = new Generate(generateParameters);
+
+        ToInputStream stringToInputStream = new ToInputStream();
+
+        Path tempDirectory = Files.createTempDirectory("gingester-inputstream-test-to-path-");
+        ToPath toPath = new ToPath(new ToPath.Parameters(tempDirectory.resolve("test-%1$s.txt").toString()));
+
+        Gingester gingester = new Gingester();
+        gingester.link(generate, stringToInputStream);
+        gingester.link(stringToInputStream, toPath);
+        gingester.run();
+
+        assertEquals("Hello, World!", Files.readString(tempDirectory.resolve("test-1.txt")));
+        assertEquals("Hello, World!", Files.readString(tempDirectory.resolve("test-2.txt")));
+        assertEquals("Hello, World!", Files.readString(tempDirectory.resolve("test-3.txt")));
+
+        Files.delete(tempDirectory.resolve("test-1.txt"));
+        Files.delete(tempDirectory.resolve("test-2.txt"));
+        Files.delete(tempDirectory.resolve("test-3.txt"));
         Files.delete(tempDirectory);
     }
 }
