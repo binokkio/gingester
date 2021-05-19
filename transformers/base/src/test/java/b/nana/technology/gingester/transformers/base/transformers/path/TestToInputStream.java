@@ -21,13 +21,19 @@ class TestToInputStream {
         Path helloWorld = Files.write(tempDir.resolve("hello-world.txt"), List.of("Hello, World!"));
 
         try {
-            AtomicReference<InputStream> result = new AtomicReference<>();
+            AtomicReference<String> result = new AtomicReference<>();
             ToInputStream toInputStream = new ToInputStream();
             Gingester gingester = new Gingester();
             gingester.seed(toInputStream, helloWorld);
-            gingester.link(toInputStream, result::set);
+            gingester.link(toInputStream, inputStream -> {
+                try {
+                    result.set(new String(inputStream.readAllBytes()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
             gingester.run();
-            assertEquals("Hello, World!\n", new String(result.get().readAllBytes()));
+            assertEquals("Hello, World!\n", result.get());
 
         } finally {
             Files.delete(helloWorld);
