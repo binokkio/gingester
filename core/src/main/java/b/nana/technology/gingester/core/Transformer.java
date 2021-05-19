@@ -105,6 +105,10 @@ public abstract class Transformer<I, O> {
         }
     }
 
+    protected final Thread newThread(Runnable runnable) {
+        return new Worker(gingester, this, runnable);
+    }
+
     boolean isEmpty() {
         return queue.isEmpty() && workers.isEmpty();
     }
