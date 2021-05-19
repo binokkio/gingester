@@ -9,53 +9,62 @@ final class Worker extends Thread {
 
     private final Gingester gingester;
     final Transformer<?, ?> transformer;
+    private final Runnable runnable;
     final Object lock = new Object();
     private final Map<Link<?>, Batch<?>> batches = new HashMap<>();
     volatile boolean starving;
 
     Worker(Gingester gingester, Transformer<?, ?> transformer) {
+        this(gingester, transformer, null);
+    }
+
+    Worker(Gingester gingester, Transformer<?, ?> transformer, Runnable runnable) {
         this.gingester = gingester;
         this.transformer = transformer;
+        this.runnable = runnable != null ? runnable : () -> work(transformer);
         setName("Gingester-Worker-" + ++counter);
     }
 
     @Override
     public void run() {
+        runnable.run();
+    }
+
+    private <I, O> void work(Transformer<I, O> transformer) {
+
         try {
-            work(transformer);
+
+            while (true) {
+
+                Batch<? extends I> batch = transformer.queue.poll();
+                if (batch == null) {
+                    synchronized (lock) {
+                        starving = true;
+                        try {
+                            while ((batch = transformer.queue.poll()) == null) {
+                                gingester.signalStarving(this);
+                                lock.wait();
+                            }
+                        } catch (InterruptedException e) {
+                            break;
+                        } finally {
+                            starving = false;
+                        }
+                    }
+                }
+
+                for (Batch.Entry<? extends I> value : batch) {
+                    transform(transformer, value.context, value.value);
+                }
+            }
+
             flushAll();
+
         } catch (Throwable t) {
             t.printStackTrace();  // TODO
             throw t;
         } finally {
             gingester.signalQuit(this);
-        }
-    }
-
-    private <I, O> void work(Transformer<I, O> transformer) {
-
-        while (true) {
-
-            Batch<? extends I> batch = transformer.queue.poll();
-            if (batch == null) {
-                synchronized (lock) {
-                    starving = true;
-                    try {
-                        while ((batch = transformer.queue.poll()) == null) {
-                            gingester.signalStarving(this);
-                            lock.wait();
-                        }
-                    } catch (InterruptedException e) {
-                        break;
-                    } finally {
-                        starving = false;
-                    }
-                }
-            }
-
-            for (Batch.Entry<? extends I> value : batch) {
-                transform(transformer, value.context, value.value);
-            }
         }
     }
 

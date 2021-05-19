@@ -13,8 +13,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 public abstract class ToPathBase<I> extends Transformer<I, Path> {
+
+    private static final Pattern SANITIZER = Pattern.compile("[^a-zA-Z0-9-_.]");
 
     protected abstract InputStream toInputStream(I input);
 
@@ -24,7 +27,7 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
 
     public ToPathBase(Parameters parameters) {
         super(parameters);
-        pathFormat = new Context.StringFormat(parameters.path);
+        pathFormat = new Context.StringFormat(parameters.path, s -> SANITIZER.matcher(s).replaceAll("_"), true);
         emitEarly = parameters.emitEarly;
         bufferSize = parameters.bufferSize;
     }
