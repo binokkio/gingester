@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import net.jodah.typetools.TypeResolver;
+
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -26,23 +26,10 @@ public abstract class Transformer<I, O> {
 
     @SuppressWarnings("unchecked")
     protected Transformer(Object parameters) {
+        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, this.getClass());
+        this.inputClass = (Class<I>) types[0];
+        this.outputClass = (Class<O>) types[1];
         this.parameters = parameters;
-
-        // TODO this is very very fragile
-        ArrayDeque<Class<?>> found = new ArrayDeque<>();
-        Class<?> pointer = getClass();
-        while (!pointer.getSuperclass().equals(Transformer.class)) {
-            Type[] actualTypeArguments = ((ParameterizedType) pointer.getGenericSuperclass()).getActualTypeArguments();
-            for (Type actualTypeArgument : actualTypeArguments) {
-                if (actualTypeArgument instanceof Class) {
-                    found.add((Class<?>) actualTypeArgument);
-                }
-            }
-            pointer = pointer.getSuperclass();
-        }
-        Type[] actualTypeArguments = ((ParameterizedType) pointer.getGenericSuperclass()).getActualTypeArguments();
-        inputClass = actualTypeArguments[0] instanceof Class ? (Class<I>) actualTypeArguments[0] : (Class<I>) found.removeFirst();
-        outputClass = actualTypeArguments[1] instanceof Class ? (Class<O>) actualTypeArguments[1] : (Class<O>) found.removeFirst();
     }
 
     Transformer(Class<I> inputClass, Class<O> outputClass) {
@@ -116,6 +103,10 @@ public abstract class Transformer<I, O> {
         if (!syncs.isEmpty()) {
             Worker.finish(this, context);
         }
+    }
+
+    protected final Thread newThread(Runnable runnable) {
+        return new Worker(gingester, this, runnable);
     }
 
     boolean isEmpty() {

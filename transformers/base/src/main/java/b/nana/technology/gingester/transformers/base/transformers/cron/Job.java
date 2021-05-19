@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +30,7 @@ public class Job extends Transformer<Void, Void> {
     @Override
     protected void setup(Setup setup) {
         setup.assertNoInputs();
+        setup.limitMaxWorkers(1);
         setup.limitBatchSize(1);
     }
 
@@ -63,7 +66,16 @@ public class Job extends Transformer<Void, Void> {
             }
 
             emit(
-                    context.extend(this).description(schedule + " :: " + next),
+                    context.extend(this)
+                            .description(next.toString())
+                            .details(Map.of(
+                                    "year", next.getYear(),
+                                    "month", next.getMonthValue(),
+                                    "day", next.getDayOfMonth(),
+                                    "hour", next.getHour(),
+                                    "minute", next.getMinute(),
+                                    "second", next.getSecond()
+                            )),
                     null
             );
 

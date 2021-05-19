@@ -4,6 +4,8 @@ import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Map;
+
 public class Generate extends Transformer<Object, String> {
 
     private final String payload;
@@ -18,7 +20,7 @@ public class Generate extends Transformer<Object, String> {
     @Override
     protected void transform(Context context, Object input) {
         for (int i = 1; i <= count; i++) {
-            emit(context.extend(this).description(i), payload);
+            emit(context.extend(this).description(i).details(Map.of("generate-counter", i)), payload);
         }
     }
 
