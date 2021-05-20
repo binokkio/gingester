@@ -5,7 +5,9 @@ import net.jodah.typetools.TypeResolver;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class Transformer<I, O> {
 
@@ -17,8 +19,8 @@ public abstract class Transformer<I, O> {
     final List<Link<O>> outputs = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
-    final Set<Worker> workers = new HashSet<>();
-    int maxWorkers = Integer.MAX_VALUE;
+    final Set<Worker.Transform> workers = new HashSet<>();
+    private int state = Integer.MAX_VALUE;
 
     protected Transformer() {
         this(null);
@@ -47,11 +49,20 @@ public abstract class Transformer<I, O> {
     }
 
     void assertCanLinkTo(Transformer<?, ?> to) {
+
+        if (to.getDownstream().contains(this)) {
+            throw new IllegalStateException(String.format(
+                    "Linking from %s to %s would create a circular route",
+                    gingester.getName(this).orElseGet(() -> Provider.name(this)),
+                    gingester.getName(to).orElseGet(() -> Provider.name(to))
+            ));
+        }
+
         for (Class<?> outputClass : getOutputClasses()) {
             for (Class<?> inputClass : to.getInputClasses()) {
                 if (!inputClass.isAssignableFrom(outputClass)) {
                     throw new IllegalStateException(String.format(
-                            "Can't link %s to %s, %s can not be assigned to %s",
+                            "Can't link from %s to %s, %s can not be assigned to %s",
                             gingester.getName(this).orElseGet(() -> Provider.name(this)),
                             gingester.getName(to).orElseGet(() -> Provider.name(to)),
                             outputClass.getCanonicalName(),
@@ -64,7 +75,7 @@ public abstract class Transformer<I, O> {
 
     void apply(Configuration.TransformerConfiguration configuration) {
         if (configuration.maxWorkers != null) {
-            maxWorkers = Math.min(maxWorkers, configuration.maxWorkers);
+            state = Math.min(state, configuration.maxWorkers);
         }
     }
 
@@ -80,6 +91,30 @@ public abstract class Transformer<I, O> {
         }
         gingester.signalNewBatch(this);
     }
+
+    boolean isEmpty() {
+        return queue.isEmpty() && workers.isEmpty();
+    }
+
+    boolean isOpen() {
+        return state > 0;
+    }
+
+    boolean isClosed() {
+        return state == -1;
+    }
+
+    void setIsClosing() {
+        state = 0;
+    }
+
+    void setIsClosed() {
+        state = -1;
+    }
+
+
+
+    // methods to be overridden by subclasses
 
     /**
      * Called after all transformers been linked.
@@ -98,9 +133,18 @@ public abstract class Transformer<I, O> {
      * with this transformer, i.e. those for which {@link Gingester#sync(Transformer, Transformer)} sync}
      * was called with the upstream transformer as first and this transformer as second argument.
      */
-    protected void finish(Context context) throws Exception {
+    protected void finish(Context context) throws Exception {}
 
+    /**
+     * Called when no more input will come for this transformer.
+     */
+    protected void close() throws Exception {
+        System.out.println("Closing " + gingester.getName(this).orElseGet(() -> Provider.name(this)));
     }
+
+
+
+    // methods available to subclasses
 
     protected final void emit(Context.Builder context, O output) {
         emit(context.build(), output);
@@ -130,33 +174,54 @@ public abstract class Transformer<I, O> {
     }
 
     protected final Thread newThread(Runnable runnable) {
-        return new Worker(gingester, this, runnable);
+        return new Worker.Job(gingester, this, runnable);
     }
 
-    boolean isEmpty() {
-        return queue.isEmpty() && workers.isEmpty();
+
+
+    // upstream and downstream discovery
+
+    Set<Transformer<?, ?>> getUpstream() {
+        return getUpstreamRoutes().stream()
+                .flatMap(Collection::stream)
+                .filter(transformer -> !transformer.equals(this))
+                .collect(Collectors.toSet());
+    }
+
+    Set<Transformer<?, ?>> getDownstream() {
+        return getDownstreamRoutes().stream()
+                .flatMap(Collection::stream)
+                .filter(transformer -> !transformer.equals(this))
+                .collect(Collectors.toSet());
+    }
+
+    List<ArrayDeque<Transformer<?, ?>>> getUpstreamRoutes() {
+        return getRoutes(transformer -> transformer.inputs.stream().map(link -> link.from));
+    }
+
+    List<ArrayDeque<Transformer<?, ?>>> getDownstreamRoutes() {
+        return getRoutes(transformer -> transformer.outputs.stream().map(link -> link.to));
     }
 
     /**
-     * @return list of all downstream (partial and full) routes
+     * All partial and complete routes from `this` transformer up- or downstream depending on the given stepper.
      */
-    List<Deque<Link<?>>> getDownstreamRoutes() {
+    private List<ArrayDeque<Transformer<?, ?>>> getRoutes(Function<Transformer<?, ?>, Stream<Transformer<?, ?>>> stepper) {
 
-        List<Deque<Link<?>>> routes = new ArrayList<>();
-        for (Link<?> link : outputs) {
-            Deque<Link<?>> route = new ArrayDeque<>();
-            route.add(link);
-            routes.add(route);
-        }
+        ArrayDeque<Transformer<?, ?>> start = new ArrayDeque<>();
+        start.add(this);
 
-        List<Deque<Link<?>>> discovered = routes;
+        List<ArrayDeque<Transformer<?, ?>>> routes = new ArrayList<>();
+        routes.add(start);
+
+        List<ArrayDeque<Transformer<?, ?>>> discovered = routes;
         while (!discovered.isEmpty()) {
             discovered = discovered.stream()
-                    .flatMap(route -> route.getLast().to.outputs.stream()
-                            .filter(link -> !route.contains(link))
-                            .map(link -> {
-                                Deque<Link<?>> copy = new ArrayDeque<>(route);
-                                copy.add(link);
+                    .flatMap(route -> stepper
+                            .apply(route.getLast())
+                            .map(transformer -> {
+                                ArrayDeque<Transformer<?, ?>> copy = new ArrayDeque<>(route);
+                                copy.add(transformer);
                                 return copy;
                             }))
                     .collect(Collectors.toList());
@@ -165,6 +230,10 @@ public abstract class Transformer<I, O> {
 
         return routes;
     }
+
+
+
+    //
 
     public class Setup {
 
@@ -187,7 +256,7 @@ public abstract class Transformer<I, O> {
         }
 
         public void limitMaxWorkers(int limit) {
-            maxWorkers = Math.min(maxWorkers, limit);
+            state = Math.min(state, limit);
         }
     }
 }

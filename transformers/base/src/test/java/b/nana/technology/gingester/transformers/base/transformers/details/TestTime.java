@@ -64,6 +64,6 @@ class TestTime {
     void testTimeFromBadConfiguration() throws IOException {
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/test-time-bad-passthrough.gingester.json"));
         IllegalStateException e = assertThrows(IllegalStateException.class, configuration::build);
-        assertEquals("Can't link Details.Time to Json.Wrap, java.lang.String can not be assigned to com.fasterxml.jackson.databind.JsonNode", e.getMessage());
+        assertEquals("Can't link from Details.Time to Json.Wrap, java.lang.String can not be assigned to com.fasterxml.jackson.databind.JsonNode", e.getMessage());
     }
 }

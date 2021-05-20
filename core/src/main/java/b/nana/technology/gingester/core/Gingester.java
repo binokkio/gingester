@@ -11,15 +11,15 @@ public final class Gingester {
     enum State {
         SETUP,
         RUNNING,
-        FLUSHING,
+        CLOSING,
         DONE
     }
 
     private final Set<Transformer<?, ?>> transformers = new LinkedHashSet<>();
     private final Map<String, Transformer<?, ?>> transformerMap = new HashMap<>();
     private final Set<Link<?>> links = new LinkedHashSet<>();
-    private final Set<Worker> seeders = new HashSet<>();
-    private final Set<Worker> workers = new HashSet<>();
+    private final Set<Worker.Transform> seeders = new HashSet<>();
+    private final Set<Worker.Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
 
     State state = State.SETUP;
@@ -140,8 +140,8 @@ public final class Gingester {
             throw new IllegalStateException();  // TODO
         }
 
-        List<Deque<Link<?>>> routes = from.getDownstreamRoutes().stream()
-                .filter(route -> route.getLast().to == to)
+        List<ArrayDeque<Transformer<?, ?>>> routes = from.getDownstreamRoutes().stream()
+                .filter(route -> route.getLast() == to)
                 .collect(Collectors.toList());
 
         if (routes.isEmpty()) {
@@ -149,9 +149,17 @@ public final class Gingester {
         }
 
         from.syncs.add(to);
-        routes.stream()
-                .flatMap(Collection::stream)
-                .forEach(Link::sync);
+
+        Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
+                route.stream().reduce((f, t) -> {
+                        f.outputs.stream().filter(l -> l.to == t).findFirst().orElseThrow().sync();
+                        return t;
+                }).orElseThrow()
+        ).collect(Collectors.toSet());
+
+        if (!sanity.equals(Set.of(to))) {
+            throw new IllegalStateException();  // TODO
+        }
     }
 
     private void seed(Transformer<?, ?> transformer) {
@@ -173,7 +181,6 @@ public final class Gingester {
             throw new IllegalStateException();  // TODO
         }
 
-        links.forEach(Link::setup);
         transformers.forEach(Transformer::setup);
         transformers.stream()
                 .filter(Transformer::isEmpty)
@@ -204,11 +211,15 @@ public final class Gingester {
     }
 
     private void report() {
-
+        signal(() -> {
+            // on main thread
+        });
     }
 
     private void optimize() {
-
+        signal(() -> {
+            // on main thread
+        });
     }
 
     void signalNewBatch(Transformer<?, ?> transformer) {
@@ -217,7 +228,7 @@ public final class Gingester {
                 state = State.RUNNING;
                 addWorker(transformer);
             } else {
-                for (Worker worker : transformer.workers) {
+                for (Worker.Transform worker : transformer.workers) {
                     if (worker.starving) {
                         synchronized (worker.lock) {
                             worker.lock.notify();
@@ -229,13 +240,21 @@ public final class Gingester {
         });
     }
 
+    void signalClosed(Transformer<?, ?> transformer) {
+        signal(() -> {
+            System.out.println(getName(transformer).orElseGet(() -> Provider.name(transformer)) + " was closed");
+            transformer.setIsClosed();
+            maybeClose();
+        });
+    }
+
     void signalFull(Transformer<?, ?> transformer) {
         signal(() -> {
             // TODO
         });
     }
 
-    void signalStarving(Worker worker) {
+    void signalStarving(Worker.Transform worker) {
         signal(() -> {
             if (isWorkerRedundant(worker)) {
                 worker.interrupt();
@@ -243,14 +262,15 @@ public final class Gingester {
         });
     }
 
-    void signalQuit(Worker quiter) {
+    void signalQuit(Worker.Transform quiter) {
         signal(() -> {
             workers.remove(quiter);
             quiter.transformer.workers.remove(quiter);
             if (workers.isEmpty()) {
-                state = State.FLUSHING;
+                state = State.CLOSING;
+                maybeClose();
             } else {
-                for (Worker worker : workers) {
+                for (Worker.Transform worker : workers) {
                     if (isWorkerRedundant(worker)) {
                         worker.interrupt();
                     }
@@ -268,21 +288,37 @@ public final class Gingester {
         if (!result) throw new IllegalStateException("Too many signals");
     }
 
-    private Worker addWorker(Transformer<?, ?> transformer) {
-        Worker worker = new Worker(this, transformer);
+    private Worker.Transform addWorker(Transformer<?, ?> transformer) {
+        Worker.Transform worker = new Worker.Transform(this, transformer);
         workers.add(worker);
         transformer.workers.add(worker);
         worker.start();
         return worker;
     }
 
-    private static boolean isWorkerRedundant(Worker worker) {
+    private void maybeClose() {
+        if (state == State.CLOSING) {
+            boolean done = true;
+            for (Transformer<?, ?> transformer : transformers) {
+                if (!transformer.isClosed()) {
+                    System.out.println(transformer);
+                    done = false;
+                    if (transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+                        System.out.println("2 + " + transformer);
+                        transformer.setIsClosing();
+                        new Worker.Close(this, transformer).start();
+                    }
+                }
+            }
+            if (done) state = State.DONE;
+        }
+    }
+
+    private static boolean isWorkerRedundant(Worker.Transform worker) {
 
         // a worker is redundant if all its upstream transformers are empty...
-        for (Link<?> input : worker.transformer.inputs) {
-            for (Link<?> link : input.upstream) {
-                if (!link.to.isEmpty()) return false;
-            }
+        if (worker.transformer.getUpstream().stream().anyMatch(t -> !t.isEmpty())) {
+            return false;
         }
 
         // ... and it is starving

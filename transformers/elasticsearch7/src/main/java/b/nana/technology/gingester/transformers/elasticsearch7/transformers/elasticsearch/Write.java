@@ -12,6 +12,8 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
+import java.util.concurrent.TimeUnit;
+
 public class Write extends ElasticsearchTransformer<byte[], Void> implements BulkProcessor.Listener {
 
     private final Context.StringFormat indexFormat;
@@ -51,6 +53,15 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
             if (idFormat != null) indexRequest.id(idFormat.format(context));
             indexRequest.source(input, XContentType.JSON);
             bulkProcessor.add(indexRequest);
+        }
+    }
+
+    @Override
+    protected void close() throws Exception {
+        synchronized (bulkProcessor) {
+            bulkProcessor.close();
+            bulkProcessor.awaitClose(1, TimeUnit.HOURS);
+            restClient.close();
         }
     }
 

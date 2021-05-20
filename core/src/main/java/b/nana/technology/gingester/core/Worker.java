@@ -2,70 +2,20 @@ package b.nana.technology.gingester.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-final class Worker extends Thread {
+abstract class Worker extends Thread {
 
-    private static int counter = 0;
+    private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
-    private final Gingester gingester;
+    final Gingester gingester;
     final Transformer<?, ?> transformer;
-    private final Runnable runnable;
-    final Object lock = new Object();
-    private final Map<Link<?>, Batch<?>> batches = new HashMap<>();
-    volatile boolean starving;
+    final Map<Link<?>, Batch<?>> batches = new HashMap<>();
 
     Worker(Gingester gingester, Transformer<?, ?> transformer) {
-        this(gingester, transformer, null);
-    }
-
-    Worker(Gingester gingester, Transformer<?, ?> transformer, Runnable runnable) {
         this.gingester = gingester;
         this.transformer = transformer;
-        this.runnable = runnable != null ? runnable : () -> work(transformer);
-        setName("Gingester-Worker-" + ++counter);
-    }
-
-    @Override
-    public void run() {
-        runnable.run();
-    }
-
-    private <I, O> void work(Transformer<I, O> transformer) {
-
-        try {
-
-            while (true) {
-
-                Batch<? extends I> batch = transformer.queue.poll();
-                if (batch == null) {
-                    synchronized (lock) {
-                        starving = true;
-                        try {
-                            while ((batch = transformer.queue.poll()) == null) {
-                                gingester.signalStarving(this);
-                                lock.wait();
-                            }
-                        } catch (InterruptedException e) {
-                            break;
-                        } finally {
-                            starving = false;
-                        }
-                    }
-                }
-
-                for (Batch.Entry<? extends I> value : batch) {
-                    transform(transformer, value.context, value.value);
-                }
-            }
-
-            flushAll();
-
-        } catch (Throwable t) {
-            t.printStackTrace();  // TODO
-            throw t;
-        } finally {
-            gingester.signalQuit(this);
-        }
+        setName("Gingester-Worker-" + COUNTER.incrementAndGet());
     }
 
     @SuppressWarnings("unchecked")
@@ -128,13 +78,13 @@ final class Worker extends Thread {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void flushAll() {
+    <T> void flushAll() {
         for (Map.Entry<Link<?>, Batch<?>> linkBatchEntry : batches.entrySet()) {
             flush((Link<T>) linkBatchEntry.getKey(), (Batch<T>) linkBatchEntry.getValue());
         }
     }
 
-    private <T> void flush(Link<T> link, Batch<? extends T> batch) {
+    <T> void flush(Link<T> link, Batch<? extends T> batch) {
         try {
             link.to.put(batch);
         } catch (InterruptedException e) {
@@ -145,8 +95,89 @@ final class Worker extends Thread {
         }
     }
 
-    @Override
-    public String toString() {
-        return "Worker { transformer: " + Provider.name(transformer) + " }";
+    static class Transform extends Worker {
+
+        final Object lock = new Object();
+        volatile boolean starving;
+
+        Transform(Gingester gingester, Transformer<?, ?> transformer) {
+            super(gingester, transformer);
+        }
+
+        @Override
+        public void run() {
+            run(transformer);
+        }
+
+        private <I, O> void run(Transformer<I, O> transformer) {
+
+            try {
+
+                while (true) {
+
+                    Batch<? extends I> batch = transformer.queue.poll();
+                    if (batch == null) {
+                        synchronized (lock) {
+                            starving = true;
+                            try {
+                                while ((batch = transformer.queue.poll()) == null) {
+                                    gingester.signalStarving(this);
+                                    lock.wait();
+                                }
+                            } catch (InterruptedException e) {
+                                break;
+                            } finally {
+                                starving = false;
+                            }
+                        }
+                    }
+
+                    for (Batch.Entry<? extends I> value : batch) {
+                        transform(transformer, value.context, value.value);
+                    }
+                }
+
+                flushAll();
+
+            } catch (Throwable t) {
+                t.printStackTrace();  // TODO
+                throw t;
+            } finally {
+                gingester.signalQuit(this);
+            }
+        }
+    }
+
+    static class Close extends Worker {
+
+        Close(Gingester gingester, Transformer<?, ?> transformer) {
+            super(gingester, transformer);
+        }
+
+        @Override
+        public void run() {
+            try {
+                transformer.close();
+            } catch (Exception e) {
+                e.printStackTrace();  // TODO
+            }
+            flushAll();
+            gingester.signalClosed(transformer);
+        }
+    }
+
+    static class Job extends Worker {
+
+        private final Runnable runnable;
+
+        Job(Gingester gingester, Transformer<?, ?> transformer, Runnable runnable) {
+            super(gingester, transformer);
+            this.runnable = runnable;
+        }
+
+        @Override
+        public void run() {
+            runnable.run();
+        }
     }
 }
