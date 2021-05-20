@@ -15,17 +15,17 @@ final class Provider {
             .map(ServiceLoader.Provider::get)
             .collect(Collectors.toList());
 
-    static Optional<String> name(Transformer<?, ?> transformer) {
+    static String name(Transformer<?, ?> transformer) {
 
         String canonicalName = transformer.getClass().getCanonicalName();
-        if (canonicalName == null) return Optional.empty();
+        if (canonicalName == null) return "UnknownTransformer";
 
-        return Optional.of(RESOLVERS.stream()
+        return RESOLVERS.stream()
                 .map(r -> r.name(transformer))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .reduce((a, b) -> { throw new IllegalStateException("Multiple names for " + canonicalName); })
-                .orElseThrow(() -> new NoSuchElementException("No name for " + canonicalName)));
+                .orElseThrow(() -> new NoSuchElementException("No name for " + canonicalName));
     }
 
     static Transformer<?, ?> instance(String name, JsonNode jsonParameters) {

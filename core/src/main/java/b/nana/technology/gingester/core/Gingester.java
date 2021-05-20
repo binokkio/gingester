@@ -61,7 +61,7 @@ public final class Gingester {
         Transformer<?, ?> transformer = transformerMap.get(name);
         if (transformer != null) return transformer;
         return transformers.stream()
-                .filter(t -> Provider.name(t).filter(name::equals).isPresent())
+                .filter(t -> Provider.name(t).equals(name))
                 .reduce((a, b) -> { throw new IllegalStateException("Multiple matches for " + name); })
                 .orElseThrow(() -> new NoSuchElementException("No transformer named " + name));
     }
@@ -74,13 +74,10 @@ public final class Gingester {
         return transformer;
     }
 
-    @SuppressWarnings("unchecked")  // checked at runtime
+    @SuppressWarnings("unchecked")  // checked at runtime in link()
     public <T> Link<T> link(String fromName, String toName) {
         Transformer<?, T> from = (Transformer<?, T>) getTransformer(fromName);
         Transformer<? super T, ?> to = (Transformer<? super T, ?>) getTransformer(toName);
-        if (!to.inputClass.isAssignableFrom(from.outputClass)) {
-            throw new IllegalArgumentException("Incompatible transformers");
-        }
         return link(from, to);
     }
 
@@ -90,6 +87,8 @@ public final class Gingester {
 
         addTransformer(from);
         addTransformer(to);
+
+        from.assertCanLinkTo(to);
 
         Link<T> link = new Link<>(this, from, to);
         from.outputs.add(link);

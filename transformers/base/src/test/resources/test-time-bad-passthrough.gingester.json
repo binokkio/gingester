@@ -1,0 +1,23 @@
+{
+  "transformers": [
+    {
+      "transformer": "String.Generate",
+      "parameters": {
+        "payload": "{\"Hello\":\"World!\"}",
+        "count": 1
+      },
+      "links": [
+        "Details.Time"
+      ]
+    },
+    {
+      "transformer": "Details.Time",
+      "links": [
+        "Json.Wrap"
+      ]
+    },
+    {
+      "transformer": "Json.Wrap"
+    }
+  ]
+}

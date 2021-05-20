@@ -105,7 +105,7 @@ final class Worker extends Thread {
         try {
             transformer.transform(context, value);
         } catch (InterruptedException e) {
-            System.err.println(Provider.name(transformer).orElse("Worker") + " transform interrupted");
+            System.err.println(Provider.name(transformer) + " transform interrupted");
             context.handleException(e);
             Thread.currentThread().interrupt();
         } catch (Throwable t) {
@@ -118,7 +118,7 @@ final class Worker extends Thread {
             try {
                 sync.finish(context);
             } catch (InterruptedException e) {
-                System.err.println(Provider.name(transformer).orElse("Worker") + " finish interrupted");
+                System.err.println(Provider.name(transformer) + " finish interrupted");
                 context.handleException(e);
                 Thread.currentThread().interrupt();
             } catch (Throwable t) {

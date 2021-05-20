@@ -57,11 +57,8 @@ public class Main {
         return gingester;
     }
 
-    @SuppressWarnings("unchecked")  // checked at runtime
+    @SuppressWarnings("unchecked")  // checked at runtime in gingester.link()
     private static <T> void link(Gingester gingester, Transformer<?, ?> from, Transformer<?, ?> to) {
-        if (!to.inputClass.isAssignableFrom(from.outputClass)) {
-            throw new IllegalArgumentException(from + " and " + to + " are incompatible");
-        }
         gingester.link(
                 (Transformer<?, T>) from,
                 (Transformer<T, ?>) to

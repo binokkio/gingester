@@ -9,8 +9,6 @@ import java.util.Map;
 
 public class Out extends Transformer<String, Void> {
 
-    private static final int INDENT = 2;
-
     private final boolean decorate;
 
     public Out() {
@@ -25,43 +23,16 @@ public class Out extends Transformer<String, Void> {
     @Override
     protected void transform(Context context, String input) throws JsonProcessingException {
         if (decorate) {
-            Map<String, Object> details = context.getDetails();
             String description = context.getDescription();
+            String prettyDetails = context.prettyDetails();
             System.out.print(
                     "---- " + description + " ----\n" +
-                    (details.isEmpty() ? "" : prettyPrint(context.getDetails(), 0) + '\n') +
+                    (prettyDetails.isEmpty() ? "" : prettyDetails + '\n') +
                     input + '\n' +
                     "-".repeat(description.length() + 10) + "\n\n"
             );
         } else {
             System.out.println(input);
-        }
-    }
-
-    private String prettyPrint(Object object, int indentation) {
-
-        if (object instanceof Map) {
-
-            StringBuilder stringBuilder = new StringBuilder();
-
-            stringBuilder.append("{\n");
-
-            ((Map<?, ?>) object).forEach(
-                    (key, value) -> stringBuilder
-                            .append(" ".repeat(indentation + INDENT))
-                            .append(key)
-                            .append('=')
-                            .append(prettyPrint(value, indentation + INDENT))
-            );
-
-            stringBuilder
-                    .append(" ".repeat(indentation))
-                    .append("}\n");
-
-            return stringBuilder.toString();
-
-        } else {
-            return object.toString() + '\n';
         }
     }
 
