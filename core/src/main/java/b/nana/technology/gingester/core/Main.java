@@ -17,6 +17,7 @@ public class Main {
 
             gingester.signalShutdown();
             try {
+                Thread.sleep(30000);
                 main.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();

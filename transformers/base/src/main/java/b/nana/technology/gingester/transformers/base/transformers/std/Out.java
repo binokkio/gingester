@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.Map;
 
-public class Out extends Transformer<String, Void> {
+public class Out extends Transformer<Object, Void> {
 
     private final boolean decorate;
 
@@ -21,7 +21,7 @@ public class Out extends Transformer<String, Void> {
     }
 
     @Override
-    protected void transform(Context context, String input) throws JsonProcessingException {
+    protected void transform(Context context, Object input) throws JsonProcessingException {
         if (decorate) {
             String description = context.getDescription();
             String prettyDetails = context.prettyDetails();

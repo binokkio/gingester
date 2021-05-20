@@ -20,6 +20,7 @@
         <module>unpack</module>
         <module>jetty</module>
         <module>redis</module>
+        <module>elasticsearch7</module>
     </modules>
 
 </project>

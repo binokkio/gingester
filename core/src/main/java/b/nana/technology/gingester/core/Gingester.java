@@ -11,6 +11,7 @@ public final class Gingester {
     enum State {
         SETUP,
         RUNNING,
+        FLUSHING,
         DONE
     }
 
@@ -193,7 +194,7 @@ public final class Gingester {
         while (true) {
             try {
                 signals.take().run();
-                if (state != State.RUNNING) break;
+                if (state == State.DONE) break;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);  // TODO
             }
@@ -213,6 +214,7 @@ public final class Gingester {
     void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
             if (transformer.workers.isEmpty()) {
+                state = State.RUNNING;
                 addWorker(transformer);
             } else {
                 for (Worker worker : transformer.workers) {
@@ -246,7 +248,7 @@ public final class Gingester {
             workers.remove(quiter);
             quiter.transformer.workers.remove(quiter);
             if (workers.isEmpty()) {
-                state = State.DONE;
+                state = State.FLUSHING;
             } else {
                 for (Worker worker : workers) {
                     if (isWorkerRedundant(worker)) {
