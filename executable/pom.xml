@@ -32,6 +32,11 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>redis</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
         </dependency>

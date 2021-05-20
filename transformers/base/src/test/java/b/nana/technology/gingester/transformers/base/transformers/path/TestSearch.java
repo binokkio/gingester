@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestSearch {
 
-    @Test
+//    @Test
     void test() throws IOException {
 
         Path tempDir = Files.createTempDirectory("gingester-transformers-test-");
