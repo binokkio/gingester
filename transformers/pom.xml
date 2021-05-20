@@ -19,6 +19,7 @@
         <module>base</module>
         <module>unpack</module>
         <module>jetty</module>
+        <module>redis</module>
     </modules>
 
 </project>
