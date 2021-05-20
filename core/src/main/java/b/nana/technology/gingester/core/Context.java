@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 public final class Context implements Iterable<Context> {
 
+    private static final int INDENT = 2;
     static final Context SEED = new Context();
 
     final Context parent;
@@ -102,9 +103,44 @@ public final class Context implements Iterable<Context> {
         };
     }
 
+    public String prettyDetails() {
+        Map<String, Object> details = getDetails();
+        if (details.isEmpty()) return "";
+        return prettyPrint(details, 0);
+    }
+
+    private String prettyPrint(Object object, int indentation) {
+
+        if (object instanceof Map) {
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.append("{\n");
+
+            ((Map<?, ?>) object)
+                    .entrySet()
+                    .stream()
+                    .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
+                    .forEach(entry -> stringBuilder
+                            .append(" ".repeat(indentation + INDENT))
+                            .append(entry.getKey())
+                            .append('=')
+                            .append(prettyPrint(entry.getValue(), indentation + INDENT)));
+
+            stringBuilder
+                    .append(" ".repeat(indentation))
+                    .append("}\n");
+
+            return stringBuilder.toString();
+
+        } else {
+            return object.toString() + '\n';
+        }
+    }
+
     @Override
     public String toString() {
-        return "Context { " + super.toString() + " :: " + getDescription() + " }";
+        return "Context { " + super.toString() + "," + getDescription() + "," + getDetails() + "}";
     }
 
     void handleException(Throwable exception) {

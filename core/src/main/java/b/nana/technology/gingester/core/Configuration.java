@@ -33,7 +33,7 @@ public final class Configuration {
         Configuration configuration = new Configuration();
         for (Transformer<?, ?> transformer : gingester.getTransformers()) {
             TransformerConfiguration transformerConfiguration = new TransformerConfiguration();
-            Provider.name(transformer).ifPresent(name -> transformerConfiguration.transformer = name);
+            transformerConfiguration.transformer = Provider.name(transformer);
             gingester.getName(transformer)
                     .filter(name -> !name.equals(transformerConfiguration.transformer))
                     .ifPresent(name -> transformerConfiguration.id = name);
@@ -42,10 +42,10 @@ public final class Configuration {
             }
             transformer.outputs.stream()
                     .map(link -> link.to)
-                    .map(t -> gingester.getName(t).or(() -> Provider.name(t)).orElse("..."))
+                    .map(t -> gingester.getName(t).orElseGet(() -> Provider.name(t)))
                     .forEach(transformerConfiguration.links::add);
             transformer.syncs.stream()
-                    .map(t -> gingester.getName(t).or(() -> Provider.name(t)).orElse("..."))
+                    .map(t -> gingester.getName(t).orElseGet(() -> Provider.name(t)))
                     .forEach(transformerConfiguration.syncs::add);
             if (transformerConfiguration.transformer != null) {
                 configuration.transformers.add(transformerConfiguration);

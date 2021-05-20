@@ -38,6 +38,30 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
+    List<Class<?>> getInputClasses() {
+        return List.of(inputClass);
+    }
+
+    List<Class<?>> getOutputClasses() {
+        return List.of(outputClass);
+    }
+
+    void assertCanLinkTo(Transformer<?, ?> to) {
+        for (Class<?> outputClass : getOutputClasses()) {
+            for (Class<?> inputClass : to.getInputClasses()) {
+                if (!inputClass.isAssignableFrom(outputClass)) {
+                    throw new IllegalStateException(String.format(
+                            "Can't link %s to %s, %s can not be assigned to %s",
+                            gingester.getName(this).orElseGet(() -> Provider.name(this)),
+                            gingester.getName(to).orElseGet(() -> Provider.name(to)),
+                            outputClass.getCanonicalName(),
+                            inputClass.getCanonicalName()
+                    ));
+                }
+            }
+        }
+    }
+
     void apply(Configuration.TransformerConfiguration configuration) {
         if (configuration.maxWorkers != null) {
             maxWorkers = Math.min(maxWorkers, configuration.maxWorkers);
