@@ -12,9 +12,6 @@ public class Main {
         final Thread main = Thread.currentThread();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-
-            System.err.println("\nShutdown started");
-
             gingester.signalShutdown();
             try {
                 main.join();
