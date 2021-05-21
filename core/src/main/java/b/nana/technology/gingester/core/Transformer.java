@@ -138,9 +138,7 @@ public abstract class Transformer<I, O> {
     /**
      * Called when no more input will come for this transformer.
      */
-    protected void close() throws Exception {
-        System.out.println("Closing " + gingester.getName(this).orElseGet(() -> Provider.name(this)));
-    }
+    protected void close() throws Exception {}
 
 
 

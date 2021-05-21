@@ -11,13 +11,11 @@ public final class Gingester {
     enum State {
         SETUP,
         RUNNING,
-        CLOSING,
         DONE
     }
 
     private final Set<Transformer<?, ?>> transformers = new LinkedHashSet<>();
     private final Map<String, Transformer<?, ?>> transformerMap = new HashMap<>();
-    private final Set<Link<?>> links = new LinkedHashSet<>();
     private final Set<Worker.Transform> seeders = new HashSet<>();
     private final Set<Worker.Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
@@ -94,7 +92,6 @@ public final class Gingester {
         Link<T> link = new Link<>(this, from, to);
         from.outputs.add(link);
         to.inputs.add(link);
-        links.add(link);
         return link;
     }
 
@@ -225,7 +222,6 @@ public final class Gingester {
     void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
             if (transformer.workers.isEmpty()) {
-                state = State.RUNNING;
                 addWorker(transformer);
             } else {
                 for (Worker.Transform worker : transformer.workers) {
@@ -237,14 +233,6 @@ public final class Gingester {
                     }
                 }
             }
-        });
-    }
-
-    void signalClosed(Transformer<?, ?> transformer) {
-        signal(() -> {
-            System.out.println(getName(transformer).orElseGet(() -> Provider.name(transformer)) + " was closed");
-            transformer.setIsClosed();
-            maybeClose();
         });
     }
 
@@ -265,11 +253,22 @@ public final class Gingester {
     void signalQuit(Worker.Transform quiter) {
         signal(() -> {
             workers.remove(quiter);
-            quiter.transformer.workers.remove(quiter);
-            if (workers.isEmpty()) {
-                state = State.CLOSING;
-                maybeClose();
+            Transformer<?, ?> transformer = quiter.transformer;
+            transformer.workers.remove(quiter);
+            if (transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+                transformer.setIsClosing();
+                new Worker.Close(this, transformer).start();
+            }
+        });
+    }
+
+    void signalClosed(Transformer<?, ?> transformer) {
+        signal(() -> {
+            transformer.setIsClosed();
+            if (transformers.stream().allMatch(Transformer::isClosed)) {
+                state = State.DONE;
             } else {
+                maybeClose();
                 for (Worker.Transform worker : workers) {
                     if (isWorkerRedundant(worker)) {
                         worker.interrupt();
@@ -297,33 +296,30 @@ public final class Gingester {
     }
 
     private void maybeClose() {
-        if (state == State.CLOSING) {
-            boolean done = true;
-            for (Transformer<?, ?> transformer : transformers) {
-                if (!transformer.isClosed()) {
-                    System.out.println(transformer);
-                    done = false;
-                    if (transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
-                        System.out.println("2 + " + transformer);
-                        transformer.setIsClosing();
-                        new Worker.Close(this, transformer).start();
-                    }
+        boolean done = true;
+        for (Transformer<?, ?> transformer : transformers) {
+            if (!transformer.isClosed()) {
+                done = false;
+                if (transformer.isOpen() && transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+                    transformer.setIsClosing();
+                    new Worker.Close(this, transformer).start();
                 }
             }
-            if (done) state = State.DONE;
         }
+        if (done) state = State.DONE;
     }
 
     private static boolean isWorkerRedundant(Worker.Transform worker) {
 
-        // a worker is redundant if all its upstream transformers are empty...
-        if (worker.transformer.getUpstream().stream().anyMatch(t -> !t.isEmpty())) {
-            return false;
+        // a worker is redundant if all its upstream transformers are closed...
+        if (worker.transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+
+            // ... and it is starving
+            synchronized (worker.lock) {
+                return worker.starving;
+            }
         }
 
-        // ... and it is starving
-        synchronized (worker.lock) {
-            return worker.starving;
-        }
+        return false;
     }
 }
