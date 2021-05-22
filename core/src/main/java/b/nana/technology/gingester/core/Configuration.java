@@ -47,9 +47,7 @@ public final class Configuration {
             transformer.syncs.stream()
                     .map(t -> gingester.getName(t).orElseGet(() -> Provider.name(t)))
                     .forEach(transformerConfiguration.syncs::add);
-            if (transformerConfiguration.transformer != null) {
-                configuration.transformers.add(transformerConfiguration);
-            }
+            configuration.transformers.add(transformerConfiguration);
         }
         return configuration;
     }

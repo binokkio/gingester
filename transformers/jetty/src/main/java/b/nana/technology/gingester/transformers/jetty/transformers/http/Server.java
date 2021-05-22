@@ -92,7 +92,7 @@ public class Server extends Transformer<Void, RequestWrapper> {
 
         @Override
         public Thread newThread(Runnable runnable) {
-            return Server.this.newThread(runnable);
+            return getThreader().newThread(runnable);
         }
     }
 

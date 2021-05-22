@@ -19,7 +19,7 @@ public final class Gingester {
     private final Set<Worker.Transform> seeders = new HashSet<>();
     private final Set<Worker.Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
-
+    final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     State state = State.SETUP;
 
     private void addTransformer(Transformer<?, ?> transformer) {
@@ -179,10 +179,17 @@ public final class Gingester {
         }
 
         transformers.forEach(Transformer::setup);
+
+        // seed all transformers that have no inputs and were not already seeded
         transformers.stream()
                 .filter(Transformer::isEmpty)
                 .filter(transformer -> transformer.inputs.isEmpty())
                 .forEach(this::seed);
+
+        // enable statistics on the transformers that have no outputs
+        transformers.stream()
+                .filter(transformer -> transformer.outputs.isEmpty())
+                .forEach(Transformer::enableStatistics);
 
         state = State.RUNNING;
 
@@ -191,9 +198,7 @@ public final class Gingester {
                 .map(this::addWorker)
                 .forEach(seeders::add);
 
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(this::optimize, 10, 10, TimeUnit.SECONDS);
 
         while (true) {
             try {
@@ -205,17 +210,22 @@ public final class Gingester {
         }
 
         scheduler.shutdown();
+
+        report();
+
+        for (Runnable signal : signals) {
+            signal.run();
+        }
     }
 
     private void report() {
         signal(() -> {
-            // on main thread
-        });
-    }
-
-    private void optimize() {
-        signal(() -> {
-            // on main thread
+            for (Transformer<?, ?> transformer : transformers) {
+                transformer.getStatistics().ifPresent(statistics -> {
+                    statistics.sample();
+                    System.err.println(transformer.name + ": " + statistics);
+                });
+            }
         });
     }
 
@@ -233,12 +243,6 @@ public final class Gingester {
                     }
                 }
             }
-        });
-    }
-
-    void signalFull(Transformer<?, ?> transformer) {
-        signal(() -> {
-            // TODO
         });
     }
 

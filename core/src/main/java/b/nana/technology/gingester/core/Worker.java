@@ -33,12 +33,14 @@ abstract class Worker extends Thread {
             transform(link.to, context, value);
             finish(link.to, context);
 
+            link.to.getStatistics().ifPresent(statistics -> statistics.delt.incrementAndGet());
+
         } else {
 
             Batch<T> batch = (Batch<T>) batches.get(link);
 
             if (batch == null) {
-                batch = new Batch<>(link.batchSize);  // volatile read
+                batch = new Batch<>(link.to.batchSize);  // volatile read
                 batches.put(link, batch);
             }
 
@@ -48,6 +50,12 @@ abstract class Worker extends Thread {
                 flush(link, batch);
                 batches.remove(link);
             }
+        }
+    }
+
+    static <T> void transform(Transformer<? super T, ?> transformer, Batch<T> batch) {
+        for (Batch.Entry<? extends T> value : batch) {
+            transform(transformer, value.context, value.value);
         }
     }
 
@@ -99,6 +107,7 @@ abstract class Worker extends Thread {
 
         final Object lock = new Object();
         volatile boolean starving;
+//        long lastBatchReport = System.nanoTime();
 
         Transform(Gingester gingester, Transformer<?, ?> transformer) {
             super(gingester, transformer);
@@ -132,9 +141,37 @@ abstract class Worker extends Thread {
                         }
                     }
 
-                    for (Batch.Entry<? extends I> value : batch) {
-                        transform(transformer, value.context, value.value);
+                    if (transformer.maxBatchSize == 1) {
+                        // no batch optimizations possible, not tracking batch duration
+                        transform(transformer, batch);
+                    } else {
+
+                        long batchStarted = System.nanoTime();
+                        transform(transformer, batch);
+                        long batchFinished = System.nanoTime();
+                        double batchDuration = batchFinished - batchStarted;
+
+                        if ((batchDuration < 2_000_000 && batch.getSize() != transformer.maxBatchSize) ||
+                            (batchDuration > 4_000_000 && batch.getSize() != 1)) {
+
+                            double abrupt = 3_000_000 / batchDuration * batch.getSize();
+                            double dampened = (abrupt + batch.getSize() * 9) / 10;
+                            transformer.batchSize = (int) Math.min(transformer.maxBatchSize, dampened);
+                        }
+
+//                        if (lastBatchReport + 1_000_000_000 < batchFinished) {
+//                            lastBatchReport = batchFinished;
+//                            System.err.printf(
+//                                    "%s processed batch of %,d items in %,.3f seconds%n",
+//                                    transformer.name,
+//                                    batch.getSize(),
+//                                    batchDuration / 1_000_000_000
+//                            );
+//                        }
                     }
+
+                    Transformer.Statistics statistics = transformer.getStatistics().orElse(null);
+                    if (statistics != null) statistics.delt.addAndGet(batch.getSize());
                 }
 
                 flushAll();

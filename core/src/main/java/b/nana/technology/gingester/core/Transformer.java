@@ -5,6 +5,8 @@ import net.jodah.typetools.TypeResolver;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,6 +14,7 @@ import java.util.stream.Stream;
 public abstract class Transformer<I, O> {
 
     Gingester gingester;
+    String name;
     final Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
@@ -20,7 +23,10 @@ public abstract class Transformer<I, O> {
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
+    private final Threader threader = new Threader();
     private int state = Integer.MAX_VALUE;
+    int maxBatchSize = 65536;
+    volatile int batchSize = 1;
 
     protected Transformer() {
         this(null);
@@ -80,15 +86,12 @@ public abstract class Transformer<I, O> {
     }
 
     void setup() {
+        name = gingester.getName(this).orElseGet(() -> Provider.name(this));
         setup(new Setup());
     }
 
     void put(Batch<? extends I> batch) throws InterruptedException {
-        boolean accepted = queue.offer(batch);
-        if (!accepted) {
-            gingester.signalFull(this);
-            queue.put(batch);
-        }
+        queue.put(batch);
         gingester.signalNewBatch(this);
     }
 
@@ -163,7 +166,7 @@ public abstract class Transformer<I, O> {
         worker.accept(this, context, output, direction);
     }
 
-    protected final <T extends I>  void recurse(Context.Builder contextBuilder, T value) {
+    protected final <T extends I> void recurse(Context.Builder contextBuilder, T value) {
         Context context = contextBuilder.build();
         Worker.transform(this, context, value);
         if (!syncs.isEmpty()) {
@@ -171,8 +174,16 @@ public abstract class Transformer<I, O> {
         }
     }
 
-    protected final Thread newThread(Runnable runnable) {
-        return new Worker.Job(gingester, this, runnable);
+    protected final void ack() {
+        getStatistics().ifPresent(statistics -> statistics.acks.incrementAndGet());
+    }
+
+    protected final void ack(long acks) {
+        getStatistics().ifPresent(statistics -> statistics.acks.addAndGet(acks));
+    }
+
+    protected final Threader getThreader() {
+        return threader;
     }
 
 
@@ -250,11 +261,88 @@ public abstract class Transformer<I, O> {
         }
 
         public void limitBatchSize(int limit) {
-            outputs.forEach(link -> link.limitBatchSize(limit));
+            maxBatchSize = Math.min(maxBatchSize, limit);
         }
 
         public void limitMaxWorkers(int limit) {
             state = Math.min(state, limit);
+        }
+    }
+
+    public class Threader {
+
+        // TODO use a thread pool
+
+        public final Thread newThread(Runnable runnable) {
+            return new Worker.Job(gingester, Transformer.this, runnable);
+        }
+
+        public void execute(Runnable runnable) {
+            newThread(runnable).start();
+        }
+
+        public void schedule(Runnable runnable, long l, TimeUnit timeUnit) {
+            gingester.scheduler.schedule(() -> execute(runnable), l, timeUnit);
+        }
+
+        public void scheduleAtFixedRate(Runnable runnable, long l, long l1, TimeUnit timeUnit) {
+            gingester.scheduler.scheduleAtFixedRate(() -> execute(runnable), l, l1, timeUnit);
+        }
+
+        public void scheduleWithFixedDelay(Runnable runnable, long l, long l1, TimeUnit timeUnit) {
+            gingester.scheduler.scheduleWithFixedDelay(() -> execute(runnable), l, l1, timeUnit);
+        }
+    }
+
+
+    // statistics
+
+    private Statistics statistics;
+
+    void enableStatistics() {
+        this.statistics = new Statistics();
+    }
+
+    Optional<Statistics> getStatistics() {
+        return Optional.ofNullable(statistics);
+    }
+
+    static class Statistics {
+
+        final AtomicLong delt = new AtomicLong();
+        final Sampler deltSampler = new Sampler(delt::get);
+
+        final AtomicLong acks = new AtomicLong();
+        final Sampler acksSampler = new Sampler(acks::get);
+
+        void sample() {
+            deltSampler.sample();
+            acksSampler.sample();
+        }
+
+        @Override
+        public String toString() {
+
+            StringBuilder stringBuilder = new StringBuilder(String.format(
+                    "%,d processed",
+                    delt.get()
+            ));
+
+            long acks = this.acks.get();
+            if (acks != 0) {
+                stringBuilder.append(String.format(
+                        ", %,d acknowledged at %,.2f/s",
+                        acks,
+                        acksSampler.getChangePerSecond()
+                ));
+            } else {
+                stringBuilder.append(String.format(
+                        " at %,.2f/s",
+                        deltSampler.getChangePerSecond()
+                ));
+            }
+
+            return stringBuilder.toString();
         }
     }
 }

@@ -3,10 +3,7 @@ package b.nana.technology.gingester.transformers.elasticsearch7.transformers.ela
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.transformers.elasticsearch7.common.ElasticsearchTransformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import org.elasticsearch.action.bulk.BackoffPolicy;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.bulk.*;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.unit.TimeValue;
@@ -59,7 +56,6 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
     @Override
     protected void close() throws Exception {
         synchronized (bulkProcessor) {
-            bulkProcessor.close();
             bulkProcessor.awaitClose(1, TimeUnit.HOURS);
             restClient.close();
         }
@@ -72,7 +68,17 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
 
     @Override
     public void afterBulk(long l, BulkRequest bulkRequest, BulkResponse bulkResponse) {
-
+        if (!bulkResponse.hasFailures()) {
+            ack(bulkResponse.getItems().length);
+        } else {
+            for (BulkItemResponse itemResponse : bulkResponse) {
+                if (!itemResponse.isFailed()) {
+                    ack();
+                } else {
+                    // TODO
+                }
+            }
+        }
     }
 
     @Override

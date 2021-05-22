@@ -50,7 +50,7 @@ final class Provider {
         Constructor<?> constructor = Arrays.stream(transformerClass.getConstructors())
                 .filter(method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].getSimpleName().equals("Parameters"))
                 .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } )
-                .orElseThrow(() -> new IllegalStateException("Did not find a constructor accepting Parameters"));
+                .orElseThrow(() -> new IllegalStateException("Did not find a constructor accepting Parameters on " + transformerClass.getCanonicalName()));
 
         Class<?> parameterClass = constructor.getParameterTypes()[0];
 

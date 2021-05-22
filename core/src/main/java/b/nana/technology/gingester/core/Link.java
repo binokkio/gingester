@@ -6,8 +6,6 @@ public final class Link<T> {
     final Transformer<?, T> from;
     final Transformer<? super T, ?> to;
     boolean sync = false;
-    int maxBatchSize = 10000;
-    volatile int batchSize = 1;
 
     Link(Gingester gingester, Transformer<?, T> from, Transformer<? super T, ?> to) {
         this.gingester = gingester;
@@ -26,12 +24,12 @@ public final class Link<T> {
         sync = true;
     }
 
-    void limitBatchSize(int maxBatchSize) {
-        this.maxBatchSize = Math.min(this.maxBatchSize, maxBatchSize);
-    }
-
     @Override
     public String toString() {
-        return "Link { from: " + (from == null ? "<seed>" : from.getClass().getSimpleName()) + ", to: " + to.getClass().getSimpleName() + " }";
+        return "Link { from: " +
+                gingester.getName(from).orElseGet(() -> Provider.name(from)) +
+                ", to: " +
+                gingester.getName(to).orElseGet(() -> Provider.name(to)) +
+                " }";
     }
 }
