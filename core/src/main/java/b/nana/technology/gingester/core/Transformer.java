@@ -125,6 +125,11 @@ public abstract class Transformer<I, O> {
     protected void setup(Setup setup) {}
 
     /**
+     * Called before the first input arrives for the given context.
+     */
+    protected void prepare(Context context) throws Exception {}
+
+    /**
      * Can be called concurrently!
      */
     protected abstract void transform(Context context, I input) throws Exception;
@@ -168,10 +173,9 @@ public abstract class Transformer<I, O> {
 
     protected final <T extends I> void recurse(Context.Builder contextBuilder, T value) {
         Context context = contextBuilder.build();
+        Worker.prepare(this, context);
         Worker.transform(this, context, value);
-        if (!syncs.isEmpty()) {
-            Worker.finish(this, context);
-        }
+        Worker.finish(this, context);
     }
 
     protected final void ack() {

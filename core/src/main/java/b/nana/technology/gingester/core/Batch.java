@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 final class Batch<T> implements Iterable<Batch.Entry<T>> {
 
@@ -41,14 +42,26 @@ final class Batch<T> implements Iterable<Batch.Entry<T>> {
         return values.iterator();
     }
 
+    public Stream<Entry<T>> stream() {
+        return values.stream();
+    }
+
     protected static class Entry<T> {
 
-        final Context context;
-        final T value;
+        private final Context context;
+        private final T value;
 
         private Entry(Context context, T value) {
             this.context = context;
             this.value = value;
+        }
+
+        public Context getContext() {
+            return context;
+        }
+
+        public T getValue() {
+            return value;
         }
     }
 }

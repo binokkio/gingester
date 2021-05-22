@@ -30,6 +30,7 @@ abstract class Worker extends Thread {
                 context = context.extend(transformer).build();
             }
 
+            prepare(link.to, context);
             transform(link.to, context, value);
             finish(link.to, context);
 
@@ -53,9 +54,23 @@ abstract class Worker extends Thread {
         }
     }
 
+    static void prepare(Transformer<?, ?> transformer, Context context) {
+        for (Transformer<?, ?> sync : transformer.syncs) {
+            try {
+                sync.prepare(context);
+            } catch (InterruptedException e) {
+                System.err.println(Provider.name(transformer) + " prepare interrupted");
+                context.handleException(e);
+                Thread.currentThread().interrupt();
+            } catch (Throwable t) {
+                context.handleException(t);
+            }
+        }
+    }
+
     static <T> void transform(Transformer<? super T, ?> transformer, Batch<T> batch) {
         for (Batch.Entry<? extends T> value : batch) {
-            transform(transformer, value.context, value.value);
+            transform(transformer, value.getContext(), value.getValue());
         }
     }
 
@@ -95,9 +110,11 @@ abstract class Worker extends Thread {
     <T> void flush(Link<T> link, Batch<? extends T> batch) {
         try {
             link.to.put(batch);
-        } catch (InterruptedException e) {
-            for (Batch.Entry<? extends T> entry : batch) {
-                entry.context.handleException(e);
+        } catch (InterruptedException e1) {
+            try {
+                link.to.put(batch);
+            } catch (InterruptedException e2) {
+                throw new IllegalStateException("Interrupted twice", e2);
             }
             Thread.currentThread().interrupt();
         }
