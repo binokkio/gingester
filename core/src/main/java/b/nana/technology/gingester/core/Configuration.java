@@ -15,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 
 public final class Configuration {
 
@@ -26,6 +27,7 @@ public final class Configuration {
     private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
 
     public static Configuration fromJson(InputStream inputStream) throws IOException {
+        Objects.requireNonNull(inputStream, "Configuration.fromJson called with null InputStream");
         return OBJECT_MAPPER.readValue(inputStream, Configuration.class);
     }
 
@@ -34,7 +36,7 @@ public final class Configuration {
         for (Transformer<?, ?> transformer : gingester.getTransformers()) {
             TransformerConfiguration transformerConfiguration = new TransformerConfiguration();
             transformerConfiguration.transformer = Provider.name(transformer);
-            gingester.getName(transformer)
+            transformer.getName()
                     .filter(name -> !name.equals(transformerConfiguration.transformer))
                     .ifPresent(name -> transformerConfiguration.id = name);
             if (transformer.parameters != null) {
@@ -42,10 +44,10 @@ public final class Configuration {
             }
             transformer.outputs.stream()
                     .map(link -> link.to)
-                    .map(t -> gingester.getName(t).orElseGet(() -> Provider.name(t)))
+                    .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
                     .forEach(transformerConfiguration.links::add);
             transformer.syncs.stream()
-                    .map(t -> gingester.getName(t).orElseGet(() -> Provider.name(t)))
+                    .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
                     .forEach(transformerConfiguration.syncs::add);
             configuration.transformers.add(transformerConfiguration);
         }
@@ -64,6 +66,34 @@ public final class Configuration {
         }
     }
 
+    public Gingester.Builder toBuilder() {
+
+        Gingester.Builder builder = new Gingester.Builder();
+
+        for (TransformerConfiguration transformerConfiguration : transformers) {
+            Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
+            transformer.apply(transformerConfiguration);
+            if (transformerConfiguration.id != null) builder.name(transformerConfiguration.id, transformer);
+            else builder.add(transformer);
+        }
+
+        for (TransformerConfiguration transformerConfiguration : transformers) {
+            String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
+            for (String toName : transformerConfiguration.links) {
+                builder.link(fromName, toName);
+            }
+        }
+
+        for (TransformerConfiguration transformerConfiguration : transformers) {
+            String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
+            for (String toName : transformerConfiguration.syncs) {
+                builder.sync(fromName, toName);
+            }
+        }
+
+        return builder;
+    }
+
     public String hash() {
         try {
             byte[] hash = MessageDigest.getInstance("SHA-1").digest(toJson().getBytes(StandardCharsets.UTF_8));
@@ -71,34 +101,6 @@ public final class Configuration {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public Gingester build() {
-
-        Gingester gingester = new Gingester();
-
-        for (TransformerConfiguration transformerConfiguration : transformers) {
-            String name = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
-            transformer.apply(transformerConfiguration);
-            gingester.name(name, transformer);
-        }
-
-        for (TransformerConfiguration transformerConfiguration : transformers) {
-            String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            for (String toName : transformerConfiguration.links) {
-                gingester.link(fromName, toName);
-            }
-        }
-
-        for (TransformerConfiguration transformerConfiguration : transformers) {
-            String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            for (String toName : transformerConfiguration.syncs) {
-                gingester.sync(fromName, toName);
-            }
-        }
-
-        return gingester;
     }
 
     static class HostConfiguration {

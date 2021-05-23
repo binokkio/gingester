@@ -35,7 +35,7 @@ public class Main {
 
     static Gingester fromArgs(String[] args) {
 
-        Gingester gingester = new Gingester();
+        Gingester.Builder gBuilder = new Gingester.Builder();
         Transformer<?, ?> upstream = null;
         Transformer<?, ?> syncFrom = null;
 
@@ -63,6 +63,7 @@ public class Main {
                     syncLink = !markSyncFrom && !syncTo && syncFrom == null;  // similar trickery as above
                 case "-t":
                 case "--transformer":
+
                     String transformerName = args[++i];
                     JsonNode parameters = null;
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
@@ -73,16 +74,16 @@ public class Main {
                         }
                     }
                     Transformer<?, ?> transformer = Provider.instance(transformerName, parameters);
-                    if (upstream != null) {
-                        link(gingester, upstream, transformer, syncLink);
-                    } else {
-                        gingester.name(transformerName, transformer);  // TODO this is a temp fix for when only 1 transformer is specified
-                    }
+                    gBuilder.add(transformer);
+
+                    if (upstream != null) link(gBuilder, upstream, transformer, syncLink);
                     upstream = transformer;
+
                     if (markSyncFrom) {
                         syncFrom = transformer;
                     } else if (syncTo) {
-                        gingester.sync(syncFrom, transformer);
+                        if (syncFrom == null) throw new IllegalArgumentException("Unmatched -stt/--sync-to-transformer");
+                        gBuilder.sync(syncFrom, transformer);
                         syncFrom = null;
                     }
                     break;
@@ -92,14 +93,14 @@ public class Main {
         }
 
         if (syncFrom != null) {
-            throw new IllegalArgumentException("Unmatched -sft/--sync-from-transformer, missing -stt/--sync-to-transformer");
+            throw new IllegalArgumentException("Unmatched -sft/--sync-from-transformer");
         }
 
-        return gingester;
+        return gBuilder.build();
     }
 
     @SuppressWarnings("unchecked")  // checked at runtime in gingester.link()
-    private static <T> void link(Gingester gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean syncLink) {
+    private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean syncLink) {
         Link<?> link = gingester.link(
                 (Transformer<?, T>) from,
                 (Transformer<T, ?>) to

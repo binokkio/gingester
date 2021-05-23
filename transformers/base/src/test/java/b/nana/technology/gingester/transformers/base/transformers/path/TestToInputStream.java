@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.Gingester;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -23,16 +22,16 @@ class TestToInputStream {
         try {
             AtomicReference<String> result = new AtomicReference<>();
             ToInputStream toInputStream = new ToInputStream();
-            Gingester gingester = new Gingester();
-            gingester.seed(toInputStream, helloWorld);
-            gingester.link(toInputStream, inputStream -> {
+            Gingester.Builder gBuilder = new Gingester.Builder();
+            gBuilder.seed(toInputStream, helloWorld);
+            gBuilder.link(toInputStream, inputStream -> {
                 try {
                     result.set(new String(inputStream.readAllBytes()));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
-            gingester.run();
+            gBuilder.build().run();
             assertEquals("Hello, World!\n", result.get());
 
         } finally {

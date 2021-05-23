@@ -46,6 +46,14 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
+    void setName(String name) {
+        this.name = name;
+    }
+
+    public Optional<String> getName() {
+        return Optional.ofNullable(name);
+    }
+
     List<Class<?>> getInputClasses() {
         return List.of(inputClass);
     }
@@ -59,8 +67,8 @@ public abstract class Transformer<I, O> {
         if (to.getDownstream().contains(this)) {
             throw new IllegalStateException(String.format(
                     "Linking from %s to %s would create a circular route",
-                    gingester.getName(this).orElseGet(() -> Provider.name(this)),
-                    gingester.getName(to).orElseGet(() -> Provider.name(to))
+                    getName().orElseGet(() -> Provider.name(this)),
+                    to.getName().orElseGet(() -> Provider.name(to))
             ));
         }
 
@@ -69,8 +77,8 @@ public abstract class Transformer<I, O> {
                 if (!inputClass.isAssignableFrom(outputClass)) {
                     throw new IllegalStateException(String.format(
                             "Can't link from %s to %s, %s can not be assigned to %s",
-                            gingester.getName(this).orElseGet(() -> Provider.name(this)),
-                            gingester.getName(to).orElseGet(() -> Provider.name(to)),
+                            getName().orElseGet(() -> Provider.name(this)),
+                            to.getName().orElseGet(() -> Provider.name(to)),
                             outputClass.getCanonicalName(),
                             inputClass.getCanonicalName()
                     ));
@@ -85,8 +93,8 @@ public abstract class Transformer<I, O> {
         }
     }
 
-    void setup() {
-        name = gingester.getName(this).orElseGet(() -> Provider.name(this));
+    void setup(Gingester gingester) {
+        this.gingester = gingester;
         setup(new Setup());
     }
 
@@ -143,7 +151,7 @@ public abstract class Transformer<I, O> {
      * Called when no more input will come for the given context.
      *
      * Will only be called for contexts from upstream transformers that are synced
-     * with this transformer, i.e. those for which {@link Gingester#sync(Transformer, Transformer)} sync}
+     * with this transformer, i.e. those for which {@link Gingester.Builder#sync(Transformer, Transformer)} sync}
      * was called with the upstream transformer as first and this transformer as second argument.
      */
     protected void finish(Context context) throws Exception {}
@@ -302,6 +310,7 @@ public abstract class Transformer<I, O> {
             gingester.scheduler.scheduleWithFixedDelay(() -> execute(runnable), l, l1, timeUnit);
         }
     }
+
 
 
     // statistics

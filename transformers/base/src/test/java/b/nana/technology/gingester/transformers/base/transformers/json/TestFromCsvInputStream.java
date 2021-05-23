@@ -18,10 +18,10 @@ class TestFromCsvInputStream {
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
 
-        Gingester gingester = new Gingester();
-        gingester.seed(fromCsvInputStream, getClass().getResourceAsStream("/test.csv"));
-        gingester.link(fromCsvInputStream, results::add);
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.seed(fromCsvInputStream, getClass().getResourceAsStream("/test.csv"));
+        gBuilder.link(fromCsvInputStream, results::add);
+        gBuilder.build().run();
 
         assertEquals("1", results.remove().get("a").asText());
         assertEquals("2", results.remove().get("a").asText());

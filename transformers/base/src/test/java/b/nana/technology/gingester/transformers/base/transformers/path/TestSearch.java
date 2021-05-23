@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestSearch {
 
-//    @Test
+    @Test
     void test() throws IOException {
 
         Path tempDir = Files.createTempDirectory("gingester-transformers-test-");
@@ -34,9 +34,9 @@ class TestSearch {
             fileSearchParameters.globs = new String[] { "**/hello*" };
             Search fileSearch = new Search(fileSearchParameters);
 
-            Gingester gingester = new Gingester();
+            Gingester.Builder gingester = new Gingester.Builder();
             gingester.link(fileSearch, results::add);
-            gingester.run();
+            gingester.build().run();
 
             assertTrue(results.contains(helloWorld1));
             assertTrue(results.contains(helloWorld2));

@@ -24,7 +24,7 @@ abstract class Worker extends Thread {
 
         Link<T> link = transformer.outputs.get(direction);
 
-        if (link.sync) {
+        if (link.isSync()) {
 
             // TODO this if misses the case where a transformer is linked to itself, maybe make that illegal?
             if (!transformer.syncs.isEmpty() && context.transformer != transformer) {

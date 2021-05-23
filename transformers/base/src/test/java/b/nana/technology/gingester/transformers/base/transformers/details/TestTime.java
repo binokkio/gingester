@@ -26,14 +26,14 @@ class TestTime {
         Time<String> time = new Time<>();
         ToJson toJson = new ToJson(new ToJsonBase.Parameters());
 
-        Gingester gingester = new Gingester();
-        gingester.link(generate, time);
-        gingester.link(time, toJson);
-        gingester.link(toJson, (c, r) -> {
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(generate, time);
+        gBuilder.link(time, toJson);
+        gBuilder.link(toJson, (c, r) -> {
             context.set(c);
             result.set(r);
         });
-        gingester.run();
+        gBuilder.build().run();
 
         assertEquals("World!", result.get().get("Hello").asText());
         assertTrue(context.get().getDetail("year").isPresent());
@@ -43,18 +43,18 @@ class TestTime {
     void testTimeFromConfiguration() throws IOException {
 
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/test-time.gingester.json"));
-        Gingester gingester = configuration.build();
+        Gingester.Builder gBuilder = configuration.toBuilder();
 
         AtomicReference<Context> context = new AtomicReference<>();
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        ToJson toJson = gingester.getTransformer("String.ToJson", ToJson.class);
-        gingester.link(toJson, (c, r) -> {
+        ToJson toJson = gBuilder.getTransformer("String.ToJson", ToJson.class);
+        gBuilder.link(toJson, (c, r) -> {
             context.set(c);
             result.set(r);
         });
 
-        gingester.run();
+        gBuilder.build().run();
 
         assertEquals("World!", result.get().get("Hello").asText());
         assertTrue(context.get().getDetail("year").isPresent());
@@ -63,7 +63,7 @@ class TestTime {
     @Test
     void testTimeFromBadConfiguration() throws IOException {
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/test-time-bad-passthrough.gingester.json"));
-        IllegalStateException e = assertThrows(IllegalStateException.class, configuration::build);
+        IllegalStateException e = assertThrows(IllegalStateException.class, configuration::toBuilder);
         assertEquals("Can't link from Details.Time to Json.Wrap, java.lang.String can not be assigned to com.fasterxml.jackson.databind.JsonNode", e.getMessage());
     }
 }
