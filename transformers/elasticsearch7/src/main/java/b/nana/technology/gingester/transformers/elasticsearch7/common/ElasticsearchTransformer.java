@@ -8,14 +8,28 @@ import org.elasticsearch.client.RestHighLevelClient;
 
 public abstract class ElasticsearchTransformer<I, O> extends Transformer<I, O> {
 
-    protected final RestHighLevelClient restClient;
+    private final String host;
+    private final int port;
+    private final String schema;
+
+    protected RestHighLevelClient restClient;
 
     public ElasticsearchTransformer(Parameters parameters) {
-
         super(parameters);
+        host = parameters.host;
+        port = parameters.port;
+        schema = parameters.schema;
+    }
 
+    @Override
+    protected void open() {
         restClient = new RestHighLevelClient(RestClient.builder(
-                new HttpHost(parameters.host, parameters.port, parameters.schema)));
+                new HttpHost(host, port, schema)));
+    }
+
+    @Override
+    protected void close() throws Exception {
+        restClient.close();
     }
 
     public static class Parameters {

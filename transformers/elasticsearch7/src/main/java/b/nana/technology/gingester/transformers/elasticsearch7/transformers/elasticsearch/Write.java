@@ -15,7 +15,7 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
 
     private final Context.StringFormat indexFormat;
     private final Context.StringFormat idFormat;
-    private final BulkProcessor bulkProcessor;
+    private BulkProcessor bulkProcessor;
 
     public Write(Parameters parameters) {
 
@@ -23,6 +23,16 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
 
         indexFormat = new Context.StringFormat(parameters.indexFormat);
         idFormat = parameters.idFormat == null ? null : new Context.StringFormat(parameters.idFormat);
+    }
+
+    @Override
+    protected void setup(Setup setup) {
+        setup.limitMaxWorkers(1);
+    }
+
+    @Override
+    protected void open() {
+        super.open();
 
         BulkProcessor.Builder builder = BulkProcessor.builder(
                 (request, bulkListener) -> restClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
@@ -33,32 +43,21 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
         builder.setBackoffPolicy(BackoffPolicy.exponentialBackoff(TimeValue.timeValueSeconds(1L), 3));
 
         bulkProcessor = builder.build();
-
-        // TODO bulkProcess.awaitClose() on shutdown, maybe call it flush
     }
 
     @Override
-    protected void setup(Setup setup) {
-        setup.limitMaxWorkers(1);
-    }
-
-    @Override
-    protected void transform(Context context, byte[] input) {
-        synchronized (bulkProcessor) {
-            IndexRequest indexRequest = new IndexRequest();
-            indexRequest.index(indexFormat.format(context));
-            if (idFormat != null) indexRequest.id(idFormat.format(context));
-            indexRequest.source(input, XContentType.JSON);
-            bulkProcessor.add(indexRequest);
-        }
+    protected synchronized void transform(Context context, byte[] input) {
+        IndexRequest indexRequest = new IndexRequest();
+        indexRequest.index(indexFormat.format(context));
+        if (idFormat != null) indexRequest.id(idFormat.format(context));
+        indexRequest.source(input, XContentType.JSON);
+        bulkProcessor.add(indexRequest);
     }
 
     @Override
     protected void close() throws Exception {
-        synchronized (bulkProcessor) {
-            bulkProcessor.awaitClose(1, TimeUnit.HOURS);
-            restClient.close();
-        }
+        bulkProcessor.awaitClose(1, TimeUnit.HOURS);
+        super.close();
     }
 
     @Override

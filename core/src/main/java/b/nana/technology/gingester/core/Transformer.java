@@ -125,6 +125,11 @@ public abstract class Transformer<I, O> {
     protected void setup(Setup setup) {}
 
     /**
+     * Called before the first input arrives for this transformer.
+     */
+    protected void open() throws Exception {}
+
+    /**
      * Called before the first input arrives for the given context.
      */
     protected void prepare(Context context) throws Exception {}
@@ -278,7 +283,7 @@ public abstract class Transformer<I, O> {
         // TODO use a thread pool
 
         public final Thread newThread(Runnable runnable) {
-            return new Worker.Job(gingester, Transformer.this, runnable);
+            return new Worker.Jobs(gingester, Transformer.this, runnable::run);
         }
 
         public void execute(Runnable runnable) {

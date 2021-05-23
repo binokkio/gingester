@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -202,36 +203,29 @@ abstract class Worker extends Thread {
         }
     }
 
-    static class Close extends Worker {
+    static class Jobs extends Worker {
 
-        Close(Gingester gingester, Transformer<?, ?> transformer) {
+        interface Job {
+            void run() throws Exception;
+        }
+
+        private final List<Job> jobs;
+
+        Jobs(Gingester gingester, Transformer<?, ?> transformer, Job... jobs) {
             super(gingester, transformer);
+            this.jobs = List.of(jobs);
         }
 
         @Override
         public void run() {
-            try {
-                transformer.close();
-            } catch (Exception e) {
-                e.printStackTrace();  // TODO
+            for (Job job : jobs) {
+                try {
+                    job.run();
+                    flushAll();
+                } catch (Exception e) {
+                    e.printStackTrace();  // TODO
+                }
             }
-            flushAll();
-            gingester.signalClosed(transformer);
-        }
-    }
-
-    static class Job extends Worker {
-
-        private final Runnable runnable;
-
-        Job(Gingester gingester, Transformer<?, ?> transformer, Runnable runnable) {
-            super(gingester, transformer);
-            this.runnable = runnable;
-        }
-
-        @Override
-        public void run() {
-            runnable.run();
         }
     }
 }

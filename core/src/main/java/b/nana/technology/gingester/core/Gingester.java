@@ -19,8 +19,10 @@ public final class Gingester {
     private final Set<Worker.Transform> seeders = new HashSet<>();
     private final Set<Worker.Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
-    final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    ScheduledExecutorService scheduler;
     State state = State.SETUP;
+    private int unopened;
+    private int unclosed;
 
     private void addTransformer(Transformer<?, ?> transformer) {
 
@@ -178,6 +180,8 @@ public final class Gingester {
             throw new IllegalStateException();  // TODO
         }
 
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+
         transformers.forEach(Transformer::setup);
 
         // seed all transformers that have no inputs and were not already seeded
@@ -191,13 +195,9 @@ public final class Gingester {
                 .filter(transformer -> transformer.outputs.isEmpty())
                 .forEach(Transformer::enableStatistics);
 
+        unopened = unclosed = transformers.size();
+        transformers.forEach(this::open);
         state = State.RUNNING;
-
-        transformers.stream()
-                .filter(transformer -> !transformer.queue.isEmpty())
-                .map(this::addWorker)
-                .forEach(seeders::add);
-
         scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
 
         while (true) {
@@ -225,6 +225,17 @@ public final class Gingester {
                     statistics.sample();
                     System.err.println(transformer.name + ": " + statistics);
                 });
+            }
+        });
+    }
+
+    void signalOpen() {
+        signal(() -> {
+            if (--unopened == 0) {
+                transformers.stream()
+                        .filter(transformer -> !transformer.queue.isEmpty())
+                        .map(this::addWorker)
+                        .forEach(seeders::add);
             }
         });
     }
@@ -261,7 +272,7 @@ public final class Gingester {
             transformer.workers.remove(quiter);
             if (transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
                 transformer.setIsClosing();
-                new Worker.Close(this, transformer).start();
+                new Worker.Jobs(this, transformer, transformer::close, () -> signalClosed(transformer)).start();
             }
         });
     }
@@ -269,7 +280,7 @@ public final class Gingester {
     void signalClosed(Transformer<?, ?> transformer) {
         signal(() -> {
             transformer.setIsClosed();
-            if (transformers.stream().allMatch(Transformer::isClosed)) {
+            if (--unclosed == 0) {
                 state = State.DONE;
             } else {
                 maybeClose();
@@ -291,6 +302,10 @@ public final class Gingester {
         if (!result) throw new IllegalStateException("Too many signals");
     }
 
+    private void open(Transformer<?, ?> transformer) {
+        new Worker.Jobs(this, transformer, transformer::open, this::signalOpen).start();
+    }
+
     private Worker.Transform addWorker(Transformer<?, ?> transformer) {
         Worker.Transform worker = new Worker.Transform(this, transformer);
         workers.add(worker);
@@ -306,7 +321,7 @@ public final class Gingester {
                 done = false;
                 if (transformer.isOpen() && transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
                     transformer.setIsClosing();
-                    new Worker.Close(this, transformer).start();
+                    new Worker.Jobs(this, transformer, transformer::close, () -> signalClosed(transformer)).start();
                 }
             }
         }
