@@ -31,7 +31,7 @@ class TestSearch {
 
             Search.Parameters fileSearchParameters = new Search.Parameters();
             fileSearchParameters.root = tempDir.toString();
-            fileSearchParameters.globs = new String[] { "**/hello*" };
+            fileSearchParameters.globs = new String[] { "**hello*" };
             Search fileSearch = new Search(fileSearchParameters);
 
             Gingester.Builder gingester = new Gingester.Builder();

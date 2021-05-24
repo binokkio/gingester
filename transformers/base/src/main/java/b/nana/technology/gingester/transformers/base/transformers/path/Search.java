@@ -67,10 +67,12 @@ public class Search extends Transformer<Void, Path> {
 
         private void handle(Path path) {
 
-            if (pathMatcher.matches(path)) {
+            Path relative = root.relativize(path);
+
+            if (pathMatcher.matches(relative)) {
 
                 Context.Builder contextBuilder = context.extend(Search.this)
-                        .description(root.relativize(path).toString());
+                        .description(relative.toString());
 
                 emit(contextBuilder, path);
             }
