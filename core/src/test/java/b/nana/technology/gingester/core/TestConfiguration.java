@@ -30,6 +30,24 @@ public class TestConfiguration {
     }
 
     @Test
+    void testEmphasizeHelloWorldSyncLink() throws IOException {
+        AtomicReference<String> result = new AtomicReference<>();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/emphasize-hello-world-sync-link.json")).toBuilder();
+        gBuilder.link(gBuilder.getTransformer("Emphasize", Emphasize.class), result::set);
+        gBuilder.build().run();
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testEmphasizeHelloWorldDoubleSync() throws IOException {
+        AtomicReference<String> result = new AtomicReference<>();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/emphasize-hello-world-double-sync.json")).toBuilder();
+        gBuilder.link(gBuilder.getTransformer("Emphasize", Emphasize.class), result::set);
+        gBuilder.build().run();
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
     void testEmphasizeHelloWorldRestore() throws IOException {
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/emphasize-hello-world.json"));
         Gingester gBuilder = configuration.toBuilder().build();
@@ -40,6 +58,24 @@ public class TestConfiguration {
     @Test
     void testEmphasizeHelloWorldSyncRestore() throws IOException {
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/emphasize-hello-world-sync.json"));
+        Gingester gBuilder = configuration.toBuilder().build();
+        Configuration restored = Configuration.fromGingester(gBuilder);
+        assertEquals(configuration.toJson(), restored.toJson());
+        assertEquals(configuration.hash(), Configuration.fromGingester(gBuilder).hash());
+    }
+
+    @Test
+    void testEmphasizeHelloWorldSyncLinkRestore() throws IOException {
+        Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/emphasize-hello-world-sync-link.json"));
+        Gingester gBuilder = configuration.toBuilder().build();
+        Configuration restored = Configuration.fromGingester(gBuilder);
+        assertEquals(configuration.toJson(), restored.toJson());
+        assertEquals(configuration.hash(), Configuration.fromGingester(gBuilder).hash());
+    }
+
+    @Test
+    void testEmphasizeHelloWorldDoubleSyncRestore() throws IOException {
+        Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/emphasize-hello-world-double-sync.json"));
         Gingester gBuilder = configuration.toBuilder().build();
         Configuration restored = Configuration.fromGingester(gBuilder);
         assertEquals(configuration.toJson(), restored.toJson());

@@ -1,11 +1,15 @@
 package b.nana.technology.gingester.core;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,8 +48,7 @@ public final class Configuration {
                 transformerConfiguration.parameters = OBJECT_MAPPER.valueToTree(transformer.parameters);
             }
             transformer.outputs.stream()
-                    .map(link -> link.to)
-                    .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
+                    .map(LinkConfiguration::new)
                     .forEach(transformerConfiguration.links::add);
             transformer.syncs.stream()
                     .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
@@ -82,8 +85,9 @@ public final class Configuration {
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            for (String toName : transformerConfiguration.links) {
-                gBuilder.link(fromName, toName);
+            for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
+                Link<?> link = gBuilder.link(fromName, linkConfiguration.to);
+                if (linkConfiguration.sync) link.sync();
             }
         }
 
@@ -118,7 +122,40 @@ public final class Configuration {
         public Integer maxWorkers;
         public JsonNode parameters;
         public List<String> hosts = new ArrayList<>();
-        public List<String> links = new ArrayList<>();
+        public List<LinkConfiguration> links = new ArrayList<>();
         public List<String> syncs = new ArrayList<>();
+    }
+
+    static class LinkConfiguration {
+
+        public String to;
+        public boolean sync;
+
+        @JsonCreator
+        public LinkConfiguration() {
+
+        }
+
+        @JsonCreator
+        public LinkConfiguration(String to) {
+            this.to = to;
+        }
+
+        public LinkConfiguration(Link<?> link) {
+            to = link.to.getName().orElseThrow();
+            sync = link.isExplicitSync();
+        }
+
+        @JsonValue
+        public JsonNode getJsonValue() {
+            if (sync) {
+                ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+                objectNode.put("to", to);
+                objectNode.put("sync", sync);
+                return objectNode;
+            } else {
+                return JsonNodeFactory.instance.textNode(to);
+            }
+        }
     }
 }

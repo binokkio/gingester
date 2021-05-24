@@ -31,9 +31,8 @@ public final class Link<T> {
         explicitSync = true;
     }
 
-    void sync(boolean explicit) {
-        sync();
-        explicitSync = explicit;
+    void syncImplied() {
+        sync = true;
     }
 
     @Override
