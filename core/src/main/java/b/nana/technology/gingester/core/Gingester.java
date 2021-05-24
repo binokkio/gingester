@@ -15,6 +15,8 @@ public final class Gingester {
     }
 
     private final Set<Transformer<?, ?>> transformers;
+    final boolean report;
+
     private final Set<Worker.Transform> seeders = new HashSet<>();
     private final Set<Worker.Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
@@ -25,6 +27,7 @@ public final class Gingester {
 
     Gingester(Builder builder) {
         transformers = builder.transformers;
+        report = builder.report;
     }
 
     Set<Transformer<?, ?>> getTransformers() {
@@ -51,7 +54,8 @@ public final class Gingester {
         unopened = unclosed = transformers.size();
         transformers.forEach(this::open);
         state = State.RUNNING;
-        scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
+
+        if (report) scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
 
         while (true) {
             try {
@@ -64,7 +68,7 @@ public final class Gingester {
 
         scheduler.shutdown();
 
-        report();
+        if (report) report();
 
         for (Runnable signal : signals) {
             signal.run();
@@ -202,7 +206,13 @@ public final class Gingester {
     public static class Builder {
 
         private final Set<Transformer<?, ?>> transformers = new LinkedHashSet<>();
+        private boolean report;
         private boolean built;
+
+        public Builder report(boolean report) {
+            this.report = report;
+            return this;
+        }
 
         /**
          * Add the given transformer to the to-be-built Gingester.

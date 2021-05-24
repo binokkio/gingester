@@ -33,6 +33,7 @@ public final class Configuration {
 
     static Configuration fromGingester(Gingester gingester) {
         Configuration configuration = new Configuration();
+        configuration.report = gingester.report;
         for (Transformer<?, ?> transformer : gingester.getTransformers()) {
             TransformerConfiguration transformerConfiguration = new TransformerConfiguration();
             transformerConfiguration.transformer = Provider.name(transformer);
@@ -55,6 +56,7 @@ public final class Configuration {
     }
 
     public Integer maxWorkers;
+    public boolean report = true;
     public List<HostConfiguration> hosts = new ArrayList<>();
     public List<TransformerConfiguration> transformers = new ArrayList<>();
 
@@ -68,30 +70,31 @@ public final class Configuration {
 
     public Gingester.Builder toBuilder() {
 
-        Gingester.Builder builder = new Gingester.Builder();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.report(report);
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
             Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
             transformer.apply(transformerConfiguration);
-            if (transformerConfiguration.id != null) builder.name(transformerConfiguration.id, transformer);
-            else builder.add(transformer);
+            if (transformerConfiguration.id != null) gBuilder.name(transformerConfiguration.id, transformer);
+            else gBuilder.add(transformer);
         }
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
             for (String toName : transformerConfiguration.links) {
-                builder.link(fromName, toName);
+                gBuilder.link(fromName, toName);
             }
         }
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
             for (String toName : transformerConfiguration.syncs) {
-                builder.sync(fromName, toName);
+                gBuilder.sync(fromName, toName);
             }
         }
 
-        return builder;
+        return gBuilder;
     }
 
     public String hash() {

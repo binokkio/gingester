@@ -40,6 +40,7 @@ public final class Main {
     static Gingester fromArgs(String[] args) {
 
         Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.report(true);
         Transformer<?, ?> upstream = null;
         Transformer<?, ?> syncFrom = null;
 
@@ -54,6 +55,11 @@ public final class Main {
                 case "-pc":
                 case "--print-config":
                     // ignore
+                    break;
+
+                case "-nr":
+                case "--no-report":
+                    gBuilder.report(false);
                     break;
 
                 case "-sft":
