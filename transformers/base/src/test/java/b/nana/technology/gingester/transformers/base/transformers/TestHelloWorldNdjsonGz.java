@@ -36,14 +36,14 @@ class TestHelloWorldNdjsonGz {
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
 
-        Gingester gingester = new Gingester();
-        gingester.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
-        gingester.link(gunzip, toString);
-        gingester.link(toString, toJson);
-        gingester.link(toJson, wrap);
-        gingester.link(wrap, addContext);
-        gingester.link(addContext, results::add);
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
+        gBuilder.link(gunzip, toString);
+        gBuilder.link(toString, toJson);
+        gBuilder.link(toJson, wrap);
+        gBuilder.link(wrap, addContext);
+        gBuilder.link(addContext, results::add);
+        gBuilder.build().run();
 
         Set<String> contexts = results.stream().map(jsonNode -> jsonNode.get("context").asText()).collect(Collectors.toSet());
         Set<String> messages = results.stream().map(jsonNode -> jsonNode.get("content").get("message").asText()).collect(Collectors.toSet());
@@ -57,16 +57,16 @@ class TestHelloWorldNdjsonGz {
     void testHelloWorldNdJsonGzFromConfiguration() throws IOException {
 
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/hello-world.gingester.json"));
-        Gingester gingester = configuration.build();
+        Gingester.Builder gBuilder = configuration.toBuilder();
 
-        Gunzip gunzip = gingester.getTransformer("InputStream.Gunzip", Gunzip.class);
-        gingester.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
+        Gunzip gunzip = gBuilder.getTransformer("InputStream.Gunzip", Gunzip.class);
+        gBuilder.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
-        AddContext addContext = gingester.getTransformer("Json.AddContext", AddContext.class);
-        gingester.link(addContext, results::add);
+        AddContext addContext = gBuilder.getTransformer("Json.AddContext", AddContext.class);
+        gBuilder.link(addContext, results::add);
 
-        gingester.run();
+        gBuilder.build().run();
 
         Set<String> contexts = results.stream().map(jsonNode -> jsonNode.get("context").asText()).collect(Collectors.toSet());
         Set<String> messages = results.stream().map(jsonNode -> jsonNode.get("content").get("message").asText()).collect(Collectors.toSet());
@@ -80,16 +80,16 @@ class TestHelloWorldNdjsonGz {
     void testHelloWorldNdJsonGzFromConfigurationWithToJsonParameters() throws IOException {
 
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-with-to-json-parameters.gingester.json"));
-        Gingester gingester = configuration.build();
+        Gingester.Builder gBuilder = configuration.toBuilder();
 
-        Gunzip gunzip = gingester.getTransformer("InputStream.Gunzip", Gunzip.class);
-        gingester.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
+        Gunzip gunzip = gBuilder.getTransformer("InputStream.Gunzip", Gunzip.class);
+        gBuilder.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
-        AddContext addContext = gingester.getTransformer("Json.AddContext", AddContext.class);
-        gingester.link(addContext, results::add);
+        AddContext addContext = gBuilder.getTransformer("Json.AddContext", AddContext.class);
+        gBuilder.link(addContext, results::add);
 
-        gingester.run();
+        gBuilder.build().run();
 
         Set<String> contexts = results.stream().map(jsonNode -> jsonNode.get("context").asText()).collect(Collectors.toSet());
         Set<String> messages = results.stream().map(jsonNode -> jsonNode.get("content").get("message").asText()).collect(Collectors.toSet());

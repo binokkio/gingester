@@ -8,9 +8,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,7 +15,6 @@ public class Job extends Transformer<Void, Void> {
 
     private final String schedule;
     private final boolean skips;
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final AtomicBoolean triggered = new AtomicBoolean();
 
     public Job(Parameters parameters) {
@@ -48,12 +44,13 @@ public class Job extends Transformer<Void, Void> {
 
             if (durationSeconds > 0) {
 
-                scheduler.schedule(
+                getThreader().schedule(
                         this::trigger,
                         durationSeconds,
                         TimeUnit.SECONDS
                 );
 
+                // TODO it is no longer necessary to emit from the transform-calling thread
                 synchronized (triggered) {
                     while (!triggered.get()) {
                         triggered.wait();

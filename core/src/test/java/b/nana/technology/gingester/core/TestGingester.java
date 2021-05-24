@@ -17,10 +17,10 @@ class TestGingester {
     void testEmphasizeLinkFirst() {
         AtomicReference<String> result = new AtomicReference<>();
         Emphasize emphasize = new Emphasize();
-        Gingester gingester = new Gingester();
-        gingester.link(emphasize, result::set);
-        gingester.seed(emphasize, "Hello, World");
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(emphasize, result::set);
+        gBuilder.seed(emphasize, "Hello, World");
+        gBuilder.build().run();
         assertEquals("Hello, World!", result.get());
     }
 
@@ -28,10 +28,10 @@ class TestGingester {
     void testEmphasizeSeedFirst() {
         AtomicReference<String> result = new AtomicReference<>();
         Emphasize emphasize = new Emphasize();
-        Gingester gingester = new Gingester();
-        gingester.seed(emphasize, "Hello, World");
-        gingester.link(emphasize, result::set);
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.seed(emphasize, "Hello, World");
+        gBuilder.link(emphasize, result::set);
+        gBuilder.build().run();
         assertEquals("Hello, World!", result.get());
     }
 
@@ -41,11 +41,11 @@ class TestGingester {
         Emphasize[] emphasizers = new Emphasize[] {
                 new Emphasize(), new Emphasize()
         };
-        Gingester gingester = new Gingester();
-        gingester.link(emphasizers[0], emphasizers[1]);
-        gingester.link(emphasizers[1], result::set);
-        gingester.seed(emphasizers[0], "Hello, World");
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(emphasizers[0], emphasizers[1]);
+        gBuilder.link(emphasizers[1], result::set);
+        gBuilder.seed(emphasizers[0], "Hello, World");
+        gBuilder.build().run();
         assertEquals("Hello, World!!", result.get());
     }
 
@@ -55,12 +55,12 @@ class TestGingester {
         Emphasize[] emphasizers = new Emphasize[] {
                 new Emphasize(), new Emphasize(), new Emphasize()
         };
-        Gingester gingester = new Gingester();
-        gingester.link(emphasizers[0], emphasizers[1]);
-        gingester.link(emphasizers[1], emphasizers[2]);
-        gingester.link(emphasizers[2], result::set);
-        gingester.seed(emphasizers[0], "Hello, World");
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(emphasizers[0], emphasizers[1]);
+        gBuilder.link(emphasizers[1], emphasizers[2]);
+        gBuilder.link(emphasizers[2], result::set);
+        gBuilder.seed(emphasizers[0], "Hello, World");
+        gBuilder.build().run();
         assertEquals("Hello, World!!!", result.get());
     }
 
@@ -70,45 +70,45 @@ class TestGingester {
         Emphasize[] emphasizers = new Emphasize[] {
                 new Emphasize(), new Emphasize(), new Emphasize()
         };
-        Gingester gingester = new Gingester();
-        gingester.link(emphasizers[0], emphasizers[1]);
-        gingester.link(emphasizers[1], emphasizers[2]);
-        gingester.link(emphasizers[2], results::add);
-        gingester.seed(emphasizers[0], "Hello, World");
-        gingester.seed(emphasizers[1], "Hello, World");
-        gingester.seed(emphasizers[2], "Hello, World");
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(emphasizers[0], emphasizers[1]);
+        gBuilder.link(emphasizers[1], emphasizers[2]);
+        gBuilder.link(emphasizers[2], results::add);
+        gBuilder.seed(emphasizers[0], "Hello, World");
+        gBuilder.seed(emphasizers[1], "Hello, World");
+        gBuilder.seed(emphasizers[2], "Hello, World");
+        gBuilder.build().run();
         assertEquals(Set.of("Hello, World!", "Hello, World!!", "Hello, World!!!"), results);
     }
 
     @Test
     void testSyncBeforeLinkThrows() {
-        assertThrows(IllegalStateException.class, () -> new Gingester().sync(new Emphasize(), new Emphasize()));
+        assertThrows(IllegalStateException.class, () -> new Gingester.Builder().sync(new Emphasize(), new Emphasize()));
     }
 
     @Test
     void testTransformCalledByDedicatedWorkerByDefault() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
-        Gingester gingester = new Gingester();
+        Gingester.Builder gBuilder = new Gingester.Builder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
-        gingester.link(yieldThreadName, names::add);
-        gingester.link(new Generate("Hello!"), yieldThreadName);
-        gingester.link(new Generate("Hello!"), yieldThreadName);
-        gingester.link(new Generate("Hello!"), yieldThreadName);
-        gingester.run();
+        gBuilder.link(yieldThreadName, names::add);
+        gBuilder.link(new Generate("Hello!"), yieldThreadName);
+        gBuilder.link(new Generate("Hello!"), yieldThreadName);
+        gBuilder.link(new Generate("Hello!"), yieldThreadName);
+        gBuilder.build().run();
         assertEquals(1, names.size());
     }
 
     @Test
     void testTransformCalledByDownstreamWorkerWhenLinkIsSynced() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
-        Gingester gingester = new Gingester();
+        Gingester.Builder gBuilder = new Gingester.Builder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
-        gingester.link(yieldThreadName, names::add);
-        gingester.link(new Generate("Hello!"), yieldThreadName).sync();
-        gingester.link(new Generate("Hello!"), yieldThreadName).sync();
-        gingester.link(new Generate("Hello!"), yieldThreadName).sync();
-        gingester.run();
+        gBuilder.link(yieldThreadName, names::add);
+        gBuilder.link(new Generate("Hello!"), yieldThreadName).sync();
+        gBuilder.link(new Generate("Hello!"), yieldThreadName).sync();
+        gBuilder.link(new Generate("Hello!"), yieldThreadName).sync();
+        gBuilder.build().run();
         assertEquals(3, names.size());
     }
 }

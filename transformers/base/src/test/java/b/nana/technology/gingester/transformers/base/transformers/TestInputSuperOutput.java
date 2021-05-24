@@ -28,10 +28,10 @@ class TestInputSuperOutput {
 
         List<String> results = Collections.synchronizedList(new ArrayList<>());
 
-        Gingester gingester = new Gingester();
-        gingester.link(hello, world);
-        gingester.link(world, (Consumer<String>) results::add);
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(hello, world);
+        gBuilder.link(world, (Consumer<String>) results::add);
+        gBuilder.build().run();
 
         assertEquals(List.of("World", "World", "World", "World"), results);
     }

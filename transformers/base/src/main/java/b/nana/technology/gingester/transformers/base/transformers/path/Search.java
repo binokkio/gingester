@@ -79,15 +79,15 @@ public class Search extends Transformer<Void, Path> {
 
     public static class Parameters {
 
-        public String root;
+        public String root = "";
         public String[] globs = new String[] { "**/*" };
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String root) {
-            this.root = root;
+        public Parameters(String glob) {
+            this.globs = new String[] { glob };
         }
     }
 }

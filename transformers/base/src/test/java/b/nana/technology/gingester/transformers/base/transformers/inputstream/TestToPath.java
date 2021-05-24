@@ -23,9 +23,9 @@ class TestToPath {
         ToPath toPath = new ToPath(new ToPath.Parameters(tempFile.toString()));
         String write = "Hello, World!";
 
-        Gingester gingester = new Gingester();
-        gingester.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
+        gBuilder.build().run();
 
         String read = Files.readString(tempFile);
         assertEquals(write, read);
@@ -47,10 +47,10 @@ class TestToPath {
         Path tempDirectory = Files.createTempDirectory("gingester-inputstream-test-to-path-");
         ToPath toPath = new ToPath(new ToPath.Parameters(tempDirectory.resolve("test-{generate-counter}.txt").toString()));
 
-        Gingester gingester = new Gingester();
-        gingester.link(generate, stringToInputStream);
-        gingester.link(stringToInputStream, toPath);
-        gingester.run();
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        gBuilder.link(generate, stringToInputStream);
+        gBuilder.link(stringToInputStream, toPath);
+        gBuilder.build().run();
 
         assertEquals("Hello, World!", Files.readString(tempDirectory.resolve("test-1.txt")));
         assertEquals("Hello, World!", Files.readString(tempDirectory.resolve("test-2.txt")));

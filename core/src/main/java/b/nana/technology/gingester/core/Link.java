@@ -1,26 +1,23 @@
 package b.nana.technology.gingester.core;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
-
 public final class Link<T> {
 
-    private final Gingester gingester;
     final Transformer<?, T> from;
-    final Set<Link<?>> upstream = new HashSet<>();
     final Transformer<? super T, ?> to;
-    final Set<Link<?>> downstream = new HashSet<>();
-    final Set<Link<?>> syncedDownstream = new HashSet<>();
-    boolean sync = false;
-    int maxBatchSize = 10000;
-    volatile int batchSize = 1;
+    private boolean sync;
+    private boolean explicitSync;
 
-    Link(Gingester gingester, Transformer<?, T> from, Transformer<? super T, ?> to) {
-        this.gingester = gingester;
+    Link(Transformer<?, T> from, Transformer<? super T, ?> to) {
         this.from = from;
         this.to = to;
+    }
+
+    boolean isSync() {
+        return sync;
+    }
+
+    boolean isExplicitSync() {
+        return explicitSync;
     }
 
     /**
@@ -30,36 +27,21 @@ public final class Link<T> {
      * immediately after each `emit(..)` by the upstream transformer.
      */
     public void sync() {
-        if (gingester.state != Gingester.State.SETUP) throw new IllegalStateException();
         sync = true;
+        explicitSync = true;
     }
 
-    void setup() {
-        discover(true, this, l -> true, upstream);
-        discover(false, this, l -> true, downstream);
-        discover(false, this, l -> l.sync, syncedDownstream);
-    }
-
-    void limitBatchSize(int maxBatchSize) {
-        this.maxBatchSize = Math.min(this.maxBatchSize, maxBatchSize);
+    void syncImplied() {
+        sync = true;
     }
 
     @Override
     public String toString() {
-        return "Link { from: " + (from == null ? "<seed>" : from.getClass().getSimpleName()) + ", to: " + to.getClass().getSimpleName() + " }";
-    }
-
-    private static void discover(boolean upstream, Link<?> link, Predicate<Link<?>> predicate, Set<Link<?>> target) {
-        Transformer<?, ?> transformer = upstream ? link.from : link.to;
-        if (transformer != null) {
-            List<?> links = upstream ? transformer.inputs : transformer.outputs;
-            for (Object o : links) {
-                Link<?> l = (Link<?>) o;
-                if (predicate.test(l)) {
-                    boolean recurse = target.add(l);
-                    if (recurse) discover(upstream, (Link<?>) o, predicate, target);
-                }
-            }
-        }
+        return
+                "Link { from: " +
+                from.getName().orElseGet(() -> Provider.name(from)) +
+                ", to: " +
+                to.getName().orElseGet(() -> Provider.name(to)) +
+                " }";
     }
 }

@@ -1,4 +1,5 @@
 {
+  "report": false,
   "transformers": [
     {
       "transformer": "InputStream.Gunzip",

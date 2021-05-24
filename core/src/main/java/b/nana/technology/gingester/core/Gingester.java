@@ -14,153 +14,24 @@ public final class Gingester {
         DONE
     }
 
-    private final Set<Transformer<?, ?>> transformers = new LinkedHashSet<>();
-    private final Map<String, Transformer<?, ?>> transformerMap = new HashMap<>();
-    private final Set<Link<?>> links = new LinkedHashSet<>();
-    private final Set<Worker> seeders = new HashSet<>();
-    private final Set<Worker> workers = new HashSet<>();
+    private final Set<Transformer<?, ?>> transformers;
+    final boolean report;
+
+    private final Set<Worker.Transform> seeders = new HashSet<>();
+    private final Set<Worker.Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
-
+    final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     State state = State.SETUP;
+    private int unopened;
+    private int unclosed;
 
-    private void addTransformer(Transformer<?, ?> transformer) {
-
-        if (transformer.gingester != null && transformer.gingester != this) {
-            throw new IllegalArgumentException("Transformers can not be associated with multiple Gingesters");
-        }
-
-        transformer.gingester = this;
-        transformers.add(transformer);
+    Gingester(Builder builder) {
+        transformers = builder.transformers;
+        report = builder.report;
     }
 
     Set<Transformer<?, ?>> getTransformers() {
         return transformers;
-    }
-
-    /**
-     * Allow the given transformer to be referenced by the given name.
-     *
-     * The name must not have been given to any other transformer.
-     * A transformer may only be given 1 name.
-     */
-    public void name(String name, Transformer<?, ?> transformer) {
-        if (transformerMap.containsValue(transformer)) throw new IllegalArgumentException("Transformer was already named");
-        addTransformer(transformer);
-        Transformer<?, ?> collision = transformerMap.put(name, transformer);
-        if (collision != null) throw new IllegalArgumentException("Transformer name not unique: " + name);
-    }
-
-    public Optional<String> getName(Transformer<?, ?> transformer) {
-        return transformerMap.entrySet().stream()
-                .filter(e -> e.getValue() == transformer)
-                .findFirst()
-                .map(Map.Entry::getKey);
-    }
-
-    public Transformer<?, ?> getTransformer(String name) {
-        Transformer<?, ?> transformer = transformerMap.get(name);
-        if (transformer != null) return transformer;
-        return transformers.stream()
-                .filter(t -> Provider.name(t).filter(name::equals).isPresent())
-                .reduce((a, b) -> { throw new IllegalStateException("Multiple matches for " + name); })
-                .orElseThrow(() -> new NoSuchElementException("No transformer named " + name));
-    }
-
-    @SuppressWarnings("unchecked")  // checked at runtime
-    public <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass) {
-        T transformer = (T) transformerMap.get(name);
-        if (transformer == null) throw new NoSuchElementException("No transformer named " + name);
-        if (!transformerClass.isInstance(transformer)) throw new ClassCastException();  // TODO
-        return transformer;
-    }
-
-    @SuppressWarnings("unchecked")  // checked at runtime
-    public <T> Link<T> link(String fromName, String toName) {
-        Transformer<?, T> from = (Transformer<?, T>) getTransformer(fromName);
-        Transformer<? super T, ?> to = (Transformer<? super T, ?>) getTransformer(toName);
-        if (!to.inputClass.isAssignableFrom(from.outputClass)) {
-            throw new IllegalArgumentException("Incompatible transformers");
-        }
-        return link(from, to);
-    }
-
-    public <T> Link<T> link(Transformer<?, T> from, Transformer<? super T, ?> to) {
-
-        if (state != State.SETUP) throw new IllegalStateException();  // TODO
-
-        addTransformer(from);
-        addTransformer(to);
-
-        Link<T> link = new Link<>(this, from, to);
-        from.outputs.add(link);
-        to.inputs.add(link);
-        links.add(link);
-        return link;
-    }
-
-    public <T> Link<T> link(Transformer<?, T> from, Consumer<? super T> consumer) {
-        return link(from, new Transformer<>(from.outputClass, Void.class) {
-            @Override
-            protected void transform(Context context, T input) {
-                consumer.accept(input);
-            }
-        });
-    }
-
-    public <T> Link<T> link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer) {
-        return link(from, new Transformer<>(from.outputClass, Void.class) {
-            @Override
-            protected void transform(Context context, T input) {
-                consumer.accept(context, input);
-            }
-        });
-    }
-
-    /**
-     * Synchronize the routes from `from` to `to`.
-     *
-     * This will ensure `to` receives all results from `from` in order
-     * and `to` will get a call to `finish(Context)` after it received all
-     * emits for a context created by `to`.
-     */
-    public void sync(String fromName, String toName) {
-        sync(getTransformer(fromName), getTransformer(toName));
-    }
-
-    /**
-     * Synchronize the routes from `from` to `to`.
-     *
-     * This will ensure `to` receives all results from `from` in order
-     * and `to` will get a call to `finish(Context)` after it received all
-     * emits for a context created by `to`.
-     */
-    public void sync(Transformer<?, ?> from, Transformer<?, ?> to) {
-
-        if (state != State.SETUP) {
-            throw new IllegalStateException();  // TODO
-        }
-
-        List<Deque<Link<?>>> routes = from.getDownstreamRoutes().stream()
-                .filter(route -> route.getLast().to == to)
-                .collect(Collectors.toList());
-
-        if (routes.isEmpty()) {
-            throw new IllegalStateException("No route between given transformers");
-        }
-
-        from.syncs.add(to);
-        routes.stream()
-                .flatMap(Collection::stream)
-                .forEach(Link::sync);
-    }
-
-    private void seed(Transformer<?, ?> transformer) {
-        seed(transformer, null);
-    }
-
-    public <T> void seed(Transformer<T, ?> transformer, T seed) {
-        addTransformer(transformer);
-        transformer.queue.add(new Batch<>(Context.SEED, seed));
     }
 
     public Configuration toConfiguration() {
@@ -173,42 +44,57 @@ public final class Gingester {
             throw new IllegalStateException();  // TODO
         }
 
-        links.forEach(Link::setup);
-        transformers.forEach(Transformer::setup);
-        transformers.stream()
-                .filter(Transformer::isEmpty)
-                .filter(transformer -> transformer.inputs.isEmpty())
-                .forEach(this::seed);
+        transformers.forEach(transformer -> transformer.setup(this));
 
+        // enable statistics on the transformers that have no outputs
+        transformers.stream()
+                .filter(transformer -> transformer.outputs.isEmpty())
+                .forEach(Transformer::enableStatistics);
+
+        unopened = unclosed = transformers.size();
+        transformers.forEach(this::open);
         state = State.RUNNING;
 
-        transformers.stream()
-                .filter(transformer -> !transformer.queue.isEmpty())
-                .map(this::addWorker)
-                .forEach(seeders::add);
-
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(this::optimize, 10, 10, TimeUnit.SECONDS);
+        if (report) scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
 
         while (true) {
             try {
                 signals.take().run();
-                if (state != State.RUNNING) break;
+                if (state == State.DONE) break;
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);  // TODO
             }
         }
 
         scheduler.shutdown();
+
+        if (report) report();
+
+        for (Runnable signal : signals) {
+            signal.run();
+        }
     }
 
     private void report() {
-
+        signal(() -> {
+            for (Transformer<?, ?> transformer : transformers) {
+                transformer.getStatistics().ifPresent(statistics -> {
+                    statistics.sample();
+                    System.err.println(transformer.name + ": " + statistics);
+                });
+            }
+        });
     }
 
-    private void optimize() {
-
+    void signalOpen() {
+        signal(() -> {
+            if (--unopened == 0) {
+                transformers.stream()
+                        .filter(transformer -> !transformer.queue.isEmpty())
+                        .map(this::addWorker)
+                        .forEach(seeders::add);
+            }
+        });
     }
 
     void signalNewBatch(Transformer<?, ?> transformer) {
@@ -216,7 +102,7 @@ public final class Gingester {
             if (transformer.workers.isEmpty()) {
                 addWorker(transformer);
             } else {
-                for (Worker worker : transformer.workers) {
+                for (Worker.Transform worker : transformer.workers) {
                     if (worker.starving) {
                         synchronized (worker.lock) {
                             worker.lock.notify();
@@ -228,13 +114,7 @@ public final class Gingester {
         });
     }
 
-    void signalFull(Transformer<?, ?> transformer) {
-        signal(() -> {
-            // TODO
-        });
-    }
-
-    void signalStarving(Worker worker) {
+    void signalStarving(Worker.Transform worker) {
         signal(() -> {
             if (isWorkerRedundant(worker)) {
                 worker.interrupt();
@@ -242,14 +122,26 @@ public final class Gingester {
         });
     }
 
-    void signalQuit(Worker quiter) {
+    void signalQuit(Worker.Transform quiter) {
         signal(() -> {
             workers.remove(quiter);
-            quiter.transformer.workers.remove(quiter);
-            if (workers.isEmpty()) {
+            Transformer<?, ?> transformer = quiter.transformer;
+            transformer.workers.remove(quiter);
+            if (transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+                transformer.setIsClosing();
+                new Worker.Jobs(this, transformer, transformer::close, () -> signalClosed(transformer)).start();
+            }
+        });
+    }
+
+    void signalClosed(Transformer<?, ?> transformer) {
+        signal(() -> {
+            transformer.setIsClosed();
+            if (--unclosed == 0) {
                 state = State.DONE;
             } else {
-                for (Worker worker : workers) {
+                maybeClose();
+                for (Worker.Transform worker : workers) {
                     if (isWorkerRedundant(worker)) {
                         worker.interrupt();
                     }
@@ -267,26 +159,218 @@ public final class Gingester {
         if (!result) throw new IllegalStateException("Too many signals");
     }
 
-    private Worker addWorker(Transformer<?, ?> transformer) {
-        Worker worker = new Worker(this, transformer);
+    private void open(Transformer<?, ?> transformer) {
+        new Worker.Jobs(this, transformer, transformer::open, this::signalOpen).start();
+    }
+
+    private Worker.Transform addWorker(Transformer<?, ?> transformer) {
+        Worker.Transform worker = new Worker.Transform(this, transformer);
         workers.add(worker);
         transformer.workers.add(worker);
         worker.start();
         return worker;
     }
 
-    private static boolean isWorkerRedundant(Worker worker) {
+    private void maybeClose() {
+        boolean done = true;
+        for (Transformer<?, ?> transformer : transformers) {
+            if (!transformer.isClosed()) {
+                done = false;
+                if (transformer.isOpen() && transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+                    transformer.setIsClosing();
+                    new Worker.Jobs(this, transformer, transformer::close, () -> signalClosed(transformer)).start();
+                }
+            }
+        }
+        if (done) state = State.DONE;
+    }
 
-        // a worker is redundant if all its upstream transformers are empty...
-        for (Link<?> input : worker.transformer.inputs) {
-            for (Link<?> link : input.upstream) {
-                if (!link.to.isEmpty()) return false;
+    private static boolean isWorkerRedundant(Worker.Transform worker) {
+
+        // a worker is redundant if all its upstream transformers are closed...
+        if (worker.transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
+
+            // ... and it is starving
+            synchronized (worker.lock) {
+                return worker.starving;
             }
         }
 
-        // ... and it is starving
-        synchronized (worker.lock) {
-            return worker.starving;
+        return false;
+    }
+
+
+
+    // builder
+
+    public static class Builder {
+
+        private final Set<Transformer<?, ?>> transformers = new LinkedHashSet<>();
+        private boolean report;
+        private boolean built;
+
+        public Builder report(boolean report) {
+            this.report = report;
+            return this;
+        }
+
+        /**
+         * Add the given transformer to the to-be-built Gingester.
+         *
+         * It is not necessary to call this if the transformer was/is also an argument to
+         * any of the other methods in this builder.
+         */
+        void add(Transformer<?, ?> transformer) {
+            transformers.add(transformer);
+        }
+
+        public Transformer<?, ?> getTransformer(String name) {
+            return transformers.stream()
+                    .filter(transformer -> transformer.getName().orElseGet(() -> Provider.name(transformer)).equals(name))
+                    .reduce((a, b) -> { throw new IllegalStateException("Multiple matches for " + name); })
+                    .orElseThrow(() -> new NoSuchElementException("No transformer named " + name));
+        }
+
+        @SuppressWarnings("unchecked")  // checked at runtime
+        public <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass) {
+            T transformer = (T) getTransformer(name);
+            if (!transformerClass.isInstance(transformer)) throw new ClassCastException();  // TODO
+            return transformer;
+        }
+
+        /**
+         * Allow the given transformer to be referenced by the given name.
+         *
+         * The name must not have been given to any other transformer.
+         * A transformer may only be given 1 name.
+         */
+        public void name(String name, Transformer<?, ?> transformer) {
+            if (transformer.name != null) throw new IllegalArgumentException("Transformer was already named");
+            if (transformers.stream().map(Transformer::getName).anyMatch(Optional::isPresent)) throw new IllegalArgumentException("Transformer name not unique: " + name);
+            transformer.setName(name);
+            add(transformer);
+        }
+
+        @SuppressWarnings("unchecked")  // checked at runtime in link()
+        public <T> Link<T> link(String fromName, String toName) {
+            Transformer<?, T> from = (Transformer<?, T>) getTransformer(fromName);
+            Transformer<? super T, ?> to = (Transformer<? super T, ?>) getTransformer(toName);
+            return link(from, to);
+        }
+
+        public <T> Link<T> link(Transformer<?, T> from, Transformer<? super T, ?> to) {
+
+            add(from);
+            add(to);
+
+            from.assertCanLinkTo(to);
+
+            Link<T> link = new Link<>(from, to);
+            from.outputs.add(link);
+            to.inputs.add(link);
+            return link;
+        }
+
+        public <T> Link<T> link(Transformer<?, T> from, Consumer<? super T> consumer) {
+            return link(from, new Transformer<>(from.outputClass, Void.class) {
+                @Override
+                protected void transform(Context context, T input) {
+                    consumer.accept(input);
+                }
+            });
+        }
+
+        public <T> Link<T> link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer) {
+            return link(from, new Transformer<>(from.outputClass, Void.class) {
+                @Override
+                protected void transform(Context context, T input) {
+                    consumer.accept(context, input);
+                }
+            });
+        }
+
+        /**
+         * Synchronize the routes from `from` to `to`.
+         *
+         * This will ensure `to` receives all results from `from` in order
+         * and `to` will get a call to `finish(Context)` after it received all
+         * emits for a context created by `to`.
+         */
+        public void sync(String fromName, String toName) {
+            sync(getTransformer(fromName), getTransformer(toName));
+        }
+
+        /**
+         * Synchronize the routes from `from` to `to`.
+         *
+         * This will ensure `to` receives all results from `from` in order
+         * and `to` will get a call to `finish(Context)` after it received all
+         * emits for a context created by `to`.
+         */
+        public void sync(Transformer<?, ?> from, Transformer<?, ?> to) {
+
+            List<ArrayDeque<Transformer<?, ?>>> routes = from.getDownstreamRoutes().stream()
+                    .filter(route -> route.getLast() == to)
+                    .collect(Collectors.toList());
+
+            if (routes.isEmpty()) {
+                throw new IllegalStateException("No route between given transformers");
+            }
+
+            from.syncs.add(to);
+
+            Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
+                    route.stream().reduce((f, t) -> {
+                        f.outputs.stream().filter(l -> l.to == t).findFirst().orElseThrow().syncImplied();
+                        return t;
+                    }).orElseThrow()
+            ).collect(Collectors.toSet());
+
+            if (!sanity.equals(Set.of(to))) {
+                throw new IllegalStateException();  // TODO
+            }
+        }
+
+        public <T> void seed(Transformer<T, ?> transformer, T seed) {
+            add(transformer);
+            transformer.queue.add(new Batch<>(Context.SEED, seed));
+        }
+
+        public final Gingester build() {
+
+            if (built) throw new IllegalStateException("Already built");
+            built = true;
+
+            // seed all transformers that have no inputs and were not already seeded
+            for (Transformer<?, ?> transformer : transformers) {
+                if (transformer.isEmpty() && transformer.inputs.isEmpty()) {
+                    seed(transformer, null);
+                }
+            }
+
+            Map<String, Integer> counters = new HashMap<>();
+
+            // update every transformer name with a counter suffix
+            for (Transformer<?, ?> transformer : transformers) {
+                String name = transformer.getName().orElse(Provider.name(transformer));
+                Integer counter = counters.get(name);
+                counter = counter == null ? 1 : counter + 1;
+                counters.put(name, counter);
+                transformer.setName(name + "-" + counter);
+            }
+
+            // remove the counter suffix from transformers with unique names
+            for (Transformer<?, ?> transformer : transformers) {
+                String name = transformer.getName().orElseThrow();
+                if (name.endsWith("-1")) {
+                    String nameWithoutSuffix = name.substring(0, name.length() - 2);
+                    if (counters.get(nameWithoutSuffix) == 1) {
+                        transformer.setName(nameWithoutSuffix);
+                    }
+                }
+            }
+
+            return new Gingester(this);
         }
     }
 }

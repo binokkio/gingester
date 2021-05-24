@@ -3,7 +3,7 @@ package b.nana.technology.gingester.core;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 final class Batch<T> implements Iterable<Batch.Entry<T>> {
 
@@ -12,7 +12,7 @@ final class Batch<T> implements Iterable<Batch.Entry<T>> {
 
     Batch(int capacity) {
         this.capacity = capacity;
-        this.values = capacity == 0 ? null : new ArrayList<>(capacity);
+        this.values = new ArrayList<>(capacity);
     }
 
     Batch(Context context, T value) {
@@ -33,19 +33,35 @@ final class Batch<T> implements Iterable<Batch.Entry<T>> {
         }
     }
 
+    public int getSize() {
+        return values.size();
+    }
+
     @Override
     public Iterator<Entry<T>> iterator() {
         return values.iterator();
     }
 
+    public Stream<Entry<T>> stream() {
+        return values.stream();
+    }
+
     protected static class Entry<T> {
 
-        final Context context;
-        final T value;
+        private final Context context;
+        private final T value;
 
         private Entry(Context context, T value) {
             this.context = context;
             this.value = value;
+        }
+
+        public Context getContext() {
+            return context;
+        }
+
+        public T getValue() {
+            return value;
         }
     }
 }

@@ -18,8 +18,9 @@ public class Generate extends Transformer<Object, String> {
     }
 
     @Override
-    protected void transform(Context context, Object input) {
+    protected void transform(Context context, Object input) throws InterruptedException {
         for (int i = 1; i <= count; i++) {
+            if (Thread.interrupted()) throw new InterruptedException();
             emit(context.extend(this).description(i).details(Map.of("generate-counter", i)), payload);
         }
     }
