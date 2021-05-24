@@ -224,7 +224,7 @@ public final class Context implements Iterable<Context> {
         private final List<String> strings = new ArrayList<>();
         private final List<String[]> detailNames = new ArrayList<>();
         private final Function<String, String> sanitizer;
-        private final boolean throwOnMissingDetail;
+        private final boolean throwOnMissingDetail;  // TODO
 
         public StringFormat(String format) {
             this(format, s -> s);

@@ -3,7 +3,7 @@ package b.nana.technology.gingester.core;
 import java.util.Arrays;
 import java.util.function.LongSupplier;
 
-public class Sampler {
+public final class Sampler {
 
     private static final int SAMPLE_COUNT = 10;
 

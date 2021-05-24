@@ -8,7 +8,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Main {
+public final class Main {
+
+    private Main() {
+
+    }
 
     public static void main(String[] args) {
 
