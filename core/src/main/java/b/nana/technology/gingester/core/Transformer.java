@@ -18,8 +18,8 @@ public abstract class Transformer<I, O> {
     final Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
-    final List<Link<? extends I>> inputs = new ArrayList<>();
-    final List<Link<O>> outputs = new ArrayList<>();
+    final List<Link<? extends I>> incoming = new ArrayList<>();
+    final List<Link<O>> outgoing = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
@@ -170,7 +170,7 @@ public abstract class Transformer<I, O> {
     }
 
     protected final void emit(Context context, O output) {
-        for (int i = 0; i < outputs.size(); i++) {
+        for (int i = 0; i < outgoing.size(); i++) {
             emit(context, output, i);
         }
     }
@@ -222,11 +222,11 @@ public abstract class Transformer<I, O> {
     }
 
     List<ArrayDeque<Transformer<?, ?>>> getUpstreamRoutes() {
-        return getRoutes(transformer -> transformer.inputs.stream().map(link -> link.from));
+        return getRoutes(transformer -> transformer.incoming.stream().map(link -> link.from));
     }
 
     List<ArrayDeque<Transformer<?, ?>>> getDownstreamRoutes() {
-        return getRoutes(transformer -> transformer.outputs.stream().map(link -> link.to));
+        return getRoutes(transformer -> transformer.outgoing.stream().map(link -> link.to));
     }
 
     /**
@@ -264,37 +264,37 @@ public abstract class Transformer<I, O> {
     public class Setup {
 
         public void preferUpstreamSync() {
-            inputs.forEach(Link::preferSync);
+            incoming.forEach(Link::preferSync);
         }
 
         public void preferDownstreamSync() {
-            outputs.forEach(Link::preferSync);
+            outgoing.forEach(Link::preferSync);
         }
 
         public void requireUpstreamSync() {
-            inputs.forEach(Link::requireSync);
+            incoming.forEach(Link::requireSync);
         }
 
         public void requireDownstreamSync() {
-            outputs.forEach(Link::requireSync);
+            outgoing.forEach(Link::requireSync);
         }
 
         public void requireUpstreamAsync() {
-            inputs.forEach(Link::requireAsync);
+            incoming.forEach(Link::requireAsync);
         }
 
         public void requireDownstreamAsync() {
-            outputs.forEach(Link::requireAsync);
+            outgoing.forEach(Link::requireAsync);
         }
 
         public void assertNoUpstream() {
-            if (!inputs.isEmpty()) {
+            if (!incoming.isEmpty()) {
                 throw new IllegalStateException("upstream");  // TODO
             }
         }
 
         public void assertNoDownstream() {
-            if (!outputs.isEmpty()) {
+            if (!outgoing.isEmpty()) {
                 throw new IllegalStateException("downstream");  // TODO
             }
         }

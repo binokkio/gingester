@@ -22,7 +22,7 @@ abstract class Worker extends Thread {
     @SuppressWarnings("unchecked")
     <T> void accept(Transformer<?, T> transformer, Context context, T value, int direction) {
 
-        Link<T> link = transformer.outputs.get(direction);
+        Link<T> link = transformer.outgoing.get(direction);
 
         if (link.isSync()) {
 
