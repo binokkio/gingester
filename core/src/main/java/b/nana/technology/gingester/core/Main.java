@@ -4,6 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,6 +59,17 @@ public final class Main {
                 case "-pc":
                 case "--print-config":
                     // ignore
+                    break;
+
+                case "-fc":
+                case "--from-config":
+                case "--file-config":
+                    Path path = Paths.get(args[++i]);
+                    try {
+                        Configuration.fromJson(Files.newInputStream(path)).appendToBuilder(gBuilder);
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException(e);  // TODO
+                    }
                     break;
 
                 case "-nr":

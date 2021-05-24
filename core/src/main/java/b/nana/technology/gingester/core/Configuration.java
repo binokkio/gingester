@@ -72,8 +72,13 @@ public final class Configuration {
     }
 
     public Gingester.Builder toBuilder() {
-
         Gingester.Builder gBuilder = new Gingester.Builder();
+        appendToBuilder(gBuilder);
+        return gBuilder;
+    }
+
+    void appendToBuilder(Gingester.Builder gBuilder) {
+
         gBuilder.report(report);
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
@@ -97,8 +102,6 @@ public final class Configuration {
                 gBuilder.sync(fromName, toName);
             }
         }
-
-        return gBuilder;
     }
 
     public String hash() {
