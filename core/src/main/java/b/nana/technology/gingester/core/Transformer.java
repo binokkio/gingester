@@ -263,17 +263,39 @@ public abstract class Transformer<I, O> {
 
     public class Setup {
 
-        public void syncInputs() {
-            inputs.forEach(Link::sync);
+        public void preferUpstreamSync() {
+            inputs.forEach(Link::preferSync);
         }
 
-        public void syncOutputs() {
-            outputs.forEach(Link::sync);
+        public void preferDownstreamSync() {
+            outputs.forEach(Link::preferSync);
         }
 
-        public void assertNoInputs() {
+        public void requireUpstreamSync() {
+            inputs.forEach(Link::requireSync);
+        }
+
+        public void requireDownstreamSync() {
+            outputs.forEach(Link::requireSync);
+        }
+
+        public void requireUpstreamAsync() {
+            inputs.forEach(Link::requireAsync);
+        }
+
+        public void requireDownstreamAsync() {
+            outputs.forEach(Link::requireAsync);
+        }
+
+        public void assertNoUpstream() {
             if (!inputs.isEmpty()) {
-                throw new IllegalStateException("inputs");  // TODO
+                throw new IllegalStateException("upstream");  // TODO
+            }
+        }
+
+        public void assertNoDownstream() {
+            if (!outputs.isEmpty()) {
+                throw new IllegalStateException("downstream");  // TODO
             }
         }
 
@@ -281,7 +303,7 @@ public abstract class Transformer<I, O> {
             maxBatchSize = Math.min(maxBatchSize, limit);
         }
 
-        public void limitMaxWorkers(int limit) {
+        public void limitWorkers(int limit) {
             state = Math.min(state, limit);
         }
     }

@@ -146,7 +146,7 @@ public final class Configuration {
 
         public LinkConfiguration(Link<?> link) {
             to = link.to.getName().orElseThrow();
-            sync = link.isExplicitSync();
+            sync = link.isSyncModeExplicit();
         }
 
         @JsonValue

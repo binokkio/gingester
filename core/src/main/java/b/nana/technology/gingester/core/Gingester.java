@@ -321,7 +321,7 @@ public final class Gingester {
 
             Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
                     route.stream().reduce((f, t) -> {
-                        f.outputs.stream().filter(l -> l.to == t).findFirst().orElseThrow().syncImplied();
+                        f.outputs.stream().filter(l -> l.to == t).findFirst().orElseThrow().requireSync();
                         return t;
                     }).orElseThrow()
             ).collect(Collectors.toSet());

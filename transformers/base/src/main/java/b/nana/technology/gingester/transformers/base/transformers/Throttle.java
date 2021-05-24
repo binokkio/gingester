@@ -23,7 +23,7 @@ public class Throttle<T> extends Passthrough<T> {
 
     @Override
     protected void setup(Setup setup) {
-        setup.limitMaxWorkers(1);
+        setup.limitWorkers(1);
     }
 
     @Override

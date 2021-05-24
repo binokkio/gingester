@@ -10,7 +10,7 @@ public class Gunzip extends Transformer<InputStream, InputStream> {
 
     @Override
     protected void setup(Setup setup) {
-        setup.syncOutputs();
+        setup.requireDownstreamSync();
     }
 
     @Override

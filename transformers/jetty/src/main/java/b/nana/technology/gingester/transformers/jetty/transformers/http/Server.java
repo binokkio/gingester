@@ -31,8 +31,8 @@ public class Server extends Transformer<Void, RequestWrapper> {
 
     @Override
     protected void setup(Setup setup) {
-        setup.syncOutputs();
-        setup.limitMaxWorkers(1);
+        setup.requireDownstreamSync();
+        setup.limitWorkers(1);
     }
 
     @Override

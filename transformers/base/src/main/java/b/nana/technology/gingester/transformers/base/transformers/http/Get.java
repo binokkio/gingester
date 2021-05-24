@@ -26,7 +26,7 @@ public class Get extends Transformer<Object, byte[]> {
 
     @Override
     protected void setup(Setup setup) {
-        setup.syncOutputs();
+        setup.requireDownstreamSync();
     }
 
     @Override

@@ -10,7 +10,7 @@ public class Wrap extends Transformer<JsonNode, JsonNode> {
 
     @Override
     protected void setup(Setup setup) {
-        setup.syncInputs();
+        setup.preferUpstreamSync();
     }
 
     @Override
