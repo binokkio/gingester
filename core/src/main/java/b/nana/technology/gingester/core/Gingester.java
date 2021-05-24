@@ -246,7 +246,7 @@ public final class Gingester {
          */
         public void name(String name, Transformer<?, ?> transformer) {
             if (transformer.name != null) throw new IllegalArgumentException("Transformer was already named");
-            if (transformers.stream().map(Transformer::getName).anyMatch(Optional::isPresent)) throw new IllegalArgumentException("Transformer name not unique: " + name);
+            if (transformers.stream().map(Transformer::getName).flatMap(Optional::stream).anyMatch(name::equals)) throw new IllegalArgumentException("Transformer name not unique: " + name);
             transformer.setName(name);
             add(transformer);
         }

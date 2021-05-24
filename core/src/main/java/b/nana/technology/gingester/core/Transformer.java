@@ -64,7 +64,7 @@ public abstract class Transformer<I, O> {
 
     void assertCanLinkTo(Transformer<?, ?> to) {
 
-        if (to.getDownstream().contains(this)) {
+        if (to == this || to.getDownstream().contains(this)) {
             throw new IllegalStateException(String.format(
                     "Linking from %s to %s would create a circular route",
                     getName().orElseGet(() -> Provider.name(this)),
