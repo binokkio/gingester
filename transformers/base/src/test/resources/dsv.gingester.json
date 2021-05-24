@@ -1,0 +1,17 @@
+{
+  "report": false,
+  "transformers": [
+    {
+      "transformer": "Json.FromDsvInputStream",
+      "parameters": {
+        "separator": "|",
+        "quote": "\"",
+        "columnNames": [
+          "x",
+          "y",
+          "z"
+        ]
+      }
+    }
+  ]
+}

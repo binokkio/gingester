@@ -4,25 +4,34 @@ import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 import java.io.InputStream;
-import java.util.Map;
+import java.util.List;
 
-public class FromCsvInputStream extends Transformer<InputStream, JsonNode> {
+public class FromDsvInputStream extends Transformer<InputStream, JsonNode> {
 
     private final CsvMapper csvMapper = new CsvMapper();
+    private final CsvSchema csvSchema;
+
+    public FromDsvInputStream(Parameters parameters) {
+        super(parameters);
+
+        CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
+        csvSchemaBuilder.setColumnSeparator(parameters.separator);
+        csvSchemaBuilder.setQuoteChar(parameters.quote);
+        if (parameters.columnNames != null) {
+            csvSchema = csvSchemaBuilder.addColumns(parameters.columnNames, CsvSchema.ColumnType.STRING_OR_LITERAL).build();
+        } else {
+            csvSchema = csvSchemaBuilder.build().withHeader();
+        }
+    }
 
     @Override
     protected void transform(Context context, InputStream input) throws Exception {
 
         long counter = 0;
-
-        CsvSchema csvSchema = CsvSchema.emptySchema()
-                .withHeader();  // TODO add configuration parameters
 
         MappingIterator<JsonNode> iterator = csvMapper
                 .readerFor(JsonNode.class)
@@ -36,5 +45,11 @@ public class FromCsvInputStream extends Transformer<InputStream, JsonNode> {
                     jsonNode
             );
         }
+    }
+
+    public static class Parameters {
+        public char separator = ',';
+        public char quote = '"';
+        public List<String> columnNames;
     }
 }
