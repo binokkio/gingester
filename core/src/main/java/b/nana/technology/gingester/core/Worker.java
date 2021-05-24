@@ -26,7 +26,6 @@ abstract class Worker extends Thread {
 
         if (link.isSync()) {
 
-            // TODO this if misses the case where a transformer is linked to itself, maybe make that illegal?
             if (!transformer.syncs.isEmpty() && context.transformer != transformer) {
                 context = context.extend(transformer).build();
             }

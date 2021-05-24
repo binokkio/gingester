@@ -201,7 +201,6 @@ public final class Context implements Iterable<Context> {
         public Builder onSyncedException(Function<Throwable, Boolean> syncedExceptionListener) {
             final Thread thread = Thread.currentThread();
             this.syncedExceptionListener = exception -> {
-                // TODO this misses the case where an a transformer is in its own downstream, maybe make that illegal
                 if (Thread.currentThread() == thread) {
                     return syncedExceptionListener.apply(exception);
                 } else {
