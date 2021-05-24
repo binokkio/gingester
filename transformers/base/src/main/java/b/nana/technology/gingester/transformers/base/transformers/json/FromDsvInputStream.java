@@ -22,7 +22,7 @@ public class FromDsvInputStream extends Transformer<InputStream, JsonNode> {
         csvSchemaBuilder.setColumnSeparator(parameters.separator);
         csvSchemaBuilder.setQuoteChar(parameters.quote);
         if (parameters.columnNames != null) {
-            csvSchema = csvSchemaBuilder.addColumns(parameters.columnNames, CsvSchema.ColumnType.STRING_OR_LITERAL).build();
+            csvSchema = csvSchemaBuilder.addColumns(parameters.columnNames, CsvSchema.ColumnType.STRING).build();
         } else {
             csvSchema = csvSchemaBuilder.build().withHeader();
         }

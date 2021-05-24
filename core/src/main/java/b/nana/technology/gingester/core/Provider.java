@@ -25,7 +25,7 @@ final class Provider {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .reduce((a, b) -> { throw new IllegalStateException("Multiple names for " + canonicalName); })
-                .orElseThrow(() -> new NoSuchElementException("No name for " + canonicalName));
+                .orElseThrow(() -> new NoSuchElementException("No resolver has a name for " + canonicalName));
     }
 
     static Transformer<?, ?> instance(String name, JsonNode jsonParameters) {

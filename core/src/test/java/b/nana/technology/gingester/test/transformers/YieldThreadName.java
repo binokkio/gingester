@@ -13,7 +13,7 @@ public class YieldThreadName extends Transformer<Object, String> {
 
     @Override
     protected void setup(Setup setup) {
-        if (limitMaxWorkers) setup.limitMaxWorkers(1);
+        if (limitMaxWorkers) setup.limitWorkers(1);
     }
 
     @Override

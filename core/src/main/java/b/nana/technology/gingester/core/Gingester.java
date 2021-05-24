@@ -48,7 +48,7 @@ public final class Gingester {
 
         // enable statistics on the transformers that have no outputs
         transformers.stream()
-                .filter(transformer -> transformer.outputs.isEmpty())
+                .filter(transformer -> transformer.outgoing.isEmpty())
                 .forEach(Transformer::enableStatistics);
 
         unopened = unclosed = transformers.size();
@@ -246,7 +246,7 @@ public final class Gingester {
          */
         public void name(String name, Transformer<?, ?> transformer) {
             if (transformer.name != null) throw new IllegalArgumentException("Transformer was already named");
-            if (transformers.stream().map(Transformer::getName).anyMatch(Optional::isPresent)) throw new IllegalArgumentException("Transformer name not unique: " + name);
+            if (transformers.stream().map(Transformer::getName).flatMap(Optional::stream).anyMatch(name::equals)) throw new IllegalArgumentException("Transformer name not unique: " + name);
             transformer.setName(name);
             add(transformer);
         }
@@ -266,8 +266,8 @@ public final class Gingester {
             from.assertCanLinkTo(to);
 
             Link<T> link = new Link<>(from, to);
-            from.outputs.add(link);
-            to.inputs.add(link);
+            from.outgoing.add(link);
+            to.incoming.add(link);
             return link;
         }
 
@@ -321,7 +321,7 @@ public final class Gingester {
 
             Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
                     route.stream().reduce((f, t) -> {
-                        f.outputs.stream().filter(l -> l.to == t).findFirst().orElseThrow().syncImplied();
+                        f.outgoing.stream().filter(l -> l.to == t).findFirst().orElseThrow().requireSync();
                         return t;
                     }).orElseThrow()
             ).collect(Collectors.toSet());
@@ -343,7 +343,7 @@ public final class Gingester {
 
             // seed all transformers that have no inputs and were not already seeded
             for (Transformer<?, ?> transformer : transformers) {
-                if (transformer.isEmpty() && transformer.inputs.isEmpty()) {
+                if (transformer.isEmpty() && transformer.incoming.isEmpty()) {
                     seed(transformer, null);
                 }
             }

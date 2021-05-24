@@ -111,4 +111,24 @@ class TestGingester {
         gBuilder.build().run();
         assertEquals(3, names.size());
     }
+
+    @Test
+    void testTransformerLinkingSelfIsIllegal() {
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        Emphasize emphasize = new Emphasize();
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> gBuilder.link(emphasize, emphasize));
+        assertEquals("Linking from Emphasize to Emphasize would create a circular route", e.getMessage());
+    }
+
+    @Test
+    void testCircularLinkingIsIllegal() {
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        Emphasize emphasize1 = new Emphasize();
+        Emphasize emphasize2 = new Emphasize();
+        gBuilder.name("Emphasize-1", emphasize1);
+        gBuilder.name("Emphasize-2", emphasize2);
+        gBuilder.link(emphasize1, emphasize2);
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> gBuilder.link(emphasize2, emphasize1));
+        assertEquals("Linking from Emphasize-2 to Emphasize-1 would create a circular route", e.getMessage());
+    }
 }

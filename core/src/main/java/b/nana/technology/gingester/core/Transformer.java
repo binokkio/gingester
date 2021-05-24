@@ -18,8 +18,8 @@ public abstract class Transformer<I, O> {
     final Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
-    final List<Link<? extends I>> inputs = new ArrayList<>();
-    final List<Link<O>> outputs = new ArrayList<>();
+    final List<Link<? extends I>> incoming = new ArrayList<>();
+    final List<Link<O>> outgoing = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
@@ -64,7 +64,7 @@ public abstract class Transformer<I, O> {
 
     void assertCanLinkTo(Transformer<?, ?> to) {
 
-        if (to.getDownstream().contains(this)) {
+        if (to == this || to.getDownstream().contains(this)) {
             throw new IllegalStateException(String.format(
                     "Linking from %s to %s would create a circular route",
                     getName().orElseGet(() -> Provider.name(this)),
@@ -170,7 +170,7 @@ public abstract class Transformer<I, O> {
     }
 
     protected final void emit(Context context, O output) {
-        for (int i = 0; i < outputs.size(); i++) {
+        for (int i = 0; i < outgoing.size(); i++) {
             emit(context, output, i);
         }
     }
@@ -222,11 +222,11 @@ public abstract class Transformer<I, O> {
     }
 
     List<ArrayDeque<Transformer<?, ?>>> getUpstreamRoutes() {
-        return getRoutes(transformer -> transformer.inputs.stream().map(link -> link.from));
+        return getRoutes(transformer -> transformer.incoming.stream().map(link -> link.from));
     }
 
     List<ArrayDeque<Transformer<?, ?>>> getDownstreamRoutes() {
-        return getRoutes(transformer -> transformer.outputs.stream().map(link -> link.to));
+        return getRoutes(transformer -> transformer.outgoing.stream().map(link -> link.to));
     }
 
     /**
@@ -263,17 +263,39 @@ public abstract class Transformer<I, O> {
 
     public class Setup {
 
-        public void syncInputs() {
-            inputs.forEach(Link::sync);
+        public void preferUpstreamSync() {
+            incoming.forEach(Link::preferSync);
         }
 
-        public void syncOutputs() {
-            outputs.forEach(Link::sync);
+        public void preferDownstreamSync() {
+            outgoing.forEach(Link::preferSync);
         }
 
-        public void assertNoInputs() {
-            if (!inputs.isEmpty()) {
-                throw new IllegalStateException("inputs");  // TODO
+        public void requireUpstreamSync() {
+            incoming.forEach(Link::requireSync);
+        }
+
+        public void requireDownstreamSync() {
+            outgoing.forEach(Link::requireSync);
+        }
+
+        public void requireUpstreamAsync() {
+            incoming.forEach(Link::requireAsync);
+        }
+
+        public void requireDownstreamAsync() {
+            outgoing.forEach(Link::requireAsync);
+        }
+
+        public void assertNoUpstream() {
+            if (!incoming.isEmpty()) {
+                throw new IllegalStateException("upstream");  // TODO
+            }
+        }
+
+        public void assertNoDownstream() {
+            if (!outgoing.isEmpty()) {
+                throw new IllegalStateException("downstream");  // TODO
             }
         }
 
@@ -281,7 +303,7 @@ public abstract class Transformer<I, O> {
             maxBatchSize = Math.min(maxBatchSize, limit);
         }
 
-        public void limitMaxWorkers(int limit) {
+        public void limitWorkers(int limit) {
             state = Math.min(state, limit);
         }
     }

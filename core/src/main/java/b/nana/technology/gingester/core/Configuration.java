@@ -47,7 +47,7 @@ public final class Configuration {
             if (transformer.parameters != null) {
                 transformerConfiguration.parameters = OBJECT_MAPPER.valueToTree(transformer.parameters);
             }
-            transformer.outputs.stream()
+            transformer.outgoing.stream()
                     .map(LinkConfiguration::new)
                     .forEach(transformerConfiguration.links::add);
             transformer.syncs.stream()
@@ -146,7 +146,7 @@ public final class Configuration {
 
         public LinkConfiguration(Link<?> link) {
             to = link.to.getName().orElseThrow();
-            sync = link.isExplicitSync();
+            sync = link.isSyncModeExplicit();
         }
 
         @JsonValue

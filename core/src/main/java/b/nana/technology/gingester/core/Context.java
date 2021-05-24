@@ -47,10 +47,10 @@ public final class Context implements Iterable<Context> {
         // TODO
     }
 
-    public String[] getDescriptions() {
+    private String[] getDescriptions() {
         Context pointer = this;
         String[] descriptions = new String[depth + 1];
-        for (int i = descriptions.length - 1; i >= 0; i--) {
+        for (int i = depth; i >= 0; i--) {
             descriptions[i] = pointer.description;
             pointer = pointer.parent;
         }
@@ -61,6 +61,17 @@ public final class Context implements Iterable<Context> {
         return Arrays.stream(getDescriptions())
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining(" :: "));
+    }
+
+    public Optional<String> getDescriptionTail() {
+        Context pointer = this;
+        do {
+            if (pointer.description != null) {
+                return Optional.of(pointer.description);
+            }
+            pointer = pointer.parent;
+        } while (pointer != null);
+        return Optional.empty();
     }
 
     public Optional<Object> getDetail(String name) {
@@ -201,7 +212,6 @@ public final class Context implements Iterable<Context> {
         public Builder onSyncedException(Function<Throwable, Boolean> syncedExceptionListener) {
             final Thread thread = Thread.currentThread();
             this.syncedExceptionListener = exception -> {
-                // TODO this misses the case where an a transformer is in its own downstream, maybe make that illegal
                 if (Thread.currentThread() == thread) {
                     return syncedExceptionListener.apply(exception);
                 } else {

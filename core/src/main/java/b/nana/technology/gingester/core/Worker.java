@@ -22,11 +22,10 @@ abstract class Worker extends Thread {
     @SuppressWarnings("unchecked")
     <T> void accept(Transformer<?, T> transformer, Context context, T value, int direction) {
 
-        Link<T> link = transformer.outputs.get(direction);
+        Link<T> link = transformer.outgoing.get(direction);
 
         if (link.isSync()) {
 
-            // TODO this if misses the case where a transformer is linked to itself, maybe make that illegal?
             if (!transformer.syncs.isEmpty() && context.transformer != transformer) {
                 context = context.extend(transformer).build();
             }

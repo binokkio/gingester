@@ -11,7 +11,7 @@ public class ToInputStream extends Transformer<String, InputStream> {
 
     @Override
     protected void setup(Setup setup) {
-        setup.syncInputs();
+        setup.preferUpstreamSync();
     }
 
     @Override

@@ -27,7 +27,7 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
 
     @Override
     protected void setup(Setup setup) {
-        setup.limitMaxWorkers(1);
+        setup.limitWorkers(1);
     }
 
     @Override
