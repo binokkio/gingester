@@ -5,6 +5,12 @@ import java.util.stream.Collectors;
 
 public abstract class Passthrough<T> extends Transformer<T, T> {
 
+    public Passthrough() {}
+
+    public Passthrough(Object parameters) {
+        super(parameters);
+    }
+
     @Override
     List<Class<?>> getInputClasses() {
         // my input classes are the classes my outputs have as inputs
