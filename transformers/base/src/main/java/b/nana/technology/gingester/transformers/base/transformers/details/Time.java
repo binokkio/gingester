@@ -15,14 +15,16 @@ public class Time<T> extends Passthrough<T> {
 
         emit(context.extend(this)
                 .details(Map.of(
-                        "year", now.getYear(),
-                        "month", now.getMonthValue(),
-                        "day", now.getDayOfMonth(),
-                        "hour", now.getHour(),
-                        "minute", now.getMinute(),
-                        "second", now.getSecond(),
-                        "milli", now.getNano() / 1_000_000,
-                        "nano", now.getNano() % 1_000_000)
+                        "time", Map.of(
+                                "year", now.getYear(),
+                                "month", now.getMonthValue(),
+                                "day", now.getDayOfMonth(),
+                                "hour", now.getHour(),
+                                "minute", now.getMinute(),
+                                "second", now.getSecond(),
+                                "milli", now.getNano() / 1_000_000,
+                                "nano", now.getNano() % 1_000_000)
+                        )
                 ),
                 input
         );

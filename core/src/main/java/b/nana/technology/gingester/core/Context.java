@@ -74,10 +74,15 @@ public final class Context implements Iterable<Context> {
         return Optional.empty();
     }
 
-    public Optional<Object> getDetail(String name) {
+    public Optional<Object> getDetail(String... name) {
+        if (name.length == 0) {
+            return Optional.of(getDetails());
+        }
         for (Context context : this) {
-            Object detail = context.details.get(name);
-            if (detail != null) return Optional.of(detail);
+            Object detail = context.details.get(name[0]);
+            if (detail != null) {
+                return resolveDetail(detail, name);
+            }
         }
         return Optional.empty();
     }
@@ -170,6 +175,14 @@ public final class Context implements Iterable<Context> {
         exception.printStackTrace();  // TODO
     }
 
+    private static Optional<Object> resolveDetail(Object detail, String[] name) {
+        for (int i = 1; i < name.length; i++) {  // root detail has already been resolved, so start at 1
+            if (!(detail instanceof Map)) return Optional.empty();
+            detail = ((Map<?, ?>) detail).get(name[i]);
+        }
+        return Optional.ofNullable(detail);
+    }
+
     public static class Builder {
 
         private final Context parent;
@@ -260,28 +273,20 @@ public final class Context implements Iterable<Context> {
         }
 
         public String format(Context context) {
+            if (detailNames.isEmpty()) return strings.get(0);
             StringBuilder stringBuilder = new StringBuilder();
             int i = 0;
             for (; i < detailNames.size(); i++) {
                 String[] detailName = detailNames.get(i);
                 stringBuilder
                         .append(strings.get(i))
-                        .append(resolveDetail(context, detailName)
+                        .append(context.getDetail(detailName)
                                 .map(Object::toString)
                                 .map(sanitizer)
                                 .orElse(String.join(".", detailName)));  // TODO
             }
             stringBuilder.append(strings.get(i));
             return stringBuilder.toString();
-        }
-
-        private Optional<Object> resolveDetail(Context context, String[] detailName) {
-            Object detail = context.getDetail(detailName[0]).orElse(null);
-            for (int i = 1; i < detailName.length; i++) {
-                if (!(detail instanceof Map)) return Optional.empty();
-                detail = ((Map<?, ?>) detail).get(detailName[i]);
-            }
-            return Optional.ofNullable(detail);
         }
     }
 }
