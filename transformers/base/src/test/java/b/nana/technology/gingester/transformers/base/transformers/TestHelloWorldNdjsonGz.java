@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.transformers.base.common.ToJsonBase;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.Gunzip;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToString;
-import b.nana.technology.gingester.transformers.base.transformers.json.AddContext;
+import b.nana.technology.gingester.transformers.base.transformers.json.insert.Context;
 import b.nana.technology.gingester.transformers.base.transformers.json.Wrap;
 import b.nana.technology.gingester.transformers.base.transformers.string.ToJson;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,7 +32,7 @@ class TestHelloWorldNdjsonGz {
 
         ToJson toJson = new ToJson(new ToJsonBase.Parameters());
         Wrap wrap = new Wrap();
-        AddContext addContext = new AddContext();
+        Context insertContext = new Context();
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
 
@@ -41,8 +41,8 @@ class TestHelloWorldNdjsonGz {
         gBuilder.link(gunzip, toString);
         gBuilder.link(toString, toJson);
         gBuilder.link(toJson, wrap);
-        gBuilder.link(wrap, addContext);
-        gBuilder.link(addContext, results::add);
+        gBuilder.link(wrap, insertContext);
+        gBuilder.link(insertContext, results::add);
         gBuilder.build().run();
 
         Set<String> contexts = results.stream().map(jsonNode -> jsonNode.get("context").asText()).collect(Collectors.toSet());
@@ -63,8 +63,8 @@ class TestHelloWorldNdjsonGz {
         gBuilder.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
-        AddContext addContext = gBuilder.getTransformer("Json.AddContext", AddContext.class);
-        gBuilder.link(addContext, results::add);
+        Context insertContext = gBuilder.getTransformer("Json.Insert.Context", Context.class);
+        gBuilder.link(insertContext, results::add);
 
         gBuilder.build().run();
 
@@ -86,8 +86,8 @@ class TestHelloWorldNdjsonGz {
         gBuilder.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
-        AddContext addContext = gBuilder.getTransformer("Json.AddContext", AddContext.class);
-        gBuilder.link(addContext, results::add);
+        Context insertContext = gBuilder.getTransformer("Json.Insert.Context", Context.class);
+        gBuilder.link(insertContext, results::add);
 
         gBuilder.build().run();
 

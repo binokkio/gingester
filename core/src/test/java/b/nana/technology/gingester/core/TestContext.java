@@ -29,4 +29,12 @@ class TestContext {
                 .extend(null).details(Map.of("c", "Reader")).build();
         assertEquals("Hello, World and Unit Test Reader!", stringFormat.format(context));
     }
+
+    @Test
+    void testContextStringFormatDescription() {
+        Context.StringFormat stringFormat = new Context.StringFormat("{description}");
+        Context context = Context.SEED
+                .extend(null).description("Hello, World!").build();
+        assertEquals("Hello, World!", stringFormat.format(context));
+    }
 }

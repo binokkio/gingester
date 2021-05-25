@@ -29,11 +29,11 @@
     {
       "transformer": "Json.Wrap",
       "links": [
-        "Json.AddContext"
+        "Json.Insert.Context"
       ]
     },
     {
-      "transformer": "Json.AddContext"
+      "transformer": "Json.Insert.Context"
     }
   ]
 }

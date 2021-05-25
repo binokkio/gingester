@@ -52,7 +52,7 @@ public final class Main {
 
             boolean markSyncFrom = false;
             boolean syncTo = false;
-            boolean syncLink = false;
+            boolean asyncLink = false;
 
             switch (args[i]) {
 
@@ -83,9 +83,9 @@ public final class Main {
                 case "-stt":
                 case "--sync-to-transformer":
                     syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
-                case "-slt":
-                case "--synced-link-transformer":
-                    syncLink = !markSyncFrom && !syncTo && syncFrom == null;  // similar trickery as above
+                case "-at":
+                case "--async-transformer":
+                    asyncLink = !markSyncFrom && !syncTo;  // similar trickery as above
                 case "-t":
                 case "--transformer":
 
@@ -101,7 +101,7 @@ public final class Main {
                     Transformer<?, ?> transformer = Provider.instance(transformerName, parameters);
                     gBuilder.add(transformer);
 
-                    if (upstream != null) link(gBuilder, upstream, transformer, syncLink);
+                    if (upstream != null) link(gBuilder, upstream, transformer, asyncLink);
                     upstream = transformer;
 
                     if (markSyncFrom) {
@@ -125,11 +125,11 @@ public final class Main {
     }
 
     @SuppressWarnings("unchecked")  // checked at runtime in gingester.link()
-    private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean syncLink) {
+    private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean asyncLink) {
         Link<?> link = gingester.link(
                 (Transformer<?, T>) from,
                 (Transformer<T, ?>) to
         );
-        if (syncLink) link.sync();
+        if (asyncLink) link.async();
     }
 }

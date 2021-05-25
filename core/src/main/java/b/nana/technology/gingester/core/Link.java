@@ -4,7 +4,7 @@ public final class Link<T> {
 
     final Transformer<?, T> from;
     final Transformer<? super T, ?> to;
-    private boolean sync;
+    private boolean sync = true;
     private boolean syncModeExplicit;
     private boolean syncModeRequired;
 
@@ -59,12 +59,6 @@ public final class Link<T> {
         if (syncModeExplicit && sync) throw new IllegalStateException("`requireAsync()` called on link that has explicit sync");
         sync = false;
         syncModeRequired = true;
-    }
-
-    void preferSync() {
-        if (!syncModeRequired && !syncModeExplicit) {
-            sync = true;
-        }
     }
 
     void preferAsync() {

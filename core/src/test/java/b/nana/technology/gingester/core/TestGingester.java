@@ -87,7 +87,7 @@ class TestGingester {
     }
 
     @Test
-    void testTransformCalledByDedicatedWorkerByDefault() {
+    void testTransformCalledByUpstreamWorkerByDefault() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
         Gingester.Builder gBuilder = new Gingester.Builder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
@@ -96,11 +96,11 @@ class TestGingester {
         gBuilder.link(new Generate("Hello!"), yieldThreadName);
         gBuilder.link(new Generate("Hello!"), yieldThreadName);
         gBuilder.build().run();
-        assertEquals(1, names.size());
+        assertEquals(3, names.size());
     }
 
     @Test
-    void testTransformCalledByDownstreamWorkerWhenLinkIsSynced() {
+    void testTransformCalledByUpstreamWorkerWhenLinkIsSync() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
         Gingester.Builder gBuilder = new Gingester.Builder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
@@ -113,7 +113,20 @@ class TestGingester {
     }
 
     @Test
-    void testTransformerLinkingSelfIsIllegal() {
+    void testTransformCalledByDownstreamWorkerWhenLinkIsAsync() {
+        Set<String> names = Collections.synchronizedSet(new HashSet<>());
+        Gingester.Builder gBuilder = new Gingester.Builder();
+        YieldThreadName yieldThreadName = new YieldThreadName(false);
+        gBuilder.link(yieldThreadName, names::add);
+        gBuilder.link(new Generate("Hello!"), yieldThreadName).async();
+        gBuilder.link(new Generate("Hello!"), yieldThreadName).async();
+        gBuilder.link(new Generate("Hello!"), yieldThreadName).async();
+        gBuilder.build().run();
+        assertEquals(1, names.size());
+    }
+
+    @Test
+    void testSelfLinkingIsIllegal() {
         Gingester.Builder gBuilder = new Gingester.Builder();
         Emphasize emphasize = new Emphasize();
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> gBuilder.link(emphasize, emphasize));

@@ -263,12 +263,12 @@ public abstract class Transformer<I, O> {
 
     public class Setup {
 
-        public void preferUpstreamSync() {
-            incoming.forEach(Link::preferSync);
+        public void preferUpstreamAsync() {
+            incoming.forEach(Link::preferAsync);
         }
 
-        public void preferDownstreamSync() {
-            outgoing.forEach(Link::preferSync);
+        public void preferDownstreamAsync() {
+            outgoing.forEach(Link::preferAsync);
         }
 
         public void requireUpstreamSync() {
