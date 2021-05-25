@@ -21,11 +21,6 @@ public class Detail extends InsertBase {
     }
 
     @Override
-    protected void setup(Setup setup) {
-        setup.preferUpstreamSync();
-    }
-
-    @Override
     protected void transform(Context context, JsonNode input) {
 
         context.getDetail(detailName).ifPresent(detail -> {

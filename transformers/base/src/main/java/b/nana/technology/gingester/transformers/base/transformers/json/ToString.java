@@ -30,9 +30,7 @@ public class ToString extends Transformer<JsonNode, String> {
         public boolean pretty;
 
         @JsonCreator
-        public Parameters() {
-
-        }
+        public Parameters() {}
 
         @JsonCreator
         public Parameters(boolean pretty) {

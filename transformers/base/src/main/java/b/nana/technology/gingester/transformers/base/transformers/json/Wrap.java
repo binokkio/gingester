@@ -9,11 +9,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class Wrap extends Transformer<JsonNode, JsonNode> {
 
     @Override
-    protected void setup(Setup setup) {
-        setup.preferUpstreamSync();
-    }
-
-    @Override
     protected void transform(Context context, JsonNode input) {
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
         objectNode.set("content", input);

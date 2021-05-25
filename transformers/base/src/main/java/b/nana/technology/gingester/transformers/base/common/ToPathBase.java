@@ -33,6 +33,13 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
     }
 
     @Override
+    protected void setup(Setup setup) {
+        if (emitEarly) {
+            setup.requireDownstreamAsync();
+        }
+    }
+
+    @Override
     protected void transform(Context context, I input) throws Exception {
 
         String pathString = pathFormat.format(context);

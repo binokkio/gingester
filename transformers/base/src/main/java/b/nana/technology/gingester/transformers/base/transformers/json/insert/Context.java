@@ -19,11 +19,6 @@ public class Context extends InsertBase {
     }
 
     @Override
-    protected void setup(Setup setup) {
-        setup.preferUpstreamSync();
-    }
-
-    @Override
     protected void transform(b.nana.technology.gingester.core.Context context, JsonNode input) {
         prepare(input, jsonPath).put(jsonPath[jsonPath.length - 1], context.getDescription());
         emit(context, input);

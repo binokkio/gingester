@@ -16,11 +16,6 @@ public class Text extends InsertBase {
     }
 
     @Override
-    protected void setup(Setup setup) {
-        setup.preferUpstreamSync();
-    }
-
-    @Override
     protected void transform(Context context, JsonNode input) {
         prepare(input, jsonPath).put(jsonPath[jsonPath.length - 1], textFormat.format(context));
         emit(context, input);

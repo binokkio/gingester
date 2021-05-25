@@ -4,7 +4,7 @@ public final class Link<T> {
 
     final Transformer<?, T> from;
     final Transformer<? super T, ?> to;
-    private boolean sync;
+    private boolean sync = true;
     private boolean syncModeExplicit;
     private boolean syncModeRequired;
 

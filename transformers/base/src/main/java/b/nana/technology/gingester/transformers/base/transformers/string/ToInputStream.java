@@ -10,11 +10,6 @@ import java.nio.charset.StandardCharsets;
 public class ToInputStream extends Transformer<String, InputStream> {
 
     @Override
-    protected void setup(Setup setup) {
-        setup.preferUpstreamSync();
-    }
-
-    @Override
     protected void transform(Context context, String input) throws Exception {
         emit(context, new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
     }
