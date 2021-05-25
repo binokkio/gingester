@@ -77,14 +77,17 @@ public final class Context implements Iterable<Context> {
     public Optional<Object> getDetail(String... name) {
         if (name.length == 0) {
             return Optional.of(getDetails());
-        }
-        for (Context context : this) {
-            Object detail = context.details.get(name[0]);
-            if (detail != null) {
-                return resolveDetail(detail, name);
+        } else if (name.length == 1 && name[0].equals("description")) {
+            return Optional.of(getDescription());
+        } else {
+            for (Context context : this) {
+                Object detail = context.details.get(name[0]);
+                if (detail != null) {
+                    return resolveDetail(detail, name);
+                }
             }
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     public Map<String, Object> getDetails() {

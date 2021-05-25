@@ -27,6 +27,7 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
 
     @Override
     protected void setup(Setup setup) {
+        setup.preferUpstreamAsync();
         setup.limitWorkers(1);
     }
 
@@ -91,9 +92,7 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
         public String idFormat;
 
         @JsonCreator
-        public Parameters() {
-
-        }
+        public Parameters() {}
 
         @JsonCreator
         public Parameters(String indexFormat) {

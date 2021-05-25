@@ -61,12 +61,6 @@ public final class Link<T> {
         syncModeRequired = true;
     }
 
-    void preferSync() {
-        if (!syncModeRequired && !syncModeExplicit) {
-            sync = true;
-        }
-    }
-
     void preferAsync() {
         if (!syncModeRequired && !syncModeExplicit) {
             sync = false;

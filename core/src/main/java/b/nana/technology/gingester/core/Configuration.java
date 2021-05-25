@@ -92,7 +92,10 @@ public final class Configuration {
             String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
             for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
                 Link<?> link = gBuilder.link(fromName, linkConfiguration.to);
-                if (linkConfiguration.sync) link.sync();
+                if (linkConfiguration.sync != null) {
+                    if (linkConfiguration.sync) link.sync();
+                    else link.async();
+                }
             }
         }
 
@@ -132,7 +135,7 @@ public final class Configuration {
     static class LinkConfiguration {
 
         public String to;
-        public boolean sync;
+        public Boolean sync;
 
         @JsonCreator
         public LinkConfiguration() {
@@ -146,12 +149,14 @@ public final class Configuration {
 
         public LinkConfiguration(Link<?> link) {
             to = link.to.getName().orElseThrow();
-            sync = link.isSyncModeExplicit();
+            if (link.isSyncModeExplicit()) {
+                sync = link.isSync();
+            }
         }
 
         @JsonValue
         public JsonNode getJsonValue() {
-            if (sync) {
+            if (sync != null) {
                 ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
                 objectNode.put("to", to);
                 objectNode.put("sync", sync);
