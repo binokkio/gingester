@@ -72,6 +72,12 @@ public abstract class Transformer<I, O> {
             ));
         }
 
+        // don't check Fetch for now, will throw a ClassCastException at Runtime when incorrectly linked
+        // TODO implement Fetch assertCanLinkTo check
+        if (getClass().equals(Fetch.class)) {
+            return;
+        }
+
         for (Class<?> outputClass : getOutputClasses()) {
             for (Class<?> inputClass : to.getInputClasses()) {
                 if (!inputClass.isAssignableFrom(outputClass)) {
@@ -164,6 +170,17 @@ public abstract class Transformer<I, O> {
 
 
     // methods available to subclasses
+
+    @SuppressWarnings("unchecked")  // checked at runtime
+    final void emitUnchecked(Context context, Object output) {
+        for (int i = 0; i < outgoing.size(); i++) {
+            if (outgoing.get(i).to.inputClass.isAssignableFrom(output.getClass())) {
+                emit(context, (O) output, i);
+            } else {
+                throw new ClassCastException();  // TODO
+            }
+        }
+    }
 
     protected final void emit(Context.Builder context, O output) {
         emit(context.build(), output);

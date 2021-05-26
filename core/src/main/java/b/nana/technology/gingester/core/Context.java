@@ -180,8 +180,8 @@ public final class Context implements Iterable<Context> {
 
     private static Optional<Object> resolveDetail(Object detail, String[] name) {
         for (int i = 1; i < name.length; i++) {  // root detail has already been resolved, so start at 1
-            if (!(detail instanceof Map)) return Optional.empty();
-            detail = ((Map<?, ?>) detail).get(name[i]);
+            if (detail instanceof Map) detail = ((Map<?, ?>) detail).get(name[i]);
+            else return Optional.empty();
         }
         return Optional.ofNullable(detail);
     }

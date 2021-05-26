@@ -1,23 +1,20 @@
-package b.nana.technology.gingester.transformers.base.transformers;
+package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.Map;
-
-public class Stash extends Transformer<Object, Void> {
+public class Fetch<T> extends Transformer<Object, T> {
 
     private final String key;
 
-    public Stash(Parameters parameters) {
+    public Fetch(Parameters parameters) {
         super(parameters);
         key = parameters.key;
     }
 
     @Override
     protected void transform(Context context, Object input) throws Exception {
-        emit(context.extend(this).details(Map.of(key, input)), null);
+        Stash.Item item = (Stash.Item) context.getDetail(key).orElseThrow();
+        emitUnchecked(context, item.get());
     }
 
     public static class Parameters {
