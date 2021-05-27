@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 public final class Fetch<T> extends Transformer<Object, T> {
 
-    private final String key;
-    private final boolean clear;
+    private final String[] stashName;
 
     public Fetch() {
         this(new Parameters());
@@ -13,31 +12,27 @@ public final class Fetch<T> extends Transformer<Object, T> {
 
     public Fetch(Parameters parameters) {
         super(parameters);
-        key = parameters.key;
-        clear = parameters.clear;
+        stashName = parameters.stash.split("\\.");
     }
 
     @Override
     protected void transform(Context context, Object input) throws Exception {
         emitUnchecked(
                 context,
-                clear ?
-                        context.clear(key).orElseThrow() :
-                        context.fetch(key).orElseThrow()
+                context.fetch(stashName).orElseThrow()
         );
     }
 
     public static class Parameters {
 
-        public String key = "stash";
-        public boolean clear;
+        public String stash = "stash";
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String key) {
-            this.key = key;
+        public Parameters(String stash) {
+            this.stash = stash;
         }
     }
 }

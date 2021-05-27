@@ -323,6 +323,15 @@ public abstract class Transformer<I, O> {
         public void limitWorkers(int limit) {
             state = Math.min(state, limit);
         }
+
+        public int getDirection(String transformerName) {
+            for (int i = 0; i < outgoing.size(); i++) {
+                if (outgoing.get(i).to.name.equals(transformerName)) {
+                    return i;
+                }
+            }
+            throw new IllegalStateException("No link to transformer named " + transformerName);
+        }
     }
 
     public class Threader {

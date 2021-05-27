@@ -90,17 +90,6 @@ public final class Context implements Iterable<Context> {
         }
     }
 
-    Optional<Object> clear(String name) {
-        for (Context context : this) {
-            Object object = context.stash.get(name);
-            if (object != null) {
-                context.stash.clear();
-                return Optional.of(object);
-            }
-        }
-        return Optional.empty();
-    }
-
     @Override
     public Iterator<Context> iterator() {
         return new Iterator<>() {
