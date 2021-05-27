@@ -2,28 +2,47 @@ package b.nana.technology.gingester.core;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public class Stash<T> extends Passthrough<T> {
+public final class Stash<T> extends Passthrough<T> {
 
     private final String key;
-    private final int ttl;
+    private final boolean weak;
+
+    public Stash() {
+        this(new Parameters());
+    }
 
     public Stash(Parameters parameters) {
         super(parameters);
         key = parameters.key;
-        ttl = parameters.ttl;
+        weak = parameters.weak;
     }
 
     @Override
     protected void transform(Context context, T input) throws Exception {
-        emit(context.extend(this).details(Map.of(key, new Item(input, ttl))), input);
+
+        Map<String, Object> stash = weak ?
+                createWeakMapFor(key, input) :
+                Map.of(key, input);
+
+        emit(
+                context.extend(this).stash(stash),
+                input
+        );
+    }
+
+    private Map<String, Object> createWeakMapFor(String key, T value) {
+        Map<String, Object> map = new HashMap<>(1);
+        map.put(key, value);
+        return map;
     }
 
     public static class Parameters {
 
         public String key = "stash";
-        public int ttl = 1;
+        public boolean weak;
 
         @JsonCreator
         public Parameters() {}
@@ -31,24 +50,6 @@ public class Stash<T> extends Passthrough<T> {
         @JsonCreator
         public Parameters(String key) {
             this.key = key;
-        }
-    }
-
-    static class Item {
-
-        private Object value;
-        private int ttl;
-
-        private Item(Object value, int ttl) {
-            this.value = value;
-            this.ttl = ttl;
-        }
-
-        synchronized Object get() {
-            if (value == null) throw new IllegalStateException("Expired");  // TODO
-            Object returnValue = value;
-            if (ttl != -1 && --ttl == 0) value = null;
-            return returnValue;
         }
     }
 }

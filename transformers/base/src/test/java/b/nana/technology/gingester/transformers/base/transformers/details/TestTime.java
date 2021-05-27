@@ -36,7 +36,7 @@ class TestTime {
         gBuilder.build().run();
 
         assertEquals("World!", result.get().get("Hello").asText());
-        assertTrue(context.get().getDetail("time", "year").isPresent());
+        assertTrue(context.get().fetch("time", "year").isPresent());
     }
 
     @Test
@@ -57,7 +57,7 @@ class TestTime {
         gBuilder.build().run();
 
         assertEquals("World!", result.get().get("Hello").asText());
-        assertTrue(context.get().getDetail("time", "year").isPresent());
+        assertTrue(context.get().fetch("time", "year").isPresent());
     }
 
     @Test

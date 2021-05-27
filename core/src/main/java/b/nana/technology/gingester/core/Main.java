@@ -89,6 +89,8 @@ public final class Main {
                 case "-t":
                 case "--transformer":
 
+                    // TODO -s for -t Stash and -f for -t Fetch
+
                     String transformerName = args[++i];
                     JsonNode parameters = null;
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {

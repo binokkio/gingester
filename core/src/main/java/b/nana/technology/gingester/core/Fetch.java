@@ -2,24 +2,35 @@ package b.nana.technology.gingester.core;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class Fetch<T> extends Transformer<Object, T> {
+public final class Fetch<T> extends Transformer<Object, T> {
 
     private final String key;
+    private final boolean clear;
+
+    public Fetch() {
+        this(new Parameters());
+    }
 
     public Fetch(Parameters parameters) {
         super(parameters);
         key = parameters.key;
+        clear = parameters.clear;
     }
 
     @Override
     protected void transform(Context context, Object input) throws Exception {
-        Stash.Item item = (Stash.Item) context.getDetail(key).orElseThrow();
-        emitUnchecked(context, item.get());
+        emitUnchecked(
+                context,
+                clear ?
+                        context.clear(key).orElseThrow() :
+                        context.fetch(key).orElseThrow()
+        );
     }
 
     public static class Parameters {
 
         public String key = "stash";
+        public boolean clear;
 
         @JsonCreator
         public Parameters() {}

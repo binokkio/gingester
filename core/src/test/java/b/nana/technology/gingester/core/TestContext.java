@@ -17,7 +17,7 @@ class TestContext {
     @Test
     void testContextStringFormatSimple() {
         Context.StringFormat stringFormat = new Context.StringFormat("Hello, {target}!");
-        Context context = Context.SEED.extend(null).details(Map.of("target", "World")).build();
+        Context context = Context.SEED.extend(null).stash(Map.of("target", "World")).build();
         assertEquals("Hello, World!", stringFormat.format(context));
     }
 
@@ -25,8 +25,8 @@ class TestContext {
     void testContextStringFormatMultiple() {
         Context.StringFormat stringFormat = new Context.StringFormat("Hello, {a} and {b} {c}!");
         Context context = Context.SEED
-                .extend(null).details(Map.of("a", "World", "b", "Unit Test")).build()
-                .extend(null).details(Map.of("c", "Reader")).build();
+                .extend(null).stash(Map.of("a", "World", "b", "Unit Test")).build()
+                .extend(null).stash(Map.of("c", "Reader")).build();
         assertEquals("Hello, World and Unit Test Reader!", stringFormat.format(context));
     }
 

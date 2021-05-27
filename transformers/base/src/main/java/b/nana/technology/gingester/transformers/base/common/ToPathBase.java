@@ -56,7 +56,7 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
         try (OutputStream output = Files.newOutputStream(path, StandardOpenOption.CREATE_NEW)) {
             if (emitEarly) {
                 Monitor monitor = new Monitor();
-                contextBuilder.details(Map.of("monitor", monitor));
+                contextBuilder.stash(Map.of("monitor", monitor));
                 emit(contextBuilder, path);
                 write(toInputStream(input), output);
                 output.close();

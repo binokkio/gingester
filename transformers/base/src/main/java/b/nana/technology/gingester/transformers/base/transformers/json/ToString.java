@@ -22,7 +22,11 @@ public class ToString extends Transformer<JsonNode, String> {
 
     @Override
     protected void transform(Context context, JsonNode input) throws Exception {
-        emit(context, objectWriter.writeValueAsString(input));
+        if (input.isTextual()) {
+            emit(context, input.asText());
+        } else {
+            emit(context, objectWriter.writeValueAsString(input));
+        }
     }
 
     public static class Parameters {

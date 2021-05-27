@@ -17,16 +17,16 @@ import java.util.Map;
 public class Server extends Transformer<Void, RequestWrapper> {
 
     private final int port;
-    private final boolean details;
-    private final boolean headerDetails;
-    private final boolean queryDetails;
+    private final boolean stash;
+    private final boolean stashHeaders;
+    private final boolean stashQuery;
 
     public Server(Parameters parameters) {
         super(parameters);
         port = parameters.port;
-        headerDetails = parameters.headerDetails;
-        queryDetails = parameters.queryDetails;
-        details = headerDetails | queryDetails;
+        stashHeaders = parameters.stashHeaders;
+        stashQuery = parameters.stashQuery;
+        stash = stashHeaders | stashQuery;
     }
 
     @Override
@@ -55,26 +55,26 @@ public class Server extends Transformer<Void, RequestWrapper> {
                 Context.Builder contextBuilder = context.extend(Server.this)
                         .description(jettyRequest.getMethod() + " " + target);
 
-                if (details) {
+                if (stash) {
 
-                    Map<String, Object> details = new HashMap<>();
+                    Map<String, Object> stash = new HashMap<>();
 
-                    if (headerDetails) {
+                    if (stashHeaders) {
                         Map<String, String> headers = new HashMap<>();
                         jettyRequest.getHeaderNames().asIterator().forEachRemaining(
                                 headerName -> headers.put(headerName, jettyRequest.getHeader(headerName)));
-                        details.put("headers", headers);
+                        stash.put("headers", headers);
                     }
 
-                    if (queryDetails) {
+                    if (stashQuery) {
                         Map<String, String> query = new HashMap<>();
                         jettyRequest.getParameterMap();  // triggers query parameter initialization, TODO check proper solution
                         jettyRequest.getQueryParameters().forEach(
                                 (queryParameterName, value) -> query.put(queryParameterName, value.get(value.size() - 1)));
-                        details.put("query", query);
+                        stash.put("query", query);
                     }
 
-                    contextBuilder.details(details);
+                    contextBuilder.stash(stash);
                 }
 
                 emit(
@@ -99,13 +99,11 @@ public class Server extends Transformer<Void, RequestWrapper> {
     public static class Parameters {
 
         public int port = 8080;
-        public boolean headerDetails = true;
-        public boolean queryDetails = true;
+        public boolean stashHeaders = true;
+        public boolean stashQuery = true;
 
         @JsonCreator
-        public Parameters() {
-
-        }
+        public Parameters() {}
 
         @JsonCreator
         public Parameters(int port) {
