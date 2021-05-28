@@ -176,6 +176,8 @@ public abstract class Transformer<I, O> {
         for (int i = 0; i < outgoing.size(); i++) {
             if (outgoing.get(i).to.inputClass.isAssignableFrom(output.getClass())) {
                 emit(context, (O) output, i);
+            } else if (outgoing.get(i).to.inputClass.equals(String.class)) {
+                emit(context, (O) output.toString(), i);
             } else {
                 throw new ClassCastException();  // TODO
             }
