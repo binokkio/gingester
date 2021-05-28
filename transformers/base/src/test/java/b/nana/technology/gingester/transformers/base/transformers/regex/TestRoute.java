@@ -22,7 +22,7 @@ class TestRoute {
                 "csv", "CsvHandler",
                 "json", "JsonHandler"
         );
-        Route route = new Route(routeParameters);
+        Route<String> route = new Route<>(routeParameters);
 
         Generate csvHandler = new Generate(new Generate.Parameters("CSV handler triggered"));
         Generate jsonHandler = new Generate(new Generate.Parameters("JSON handler triggered"));

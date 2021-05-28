@@ -1,15 +1,16 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
 import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.Passthrough;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Route extends Transformer<String, Void> {
+public class Route<T> extends Passthrough<T> {
 
+    private final String[] stash;
     private final Pattern pattern;
     private final int group;
     private final Map<String, String> routes;
@@ -19,6 +20,7 @@ public class Route extends Transformer<String, Void> {
 
     public Route(Parameters parameters) {
         super(parameters);
+        stash = parameters.stash != null ? parameters.stash.split("\\.") : null;
         pattern = Pattern.compile(parameters.pattern);
         group = parameters.group;
         routes = parameters.routes;
@@ -37,26 +39,31 @@ public class Route extends Transformer<String, Void> {
     }
 
     @Override
-    protected void transform(Context context, String input) throws Exception {
+    protected void transform(Context context, T input) throws Exception {
 
-        Matcher matcher = pattern.matcher(input);
+        String string = stash != null ?
+                context.fetch(stash).orElseThrow().toString() :
+                input.toString();
+
+        Matcher matcher = pattern.matcher(string);
         if (!matcher.find()) {
             if (defaultDirection == null) throw new IllegalStateException("Pattern not found");
-            emit(context, null, defaultDirection);
+            emit(context, input, defaultDirection);
             return;
         }
 
         Integer direction = directions.get(matcher.group(group));
         if (direction == null) {
             if (defaultDirection == null) throw new IllegalStateException("No route for " + matcher.group(group));
-            emit(context, null, defaultDirection);
+            emit(context, input, defaultDirection);
             return;
         }
 
-        emit(context, null, direction);
+        emit(context, input, direction);
     }
 
     public static class Parameters {
+        public String stash;
         public String pattern;
         public int group;
         public Map<String, String> routes;
