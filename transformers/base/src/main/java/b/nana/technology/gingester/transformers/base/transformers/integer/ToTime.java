@@ -2,7 +2,6 @@ package b.nana.technology.gingester.transformers.base.transformers.integer;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
-import b.nana.technology.gingester.transformers.base.common.TimeBase;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.time.Instant;
