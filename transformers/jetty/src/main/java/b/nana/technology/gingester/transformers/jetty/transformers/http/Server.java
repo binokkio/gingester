@@ -2,7 +2,6 @@ package b.nana.technology.gingester.transformers.jetty.transformers.http;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
-import b.nana.technology.gingester.transformers.jetty.common.RequestWrapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,10 +10,12 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Server extends Transformer<Void, RequestWrapper> {
+public class Server extends Transformer<Void, InputStream> {
 
     private final int port;
     private final boolean stash;
@@ -47,7 +48,7 @@ public class Server extends Transformer<Void, RequestWrapper> {
         server.setHandler(new AbstractHandler() {
 
             @Override
-            public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
+            public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
                 jettyRequest.setHandled(true);
                 jettyRequest.setContentType("application/octet-stream");
@@ -79,8 +80,10 @@ public class Server extends Transformer<Void, RequestWrapper> {
 
                 emit(
                         contextBuilder,
-                        new RequestWrapper(target, jettyRequest, request, response)
+                        request.getInputStream()
                 );
+
+                // TODO check for exceptions and respond through `response` appropriately
             }
         });
 
