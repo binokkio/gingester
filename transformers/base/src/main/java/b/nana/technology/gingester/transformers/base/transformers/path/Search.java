@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -14,11 +15,13 @@ public class Search extends Transformer<Void, Path> {
 
     private final Path root;
     private final String[] globs;
+    private final boolean stash;
 
     public Search(Parameters parameters) {
         super(parameters);
-        root = Paths.get(parameters.root);
+        root = Paths.get(parameters.root).toAbsolutePath();
         globs = parameters.globs;
+        stash = parameters.stash;
     }
 
     @Override
@@ -74,6 +77,16 @@ public class Search extends Transformer<Void, Path> {
                 Context.Builder contextBuilder = context.extend(Search.this)
                         .description(relative.toString());
 
+                if (stash) {
+                    contextBuilder.stash(Map.of(
+                            "path", Map.of(
+                                    "tail", path.getFileName(),
+                                    "relative", relative,
+                                    "full", path
+                            )
+                    ));
+                }
+
                 emit(contextBuilder, path);
             }
         }
@@ -83,6 +96,7 @@ public class Search extends Transformer<Void, Path> {
 
         public String root = "";
         public String[] globs = new String[] { "**/*" };
+        public boolean stash = true;
 
         @JsonCreator
         public Parameters() {}
