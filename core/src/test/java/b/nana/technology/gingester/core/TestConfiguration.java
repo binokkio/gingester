@@ -5,6 +5,8 @@ import b.nana.technology.gingester.test.transformers.Question;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,5 +44,16 @@ public class TestConfiguration {
         gBuilder.link(gBuilder.getTransformer("AddQuestion", Question.class), result::set);
         gBuilder.build().run();
         assertEquals("Hello, World!?", result.get());
+    }
+
+    @Test
+    void testHelloWorldDiamond() throws IOException {
+        Queue<String> results = new LinkedBlockingQueue<>();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-diamond.json")).toBuilder();
+        gBuilder.link(gBuilder.getTransformer("Emphasize", Emphasize.class), results::add);
+        gBuilder.link(gBuilder.getTransformer("Question", Question.class), results::add);
+        gBuilder.build().run();
+        assertEquals("Hello, World!", results.remove());
+        assertEquals("Hello, World?", results.remove());
     }
 }

@@ -128,6 +128,7 @@ public final class Main {
 
     private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean asyncLink) {
         Link<?> link = gingester.linkUnchecked(from, to);
+        link.markImplied();
         if (asyncLink) link.async();
     }
 }
