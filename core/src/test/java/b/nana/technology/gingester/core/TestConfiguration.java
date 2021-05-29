@@ -31,9 +31,7 @@ public class TestConfiguration {
         AtomicReference<String> result = new AtomicReference<>();
         Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json")).toBuilder();
         gBuilder.link(gBuilder.getTransformer("Question", Question.class), result::set);
-        Gingester gingester = gBuilder.build();
-        System.out.println(gingester.toConfiguration().toJson());
-        gingester.run();
+        gBuilder.build().run();
         assertEquals("Hello, World!?", result.get());
     }
 
