@@ -125,9 +125,9 @@ public final class Configuration {
             if (transformerConfiguration.links != null) {
                 for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
                     Link<?> link = gBuilder.link(transformerName, linkConfiguration.to);
-                    if (linkConfiguration.sync != null) {
-                        if (linkConfiguration.sync) link.sync();
-                        else link.async();
+                    if (linkConfiguration.async != null) {
+                        if (linkConfiguration.async) link.async();
+                        else link.sync();
                     }
                 }
             } else if (gBuilder.getTransformer(transformerName).getLinks().isEmpty()) {
@@ -200,7 +200,7 @@ public final class Configuration {
     static class LinkConfiguration {
 
         public String to;
-        public Boolean sync;
+        public Boolean async;
 
         @JsonCreator
         public LinkConfiguration() {}
@@ -213,19 +213,19 @@ public final class Configuration {
         public LinkConfiguration(Link<?> link) {
             to = link.to.getName().orElseThrow();
             if (link.isSyncModeExplicit()) {
-                sync = link.isSync();
+                async = link.isSync();
             }
         }
 
         @JsonValue
         public JsonNode getJsonValue() {
-            if (sync == null) {
+            if (async == null) {
                 return JsonNodeFactory.instance.textNode(to);
             } else {
                 // TODO find a less cumbersome solution
                 ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
                 if (to != null) objectNode.put("to", to);
-                if (sync != null) objectNode.put("sync", sync);
+                if (async != null) objectNode.put("async", async);
                 return objectNode;
             }
         }
