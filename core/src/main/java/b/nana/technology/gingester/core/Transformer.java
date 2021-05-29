@@ -172,7 +172,11 @@ public abstract class Transformer<I, O> {
 
 
 
-    // methods available to subclasses
+    // methods available to (some) subclasses
+
+    final void emitUnchecked(Context.Builder context, Object output) {
+        emitUnchecked(context.build(), output);
+    }
 
     @SuppressWarnings("unchecked")  // checked at runtime
     final void emitUnchecked(Context context, Object output) {

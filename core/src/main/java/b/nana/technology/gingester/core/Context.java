@@ -244,19 +244,13 @@ public final class Context implements Iterable<Context> {
 
         private final List<String> strings = new ArrayList<>();
         private final List<String[]> names = new ArrayList<>();
-        private final Function<String, String> sanitizer;
         private final boolean throwOnMissingItem;  // TODO
 
         public StringFormat(String format) {
-            this(format, s -> s);
+            this(format, false);
         }
 
-        public StringFormat(String format, Function<String, String> sanitizer) {
-            this(format, sanitizer, false);
-        }
-
-        public StringFormat(String format, Function<String, String> sanitizer, boolean throwOnMissingItem) {
-            this.sanitizer = sanitizer;
+        public StringFormat(String format, boolean throwOnMissingItem) {
             this.throwOnMissingItem = throwOnMissingItem;
             Matcher matcher = STRING_FORMAT_SPECIFIER.matcher(format);
             int pointer = 0;
@@ -280,7 +274,6 @@ public final class Context implements Iterable<Context> {
                         .append(strings.get(i))
                         .append(context.fetch(name)
                                 .map(Object::toString)
-                                .map(sanitizer)
                                 .orElse(String.join(".", name)));  // TODO
             }
             stringBuilder.append(strings.get(i));
