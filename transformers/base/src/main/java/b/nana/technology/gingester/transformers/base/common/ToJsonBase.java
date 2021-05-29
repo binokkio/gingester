@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class ToJsonBase<I> extends Transformer<I, JsonNode> {
@@ -25,10 +26,9 @@ public abstract class ToJsonBase<I> extends Transformer<I, JsonNode> {
         emit(context, objectReader.readTree(toInputStream(input)));
     }
 
-    protected abstract InputStream toInputStream(I input);
+    protected abstract InputStream toInputStream(I input) throws IOException;
 
     public static class Parameters {
-
         public boolean allowSingleQuotes;
         public boolean allowUnquotedFieldNames;
     }

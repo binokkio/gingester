@@ -4,6 +4,7 @@ public final class Link<T> {
 
     final Transformer<?, T> from;
     final Transformer<? super T, ?> to;
+    private boolean implied;
     private boolean sync = true;
     private boolean syncModeExplicit;
     private boolean syncModeRequired;
@@ -11,6 +12,14 @@ public final class Link<T> {
     Link(Transformer<?, T> from, Transformer<? super T, ?> to) {
         this.from = from;
         this.to = to;
+    }
+
+    void markImplied() {
+        implied = true;
+    }
+
+    boolean isImplied() {
+        return implied;
     }
 
     boolean isSync() {

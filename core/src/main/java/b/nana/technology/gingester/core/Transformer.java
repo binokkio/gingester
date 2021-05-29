@@ -15,7 +15,7 @@ public abstract class Transformer<I, O> {
 
     Gingester gingester;
     String name;
-    final Object parameters;
+    Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
     final List<Link<? extends I>> incoming = new ArrayList<>();
@@ -46,11 +46,7 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
-    void setName(String name) {
-        this.name = name;
-    }
-
-    public Optional<String> getName() {
+    public final Optional<String> getName() {
         return Optional.ofNullable(name);
     }
 
@@ -132,6 +128,13 @@ public abstract class Transformer<I, O> {
 
 
     // methods to be overridden by subclasses
+
+    /**
+     * TODO
+     */
+    public List<String> getLinks() {
+        return Collections.emptyList();
+    }
 
     /**
      * Called after all transformers been linked.

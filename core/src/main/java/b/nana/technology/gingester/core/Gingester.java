@@ -247,15 +247,17 @@ public final class Gingester {
         public void name(String name, Transformer<?, ?> transformer) {
             if (transformer.name != null) throw new IllegalArgumentException("Transformer was already named");
             if (transformers.stream().map(Transformer::getName).flatMap(Optional::stream).anyMatch(name::equals)) throw new IllegalArgumentException("Transformer name not unique: " + name);
-            transformer.setName(name);
+            transformer.name = name;
             add(transformer);
         }
 
-        @SuppressWarnings("unchecked")  // checked at runtime in link()
         public <T> Link<T> link(String fromName, String toName) {
-            Transformer<?, T> from = (Transformer<?, T>) getTransformer(fromName);
-            Transformer<? super T, ?> to = (Transformer<? super T, ?>) getTransformer(toName);
-            return link(from, to);
+            return linkUnchecked(getTransformer(fromName), getTransformer(toName));
+        }
+
+        @SuppressWarnings("unchecked")  // checked at runtime in link()
+        <T> Link<T> linkUnchecked(Transformer<?, ?> from, Transformer<?, ?> to) {
+            return link((Transformer<?, T>) from, (Transformer<? super T, ?>)to);
         }
 
         public <T> Link<T> link(Transformer<?, T> from, Transformer<? super T, ?> to) {
@@ -341,6 +343,15 @@ public final class Gingester {
             if (built) throw new IllegalStateException("Already built");
             built = true;
 
+            // parameter based links
+            for (Transformer<?, ?> transformer : transformers) {
+                if (transformer.outgoing.isEmpty()) {
+                    for (String to : transformer.getLinks()) {
+                        linkUnchecked(transformer, getTransformer(to)).markImplied();
+                    }
+                }
+            }
+
             // seed all transformers that have no inputs and were not already seeded
             for (Transformer<?, ?> transformer : transformers) {
                 if (transformer.isEmpty() && transformer.incoming.isEmpty()) {
@@ -356,7 +367,7 @@ public final class Gingester {
                 Integer counter = counters.get(name);
                 counter = counter == null ? 1 : counter + 1;
                 counters.put(name, counter);
-                transformer.setName(name + "-" + counter);
+                transformer.name = name + "-" + counter;
             }
 
             // remove the counter suffix from transformers with unique names
@@ -365,7 +376,7 @@ public final class Gingester {
                 if (name.endsWith("-1")) {
                     String nameWithoutSuffix = name.substring(0, name.length() - 2);
                     if (counters.get(nameWithoutSuffix) == 1) {
-                        transformer.setName(nameWithoutSuffix);
+                        transformer.name = nameWithoutSuffix;
                     }
                 }
             }

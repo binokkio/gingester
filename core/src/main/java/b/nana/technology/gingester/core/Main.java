@@ -126,12 +126,8 @@ public final class Main {
         return gBuilder.build();
     }
 
-    @SuppressWarnings("unchecked")  // checked at runtime in gingester.link()
     private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean asyncLink) {
-        Link<?> link = gingester.link(
-                (Transformer<?, T>) from,
-                (Transformer<T, ?>) to
-        );
+        Link<?> link = gingester.linkUnchecked(from, to);
         if (asyncLink) link.async();
     }
 }

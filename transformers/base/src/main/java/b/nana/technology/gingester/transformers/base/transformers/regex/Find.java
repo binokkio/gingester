@@ -21,11 +21,6 @@ public class Find extends Transformer<String, Matcher> {
     }
 
     @Override
-    protected void setup(Setup setup) {
-
-    }
-
-    @Override
     protected void transform(Context context, String input) throws Exception {
         Matcher matcher = pattern.matcher(input);
         if (!matcher.find()) throw new IllegalStateException("Pattern not found");

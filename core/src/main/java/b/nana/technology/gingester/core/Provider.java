@@ -71,9 +71,7 @@ final class Provider {
 
         try {
             Transformer<?, ?> transformer = (Transformer<?, ?>) constructor.newInstance(parameters);
-            if (transformer.parameters != parameters) {
-                // TODO maybe log a warning
-            }
+            transformer.parameters = jsonParameters;
             return transformer;
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);  // TODO

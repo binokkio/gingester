@@ -5,7 +5,5 @@ import b.nana.technology.gingester.core.Transformer;
 
 public class Dummy extends Transformer<Void, Void> {
     @Override
-    protected void transform(Context context, Void input) {
-
-    }
+    protected void transform(Context context, Void input) {}
 }

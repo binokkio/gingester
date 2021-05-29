@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -20,12 +21,15 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Configuration {
 
     static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
     private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
@@ -36,25 +40,37 @@ public final class Configuration {
     }
 
     static Configuration fromGingester(Gingester gingester) {
+
         Configuration configuration = new Configuration();
         configuration.report = gingester.report;
+
         for (Transformer<?, ?> transformer : gingester.getTransformers()) {
+
             TransformerConfiguration transformerConfiguration = new TransformerConfiguration();
             transformerConfiguration.transformer = Provider.name(transformer);
             transformer.getName()
                     .filter(name -> !name.equals(transformerConfiguration.transformer))
                     .ifPresent(name -> transformerConfiguration.id = name);
+
             if (transformer.parameters != null) {
+                // TODO if equal to newly constructed parameters without parameters ignore
                 transformerConfiguration.parameters = OBJECT_MAPPER.valueToTree(transformer.parameters);
             }
-            transformer.outgoing.stream()
+
+            List<LinkConfiguration> links = transformer.outgoing.stream()
+                    .filter(link -> !link.isImplied())
                     .map(LinkConfiguration::new)
-                    .forEach(transformerConfiguration.links::add);
-            transformer.syncs.stream()
+                    .collect(Collectors.toList());
+            if (!links.isEmpty()) transformerConfiguration.links = links;
+
+            List<String> syncs = transformer.syncs.stream()
                     .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
-                    .forEach(transformerConfiguration.syncs::add);
+                    .collect(Collectors.toList());
+            if (!syncs.isEmpty()) transformerConfiguration.syncs = syncs;
+
             configuration.transformers.add(transformerConfiguration);
         }
+
         return configuration;
     }
 
@@ -88,21 +104,33 @@ public final class Configuration {
             else gBuilder.add(transformer);
         }
 
+        String autoLinkNextFromName = null;
         for (TransformerConfiguration transformerConfiguration : transformers) {
-            String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
-                Link<?> link = gBuilder.link(fromName, linkConfiguration.to);
-                if (linkConfiguration.sync != null) {
-                    if (linkConfiguration.sync) link.sync();
-                    else link.async();
+            String transformerName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
+            if (autoLinkNextFromName != null) {
+                Link<?> link = gBuilder.link(autoLinkNextFromName, transformerName);
+                link.markImplied();
+                autoLinkNextFromName = null;
+            }
+            if (transformerConfiguration.links != null) {
+                for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
+                    Link<?> link = gBuilder.link(transformerName, linkConfiguration.to);
+                    if (linkConfiguration.sync != null) {
+                        if (linkConfiguration.sync) link.sync();
+                        else link.async();
+                    }
                 }
+            } else if (gBuilder.getTransformer(transformerName).getLinks().isEmpty()) {
+                autoLinkNextFromName = transformerName;
             }
         }
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String fromName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            for (String toName : transformerConfiguration.syncs) {
-                gBuilder.sync(fromName, toName);
+            if (transformerConfiguration.syncs != null) {
+                for (String toName : transformerConfiguration.syncs) {
+                    gBuilder.sync(fromName, toName);
+                }
             }
         }
     }
@@ -123,13 +151,40 @@ public final class Configuration {
     }
 
     static class TransformerConfiguration {
+
         public String id;
         public String transformer;
         public Integer maxWorkers;
         public JsonNode parameters;
-        public List<String> hosts = new ArrayList<>();
-        public List<LinkConfiguration> links = new ArrayList<>();
-        public List<String> syncs = new ArrayList<>();
+        public List<String> hosts;
+        public List<LinkConfiguration> links;
+        public List<String> syncs;
+
+        @JsonCreator
+        public TransformerConfiguration() {}
+
+        @JsonCreator
+        public TransformerConfiguration(String transformer) {
+            this.transformer = transformer;
+        }
+
+        @JsonValue
+        public JsonNode getJsonValue() {
+            if (Stream.of(id, maxWorkers, parameters, hosts, links, syncs).allMatch(Objects::isNull)) {
+                return JsonNodeFactory.instance.textNode(transformer);
+            } else {
+                // TODO find a less cumbersome solution
+                ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+                if (id != null) objectNode.put("id", id);
+                if (transformer != null) objectNode.put("transformer", transformer);
+                if (maxWorkers != null) objectNode.put("maxWorkers", maxWorkers);
+                if (parameters != null) objectNode.set("parameters", parameters);
+                if (hosts != null) objectNode.set("hosts", JsonNodeFactory.instance.pojoNode(hosts));
+                if (links != null) objectNode.set("links", JsonNodeFactory.instance.pojoNode(links));
+                if (syncs != null) objectNode.set("syncs", JsonNodeFactory.instance.pojoNode(syncs));
+                return objectNode;
+            }
+        }
     }
 
     static class LinkConfiguration {
@@ -138,9 +193,7 @@ public final class Configuration {
         public Boolean sync;
 
         @JsonCreator
-        public LinkConfiguration() {
-
-        }
+        public LinkConfiguration() {}
 
         @JsonCreator
         public LinkConfiguration(String to) {
@@ -156,13 +209,14 @@ public final class Configuration {
 
         @JsonValue
         public JsonNode getJsonValue() {
-            if (sync != null) {
-                ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
-                objectNode.put("to", to);
-                objectNode.put("sync", sync);
-                return objectNode;
-            } else {
+            if (sync == null) {
                 return JsonNodeFactory.instance.textNode(to);
+            } else {
+                // TODO find a less cumbersome solution
+                ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+                if (to != null) objectNode.put("to", to);
+                if (sync != null) objectNode.put("sync", sync);
+                return objectNode;
             }
         }
     }

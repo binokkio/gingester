@@ -19,7 +19,6 @@ public class ToString extends Transformer<JsonNode, String> {
                 objectMapper.writer();
     }
 
-
     @Override
     protected void transform(Context context, JsonNode input) throws Exception {
         if (input.isTextual()) {

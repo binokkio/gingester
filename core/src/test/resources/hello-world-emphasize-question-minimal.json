@@ -1,0 +1,11 @@
+{
+  "report": false,
+  "transformers": [
+    {
+      "transformer": "Generate",
+      "parameters": "Hello, World"
+    },
+    "Emphasize",
+    "Question"
+  ]
+}

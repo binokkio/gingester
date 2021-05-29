@@ -1,0 +1,33 @@
+{
+  "report": false,
+  "transformers": [
+    {
+      "id": "GenerateHelloWorld",
+      "transformer": "Generate",
+      "parameters": {
+        "string": "Hello, World",
+        "count": 1
+      },
+      "links": [
+        {
+          "to": "AddEmphasis",
+          "sync": true
+        }
+      ]
+    },
+    {
+      "id": "AddEmphasis",
+      "transformer": "Emphasize",
+      "links": [
+        {
+          "to": "AddQuestion",
+          "sync": true
+        }
+      ]
+    },
+    {
+      "id": "AddQuestion",
+      "transformer": "Question"
+    }
+  ]
+}

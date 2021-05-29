@@ -3,7 +3,9 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Passthrough;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +27,13 @@ public class Route<T> extends Passthrough<T> {
         group = parameters.group;
         routes = parameters.routes;
         defaultRoute = parameters.defaultRoute;
+    }
+
+    @Override
+    public List<String> getLinks() {
+        List<String> links = new ArrayList<>(routes.values());
+        if (defaultRoute != null) links.add(defaultRoute);
+        return links;
     }
 
     @Override
