@@ -12,8 +12,12 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class Server extends Transformer<Void, InputStream> {
 
@@ -78,12 +82,25 @@ public class Server extends Transformer<Void, InputStream> {
                     contextBuilder.stash(stash);
                 }
 
+                Queue<Throwable> exceptions = new LinkedBlockingQueue<>();
+                contextBuilder.onSyncedException(exceptions::add);
+
                 emit(
                         contextBuilder,
                         request.getInputStream()
                 );
 
-                // TODO check for exceptions and respond through `response` appropriately
+                if (!exceptions.isEmpty()) {
+
+                    response.setStatus(409);
+                    response.addHeader("Content-Type", "text/plain; charset=UTF-8");
+
+                    String body = exceptions.stream()
+                            .map(t -> t.getClass().getSimpleName() + ": " + t.getMessage())
+                            .collect(Collectors.joining("\n", "", "\n"));
+
+                    response.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
+                }
             }
         });
 
