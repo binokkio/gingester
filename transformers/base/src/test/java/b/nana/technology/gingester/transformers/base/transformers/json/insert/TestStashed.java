@@ -23,7 +23,7 @@ class TestStashed {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(toJson, "{\"hello\":\"world\"}");
         gBuilder.link(toJson, time);
         gBuilder.link(time, stashed);

@@ -20,7 +20,7 @@ class TestTime {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(toTime, "20210527");
         gBuilder.link(toTime, toString);
         gBuilder.link(toString, result::set);
@@ -45,7 +45,7 @@ class TestTime {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(toTime, "20210527");
         gBuilder.link(toTime, toString);
         gBuilder.link(toString, result::set);

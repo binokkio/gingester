@@ -23,7 +23,7 @@ class TestToPath {
         ToPath toPath = new ToPath(new ToPath.Parameters(tempFile.toString()));
         String write = "Hello, World!";
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
         gBuilder.build().run();
 
@@ -47,7 +47,7 @@ class TestToPath {
         Path tempDirectory = Files.createTempDirectory("gingester-inputstream-test-to-path-");
         ToPath toPath = new ToPath(new ToPath.Parameters(tempDirectory.resolve("test-{generate-counter}.txt").toString()));
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(generate, stringToInputStream);
         gBuilder.link(stringToInputStream, toPath);
         gBuilder.build().run();

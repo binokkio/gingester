@@ -17,7 +17,7 @@ class TestGingester {
     void testEmphasizeLinkFirst() {
         AtomicReference<String> result = new AtomicReference<>();
         Emphasize emphasize = new Emphasize();
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(emphasize, result::set);
         gBuilder.seed(emphasize, "Hello, World");
         gBuilder.build().run();
@@ -28,7 +28,7 @@ class TestGingester {
     void testEmphasizeSeedFirst() {
         AtomicReference<String> result = new AtomicReference<>();
         Emphasize emphasize = new Emphasize();
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(emphasize, "Hello, World");
         gBuilder.link(emphasize, result::set);
         gBuilder.build().run();
@@ -41,7 +41,7 @@ class TestGingester {
         Emphasize[] emphasizers = new Emphasize[] {
                 new Emphasize(), new Emphasize()
         };
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(emphasizers[0], emphasizers[1]);
         gBuilder.link(emphasizers[1], result::set);
         gBuilder.seed(emphasizers[0], "Hello, World");
@@ -55,7 +55,7 @@ class TestGingester {
         Emphasize[] emphasizers = new Emphasize[] {
                 new Emphasize(), new Emphasize(), new Emphasize()
         };
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(emphasizers[0], emphasizers[1]);
         gBuilder.link(emphasizers[1], emphasizers[2]);
         gBuilder.link(emphasizers[2], result::set);
@@ -70,7 +70,7 @@ class TestGingester {
         Emphasize[] emphasizers = new Emphasize[] {
                 new Emphasize(), new Emphasize(), new Emphasize()
         };
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(emphasizers[0], emphasizers[1]);
         gBuilder.link(emphasizers[1], emphasizers[2]);
         gBuilder.link(emphasizers[2], results::add);
@@ -83,13 +83,13 @@ class TestGingester {
 
     @Test
     void testSyncBeforeLinkThrows() {
-        assertThrows(IllegalStateException.class, () -> new Gingester.Builder().sync(new Emphasize(), new Emphasize()));
+        assertThrows(IllegalStateException.class, () -> new Builder().sync(new Emphasize(), new Emphasize()));
     }
 
     @Test
     void testTransformCalledByUpstreamWorkerByDefault() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
         gBuilder.link(yieldThreadName, names::add);
         gBuilder.link(new Generate("Hello!"), yieldThreadName);
@@ -102,7 +102,7 @@ class TestGingester {
     @Test
     void testTransformCalledByUpstreamWorkerWhenLinkIsSync() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
         gBuilder.link(yieldThreadName, names::add);
         gBuilder.link(new Generate("Hello!"), yieldThreadName).sync();
@@ -115,7 +115,7 @@ class TestGingester {
     @Test
     void testTransformCalledByDifferentWorkerWhenLinkIsAsync() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);
         gBuilder.link(yieldThreadName, names::add);
         gBuilder.link(new Generate("Hello!"), yieldThreadName).async();
@@ -127,7 +127,7 @@ class TestGingester {
 
     @Test
     void testSelfLinkingIsIllegal() {
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         Emphasize emphasize = new Emphasize();
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> gBuilder.link(emphasize, emphasize));
         assertEquals("Linking from Emphasize to Emphasize would create a circular route", e.getMessage());
@@ -135,7 +135,7 @@ class TestGingester {
 
     @Test
     void testCircularLinkingIsIllegal() {
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         Emphasize emphasize1 = new Emphasize();
         Emphasize emphasize2 = new Emphasize();
         gBuilder.name("Emphasize-1", emphasize1);

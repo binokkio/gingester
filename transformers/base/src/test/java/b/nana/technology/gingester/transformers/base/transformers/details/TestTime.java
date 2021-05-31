@@ -25,7 +25,7 @@ class TestTime {
         Time<String> time = new Time<>();
         ToJson toJson = new ToJson(new ToJsonBase.Parameters());
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(generate, time);
         gBuilder.link(time, toJson);
         gBuilder.link(toJson, (c, r) -> {

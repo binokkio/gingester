@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.NormalLink;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -43,7 +44,7 @@ public final class Main {
 
     static Gingester fromArgs(String[] args) {
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Builder gBuilder = new Builder();
         gBuilder.report(true);
         Transformer<?, ?> upstream = null;
         Transformer<?, ?> syncFrom = null;
@@ -126,8 +127,8 @@ public final class Main {
         return gBuilder.build();
     }
 
-    private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean asyncLink) {
-        Link<?> link = gingester.linkUnchecked(from, to);
+    private static <T> void link(Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean asyncLink) {
+        NormalLink<?> link = gingester.linkUnchecked(from, to);
         link.markImplied();
         if (asyncLink) link.async();
     }

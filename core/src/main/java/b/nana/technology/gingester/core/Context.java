@@ -18,6 +18,14 @@ public final class Context implements Iterable<Context> {
     final Transformer<?, ?> transformer;
     final String description;
     private final Map<String, Object> stash;
+
+    /*
+     * TODO
+     *
+     * These exception listeners are now a bit awkward, information moving upstream.
+     * 
+     */
+
     private final BiConsumer<Context, Throwable> exceptionListener;
     private final BiConsumer<Context, Throwable> syncedExceptionListener;
 

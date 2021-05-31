@@ -28,7 +28,7 @@ class TestInputSuperOutput {
 
         List<String> results = Collections.synchronizedList(new ArrayList<>());
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(hello, world);
         gBuilder.link(world, (Consumer<String>) results::add);
         gBuilder.build().run();

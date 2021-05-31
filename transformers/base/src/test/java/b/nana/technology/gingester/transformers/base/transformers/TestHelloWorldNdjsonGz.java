@@ -4,8 +4,8 @@ import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.transformers.base.common.ToJsonBase;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.Gunzip;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToString;
-import b.nana.technology.gingester.transformers.base.transformers.json.insert.Context;
 import b.nana.technology.gingester.transformers.base.transformers.json.Wrap;
+import b.nana.technology.gingester.transformers.base.transformers.json.insert.Context;
 import b.nana.technology.gingester.transformers.base.transformers.string.ToJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class TestHelloWorldNdjsonGz {
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(gunzip, getClass().getResourceAsStream("/hello-world.ndjson.gz"));
         gBuilder.link(gunzip, toString);
         gBuilder.link(toString, toJson);

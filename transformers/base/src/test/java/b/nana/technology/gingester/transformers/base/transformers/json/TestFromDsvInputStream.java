@@ -19,7 +19,7 @@ class TestFromDsvInputStream {
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(fromDsvInputStream, getClass().getResourceAsStream("/test.csv"));
         gBuilder.link(fromDsvInputStream, results::add);
         gBuilder.build().run();
@@ -38,7 +38,7 @@ class TestFromDsvInputStream {
 
         Queue<JsonNode> results = new LinkedBlockingQueue<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(fromDsvInputStream, getClass().getResourceAsStream("/test.csv"));
         gBuilder.link(fromDsvInputStream, results::add);
         Gingester gingester = gBuilder.build();

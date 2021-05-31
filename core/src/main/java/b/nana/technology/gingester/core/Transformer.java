@@ -1,5 +1,8 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.BaseLink;
+import b.nana.technology.gingester.core.link.ExceptionLink;
+import b.nana.technology.gingester.core.link.NormalLink;
 import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
@@ -18,8 +21,9 @@ public abstract class Transformer<I, O> {
     Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
-    final List<Link<? extends I>> incoming = new ArrayList<>();
-    final List<Link<O>> outgoing = new ArrayList<>();
+    final List<BaseLink<?, ? extends I>> incoming = new ArrayList<>();
+    final List<NormalLink<O>> outgoing = new ArrayList<>();
+    ExceptionLink exceptionHandler;
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
@@ -160,7 +164,7 @@ public abstract class Transformer<I, O> {
      * Called when no more input will come for the given context.
      *
      * Will only be called for contexts from upstream transformers that are synced
-     * with this transformer, i.e. those for which {@link Gingester.Builder#sync(Transformer, Transformer)} sync}
+     * with this transformer, i.e. those for which {@link Builder#sync(Transformer, Transformer)} sync}
      * was called with the upstream transformer as first and this transformer as second argument.
      */
     protected void finish(Context context) throws Exception {}
@@ -207,14 +211,15 @@ public abstract class Transformer<I, O> {
 
     protected final void emit(Context context, O output, int direction) {
         Worker worker = (Worker) Thread.currentThread();
-        worker.accept(this, context, output, direction);
+        worker.accept(this, context, output, outgoing.get(direction));
     }
 
     protected final <T extends I> void recurse(Context.Builder contextBuilder, T value) {
         Context context = contextBuilder.build();
-        Worker.prepare(this, context);
-        Worker.transform(this, context, value);
-        Worker.finish(this, context);
+        Worker worker = (Worker) Thread.currentThread();
+        worker.prepare(this, context);
+        worker.transform(this, context, value);
+        worker.finish(this, context);
     }
 
     protected final void ack() {
@@ -290,27 +295,27 @@ public abstract class Transformer<I, O> {
     public class Setup {
 
         public void preferUpstreamAsync() {
-            incoming.forEach(Link::preferAsync);
+            incoming.forEach(BaseLink::preferAsync);
         }
 
         public void preferDownstreamAsync() {
-            outgoing.forEach(Link::preferAsync);
+            outgoing.forEach(BaseLink::preferAsync);
         }
 
         public void requireUpstreamSync() {
-            incoming.forEach(Link::requireSync);
+            incoming.forEach(BaseLink::requireSync);
         }
 
         public void requireDownstreamSync() {
-            outgoing.forEach(Link::requireSync);
+            outgoing.forEach(BaseLink::requireSync);
         }
 
         public void requireUpstreamAsync() {
-            incoming.forEach(Link::requireAsync);
+            incoming.forEach(BaseLink::requireAsync);
         }
 
         public void requireDownstreamAsync() {
-            outgoing.forEach(Link::requireAsync);
+            outgoing.forEach(BaseLink::requireAsync);
         }
 
         public void assertNoUpstream() {
