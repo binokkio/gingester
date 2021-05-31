@@ -12,7 +12,7 @@ public abstract class KeyTransformer<I, O> extends RedisTransformer<I, O> {
 
     public KeyTransformer(Parameters parameters) {
         super(parameters);
-        keyFormat = new Context.StringFormat(parameters.keyFormat, s -> s, true);
+        keyFormat = new Context.StringFormat(parameters.keyFormat, true);
     }
 
     protected final Context.StringFormat getKeyFormat() {

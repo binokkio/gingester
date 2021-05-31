@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToPath;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToString;
-import b.nana.technology.gingester.transformers.base.transformers.path.ToInputStream;
+import b.nana.technology.gingester.transformers.base.transformers.path.Open;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class TestInputStreamToPathToInputStream {
+class TestInputStreamToPathOpen {
 
     @Test
     void test() throws IOException {
@@ -23,15 +23,15 @@ class TestInputStreamToPathToInputStream {
         Path tempDirectory = Files.createTempDirectory("gingester-inputstream-test-to-path-");
         Path tempFile = tempDirectory.resolve("test");
         ToPath toPath = new ToPath(new ToPath.Parameters(tempFile.toString()));
-        ToInputStream toInputStream = new ToInputStream();
+        Open open = new Open();
         ToString toString = new ToString();
         String write = "Hello, World!";
         AtomicReference<String> result = new AtomicReference<>();
 
         Gingester.Builder gBuilder = new Gingester.Builder();
         gBuilder.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
-        gBuilder.link(toPath, toInputStream);
-        gBuilder.link(toInputStream, toString);
+        gBuilder.link(toPath, open);
+        gBuilder.link(open, toString);
         gBuilder.link(toString, result::set);
         gBuilder.build().run();
 
@@ -51,15 +51,15 @@ class TestInputStreamToPathToInputStream {
         toPathParameters.emitEarly = true;
         toPathParameters.bufferSize = 3;
         ToPath toPath = new ToPath(toPathParameters);
-        ToInputStream toInputStream = new ToInputStream();
+        Open open = new Open();
         ToString toString = new ToString();
         String write = "Hello, World!";
         AtomicReference<String> result = new AtomicReference<>();
 
         Gingester.Builder gingester = new Gingester.Builder();
         gingester.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
-        gingester.link(toPath, toInputStream);
-        gingester.link(toInputStream, toString);
+        gingester.link(toPath, open);
+        gingester.link(open, toString);
         gingester.link(toString, result::set);
         gingester.build().run();
 

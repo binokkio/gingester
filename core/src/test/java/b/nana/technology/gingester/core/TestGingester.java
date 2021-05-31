@@ -113,7 +113,7 @@ class TestGingester {
     }
 
     @Test
-    void testTransformCalledByDownstreamWorkerWhenLinkIsAsync() {
+    void testTransformCalledByDifferentWorkerWhenLinkIsAsync() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
         Gingester.Builder gBuilder = new Gingester.Builder();
         YieldThreadName yieldThreadName = new YieldThreadName(false);

@@ -89,6 +89,8 @@ public final class Main {
                 case "-t":
                 case "--transformer":
 
+                    // TODO -s for -t Stash and -f for -t Fetch
+
                     String transformerName = args[++i];
                     JsonNode parameters = null;
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
@@ -124,12 +126,9 @@ public final class Main {
         return gBuilder.build();
     }
 
-    @SuppressWarnings("unchecked")  // checked at runtime in gingester.link()
     private static <T> void link(Gingester.Builder gingester, Transformer<?, ?> from, Transformer<?, ?> to, boolean asyncLink) {
-        Link<?> link = gingester.link(
-                (Transformer<?, T>) from,
-                (Transformer<T, ?>) to
-        );
+        Link<?> link = gingester.linkUnchecked(from, to);
+        link.markImplied();
         if (asyncLink) link.async();
     }
 }

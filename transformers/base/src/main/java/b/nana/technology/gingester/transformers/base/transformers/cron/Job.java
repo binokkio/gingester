@@ -65,7 +65,7 @@ public class Job extends Transformer<Void, Void> {
             emit(
                     context.extend(this)
                             .description(next.toString())
-                            .details(Map.of(
+                            .stash(Map.of(
                                     "year", next.getYear(),
                                     "month", next.getMonthValue(),
                                     "day", next.getDayOfMonth(),

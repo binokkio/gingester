@@ -14,7 +14,7 @@ public class Time<T> extends Passthrough<T> {
         ZonedDateTime now = ZonedDateTime.now();
 
         emit(context.extend(this)
-                .details(Map.of(
+                .stash(Map.of(
                         "time", Map.of(
                                 "year", now.getYear(),
                                 "month", now.getMonthValue(),

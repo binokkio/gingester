@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class ToInputStream extends Transformer<Path, InputStream> {
+public class Open extends Transformer<Path, InputStream> {
 
     @Override
     protected void setup(Setup setup) {
@@ -22,7 +22,7 @@ public class ToInputStream extends Transformer<Path, InputStream> {
     @Override
     protected void transform(Context context, Path input) throws IOException, InterruptedException {
         try (InputStream inputStream = Files.newInputStream(input)) {
-            Optional<Object> monitor = context.getDetail("monitor");
+            Optional<Object> monitor = context.fetch("monitor");
             if (monitor.isPresent()) {
                 emit(context, new InputStreamWrapper(inputStream, (ToPath.Monitor) monitor.get()));
             } else {

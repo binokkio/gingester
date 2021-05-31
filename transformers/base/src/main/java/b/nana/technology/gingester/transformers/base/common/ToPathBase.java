@@ -13,21 +13,22 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 public abstract class ToPathBase<I> extends Transformer<I, Path> {
-
-    private static final Pattern SANITIZER = Pattern.compile("[^a-zA-Z0-9-_.]");
 
     protected abstract InputStream toInputStream(I input);
 
     private final Context.StringFormat pathFormat;
+    private final boolean mkdirs;
+    private final StandardOpenOption[] openOptions;
     private final boolean emitEarly;
     private final int bufferSize;
 
     public ToPathBase(Parameters parameters) {
         super(parameters);
-        pathFormat = new Context.StringFormat(parameters.path, s -> SANITIZER.matcher(s).replaceAll("_"), true);
+        pathFormat = new Context.StringFormat(parameters.path, true);
+        mkdirs = parameters.mkdirs;
+        openOptions = parameters.openOptions;
         emitEarly = parameters.emitEarly;
         bufferSize = parameters.bufferSize;
     }
@@ -46,17 +47,17 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
         Path path = Paths.get(pathString);
 
         Path parent = path.getParent();
-        if (!Files.isDirectory(path.getParent())) {
+        if (mkdirs && !Files.exists(path.getParent())) {
             Files.createDirectories(parent);
         }
 
         Context.Builder contextBuilder = context.extend(this).description(pathString);
 
         // TODO make options configurable
-        try (OutputStream output = Files.newOutputStream(path, StandardOpenOption.CREATE_NEW)) {
+        try (OutputStream output = Files.newOutputStream(path, openOptions)) {
             if (emitEarly) {
                 Monitor monitor = new Monitor();
-                contextBuilder.details(Map.of("monitor", monitor));
+                contextBuilder.stash(Map.of("monitor", monitor));
                 emit(contextBuilder, path);
                 write(toInputStream(input), output);
                 output.close();
@@ -79,7 +80,9 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
 
     public static class Parameters {
 
-        public String path = ".";
+        public String path;
+        public boolean mkdirs = true;
+        public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };
         public boolean emitEarly;
         public int bufferSize = 8192;
 

@@ -1,0 +1,18 @@
+{
+  "report": false,
+  "transformers": [
+    {
+      "transformer": "Generate",
+      "parameters": "Hello, World",
+      "links": [
+        "Emphasize",
+        "Question"
+      ]
+    },
+    {
+      "transformer": "Emphasize",
+      "links": []
+    },
+    "Question"
+  ]
+}

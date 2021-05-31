@@ -5,8 +5,6 @@ import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import java.util.Map;
-
 public class Out extends Transformer<Object, Void> {
 
     private final boolean decorate;
@@ -24,10 +22,10 @@ public class Out extends Transformer<Object, Void> {
     protected void transform(Context context, Object input) throws JsonProcessingException {
         if (decorate) {
             String description = context.getDescription();
-            String prettyDetails = context.prettyDetails();
+            String prettyStash = context.prettyStash();
             System.out.print(
                     "---- " + description + " ----\n" +
-                    (prettyDetails.isEmpty() ? "" : prettyDetails + '\n') +
+                    (prettyStash.isEmpty() ? "" : prettyStash + '\n') +
                     input + '\n' +
                     "-".repeat(description.length() + 10) + "\n\n"
             );

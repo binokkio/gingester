@@ -2,7 +2,6 @@ package b.nana.technology.gingester.transformers.jetty.transformers.http;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
-import b.nana.technology.gingester.transformers.jetty.common.RequestWrapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,22 +10,28 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
-public class Server extends Transformer<Void, RequestWrapper> {
+public class Server extends Transformer<Void, InputStream> {
 
     private final int port;
-    private final boolean details;
-    private final boolean headerDetails;
-    private final boolean queryDetails;
+    private final boolean stash;
+    private final boolean stashHeaders;
+    private final boolean stashQuery;
 
     public Server(Parameters parameters) {
         super(parameters);
         port = parameters.port;
-        headerDetails = parameters.headerDetails;
-        queryDetails = parameters.queryDetails;
-        details = headerDetails | queryDetails;
+        stashHeaders = parameters.stashHeaders;
+        stashQuery = parameters.stashQuery;
+        stash = stashHeaders | stashQuery;
     }
 
     @Override
@@ -47,7 +52,7 @@ public class Server extends Transformer<Void, RequestWrapper> {
         server.setHandler(new AbstractHandler() {
 
             @Override
-            public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) {
+            public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
                 jettyRequest.setHandled(true);
                 jettyRequest.setContentType("application/octet-stream");
@@ -55,32 +60,47 @@ public class Server extends Transformer<Void, RequestWrapper> {
                 Context.Builder contextBuilder = context.extend(Server.this)
                         .description(jettyRequest.getMethod() + " " + target);
 
-                if (details) {
+                if (stash) {
 
-                    Map<String, Object> details = new HashMap<>();
+                    Map<String, Object> stash = new HashMap<>();
 
-                    if (headerDetails) {
+                    if (stashHeaders) {
                         Map<String, String> headers = new HashMap<>();
                         jettyRequest.getHeaderNames().asIterator().forEachRemaining(
                                 headerName -> headers.put(headerName, jettyRequest.getHeader(headerName)));
-                        details.put("headers", headers);
+                        stash.put("headers", headers);
                     }
 
-                    if (queryDetails) {
+                    if (stashQuery) {
                         Map<String, String> query = new HashMap<>();
                         jettyRequest.getParameterMap();  // triggers query parameter initialization, TODO check proper solution
                         jettyRequest.getQueryParameters().forEach(
                                 (queryParameterName, value) -> query.put(queryParameterName, value.get(value.size() - 1)));
-                        details.put("query", query);
+                        stash.put("query", query);
                     }
 
-                    contextBuilder.details(details);
+                    contextBuilder.stash(stash);
                 }
+
+                Queue<Throwable> exceptions = new LinkedBlockingQueue<>();
+                contextBuilder.onSyncedException((context, exception ) -> exceptions.add(exception));
 
                 emit(
                         contextBuilder,
-                        new RequestWrapper(target, jettyRequest, request, response)
+                        request.getInputStream()
                 );
+
+                if (!exceptions.isEmpty()) {
+
+                    response.setStatus(409);
+                    response.addHeader("Content-Type", "text/plain; charset=UTF-8");
+
+                    String body = exceptions.stream()
+                            .map(t -> t.getClass().getSimpleName() + ": " + t.getMessage())
+                            .collect(Collectors.joining("\n", "", "\n"));
+
+                    response.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
+                }
             }
         });
 
@@ -99,13 +119,11 @@ public class Server extends Transformer<Void, RequestWrapper> {
     public static class Parameters {
 
         public int port = 8080;
-        public boolean headerDetails = true;
-        public boolean queryDetails = true;
+        public boolean stashHeaders = true;
+        public boolean stashQuery = true;
 
         @JsonCreator
-        public Parameters() {
-
-        }
+        public Parameters() {}
 
         @JsonCreator
         public Parameters(int port) {

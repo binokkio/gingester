@@ -46,9 +46,7 @@ public class Get extends Transformer<Object, byte[]> {
         public Map<String, String> headers = Collections.emptyMap();
 
         @JsonCreator
-        public Parameters() {
-
-        }
+        public Parameters() {}
 
         @JsonCreator
         public Parameters(String uri) {

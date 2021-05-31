@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.core;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,16 +17,16 @@ public final class Context implements Iterable<Context> {
     final int depth;
     final Transformer<?, ?> transformer;
     final String description;
-    private final Map<String, Object> details;
-    private final Function<Throwable, Boolean> exceptionListener;
-    private final Function<Throwable, Boolean> syncedExceptionListener;
+    private final Map<String, Object> stash;
+    private final BiConsumer<Context, Throwable> exceptionListener;
+    private final BiConsumer<Context, Throwable> syncedExceptionListener;
 
     private Context() {
         parent = null;
         depth = 0;
         transformer = null;
         description = null;
-        details = Map.of();
+        stash = Collections.emptyMap();
         exceptionListener = null;
         syncedExceptionListener = null;
     }
@@ -34,7 +36,7 @@ public final class Context implements Iterable<Context> {
         depth = builder.parent != SEED ? builder.parent.depth + 1 : 0;
         transformer = builder.transformer;
         description = builder.description;
-        details = builder.details != null ? builder.details : Collections.emptyMap();
+        stash = builder.stash != null ? builder.stash : Collections.emptyMap();
         exceptionListener = builder.exceptionListener;
         syncedExceptionListener = builder.syncedExceptionListener;
     }
@@ -74,32 +76,20 @@ public final class Context implements Iterable<Context> {
         return Optional.empty();
     }
 
-    public Optional<Object> getDetail(String... name) {
+    public Optional<Object> fetch(String... name) {
         if (name.length == 0) {
-            return Optional.of(getDetails());
+            throw new IllegalArgumentException("Name must be at least 1 part long");
         } else if (name.length == 1 && name[0].equals("description")) {
             return Optional.of(getDescription());
         } else {
             for (Context context : this) {
-                Object detail = context.details.get(name[0]);
-                if (detail != null) {
-                    return resolveDetail(detail, name);
+                Object object = context.stash.get(name[0]);
+                if (object != null) {
+                    return resolveDetail(object, name);
                 }
             }
             return Optional.empty();
         }
-    }
-
-    public Map<String, Object> getDetails() {
-        Map<String, Object> result = new HashMap<>();
-        for (Context context : this) {
-            context.details.forEach((key, value) -> {
-                if (!result.containsKey(key)) {
-                    result.put(key, value);
-                }
-            });
-        }
-        return result;
     }
 
     @Override
@@ -122,10 +112,17 @@ public final class Context implements Iterable<Context> {
         };
     }
 
-    public String prettyDetails() {
-        Map<String, Object> details = getDetails();
-        if (details.isEmpty()) return "";
-        return prettyPrint(details, 0);
+    public String prettyStash() {
+        Map<String, Object> flatStash = new HashMap<>();
+        for (Context context : this) {
+            context.stash.forEach((key, value) -> {
+                if (!flatStash.containsKey(key)) {
+                    flatStash.put(key, value);
+                }
+            });
+        }
+        if (flatStash.isEmpty()) return "";
+        return prettyPrint(flatStash, 0);
     }
 
     private String prettyPrint(Object object, int indentation) {
@@ -159,31 +156,29 @@ public final class Context implements Iterable<Context> {
 
     @Override
     public String toString() {
-        return "Context { " + super.toString() + "," + getDescription() + "," + getDetails() + "}";
+        return "Context { " + getDescription() + "}";
     }
 
     void handleException(Throwable exception) {
         Context pointer = this;
         do {
-            boolean handled = false;
             if (pointer.exceptionListener != null) {
-                handled = pointer.exceptionListener.apply(exception);
+                pointer.exceptionListener.accept(this, exception);
             }
             if (pointer.syncedExceptionListener != null) {
-                handled |= pointer.syncedExceptionListener.apply(exception);
+                pointer.syncedExceptionListener.accept(this, exception);
             }
-            if (handled) return;
             pointer = pointer.parent;
         } while (pointer != null);
         exception.printStackTrace();  // TODO
     }
 
-    private static Optional<Object> resolveDetail(Object detail, String[] name) {
-        for (int i = 1; i < name.length; i++) {  // root detail has already been resolved, so start at 1
-            if (!(detail instanceof Map)) return Optional.empty();
-            detail = ((Map<?, ?>) detail).get(name[i]);
+    private static Optional<Object> resolveDetail(Object object, String[] name) {
+        for (int i = 1; i < name.length; i++) {  // root object has already been resolved, so start at 1
+            if (object instanceof Map) object = ((Map<?, ?>) object).get(name[i]);
+            else return Optional.empty();
         }
-        return Optional.ofNullable(detail);
+        return Optional.ofNullable(object);
     }
 
     public static class Builder {
@@ -191,9 +186,9 @@ public final class Context implements Iterable<Context> {
         private final Context parent;
         private final Transformer<?, ?> transformer;
         private String description;
-        private Map<String, Object> details;
-        private Function<Throwable, Boolean> exceptionListener;
-        private Function<Throwable, Boolean> syncedExceptionListener;
+        private Map<String, Object> stash;
+        private BiConsumer<Context, Throwable> exceptionListener;
+        private BiConsumer<Context, Throwable> syncedExceptionListener;
 
         private Builder(Context parent, Transformer<?, ?> transformer) {
             this.parent = parent;
@@ -215,23 +210,21 @@ public final class Context implements Iterable<Context> {
             return this;
         }
 
-        public Builder details(Map<String, Object> details) {
-            this.details = details;
+        public Builder stash(Map<String, Object> stash) {
+            this.stash = stash;
             return this;
         }
 
-        public Builder onException(Function<Throwable, Boolean> exceptionListener) {
+        public Builder onException(BiConsumer<Context, Throwable> exceptionListener) {
             this.exceptionListener = exceptionListener;
             return this;
         }
 
-        public Builder onSyncedException(Function<Throwable, Boolean> syncedExceptionListener) {
+        public Builder onSyncedException(BiConsumer<Context, Throwable> syncedExceptionListener) {
             final Thread thread = Thread.currentThread();
-            this.syncedExceptionListener = exception -> {
+            this.syncedExceptionListener = (context, exception) -> {
                 if (Thread.currentThread() == thread) {
-                    return syncedExceptionListener.apply(exception);
-                } else {
-                    return false;
+                    syncedExceptionListener.accept(context, exception);
                 }
             };
             return this;
@@ -248,26 +241,20 @@ public final class Context implements Iterable<Context> {
     public static class StringFormat {
 
         private final List<String> strings = new ArrayList<>();
-        private final List<String[]> detailNames = new ArrayList<>();
-        private final Function<String, String> sanitizer;
-        private final boolean throwOnMissingDetail;  // TODO
+        private final List<String[]> names = new ArrayList<>();
+        private final boolean throwOnMissingItem;  // TODO
 
         public StringFormat(String format) {
-            this(format, s -> s);
+            this(format, false);
         }
 
-        public StringFormat(String format, Function<String, String> sanitizer) {
-            this(format, sanitizer, false);
-        }
-
-        public StringFormat(String format, Function<String, String> sanitizer, boolean throwOnMissingDetail) {
-            this.sanitizer = sanitizer;
-            this.throwOnMissingDetail = throwOnMissingDetail;
+        public StringFormat(String format, boolean throwOnMissingItem) {
+            this.throwOnMissingItem = throwOnMissingItem;
             Matcher matcher = STRING_FORMAT_SPECIFIER.matcher(format);
             int pointer = 0;
             while (matcher.find()) {
                 strings.add(format.substring(pointer, matcher.start(0)));
-                detailNames.add(matcher.group(1).split("\\."));  // TODO use compiled pattern
+                names.add(matcher.group(1).split("\\."));  // TODO use compiled pattern
                 pointer = matcher.end(0);
             }
             strings.add(format.substring(pointer));
@@ -276,17 +263,16 @@ public final class Context implements Iterable<Context> {
         }
 
         public String format(Context context) {
-            if (detailNames.isEmpty()) return strings.get(0);
+            if (names.isEmpty()) return strings.get(0);
             StringBuilder stringBuilder = new StringBuilder();
             int i = 0;
-            for (; i < detailNames.size(); i++) {
-                String[] detailName = detailNames.get(i);
+            for (; i < names.size(); i++) {
+                String[] name = names.get(i);
                 stringBuilder
                         .append(strings.get(i))
-                        .append(context.getDetail(detailName)
+                        .append(context.fetch(name)
                                 .map(Object::toString)
-                                .map(sanitizer)
-                                .orElse(String.join(".", detailName)));  // TODO
+                                .orElse(String.join(".", name)));  // TODO
             }
             stringBuilder.append(strings.get(i));
             return stringBuilder.toString();

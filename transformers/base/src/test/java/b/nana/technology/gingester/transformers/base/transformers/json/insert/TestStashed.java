@@ -12,22 +12,22 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class TestDetail {
+class TestStashed {
 
     @Test
     void test() {
 
         ToJson toJson = new ToJson(new ToJsonBase.Parameters());
         Time<JsonNode> time = new Time<>();
-        Detail detail = new Detail(new Detail.Parameters("time"));
+        Stashed stashed = new Stashed(new Stashed.Parameters("time"));
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         Gingester.Builder gBuilder = new Gingester.Builder();
         gBuilder.seed(toJson, "{\"hello\":\"world\"}");
         gBuilder.link(toJson, time);
-        gBuilder.link(time, detail);
-        gBuilder.link(detail, result::set);
+        gBuilder.link(time, stashed);
+        gBuilder.link(stashed, result::set);
         gBuilder.build().run();
 
         assertEquals("world", result.get().get("hello").asText());

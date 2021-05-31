@@ -15,7 +15,7 @@ public abstract class Transformer<I, O> {
 
     Gingester gingester;
     String name;
-    final Object parameters;
+    Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
     final List<Link<? extends I>> incoming = new ArrayList<>();
@@ -46,11 +46,7 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
-    void setName(String name) {
-        this.name = name;
-    }
-
-    public Optional<String> getName() {
+    public final Optional<String> getName() {
         return Optional.ofNullable(name);
     }
 
@@ -70,6 +66,12 @@ public abstract class Transformer<I, O> {
                     getName().orElseGet(() -> Provider.name(this)),
                     to.getName().orElseGet(() -> Provider.name(to))
             ));
+        }
+
+        // don't check Fetch for now, will throw a ClassCastException at Runtime when incorrectly linked
+        // TODO implement Fetch assertCanLinkTo check
+        if (getClass().equals(Fetch.class)) {
+            return;
         }
 
         for (Class<?> outputClass : getOutputClasses()) {
@@ -128,6 +130,13 @@ public abstract class Transformer<I, O> {
     // methods to be overridden by subclasses
 
     /**
+     * TODO
+     */
+    public List<String> getLinks() {
+        return Collections.emptyList();
+    }
+
+    /**
      * Called after all transformers been linked.
      */
     protected void setup(Setup setup) {}
@@ -163,7 +172,24 @@ public abstract class Transformer<I, O> {
 
 
 
-    // methods available to subclasses
+    // methods available to (some) subclasses
+
+    final void emitUnchecked(Context.Builder context, Object output) {
+        emitUnchecked(context.build(), output);
+    }
+
+    @SuppressWarnings("unchecked")  // checked at runtime
+    final void emitUnchecked(Context context, Object output) {
+        for (int i = 0; i < outgoing.size(); i++) {
+            if (outgoing.get(i).to.inputClass.isAssignableFrom(output.getClass())) {
+                emit(context, (O) output, i);
+            } else if (outgoing.get(i).to.inputClass.equals(String.class)) {
+                emit(context, (O) output.toString(), i);
+            } else {
+                throw new ClassCastException();  // TODO
+            }
+        }
+    }
 
     protected final void emit(Context.Builder context, O output) {
         emit(context.build(), output);
@@ -305,6 +331,15 @@ public abstract class Transformer<I, O> {
 
         public void limitWorkers(int limit) {
             state = Math.min(state, limit);
+        }
+
+        public int getDirection(String transformerName) {
+            for (int i = 0; i < outgoing.size(); i++) {
+                if (outgoing.get(i).to.name.equals(transformerName)) {
+                    return i;
+                }
+            }
+            throw new IllegalStateException("No link to transformer named " + transformerName);
         }
     }
 
