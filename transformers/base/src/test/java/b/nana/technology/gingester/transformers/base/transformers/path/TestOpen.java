@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class TestToInputStream {
+class TestOpen {
 
     @Test
     void test() throws IOException {
@@ -21,10 +21,10 @@ class TestToInputStream {
 
         try {
             AtomicReference<String> result = new AtomicReference<>();
-            ToInputStream toInputStream = new ToInputStream();
+            Open open = new Open();
             Gingester.Builder gBuilder = new Gingester.Builder();
-            gBuilder.seed(toInputStream, helloWorld);
-            gBuilder.link(toInputStream, inputStream -> {
+            gBuilder.seed(open, helloWorld);
+            gBuilder.link(open, inputStream -> {
                 try {
                     result.set(new String(inputStream.readAllBytes()));
                 } catch (IOException e) {

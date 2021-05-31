@@ -16,6 +16,7 @@ public abstract class ToJsonBase<I> extends Transformer<I, JsonNode> {
 
     public ToJsonBase(Parameters parameters) {
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
         if (parameters.allowSingleQuotes) objectMapper.enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES);
         if (parameters.allowUnquotedFieldNames) objectMapper.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
         objectReader = objectMapper.reader();

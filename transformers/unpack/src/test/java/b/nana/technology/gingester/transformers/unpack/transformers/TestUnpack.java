@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.unpack.transformers;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToString;
 import b.nana.technology.gingester.transformers.base.transformers.path.Search;
-import b.nana.technology.gingester.transformers.base.transformers.path.ToInputStream;
+import b.nana.technology.gingester.transformers.base.transformers.path.Open;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class TestUnpack {
         searchParameters.root = testDir.toString();
         searchParameters.globs = new String[] { testFile.getFileName().toString() };
         Search search = new Search(searchParameters);
-        ToInputStream toInputStream = new ToInputStream();
+        Open open = new Open();
         Unpack unpack = new Unpack();
         ToString toString = new ToString();
 
@@ -38,8 +38,8 @@ public class TestUnpack {
         Queue<String> results = new LinkedBlockingQueue<>();
 
         Gingester.Builder gBuilder = new Gingester.Builder();
-        gBuilder.link(search, toInputStream);
-        gBuilder.link(toInputStream, unpack);
+        gBuilder.link(search, open);
+        gBuilder.link(open, unpack);
         gBuilder.link(unpack, toString);
         gBuilder.link(toString, (context, value) -> {
             descriptions.add(context.getDescription());
