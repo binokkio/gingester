@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -17,8 +18,8 @@ public final class Context implements Iterable<Context> {
     final Transformer<?, ?> transformer;
     final String description;
     private final Map<String, Object> stash;
-    private final Consumer<Throwable> exceptionListener;
-    private final Consumer<Throwable> syncedExceptionListener;
+    private final BiConsumer<Context, Throwable> exceptionListener;
+    private final BiConsumer<Context, Throwable> syncedExceptionListener;
 
     private Context() {
         parent = null;
@@ -162,10 +163,10 @@ public final class Context implements Iterable<Context> {
         Context pointer = this;
         do {
             if (pointer.exceptionListener != null) {
-                pointer.exceptionListener.accept(exception);
+                pointer.exceptionListener.accept(this, exception);
             }
             if (pointer.syncedExceptionListener != null) {
-                pointer.syncedExceptionListener.accept(exception);
+                pointer.syncedExceptionListener.accept(this, exception);
             }
             pointer = pointer.parent;
         } while (pointer != null);
@@ -186,8 +187,8 @@ public final class Context implements Iterable<Context> {
         private final Transformer<?, ?> transformer;
         private String description;
         private Map<String, Object> stash;
-        private Consumer<Throwable> exceptionListener;
-        private Consumer<Throwable> syncedExceptionListener;
+        private BiConsumer<Context, Throwable> exceptionListener;
+        private BiConsumer<Context, Throwable> syncedExceptionListener;
 
         private Builder(Context parent, Transformer<?, ?> transformer) {
             this.parent = parent;
@@ -214,16 +215,16 @@ public final class Context implements Iterable<Context> {
             return this;
         }
 
-        public Builder onException(Consumer<Throwable> exceptionListener) {
+        public Builder onException(BiConsumer<Context, Throwable> exceptionListener) {
             this.exceptionListener = exceptionListener;
             return this;
         }
 
-        public Builder onSyncedException(Consumer<Throwable> syncedExceptionListener) {
+        public Builder onSyncedException(BiConsumer<Context, Throwable> syncedExceptionListener) {
             final Thread thread = Thread.currentThread();
-            this.syncedExceptionListener = exception -> {
+            this.syncedExceptionListener = (context, exception) -> {
                 if (Thread.currentThread() == thread) {
-                    syncedExceptionListener.accept(exception);
+                    syncedExceptionListener.accept(context, exception);
                 }
             };
             return this;

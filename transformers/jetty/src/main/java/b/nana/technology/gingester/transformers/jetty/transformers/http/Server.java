@@ -83,7 +83,7 @@ public class Server extends Transformer<Void, InputStream> {
                 }
 
                 Queue<Throwable> exceptions = new LinkedBlockingQueue<>();
-                contextBuilder.onSyncedException(exceptions::add);
+                contextBuilder.onSyncedException((context, exception ) -> exceptions.add(exception));
 
                 emit(
                         contextBuilder,
