@@ -20,7 +20,7 @@ public final class Fetch<T> extends Transformer<Object, T> {
     @Override
     protected void transform(Context context, Object input) throws Exception {
         emitUnchecked(
-                context.extend(this).description(stashParameter),
+                context.extend(this).description("fetch " + stashParameter),
                 context.fetch(stashName).orElseThrow()
         );
     }
