@@ -107,21 +107,23 @@ public final class Configuration {
 
         gBuilder.report(report);
 
+        Transformer<?, ?> autoLinkNext = null;
         for (TransformerConfiguration transformerConfiguration : transformers) {
             Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
             transformer.apply(transformerConfiguration);
             if (transformerConfiguration.id != null) gBuilder.name(transformerConfiguration.id, transformer);
             else gBuilder.add(transformer);
+            if (autoLinkNext != null) {
+                gBuilder.linkUnchecked(autoLinkNext, transformer).markImplied();
+                autoLinkNext = null;
+            }
+            if (transformerConfiguration.links == null && transformer.getLinks().isEmpty()) {
+                autoLinkNext = transformer;
+            }
         }
 
-        String autoLinkNextFromName = null;
         for (TransformerConfiguration transformerConfiguration : transformers) {
             String transformerName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
-            if (autoLinkNextFromName != null) {
-                Link<?> link = gBuilder.link(autoLinkNextFromName, transformerName);
-                link.markImplied();
-                autoLinkNextFromName = null;
-            }
             if (transformerConfiguration.links != null) {
                 for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
                     Link<?> link = gBuilder.link(transformerName, linkConfiguration.to);
@@ -130,8 +132,6 @@ public final class Configuration {
                         else link.sync();
                     }
                 }
-            } else if (gBuilder.getTransformer(transformerName).getLinks().isEmpty()) {
-                autoLinkNextFromName = transformerName;
             }
         }
 
