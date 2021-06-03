@@ -235,6 +235,7 @@ public final class Gingester {
         <T> Link link(Transformer<?, T> from, Transformer<? super T, ?> to);
         <T> Link link(Transformer<?, T> from, Consumer<? super T> consumer);
         <T> Link link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer);
+        Link except(String fromName, String toName);
         Link except(Transformer<?, ?> from, Transformer<Throwable, ?> to);
 
         /**

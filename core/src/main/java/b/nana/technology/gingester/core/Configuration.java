@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.ExceptionLink;
 import b.nana.technology.gingester.core.link.NormalLink;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -134,6 +135,13 @@ public final class Configuration {
                     }
                 }
             }
+            if (transformerConfiguration.except != null) {
+                ExceptionLink link = gBuilder.except(transformerName, transformerConfiguration.except.to);
+                if (transformerConfiguration.except.async != null) {
+                    if (transformerConfiguration.except.async) link.async();
+                    else link.sync();
+                }
+            }
         }
 
         for (TransformerConfiguration transformerConfiguration : transformers) {
@@ -170,6 +178,7 @@ public final class Configuration {
         public List<String> hosts;
         public List<LinkConfiguration> links;
         public List<String> syncs;
+        public LinkConfiguration except;
 
         @JsonCreator
         public TransformerConfiguration() {}

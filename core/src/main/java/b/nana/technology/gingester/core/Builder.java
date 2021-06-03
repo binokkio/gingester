@@ -96,6 +96,14 @@ final class Builder implements Gingester.Builder {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public ExceptionLink except(String fromName, String toName) {
+        Transformer<Throwable, ?> to = (Transformer<Throwable, ?>) getTransformer(toName);
+        if (!to.inputClass.equals(Throwable.class)) throw new IllegalArgumentException("");  // TODO
+        return except(getTransformer(fromName), to);
+    }
+
     @Override
     public ExceptionLink except(Transformer<?, ?> from, Transformer<Throwable, ?> to) {
         add(from);

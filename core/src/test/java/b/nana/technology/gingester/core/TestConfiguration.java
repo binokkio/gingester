@@ -56,4 +56,14 @@ public class TestConfiguration {
         assertEquals("Hello, World!", results.remove());
         assertEquals("Hello, World?", results.remove());
     }
+
+    @Test
+    void testHelloException() throws IOException {
+        Queue<String> results = new LinkedBlockingQueue<>();
+        Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-exception.json")).toBuilder();
+        gBuilder.link(gBuilder.getTransformer("Emphasize", Emphasize.class), results::add);
+        gBuilder.build().run();
+        assertEquals("ExceptionThrower throws!", results.remove());
+        assertTrue(results.isEmpty());
+    }
 }
