@@ -106,10 +106,12 @@ abstract class Worker extends Thread {
             accept(transformer, exceptionContext, exception, transformer.exceptionHandler);
         } else {
             for (Context context : exceptionContext) {
-                ExceptionLink link = context.transformer.exceptionHandler;
-                if (link != null) {
-                    accept(transformer, exceptionContext, exception, link);
-                    break;
+                if (context.transformer != null) {
+                    ExceptionLink link = context.transformer.exceptionHandler;
+                    if (link != null) {
+                        accept(transformer, exceptionContext, exception, link);
+                        break;
+                    }
                 }
             }
         }

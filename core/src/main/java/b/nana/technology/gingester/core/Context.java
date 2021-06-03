@@ -108,7 +108,7 @@ public final class Context implements Iterable<Context> {
 
             @Override
             public boolean hasNext() {
-                return pointer != null && pointer.transformer != null;
+                return pointer != null;
             }
 
             @Override
