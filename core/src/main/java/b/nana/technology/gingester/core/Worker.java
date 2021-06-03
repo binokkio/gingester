@@ -24,13 +24,15 @@ abstract class Worker extends Thread {
 
     <T> void accept(Transformer<?, ?> producer, Context context, T value, BaseLink<?, T> link) {
 
-        if (producer.exceptionHandler != null && context.transformer != producer) {
+        boolean hasProducerContext = context.transformer == producer;
+
+        if (!hasProducerContext && producer.exceptionHandler != null) {
             context = context.extend(producer).build();
         }
 
         if (link.isSync()) {
 
-            if (!transformer.syncs.isEmpty() && context.transformer != producer) {
+            if (!hasProducerContext && !transformer.syncs.isEmpty()) {
                 context = context.extend(producer).build();
             }
 
@@ -100,10 +102,16 @@ abstract class Worker extends Thread {
             Thread.currentThread().interrupt();
         }
 
-        for (Context context : exceptionContext) {
-            ExceptionLink link = context.transformer.exceptionHandler;
-            accept(transformer, exceptionContext, exception, link);
-            break;
+        if (transformer.exceptionHandler != null) {
+            accept(transformer, exceptionContext, exception, transformer.exceptionHandler);
+        } else {
+            for (Context context : exceptionContext) {
+                ExceptionLink link = context.transformer.exceptionHandler;
+                if (link != null) {
+                    accept(transformer, exceptionContext, exception, link);
+                    break;
+                }
+            }
         }
     }
 

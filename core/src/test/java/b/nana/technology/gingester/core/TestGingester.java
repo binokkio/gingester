@@ -1,15 +1,12 @@
 package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.test.transformers.Emphasize;
-import b.nana.technology.gingester.test.transformers.Generate;
-import b.nana.technology.gingester.test.transformers.YieldThreadName;
+import b.nana.technology.gingester.test.transformers.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TestGingester {
 
@@ -143,5 +140,60 @@ class TestGingester {
         gBuilder.link(emphasize1, emphasize2);
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> gBuilder.link(emphasize2, emphasize1));
         assertEquals("Linking from Emphasize-2 to Emphasize-1 would create a circular route", e.getMessage());
+    }
+
+    @Test
+    void testCircularLinkThroughExceptionHandlerIsIllegal() {
+        Gingester.Builder gBuilder = Gingester.newBuilder();
+        Emphasize emphasize = new Emphasize();
+        ExceptionHandler exceptionHandler = new ExceptionHandler();
+        gBuilder.link(exceptionHandler, emphasize);
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> gBuilder.except(emphasize, exceptionHandler));
+        assertEquals("Linking from Emphasize to ExceptionHandler would create a circular route", e.getMessage());
+    }
+
+    @Test
+    void testExceptionHandling() {
+
+        Generate generate = new Generate("Hello, World");
+        ExceptionThrower exceptionThrower = new ExceptionThrower();
+        ExceptionHandler exceptionHandler = new ExceptionHandler();
+        Emphasize emphasize = new Emphasize();
+
+        AtomicReference<String> exceptionHandlerResult = new AtomicReference<>();
+        AtomicReference<String> emphasizeResult = new AtomicReference<>();
+
+        Gingester.Builder gBuilder = Gingester.newBuilder();
+        gBuilder.link(generate, exceptionThrower);
+        gBuilder.link(exceptionThrower, emphasize);
+        gBuilder.except(exceptionThrower, exceptionHandler);
+        gBuilder.link(emphasize, emphasizeResult::set);
+        gBuilder.link(exceptionHandler, exceptionHandlerResult::set);
+        gBuilder.build().run();
+
+        assertEquals("ExceptionThrower throws", exceptionHandlerResult.get());
+        assertNull(emphasizeResult.get());
+    }
+
+    @Test
+    void testExceptionHandlerCanHaveNormalLink() {
+
+        Generate generate = new Generate("Hello, World");
+        ExceptionThrower exceptionThrower = new ExceptionThrower();
+        ExceptionHandler exceptionHandler = new ExceptionHandler();
+        Emphasize emphasize = new Emphasize();
+
+        AtomicReference<String> emphasizeResult = new AtomicReference<>();
+
+        Gingester.Builder gBuilder = Gingester.newBuilder();
+        gBuilder.link(generate, exceptionThrower);
+        gBuilder.link(exceptionThrower, emphasize);
+        gBuilder.except(exceptionThrower, exceptionHandler);
+        gBuilder.link(emphasize, emphasizeResult::set);
+        gBuilder.link(exceptionHandler, emphasize);
+        gBuilder.link(emphasize, emphasizeResult::set);
+        gBuilder.build().run();
+
+        assertEquals("ExceptionThrower throws!", emphasizeResult.get());
     }
 }

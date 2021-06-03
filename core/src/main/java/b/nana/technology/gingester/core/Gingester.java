@@ -235,6 +235,7 @@ public final class Gingester {
         <T> Link link(Transformer<?, T> from, Transformer<? super T, ?> to);
         <T> Link link(Transformer<?, T> from, Consumer<? super T> consumer);
         <T> Link link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer);
+        Link except(Transformer<?, ?> from, Transformer<Throwable, ?> to);
 
         /**
          * Synchronize the routes from `from` to `to`.
@@ -254,7 +255,6 @@ public final class Gingester {
          */
         void sync(Transformer<?, ?> from, Transformer<?, ?> to);
 
-        Link setExceptionHandler(Transformer<?, ?> from, Transformer<Throwable, ?> to);
         Gingester build();
     }
 }

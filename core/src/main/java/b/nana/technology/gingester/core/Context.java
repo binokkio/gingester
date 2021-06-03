@@ -108,7 +108,7 @@ public final class Context implements Iterable<Context> {
 
             @Override
             public boolean hasNext() {
-                return pointer != null;
+                return pointer != null && pointer.transformer != null;
             }
 
             @Override
@@ -164,7 +164,7 @@ public final class Context implements Iterable<Context> {
 
     @Override
     public String toString() {
-        return "Context { " + getDescription() + "}";
+        return "Context { " + getDescription() + " }";
     }
 
     void handleException(Throwable exception) {

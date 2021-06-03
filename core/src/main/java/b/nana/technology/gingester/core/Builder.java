@@ -15,15 +15,18 @@ final class Builder implements Gingester.Builder {
 
     private boolean built;
 
+    @Override
     public Builder report(boolean report) {
         this.report = report;
         return this;
     }
 
+    @Override
     public void add(Transformer<?, ?> transformer) {
         transformers.add(transformer);
     }
 
+    @Override
     public Transformer<?, ?> getTransformer(String name) {
         return transformers.stream()
                 .filter(transformer -> transformer.getName().orElseGet(() -> Provider.name(transformer)).equals(name))
@@ -34,12 +37,14 @@ final class Builder implements Gingester.Builder {
     }
 
     @SuppressWarnings("unchecked")  // checked at runtime
+    @Override
     public <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass) {
         T transformer = (T) getTransformer(name);
         if (!transformerClass.isInstance(transformer)) throw new ClassCastException();  // TODO
         return transformer;
     }
 
+    @Override
     public void name(String name, Transformer<?, ?> transformer) {
         if (transformer.name != null) throw new IllegalArgumentException("Transformer was already named");
         if (transformers.stream().map(Transformer::getName).flatMap(Optional::stream).anyMatch(name::equals))
@@ -48,6 +53,7 @@ final class Builder implements Gingester.Builder {
         add(transformer);
     }
 
+    @Override
     public NormalLink<?> link(String fromName, String toName) {
         return linkUnchecked(getTransformer(fromName), getTransformer(toName));
     }
@@ -58,16 +64,19 @@ final class Builder implements Gingester.Builder {
         return link((Transformer<?, T>) from, (Transformer<? super T, ?>) to);
     }
 
+    @Override
     public <T> NormalLink<T> link(Transformer<?, T> from, Transformer<? super T, ?> to) {
         add(from);
         add(to);
-        from.assertCanLinkTo(to);
+        from.assertLinkToWouldNotBeCircular(to);
+        from.assertLinkToWouldBeCompatible(to);
         NormalLink<T> link = new NormalLink<>(from, to);
         from.outgoing.add(link);
         to.incoming.add(link);
         return link;
     }
 
+    @Override
     public <T> NormalLink<T> link(Transformer<?, T> from, Consumer<? super T> consumer) {
         return link(from, new Transformer<>(from.outputClass, Void.class) {
             @Override
@@ -77,6 +86,7 @@ final class Builder implements Gingester.Builder {
         });
     }
 
+    @Override
     public <T> NormalLink<T> link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer) {
         return link(from, new Transformer<>(from.outputClass, Void.class) {
             @Override
@@ -86,20 +96,23 @@ final class Builder implements Gingester.Builder {
         });
     }
 
-    public ExceptionLink setExceptionHandler(Transformer<?, ?> from, Transformer<Throwable, ?> to) {
+    @Override
+    public ExceptionLink except(Transformer<?, ?> from, Transformer<Throwable, ?> to) {
         add(from);
         add(to);
-        from.assertCanLinkTo(to);
+        from.assertLinkToWouldNotBeCircular(to);
         ExceptionLink link = new ExceptionLink(from, to);
         from.exceptionHandler = link;
         to.incoming.add(link);
         return link;
     }
 
+    @Override
     public void sync(String fromName, String toName) {
         sync(getTransformer(fromName), getTransformer(toName));
     }
 
+    @Override
     public void sync(Transformer<?, ?> from, Transformer<?, ?> to) {
 
         List<ArrayDeque<Transformer<?, ?>>> routes = from.getDownstreamRoutes().stream()
@@ -124,11 +137,13 @@ final class Builder implements Gingester.Builder {
         }
     }
 
+    @Override
     public <T> void seed(Transformer<T, ?> transformer, T seed) {
         add(transformer);
         transformer.queue.add(new Batch<>(Context.SEED, seed));
     }
 
+    @Override
     public final Gingester build() {
 
         if (built) throw new IllegalStateException("Already built");

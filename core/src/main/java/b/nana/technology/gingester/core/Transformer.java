@@ -62,8 +62,7 @@ public abstract class Transformer<I, O> {
         return List.of(outputClass);
     }
 
-    void assertCanLinkTo(Transformer<?, ?> to) {
-
+    void assertLinkToWouldNotBeCircular(Transformer<?, ?> to) {
         if (to == this || to.getDownstream().contains(this)) {
             throw new IllegalStateException(String.format(
                     "Linking from %s to %s would create a circular route",
@@ -71,6 +70,9 @@ public abstract class Transformer<I, O> {
                     to.getName().orElseGet(() -> Provider.name(to))
             ));
         }
+    }
+
+    void assertLinkToWouldBeCompatible(Transformer<?, ?> to) {
 
         // don't check Fetch for now, will throw a ClassCastException at Runtime when incorrectly linked
         // TODO implement Fetch assertCanLinkTo check
