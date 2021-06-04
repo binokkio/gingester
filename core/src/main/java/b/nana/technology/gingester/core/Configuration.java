@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.BaseLink;
 import b.nana.technology.gingester.core.link.ExceptionLink;
 import b.nana.technology.gingester.core.link.NormalLink;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -79,6 +80,10 @@ public final class Configuration {
                     .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
                     .collect(Collectors.toList());
             if (!syncs.isEmpty()) transformerConfiguration.syncs = syncs;
+
+            if (transformer.exceptionHandler != null) {
+                transformerConfiguration.except = new LinkConfiguration(transformer.exceptionHandler);
+            }
 
             configuration.transformers.add(transformerConfiguration);
         }
@@ -220,7 +225,7 @@ public final class Configuration {
             this.to = to;
         }
 
-        public LinkConfiguration(NormalLink<?> link) {
+        public LinkConfiguration(BaseLink<?, ?> link) {
             to = link.to.getName().orElseThrow();
             if (link.isSyncModeExplicit()) {
                 async = link.isSync();

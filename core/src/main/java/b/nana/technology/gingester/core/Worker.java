@@ -36,9 +36,9 @@ abstract class Worker extends Thread {
                 context = context.extend(producer).build();
             }
 
-            prepare(link.to, context);
+            prepare(producer, context);
             transform(link.to, context, value);
-            finish(link.to, context);
+            finish(producer, context);
 
             link.to.getStatistics().ifPresent(statistics -> statistics.delt.incrementAndGet());
 
@@ -95,21 +95,21 @@ abstract class Worker extends Thread {
         }
     }
 
-    void handleException(Transformer<?, ?> transformer, Context exceptionContext, Throwable exception) {
+    void handleException(Transformer<?, ?> thrower, Context exceptionContext, Throwable exception) {
 
         // keep interrupt flag set
         if (exception instanceof InterruptedException) {
             Thread.currentThread().interrupt();
         }
 
-        if (transformer.exceptionHandler != null) {
-            accept(transformer, exceptionContext, exception, transformer.exceptionHandler);
+        if (thrower.exceptionHandler != null) {
+            accept(thrower, exceptionContext, exception, thrower.exceptionHandler);
         } else {
             for (Context context : exceptionContext) {
                 if (context.transformer != null) {
                     ExceptionLink link = context.transformer.exceptionHandler;
                     if (link != null) {
-                        accept(transformer, exceptionContext, exception, link);
+                        accept(thrower, exceptionContext, exception, link);
                         break;
                     }
                 }

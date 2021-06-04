@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 public class Server extends Transformer<Void, InputStream> {
 
     private final int port;
-    private final boolean stash;
     private final boolean stashHeaders;
     private final boolean stashQuery;
 
@@ -31,7 +30,6 @@ public class Server extends Transformer<Void, InputStream> {
         port = parameters.port;
         stashHeaders = parameters.stashHeaders;
         stashQuery = parameters.stashQuery;
-        stash = stashHeaders | stashQuery;
     }
 
     @Override
@@ -60,47 +58,31 @@ public class Server extends Transformer<Void, InputStream> {
                 Context.Builder contextBuilder = context.extend(Server.this)
                         .description(jettyRequest.getMethod() + " " + target);
 
-                if (stash) {
+                Map<String, Object> stash = new HashMap<>();
 
-                    Map<String, Object> stash = new HashMap<>();
+                stash.put("response", response);
 
-                    if (stashHeaders) {
-                        Map<String, String> headers = new HashMap<>();
-                        jettyRequest.getHeaderNames().asIterator().forEachRemaining(
-                                headerName -> headers.put(headerName, jettyRequest.getHeader(headerName)));
-                        stash.put("headers", headers);
-                    }
-
-                    if (stashQuery) {
-                        Map<String, String> query = new HashMap<>();
-                        jettyRequest.getParameterMap();  // triggers query parameter initialization, TODO check proper solution
-                        jettyRequest.getQueryParameters().forEach(
-                                (queryParameterName, value) -> query.put(queryParameterName, value.get(value.size() - 1)));
-                        stash.put("query", query);
-                    }
-
-                    contextBuilder.stash(stash);
+                if (stashHeaders) {
+                    Map<String, String> headers = new HashMap<>();
+                    jettyRequest.getHeaderNames().asIterator().forEachRemaining(
+                            headerName -> headers.put(headerName, jettyRequest.getHeader(headerName)));
+                    stash.put("headers", headers);
                 }
 
-                Queue<Throwable> exceptions = new LinkedBlockingQueue<>();
-                contextBuilder.onSyncedException((context, exception ) -> exceptions.add(exception));
+                if (stashQuery) {
+                    Map<String, String> query = new HashMap<>();
+                    jettyRequest.getParameterMap();  // triggers query parameter initialization, TODO check proper solution
+                    jettyRequest.getQueryParameters().forEach(
+                            (queryParameterName, value) -> query.put(queryParameterName, value.get(value.size() - 1)));
+                    stash.put("query", query);
+                }
+
+                contextBuilder.stash(stash);
 
                 emit(
                         contextBuilder,
                         request.getInputStream()
                 );
-
-                if (!exceptions.isEmpty()) {
-
-                    response.setStatus(409);
-                    response.addHeader("Content-Type", "text/plain; charset=UTF-8");
-
-                    String body = exceptions.stream()
-                            .map(t -> t.getClass().getSimpleName() + ": " + t.getMessage())
-                            .collect(Collectors.joining("\n", "", "\n"));
-
-                    response.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
-                }
             }
         });
 

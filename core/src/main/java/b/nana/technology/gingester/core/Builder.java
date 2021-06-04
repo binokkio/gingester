@@ -100,7 +100,7 @@ final class Builder implements Gingester.Builder {
     @Override
     public ExceptionLink except(String fromName, String toName) {
         Transformer<Throwable, ?> to = (Transformer<Throwable, ?>) getTransformer(toName);
-        if (!to.inputClass.equals(Throwable.class)) throw new IllegalArgumentException("");  // TODO
+        if (!to.inputClass.isAssignableFrom(Throwable.class)) throw new IllegalArgumentException("");  // TODO
         return except(getTransformer(fromName), to);
     }
 
@@ -135,7 +135,7 @@ final class Builder implements Gingester.Builder {
 
         Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
                 route.stream().reduce((f, t) -> {
-                    f.outgoing.stream().filter(l -> l.to == t).findFirst().orElseThrow().requireSync();
+                    f.getOutgoing().stream().filter(l -> l.to == t).findFirst().orElseThrow().requireSync();
                     return t;
                 }).orElseThrow()
         ).collect(Collectors.toSet());
@@ -159,7 +159,7 @@ final class Builder implements Gingester.Builder {
 
         // parameter based links
         for (Transformer<?, ?> transformer : transformers) {
-            if (transformer.outgoing.isEmpty()) {
+            if (transformer.outgoing.isEmpty()) {  // TODO this ignores the exception handler, good or bad?
                 for (String to : transformer.getLinks()) {
                     linkUnchecked(transformer, getTransformer(to)).markImplied();
                 }
@@ -172,6 +172,9 @@ final class Builder implements Gingester.Builder {
                 seed(transformer, null);
             }
         }
+
+        // TODO do what is done in `public void sync(Transformer<?, ?> from, Transformer<?, ?> to)` here instead..
+        // TODO ..to account for links added after the call to sync, also exception links
 
         Map<String, Integer> counters = new HashMap<>();
 

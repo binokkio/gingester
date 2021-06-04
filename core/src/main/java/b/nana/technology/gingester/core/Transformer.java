@@ -241,18 +241,20 @@ public abstract class Transformer<I, O> {
     // upstream and downstream discovery
 
     private static final Function<Transformer<?, ?>, Stream<Transformer<?, ?>>> UPSTREAM_STEPPER =
-            transformer -> transformer.incoming.stream().map(link -> link.from);
+            transformer -> transformer.getIncoming().stream().map(link -> link.from);
 
     private static final Function<Transformer<?, ?>, Stream<Transformer<?, ?>>> DOWNSTREAM_STEPPER =
-            transformer -> {
-                if (transformer.exceptionHandler != null ) {
-                    return Stream.of(transformer.incoming, List.of(transformer.exceptionHandler))
-                            .flatMap(Collection::stream)
-                            .map(link -> link.to);
-                } else {
-                    return transformer.outgoing.stream().map(link -> link.to);
-                }
-            };
+            transformer -> transformer.getOutgoing().stream().map(link -> link.to);
+
+    List<BaseLink<?, ? extends I>> getIncoming() {
+        return incoming;
+    }
+
+    List<BaseLink<?, ?>> getOutgoing() {
+        List<BaseLink<?, ?>> result = new ArrayList<>(outgoing);
+        if (exceptionHandler != null ) result.add(exceptionHandler);
+        return result;
+    }
 
     Set<Transformer<?, ?>> getUpstream() {
         return getUpstreamRoutes().stream()
