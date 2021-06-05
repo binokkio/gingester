@@ -34,9 +34,9 @@ class TestSearch {
             fileSearchParameters.globs = new String[] { "**hello*" };
             Search fileSearch = new Search(fileSearchParameters);
 
-            Gingester.Builder gingester = new Gingester.Builder();
-            gingester.link(fileSearch, results::add);
-            gingester.build().run();
+            Gingester.Builder gBuilder = Gingester.newBuilder();
+            gBuilder.link(fileSearch, results::add);
+            gBuilder.build().run();
 
             assertTrue(results.contains(helloWorld1));
             assertTrue(results.contains(helloWorld2));

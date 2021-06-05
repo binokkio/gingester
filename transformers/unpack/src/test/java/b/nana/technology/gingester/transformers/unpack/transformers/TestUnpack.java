@@ -2,8 +2,8 @@ package b.nana.technology.gingester.transformers.unpack.transformers;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToString;
-import b.nana.technology.gingester.transformers.base.transformers.path.Search;
 import b.nana.technology.gingester.transformers.base.transformers.path.Open;
+import b.nana.technology.gingester.transformers.base.transformers.path.Search;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class TestUnpack {
         Queue<String> descriptions = new LinkedBlockingQueue<>();
         Queue<String> results = new LinkedBlockingQueue<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(search, open);
         gBuilder.link(open, unpack);
         gBuilder.link(unpack, toString);

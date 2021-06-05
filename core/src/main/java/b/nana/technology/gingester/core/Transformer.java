@@ -1,5 +1,8 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.BaseLink;
+import b.nana.technology.gingester.core.link.ExceptionLink;
+import b.nana.technology.gingester.core.link.NormalLink;
 import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
@@ -18,8 +21,10 @@ public abstract class Transformer<I, O> {
     Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
-    final List<Link<? extends I>> incoming = new ArrayList<>();
-    final List<Link<O>> outgoing = new ArrayList<>();
+    final List<BaseLink<?, ? extends I>> incoming = new ArrayList<>();
+    final List<NormalLink<O>> outgoing = new ArrayList<>();
+    final Map<String, NormalLink<O>> outgoingByName = new HashMap<>();
+    ExceptionLink exceptionHandler;
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
@@ -58,8 +63,7 @@ public abstract class Transformer<I, O> {
         return List.of(outputClass);
     }
 
-    void assertCanLinkTo(Transformer<?, ?> to) {
-
+    void assertLinkToWouldNotBeCircular(Transformer<?, ?> to) {
         if (to == this || to.getDownstream().contains(this)) {
             throw new IllegalStateException(String.format(
                     "Linking from %s to %s would create a circular route",
@@ -67,6 +71,9 @@ public abstract class Transformer<I, O> {
                     to.getName().orElseGet(() -> Provider.name(to))
             ));
         }
+    }
+
+    void assertLinkToWouldBeCompatible(Transformer<?, ?> to) {
 
         // don't check Fetch for now, will throw a ClassCastException at Runtime when incorrectly linked
         // TODO implement Fetch assertCanLinkTo check
@@ -97,6 +104,7 @@ public abstract class Transformer<I, O> {
 
     void setup(Gingester gingester) {
         this.gingester = gingester;
+        outgoing.forEach(link -> outgoingByName.put(link.to.getName().orElseThrow(), link));  // TODO bit out of place
         setup(new Setup());
     }
 
@@ -160,7 +168,7 @@ public abstract class Transformer<I, O> {
      * Called when no more input will come for the given context.
      *
      * Will only be called for contexts from upstream transformers that are synced
-     * with this transformer, i.e. those for which {@link Gingester.Builder#sync(Transformer, Transformer)} sync}
+     * with this transformer, i.e. those for which {@link Builder#sync(Transformer, Transformer)} sync}
      * was called with the upstream transformer as first and this transformer as second argument.
      */
     protected void finish(Context context) throws Exception {}
@@ -175,46 +183,66 @@ public abstract class Transformer<I, O> {
     // methods available to (some) subclasses
 
     final void emitUnchecked(Context.Builder context, Object output) {
-        emitUnchecked(context.build(), output);
+        _emit(context.build(), check(output), outgoing);
     }
 
-    @SuppressWarnings("unchecked")  // checked at runtime
     final void emitUnchecked(Context context, Object output) {
-        for (int i = 0; i < outgoing.size(); i++) {
-            if (outgoing.get(i).to.inputClass.isAssignableFrom(output.getClass())) {
-                emit(context, (O) output, i);
-            } else if (outgoing.get(i).to.inputClass.equals(String.class)) {
-                emit(context, (O) output.toString(), i);
-            } else {
-                throw new ClassCastException();  // TODO
-            }
-        }
+        _emit(maybeExtend(context), check(output), outgoing);
     }
 
     protected final void emit(Context.Builder context, O output) {
-        emit(context.build(), output);
+        _emit(context.build(), output, outgoing);
     }
 
     protected final void emit(Context context, O output) {
-        for (int i = 0; i < outgoing.size(); i++) {
-            emit(context, output, i);
-        }
+        _emit(maybeExtend(context), output, outgoing);
     }
 
-    protected final void emit(Context.Builder context, O output, int direction) {
-        emit(context.build(), output, direction);
+    protected final void emit(Context.Builder context, O output, String direction) {
+        _emit(context.build(), output, List.of(outgoingByName.get(direction)));
     }
 
-    protected final void emit(Context context, O output, int direction) {
+    protected final void emit(Context context, O output, String direction) {
+        _emit(maybeExtend(context), output, List.of(outgoingByName.get(direction)));
+    }
+
+    protected final void emit(Context.Builder context, O output, List<String> directions) {
+        _emit(context.build(), output, directions.stream().map(outgoingByName::get).collect(Collectors.toList()));
+    }
+
+    protected final void emit(Context context, O output, List<String> directions) {
+        _emit(maybeExtend(context), output, directions.stream().map(outgoingByName::get).collect(Collectors.toList()));
+    }
+
+    private void _emit(Context context, O output, List<NormalLink<O>> directions) {
         Worker worker = (Worker) Thread.currentThread();
-        worker.accept(this, context, output, direction);
+        worker.accept(this, context, output, directions);
+    }
+
+    @SuppressWarnings("unchecked")  // checked at runtime
+    private O check(Object output) {
+        for (Class<?> outputClass : getOutputClasses()) {
+            if (!outputClass.isAssignableFrom(output.getClass())) {
+                throw new IllegalStateException("Incompatible output");  // TODO
+            }
+        }
+        return (O) output;
+    }
+
+    private Context maybeExtend(Context context) {
+        if ((exceptionHandler != null || !syncs.isEmpty()) && context.transformer != this) {
+            return context.extend(this).build();
+        } else {
+            return context;
+        }
     }
 
     protected final <T extends I> void recurse(Context.Builder contextBuilder, T value) {
         Context context = contextBuilder.build();
-        Worker.prepare(this, context);
-        Worker.transform(this, context, value);
-        Worker.finish(this, context);
+        Worker worker = (Worker) Thread.currentThread();
+        worker.prepare(this, context);
+        worker.transform(this, context, value);
+        worker.finish(this, context);
     }
 
     protected final void ack() {
@@ -233,6 +261,22 @@ public abstract class Transformer<I, O> {
 
     // upstream and downstream discovery
 
+    private static final Function<Transformer<?, ?>, Stream<Transformer<?, ?>>> UPSTREAM_STEPPER =
+            transformer -> transformer.getIncoming().stream().map(link -> link.from);
+
+    private static final Function<Transformer<?, ?>, Stream<Transformer<?, ?>>> DOWNSTREAM_STEPPER =
+            transformer -> transformer.getOutgoing().stream().map(link -> link.to);
+
+    List<BaseLink<?, ? extends I>> getIncoming() {
+        return incoming;
+    }
+
+    List<BaseLink<?, ?>> getOutgoing() {
+        List<BaseLink<?, ?>> result = new ArrayList<>(outgoing);
+        if (exceptionHandler != null ) result.add(exceptionHandler);
+        return result;
+    }
+
     Set<Transformer<?, ?>> getUpstream() {
         return getUpstreamRoutes().stream()
                 .flatMap(Collection::stream)
@@ -248,11 +292,11 @@ public abstract class Transformer<I, O> {
     }
 
     List<ArrayDeque<Transformer<?, ?>>> getUpstreamRoutes() {
-        return getRoutes(transformer -> transformer.incoming.stream().map(link -> link.from));
+        return getRoutes(UPSTREAM_STEPPER);
     }
 
     List<ArrayDeque<Transformer<?, ?>>> getDownstreamRoutes() {
-        return getRoutes(transformer -> transformer.outgoing.stream().map(link -> link.to));
+        return getRoutes(DOWNSTREAM_STEPPER);
     }
 
     /**
@@ -290,27 +334,27 @@ public abstract class Transformer<I, O> {
     public class Setup {
 
         public void preferUpstreamAsync() {
-            incoming.forEach(Link::preferAsync);
+            incoming.forEach(BaseLink::preferAsync);
         }
 
         public void preferDownstreamAsync() {
-            outgoing.forEach(Link::preferAsync);
+            outgoing.forEach(BaseLink::preferAsync);
         }
 
         public void requireUpstreamSync() {
-            incoming.forEach(Link::requireSync);
+            incoming.forEach(BaseLink::requireSync);
         }
 
         public void requireDownstreamSync() {
-            outgoing.forEach(Link::requireSync);
+            outgoing.forEach(BaseLink::requireSync);
         }
 
         public void requireUpstreamAsync() {
-            incoming.forEach(Link::requireAsync);
+            incoming.forEach(BaseLink::requireAsync);
         }
 
         public void requireDownstreamAsync() {
-            outgoing.forEach(Link::requireAsync);
+            outgoing.forEach(BaseLink::requireAsync);
         }
 
         public void assertNoUpstream() {

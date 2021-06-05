@@ -1,41 +1,38 @@
-package b.nana.technology.gingester.core;
+package b.nana.technology.gingester.core.link;
 
-public final class Link<T> {
+import b.nana.technology.gingester.core.Transformer;
 
-    final Transformer<?, T> from;
-    final Transformer<? super T, ?> to;
+public abstract class BaseLink<F, T> implements Link {
+
+    public final Transformer<?, F> from;
+    public final Transformer<? super T, ?> to;
     private boolean implied;
     private boolean sync = true;
     private boolean syncModeExplicit;
     private boolean syncModeRequired;
 
-    Link(Transformer<?, T> from, Transformer<? super T, ?> to) {
+    protected BaseLink(Transformer<?, F> from, Transformer<? super T, ?> to) {
         this.from = from;
         this.to = to;
     }
 
-    void markImplied() {
+    public void markImplied() {
         implied = true;
     }
 
-    boolean isImplied() {
+    public boolean isImplied() {
         return implied;
     }
 
-    boolean isSync() {
+    public boolean isSync() {
         return sync;
     }
 
-    boolean isSyncModeExplicit() {
+    public boolean isSyncModeExplicit() {
         return syncModeExplicit;
     }
 
-    /**
-     * Synchronize this link.
-     *
-     * This will ensure the downstream transform is performed on the same thread
-     * immediately after each `emit(..)` by the upstream transformer.
-     */
+    @Override
     public void sync() {
         if (syncModeRequired && !sync) throw new IllegalStateException("`sync()` called on link that has async requirement");
         if (syncModeExplicit && !sync) throw new IllegalStateException("`sync()` called on link that has explicit async");
@@ -43,12 +40,7 @@ public final class Link<T> {
         syncModeExplicit = true;
     }
 
-    /**
-     * Make this link asynchronous.
-     *
-     * This will ensure the downstream transform is performed on a different thread
-     * some time after each `emit(..)` by the upstream transformer.
-     */
+    @Override
     public void async() {
         if (syncModeRequired && sync) throw new IllegalStateException("`async()` called on link that has sync requirement");
         if (syncModeExplicit && sync) throw new IllegalStateException("`async()` called on link that has explicit sync");
@@ -56,33 +48,23 @@ public final class Link<T> {
         syncModeExplicit = true;
     }
 
-    void requireSync() {
+    public void requireSync() {
         if (syncModeRequired && !sync) throw new IllegalStateException("`requireSync()` called on link that has async requirement");
         if (syncModeExplicit && !sync) throw new IllegalStateException("`requireSync()` called on link that has explicit async");
         sync = true;
         syncModeRequired = true;
     }
 
-    void requireAsync() {
+    public void requireAsync() {
         if (syncModeRequired && sync) throw new IllegalStateException("`requireAsync()` called on link that has sync requirement");
         if (syncModeExplicit && sync) throw new IllegalStateException("`requireAsync()` called on link that has explicit sync");
         sync = false;
         syncModeRequired = true;
     }
 
-    void preferAsync() {
+    public void preferAsync() {
         if (!syncModeRequired && !syncModeExplicit) {
             sync = false;
         }
-    }
-
-    @Override
-    public String toString() {
-        return
-                "Link { from: " +
-                from.getName().orElseGet(() -> Provider.name(from)) +
-                ", to: " +
-                to.getName().orElseGet(() -> Provider.name(to)) +
-                " }";
     }
 }

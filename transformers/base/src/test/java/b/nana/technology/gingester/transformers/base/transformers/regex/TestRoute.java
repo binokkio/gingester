@@ -30,7 +30,7 @@ class TestRoute {
         AtomicReference<String> csvHandlerResult = new AtomicReference<>();
         AtomicReference<String> jsonHandlerResult = new AtomicReference<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(route, "test.json");
 
         gBuilder.name("CsvHandler", csvHandler);

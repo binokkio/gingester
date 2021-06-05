@@ -1,9 +1,6 @@
 package b.nana.technology.gingester.core;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,8 +15,6 @@ public final class Context implements Iterable<Context> {
     final Transformer<?, ?> transformer;
     final String description;
     private final Map<String, Object> stash;
-    private final BiConsumer<Context, Throwable> exceptionListener;
-    private final BiConsumer<Context, Throwable> syncedExceptionListener;
 
     private Context() {
         parent = null;
@@ -27,8 +22,6 @@ public final class Context implements Iterable<Context> {
         transformer = null;
         description = null;
         stash = Collections.emptyMap();
-        exceptionListener = null;
-        syncedExceptionListener = null;
     }
 
     private Context(Builder builder) {
@@ -37,16 +30,10 @@ public final class Context implements Iterable<Context> {
         transformer = builder.transformer;
         description = builder.description;
         stash = builder.stash != null ? builder.stash : Collections.emptyMap();
-        exceptionListener = builder.exceptionListener;
-        syncedExceptionListener = builder.syncedExceptionListener;
     }
 
     public Context.Builder extend(Transformer<?, ?> transformer) {
         return new Context.Builder(this, transformer);
-    }
-
-    public void signal() {
-        // TODO
     }
 
     private String[] getDescriptions() {
@@ -156,21 +143,7 @@ public final class Context implements Iterable<Context> {
 
     @Override
     public String toString() {
-        return "Context { " + getDescription() + "}";
-    }
-
-    void handleException(Throwable exception) {
-        Context pointer = this;
-        do {
-            if (pointer.exceptionListener != null) {
-                pointer.exceptionListener.accept(this, exception);
-            }
-            if (pointer.syncedExceptionListener != null) {
-                pointer.syncedExceptionListener.accept(this, exception);
-            }
-            pointer = pointer.parent;
-        } while (pointer != null);
-        exception.printStackTrace();  // TODO
+        return "Context { " + getDescription() + " }";
     }
 
     private static Optional<Object> resolveDetail(Object object, String[] name) {
@@ -187,8 +160,6 @@ public final class Context implements Iterable<Context> {
         private final Transformer<?, ?> transformer;
         private String description;
         private Map<String, Object> stash;
-        private BiConsumer<Context, Throwable> exceptionListener;
-        private BiConsumer<Context, Throwable> syncedExceptionListener;
 
         private Builder(Context parent, Transformer<?, ?> transformer) {
             this.parent = parent;
@@ -212,21 +183,6 @@ public final class Context implements Iterable<Context> {
 
         public Builder stash(Map<String, Object> stash) {
             this.stash = stash;
-            return this;
-        }
-
-        public Builder onException(BiConsumer<Context, Throwable> exceptionListener) {
-            this.exceptionListener = exceptionListener;
-            return this;
-        }
-
-        public Builder onSyncedException(BiConsumer<Context, Throwable> syncedExceptionListener) {
-            final Thread thread = Thread.currentThread();
-            this.syncedExceptionListener = (context, exception) -> {
-                if (Thread.currentThread() == thread) {
-                    syncedExceptionListener.accept(context, exception);
-                }
-            };
             return this;
         }
 

@@ -22,7 +22,7 @@ class TestOpen {
         try {
             AtomicReference<String> result = new AtomicReference<>();
             Open open = new Open();
-            Gingester.Builder gBuilder = new Gingester.Builder();
+            Gingester.Builder gBuilder = Gingester.newBuilder();
             gBuilder.seed(open, helloWorld);
             gBuilder.link(open, inputStream -> {
                 try {

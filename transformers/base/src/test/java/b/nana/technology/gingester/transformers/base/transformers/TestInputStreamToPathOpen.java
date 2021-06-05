@@ -28,7 +28,7 @@ class TestInputStreamToPathOpen {
         String write = "Hello, World!";
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
         gBuilder.link(toPath, open);
         gBuilder.link(open, toString);
@@ -56,12 +56,12 @@ class TestInputStreamToPathOpen {
         String write = "Hello, World!";
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester.Builder gingester = new Gingester.Builder();
-        gingester.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
-        gingester.link(toPath, open);
-        gingester.link(open, toString);
-        gingester.link(toString, result::set);
-        gingester.build().run();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
+        gBuilder.seed(toPath, new ByteArrayInputStream(write.getBytes(StandardCharsets.UTF_8)));
+        gBuilder.link(toPath, open);
+        gBuilder.link(open, toString);
+        gBuilder.link(toString, result::set);
+        gBuilder.build().run();
 
         assertEquals(write, result.get());
 
