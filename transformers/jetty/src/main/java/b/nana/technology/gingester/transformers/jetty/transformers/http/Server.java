@@ -60,6 +60,11 @@ public class Server extends Transformer<Void, InputStream> {
 
                 Map<String, Object> stash = new HashMap<>();
 
+                stash.put("request", Map.of(
+                        "method", jettyRequest.getMethod(),
+                        "path", target
+                ));
+
                 stash.put("response", response);
 
                 if (stashHeaders) {
