@@ -23,6 +23,7 @@ public abstract class Transformer<I, O> {
     final Class<O> outputClass;
     final List<BaseLink<?, ? extends I>> incoming = new ArrayList<>();
     final List<NormalLink<O>> outgoing = new ArrayList<>();
+    final Map<String, NormalLink<O>> outgoingByName = new HashMap<>();
     ExceptionLink exceptionHandler;
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
@@ -103,6 +104,7 @@ public abstract class Transformer<I, O> {
 
     void setup(Gingester gingester) {
         this.gingester = gingester;
+        outgoing.forEach(link -> outgoingByName.put(link.to.getName().orElseThrow(), link));  // TODO bit out of place
         setup(new Setup());
     }
 
@@ -181,39 +183,58 @@ public abstract class Transformer<I, O> {
     // methods available to (some) subclasses
 
     final void emitUnchecked(Context.Builder context, Object output) {
-        emitUnchecked(context.build(), output);
+        _emit(context.build(), check(output), outgoing);
     }
 
-    @SuppressWarnings("unchecked")  // checked at runtime
     final void emitUnchecked(Context context, Object output) {
-        for (int i = 0; i < outgoing.size(); i++) {
-            if (outgoing.get(i).to.inputClass.isAssignableFrom(output.getClass())) {
-                emit(context, (O) output, i);
-            } else if (outgoing.get(i).to.inputClass.equals(String.class)) {
-                emit(context, (O) output.toString(), i);
-            } else {
-                throw new ClassCastException();  // TODO
-            }
-        }
+        _emit(maybeExtend(context), check(output), outgoing);
     }
 
     protected final void emit(Context.Builder context, O output) {
-        emit(context.build(), output);
+        _emit(context.build(), output, outgoing);
     }
 
     protected final void emit(Context context, O output) {
-        for (int i = 0; i < outgoing.size(); i++) {
-            emit(context, output, i);
-        }
+        _emit(maybeExtend(context), output, outgoing);
     }
 
-    protected final void emit(Context.Builder context, O output, int direction) {
-        emit(context.build(), output, direction);
+    protected final void emit(Context.Builder context, O output, String direction) {
+        _emit(context.build(), output, List.of(outgoingByName.get(direction)));
     }
 
-    protected final void emit(Context context, O output, int direction) {
+    protected final void emit(Context context, O output, String direction) {
+        _emit(maybeExtend(context), output, List.of(outgoingByName.get(direction)));
+    }
+
+    protected final void emit(Context.Builder context, O output, List<String> directions) {
+        _emit(context.build(), output, directions.stream().map(outgoingByName::get).collect(Collectors.toList()));
+    }
+
+    protected final void emit(Context context, O output, List<String> directions) {
+        _emit(maybeExtend(context), output, directions.stream().map(outgoingByName::get).collect(Collectors.toList()));
+    }
+
+    private void _emit(Context context, O output, List<NormalLink<O>> directions) {
         Worker worker = (Worker) Thread.currentThread();
-        worker.accept(this, context, output, outgoing.get(direction));
+        worker.accept(this, context, output, directions);
+    }
+
+    @SuppressWarnings("unchecked")  // checked at runtime
+    private O check(Object output) {
+        for (Class<?> outputClass : getOutputClasses()) {
+            if (!outputClass.isAssignableFrom(output.getClass())) {
+                throw new IllegalStateException("Incompatible output");  // TODO
+            }
+        }
+        return (O) output;
+    }
+
+    private Context maybeExtend(Context context) {
+        if ((exceptionHandler != null || !syncs.isEmpty()) && context.transformer != this) {
+            return context.extend(this).build();
+        } else {
+            return context;
+        }
     }
 
     protected final <T extends I> void recurse(Context.Builder contextBuilder, T value) {

@@ -22,26 +22,19 @@ abstract class Worker extends Thread {
         setName("Gingester-Worker-" + COUNTER.incrementAndGet());
     }
 
-    <T> void accept(Transformer<?, ?> producer, Context context, T value, BaseLink<?, T> link) {
-
-        boolean hasProducerContext = context.transformer == producer;
-
-        if (!hasProducerContext && producer.exceptionHandler != null) {
-            context = context.extend(producer).build();
+    <T> void accept(Transformer<?, ?> producer, Context context, T value, List<? extends BaseLink<?, T>> links) {
+        prepare(producer, context);
+        for (BaseLink<?, T> link : links) {
+            accept(context, value, link);
         }
+        finish(producer, context);
+    }
+
+    <T> void accept(Context context, T value, BaseLink<?, T> link) {
 
         if (link.isSync()) {
-
-            if (!hasProducerContext && !transformer.syncs.isEmpty()) {
-                context = context.extend(producer).build();
-            }
-
-            prepare(producer, context);
             transform(link.to, context, value);
-            finish(producer, context);
-
             link.to.getStatistics().ifPresent(statistics -> statistics.delt.incrementAndGet());
-
         } else {
 
             @SuppressWarnings("unchecked")
@@ -103,13 +96,13 @@ abstract class Worker extends Thread {
         }
 
         if (thrower.exceptionHandler != null) {
-            accept(thrower, exceptionContext, exception, thrower.exceptionHandler);
+            accept(exceptionContext, exception, thrower.exceptionHandler);
         } else {
             for (Context context : exceptionContext) {
                 if (context.transformer != null) {
                     ExceptionLink link = context.transformer.exceptionHandler;
                     if (link != null) {
-                        accept(thrower, exceptionContext, exception, link);
+                        accept(exceptionContext, exception, link);
                         break;
                     }
                 }
