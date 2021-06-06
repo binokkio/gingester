@@ -97,17 +97,20 @@ abstract class Worker extends Thread {
 
         if (thrower.exceptionHandler != null) {
             accept(exceptionContext, exception, thrower.exceptionHandler);
+            return;
         } else {
             for (Context context : exceptionContext) {
                 if (context.transformer != null) {
                     ExceptionLink link = context.transformer.exceptionHandler;
                     if (link != null) {
                         accept(exceptionContext, exception, link);
-                        break;
+                        return;
                     }
                 }
             }
         }
+
+        exception.printStackTrace();  // TODO
     }
 
     @SuppressWarnings("unchecked")

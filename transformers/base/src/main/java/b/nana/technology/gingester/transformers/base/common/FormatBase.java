@@ -13,12 +13,9 @@ public abstract class FormatBase<T> extends Transformer<Object, T> {
         format = new Context.StringFormat(parameters.format);
     }
 
-    @Override
-    protected void transform(Context context, Object input) {
-        emit(context, getResult(format.format(context)));
+    protected final Context.StringFormat getFormat() {
+        return format;
     }
-
-    protected abstract T getResult(String string);
 
     public static class Parameters {
 
