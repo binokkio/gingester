@@ -1,5 +1,8 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.BaseLink;
+import b.nana.technology.gingester.core.link.ExceptionLink;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +14,7 @@ abstract class Worker extends Thread {
 
     final Gingester gingester;
     final Transformer<?, ?> transformer;
-    final Map<Link<?>, Batch<?>> batches = new HashMap<>();
+    final Map<BaseLink<?, ?>, Batch<?>> batches = new HashMap<>();
 
     Worker(Gingester gingester, Transformer<?, ?> transformer) {
         this.gingester = gingester;
@@ -19,25 +22,22 @@ abstract class Worker extends Thread {
         setName("Gingester-Worker-" + COUNTER.incrementAndGet());
     }
 
-    @SuppressWarnings("unchecked")
-    <T> void accept(Transformer<?, T> transformer, Context context, T value, int direction) {
+    <T> void accept(Transformer<?, ?> producer, Context context, T value, List<? extends BaseLink<?, T>> links) {
+        prepare(producer, context);
+        for (BaseLink<?, T> link : links) {
+            accept(context, value, link);
+        }
+        finish(producer, context);
+    }
 
-        Link<T> link = transformer.outgoing.get(direction);
+    <T> void accept(Context context, T value, BaseLink<?, T> link) {
 
         if (link.isSync()) {
-
-            if (!transformer.syncs.isEmpty() && context.transformer != transformer) {
-                context = context.extend(transformer).build();
-            }
-
-            prepare(link.to, context);
             transform(link.to, context, value);
-            finish(link.to, context);
-
             link.to.getStatistics().ifPresent(statistics -> statistics.delt.incrementAndGet());
-
         } else {
 
+            @SuppressWarnings("unchecked")
             Batch<T> batch = (Batch<T>) batches.get(link);
 
             if (batch == null) {
@@ -54,60 +54,74 @@ abstract class Worker extends Thread {
         }
     }
 
-    static void prepare(Transformer<?, ?> transformer, Context context) {
+    void prepare(Transformer<?, ?> transformer, Context context) {
         for (Transformer<?, ?> sync : transformer.syncs) {
             try {
                 sync.prepare(context);
-            } catch (InterruptedException e) {
-                System.err.println(Provider.name(transformer) + " prepare interrupted");
-                context.handleException(e);
-                Thread.currentThread().interrupt();
             } catch (Throwable t) {
-                context.handleException(t);
+                handleException(sync, context, t);
             }
         }
     }
 
-    static <T> void transform(Transformer<? super T, ?> transformer, Batch<T> batch) {
+    <T> void transform(Transformer<? super T, ?> transformer, Batch<T> batch) {
         for (Batch.Entry<? extends T> value : batch) {
             transform(transformer, value.getContext(), value.getValue());
         }
     }
 
-    static <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
+    <T> void transform(Transformer<? super T, ?> transformer, Context context, T value) {
         try {
             transformer.transform(context, value);
-        } catch (InterruptedException e) {
-            System.err.println(Provider.name(transformer) + " transform interrupted");
-            context.handleException(e);
-            Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            context.handleException(t);
+            handleException(transformer, context, t);
         }
     }
 
-    static void finish(Transformer<?, ?> transformer, Context context) {
+    void finish(Transformer<?, ?> transformer, Context context) {
         for (Transformer<?, ?> sync : transformer.syncs) {
             try {
                 sync.finish(context);
-            } catch (InterruptedException e) {
-                System.err.println(Provider.name(transformer) + " finish interrupted");
-                context.handleException(e);
-                Thread.currentThread().interrupt();
             } catch (Throwable t) {
-                context.handleException(t);
+                handleException(sync, context, t);
             }
         }
     }
 
+    void handleException(Transformer<?, ?> thrower, Context exceptionContext, Throwable exception) {
+
+        // keep interrupt flag set
+        if (exception instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+        }
+
+        if (!thrower.excepts.isEmpty()) {
+            for (ExceptionLink except : thrower.excepts) {
+                accept(exceptionContext, exception, except);
+            }
+            return;
+        } else {
+            for (Context context : exceptionContext) {
+                if (context.transformer != null && !context.transformer.excepts.isEmpty()) {
+                    for (ExceptionLink except : context.transformer.excepts) {
+                        accept(exceptionContext, exception, except);
+                    }
+                    return;
+                }
+            }
+        }
+
+        exception.printStackTrace();  // TODO
+    }
+
     @SuppressWarnings("unchecked")
     <T> void flushAll() {
-        for (Map.Entry<Link<?>, Batch<?>> linkBatchEntry : batches.entrySet()) {
-            flush((Link<T>) linkBatchEntry.getKey(), (Batch<T>) linkBatchEntry.getValue());
+        for (Map.Entry<BaseLink<?, ?>, Batch<?>> linkBatchEntry : batches.entrySet()) {
+            flush((BaseLink<?, T>) linkBatchEntry.getKey(), (Batch<T>) linkBatchEntry.getValue());
         }
     }
 
-    <T> void flush(Link<T> link, Batch<? extends T> batch) {
+    <T> void flush(BaseLink<?, T> link, Batch<? extends T> batch) {
         try {
             link.to.put(batch);
         } catch (InterruptedException e1) {
@@ -189,6 +203,8 @@ abstract class Worker extends Thread {
 
                     Transformer.Statistics statistics = transformer.getStatistics().orElse(null);
                     if (statistics != null) statistics.delt.addAndGet(batch.getSize());
+
+                    // TODO flush all batches older than 1 second
                 }
 
                 flushAll();

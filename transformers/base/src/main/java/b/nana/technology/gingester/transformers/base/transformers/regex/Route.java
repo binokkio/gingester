@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Passthrough;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -17,8 +16,6 @@ public class Route<T> extends Passthrough<T> {
     private final int group;
     private final Map<String, String> routes;
     private final String defaultRoute;
-    private final Map<String, Integer> directions = new HashMap<>();
-    private Integer defaultDirection;
 
     public Route(Parameters parameters) {
         super(parameters);
@@ -37,17 +34,6 @@ public class Route<T> extends Passthrough<T> {
     }
 
     @Override
-    protected void setup(Setup setup) {
-
-        routes.forEach((key, value) ->
-                directions.put(key, setup.getDirection(value)));
-
-        if (defaultRoute != null) {
-            defaultDirection = setup.getDirection(defaultRoute);
-        }
-    }
-
-    @Override
     protected void transform(Context context, T input) throws Exception {
 
         String string = stash != null ?
@@ -56,19 +42,19 @@ public class Route<T> extends Passthrough<T> {
 
         Matcher matcher = pattern.matcher(string);
         if (!matcher.find()) {
-            if (defaultDirection == null) throw new IllegalStateException("Pattern not found");
-            emit(context, input, defaultDirection);
+            if (defaultRoute == null) throw new IllegalStateException("Pattern not found");
+            emit(context, input, defaultRoute);
             return;
         }
 
-        Integer direction = directions.get(matcher.group(group));
-        if (direction == null) {
-            if (defaultDirection == null) throw new IllegalStateException("No route for " + matcher.group(group));
-            emit(context, input, defaultDirection);
+        String route = routes.get(matcher.group(group));
+        if (route == null) {
+            if (defaultRoute == null) throw new IllegalStateException("No route for " + matcher.group(group));
+            emit(context, input, defaultRoute);
             return;
         }
 
-        emit(context, input, direction);
+        emit(context, input, route);
     }
 
     public static class Parameters {

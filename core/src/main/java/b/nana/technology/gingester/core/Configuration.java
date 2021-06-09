@@ -1,5 +1,8 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.link.BaseLink;
+import b.nana.technology.gingester.core.link.ExceptionLink;
+import b.nana.technology.gingester.core.link.NormalLink;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -78,6 +81,12 @@ public final class Configuration {
                     .collect(Collectors.toList());
             if (!syncs.isEmpty()) transformerConfiguration.syncs = syncs;
 
+            List<LinkConfiguration> excepts = transformer.excepts.stream()
+                    .filter(link -> !link.isImplied())
+                    .map(LinkConfiguration::new)
+                    .collect(Collectors.toList());
+            if (!excepts.isEmpty()) transformerConfiguration.excepts = excepts;
+
             configuration.transformers.add(transformerConfiguration);
         }
 
@@ -97,13 +106,13 @@ public final class Configuration {
         }
     }
 
-    public Gingester.Builder toBuilder() {
-        Gingester.Builder gBuilder = new Gingester.Builder();
+    public Builder toBuilder() {
+        Builder gBuilder = new Builder();
         appendToBuilder(gBuilder);
         return gBuilder;
     }
 
-    void appendToBuilder(Gingester.Builder gBuilder) {
+    void appendToBuilder(Builder gBuilder) {
 
         gBuilder.report(report);
 
@@ -126,7 +135,16 @@ public final class Configuration {
             String transformerName = transformerConfiguration.id != null ? transformerConfiguration.id : transformerConfiguration.transformer;
             if (transformerConfiguration.links != null) {
                 for (LinkConfiguration linkConfiguration : transformerConfiguration.links) {
-                    Link<?> link = gBuilder.link(transformerName, linkConfiguration.to);
+                    NormalLink<?> link = gBuilder.link(transformerName, linkConfiguration.to);
+                    if (linkConfiguration.async != null) {
+                        if (linkConfiguration.async) link.async();
+                        else link.sync();
+                    }
+                }
+            }
+            if (transformerConfiguration.excepts != null) {
+                for (LinkConfiguration linkConfiguration : transformerConfiguration.excepts) {
+                    ExceptionLink link = gBuilder.except(transformerName, linkConfiguration.to);
                     if (linkConfiguration.async != null) {
                         if (linkConfiguration.async) link.async();
                         else link.sync();
@@ -169,6 +187,7 @@ public final class Configuration {
         public List<String> hosts;
         public List<LinkConfiguration> links;
         public List<String> syncs;
+        public List<LinkConfiguration> excepts;
 
         @JsonCreator
         public TransformerConfiguration() {}
@@ -210,7 +229,7 @@ public final class Configuration {
             this.to = to;
         }
 
-        public LinkConfiguration(Link<?> link) {
+        public LinkConfiguration(BaseLink<?, ?> link) {
             to = link.to.getName().orElseThrow();
             if (link.isSyncModeExplicit()) {
                 async = link.isSync();

@@ -18,7 +18,7 @@ class TestReplace {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(regexReplace, "Hello, World!");
         gBuilder.link(regexReplace, result::set);
         gBuilder.build().run();

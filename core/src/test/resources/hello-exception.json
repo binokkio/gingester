@@ -1,0 +1,22 @@
+{
+  "report": false,
+  "transformers": [
+    {
+      "transformer": "Generate",
+      "parameters": "Hello"
+    },
+    {
+      "transformer": "ExceptionThrower",
+      "excepts": "ExceptionHandler"
+    },
+    "Question",
+    {
+      "transformer": "Emphasize",
+      "links": []
+    },
+    {
+      "transformer": "ExceptionHandler",
+      "links": "Emphasize"
+    }
+  ]
+}

@@ -66,13 +66,17 @@ public class Job extends Transformer<Void, Void> {
                     context.extend(this)
                             .description(next.toString())
                             .stash(Map.of(
-                                    "year", next.getYear(),
-                                    "month", next.getMonthValue(),
-                                    "day", next.getDayOfMonth(),
-                                    "hour", next.getHour(),
-                                    "minute", next.getMinute(),
-                                    "second", next.getSecond()
-                            )),
+                                    "time", Map.of(
+                                            "year", next.getYear(),
+                                            "month", next.getMonthValue(),
+                                            "day", next.getDayOfMonth(),
+                                            "hour", next.getHour(),
+                                            "minute", next.getMinute(),
+                                            "second", next.getSecond(),
+                                            "milli", next.getNano() / 1_000_000,
+                                            "nano", next.getNano() % 1_000_000)
+                                    )
+                            ),
                     null
             );
 

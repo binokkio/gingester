@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.details;
+package b.nana.technology.gingester.transformers.base.transformers.stash;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Gingester;
@@ -25,7 +25,7 @@ class TestTime {
         Time<String> time = new Time<>();
         ToJson toJson = new ToJson(new ToJsonBase.Parameters());
 
-        Gingester.Builder gBuilder = new Gingester.Builder();
+        Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.link(generate, time);
         gBuilder.link(time, toJson);
         gBuilder.link(toJson, (c, r) -> {
