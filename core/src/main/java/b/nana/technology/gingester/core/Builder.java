@@ -110,7 +110,7 @@ final class Builder implements Gingester.Builder {
         add(to);
         from.assertLinkToWouldNotBeCircular(to);
         ExceptionLink link = new ExceptionLink(from, to);
-        from.exceptionHandler = link;
+        from.excepts.add(link);
         to.incoming.add(link);
         return link;
     }

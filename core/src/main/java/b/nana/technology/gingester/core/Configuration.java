@@ -81,9 +81,11 @@ public final class Configuration {
                     .collect(Collectors.toList());
             if (!syncs.isEmpty()) transformerConfiguration.syncs = syncs;
 
-            if (transformer.exceptionHandler != null) {
-                transformerConfiguration.except = new LinkConfiguration(transformer.exceptionHandler);
-            }
+            List<LinkConfiguration> excepts = transformer.excepts.stream()
+                    .filter(link -> !link.isImplied())
+                    .map(LinkConfiguration::new)
+                    .collect(Collectors.toList());
+            if (!excepts.isEmpty()) transformerConfiguration.excepts = excepts;
 
             configuration.transformers.add(transformerConfiguration);
         }
@@ -140,11 +142,13 @@ public final class Configuration {
                     }
                 }
             }
-            if (transformerConfiguration.except != null) {
-                ExceptionLink link = gBuilder.except(transformerName, transformerConfiguration.except.to);
-                if (transformerConfiguration.except.async != null) {
-                    if (transformerConfiguration.except.async) link.async();
-                    else link.sync();
+            if (transformerConfiguration.excepts != null) {
+                for (LinkConfiguration linkConfiguration : transformerConfiguration.excepts) {
+                    ExceptionLink link = gBuilder.except(transformerName, linkConfiguration.to);
+                    if (linkConfiguration.async != null) {
+                        if (linkConfiguration.async) link.async();
+                        else link.sync();
+                    }
                 }
             }
         }
@@ -183,7 +187,7 @@ public final class Configuration {
         public List<String> hosts;
         public List<LinkConfiguration> links;
         public List<String> syncs;
-        public LinkConfiguration except;
+        public List<LinkConfiguration> excepts;
 
         @JsonCreator
         public TransformerConfiguration() {}

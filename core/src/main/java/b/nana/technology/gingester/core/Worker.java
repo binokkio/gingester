@@ -95,17 +95,18 @@ abstract class Worker extends Thread {
             Thread.currentThread().interrupt();
         }
 
-        if (thrower.exceptionHandler != null) {
-            accept(exceptionContext, exception, thrower.exceptionHandler);
+        if (!thrower.excepts.isEmpty()) {
+            for (ExceptionLink except : thrower.excepts) {
+                accept(exceptionContext, exception, except);
+            }
             return;
         } else {
             for (Context context : exceptionContext) {
-                if (context.transformer != null) {
-                    ExceptionLink link = context.transformer.exceptionHandler;
-                    if (link != null) {
-                        accept(exceptionContext, exception, link);
-                        return;
+                if (context.transformer != null && !context.transformer.excepts.isEmpty()) {
+                    for (ExceptionLink except : context.transformer.excepts) {
+                        accept(exceptionContext, exception, except);
                     }
+                    return;
                 }
             }
         }

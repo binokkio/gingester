@@ -23,9 +23,9 @@ public abstract class Transformer<I, O> {
     final Class<O> outputClass;
     final List<BaseLink<?, ? extends I>> incoming = new ArrayList<>();
     final List<NormalLink<O>> outgoing = new ArrayList<>();
-    final Map<String, NormalLink<O>> outgoingByName = new HashMap<>();
-    ExceptionLink exceptionHandler;
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
+    final List<ExceptionLink> excepts = new ArrayList<>();
+    final Map<String, NormalLink<O>> outgoingByName = new HashMap<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
     private final Threader threader = new Threader();
@@ -230,7 +230,7 @@ public abstract class Transformer<I, O> {
     }
 
     private Context maybeExtend(Context context) {
-        if ((exceptionHandler != null || !syncs.isEmpty()) && context.transformer != this) {
+        if ((!excepts.isEmpty() || !syncs.isEmpty()) && context.transformer != this) {
             return context.extend(this).build();
         } else {
             return context;
@@ -273,7 +273,7 @@ public abstract class Transformer<I, O> {
 
     List<BaseLink<?, ?>> getOutgoing() {
         List<BaseLink<?, ?>> result = new ArrayList<>(outgoing);
-        if (exceptionHandler != null ) result.add(exceptionHandler);
+        result.addAll(excepts);
         return result;
     }
 

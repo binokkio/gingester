@@ -7,7 +7,7 @@
     },
     {
       "transformer": "ExceptionThrower",
-      "except": "ExceptionHandler"
+      "excepts": "ExceptionHandler"
     },
     "Question",
     {
