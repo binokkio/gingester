@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.details;
+package b.nana.technology.gingester.transformers.base.transformers.stash;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Passthrough;

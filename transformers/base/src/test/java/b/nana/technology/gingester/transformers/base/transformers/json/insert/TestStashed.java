@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.json.insert;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.transformers.base.common.ToJsonBase;
-import b.nana.technology.gingester.transformers.base.transformers.details.Time;
+import b.nana.technology.gingester.transformers.base.transformers.stash.Time;
 import b.nana.technology.gingester.transformers.base.transformers.string.ToJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
