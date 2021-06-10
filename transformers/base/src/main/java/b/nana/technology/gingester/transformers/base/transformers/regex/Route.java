@@ -1,36 +1,22 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
 import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Passthrough;
+import b.nana.technology.gingester.transformers.base.common.RouteBase;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Route<T> extends Passthrough<T> {
+public class Route<T> extends RouteBase<T> {
 
     private final String[] stash;
     private final Pattern pattern;
     private final int group;
-    private final Map<String, String> routes;
-    private final String defaultRoute;
 
     public Route(Parameters parameters) {
         super(parameters);
         stash = parameters.stash != null ? parameters.stash.split("\\.") : null;
         pattern = Pattern.compile(parameters.pattern);
         group = parameters.group;
-        routes = parameters.routes;
-        defaultRoute = parameters.defaultRoute;
-    }
-
-    @Override
-    public List<String> getLinks() {
-        List<String> links = new ArrayList<>(routes.values());
-        if (defaultRoute != null) links.add(defaultRoute);
-        return links;
     }
 
     @Override
@@ -42,26 +28,18 @@ public class Route<T> extends Passthrough<T> {
 
         Matcher matcher = pattern.matcher(string);
         if (!matcher.find()) {
-            if (defaultRoute == null) throw new IllegalStateException("Pattern not found");
-            emit(context, input, defaultRoute);
-            return;
+            emit(context, input, getDefaultRoute().orElseThrow(() -> new IllegalStateException("Pattern not found")));
+        } else {
+            emit(context, input,
+                    getRoute(matcher.group(group)).orElseGet(
+                            () -> getDefaultRoute()
+                                    .orElseThrow(() -> new IllegalStateException("No route for " + string))));
         }
-
-        String route = routes.get(matcher.group(group));
-        if (route == null) {
-            if (defaultRoute == null) throw new IllegalStateException("No route for " + matcher.group(group));
-            emit(context, input, defaultRoute);
-            return;
-        }
-
-        emit(context, input, route);
     }
 
-    public static class Parameters {
+    public static class Parameters extends RouteBase.Parameters {
         public String stash;
         public String pattern;
         public int group;
-        public Map<String, String> routes;
-        public String defaultRoute;
     }
 }
