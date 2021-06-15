@@ -122,27 +122,7 @@ final class Builder implements Gingester.Builder {
 
     @Override
     public void sync(Transformer<?, ?> from, Transformer<?, ?> to) {
-
-        List<ArrayDeque<Transformer<?, ?>>> routes = from.getDownstreamRoutes().stream()
-                .filter(route -> route.getLast() == to)
-                .collect(Collectors.toList());
-
-        if (routes.isEmpty()) {
-            throw new IllegalStateException("No route between given transformers");
-        }
-
         from.syncs.add(to);
-
-        Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
-                route.stream().reduce((f, t) -> {
-                    f.getOutgoing().stream().filter(l -> l.to == t).findFirst().orElseThrow().requireSync();
-                    return t;
-                }).orElseThrow()
-        ).collect(Collectors.toSet());
-
-        if (!sanity.equals(Set.of(to))) {
-            throw new IllegalStateException();  // TODO
-        }
     }
 
     @Override
@@ -162,6 +142,30 @@ final class Builder implements Gingester.Builder {
             if (transformer.outgoing.isEmpty()) {  // TODO this ignores the exception handler, good or bad?
                 for (String to : transformer.getLinks()) {
                     linkUnchecked(transformer, getTransformer(to)).markImplied();
+                }
+            }
+        }
+
+        // syncs
+        for (Transformer<?, ?> from : transformers) {
+            for (Transformer<?, ?> to : from.syncs) {
+                List<ArrayDeque<Transformer<?, ?>>> routes = from.getDownstreamRoutes().stream()
+                        .filter(route -> route.getLast() == to)
+                        .collect(Collectors.toList());
+
+                if (routes.isEmpty()) {
+                    throw new IllegalStateException("No route between given transformers");
+                }
+
+                Set<Transformer<?, ?>> sanity = routes.stream().map(route ->
+                        route.stream().reduce((f, t) -> {
+                            f.getOutgoing().stream().filter(l -> l.to == t).findFirst().orElseThrow().requireSync();
+                            return t;
+                        }).orElseThrow()
+                ).collect(Collectors.toSet());
+
+                if (!sanity.equals(Set.of(to))) {
+                    throw new IllegalStateException();  // TODO
                 }
             }
         }
