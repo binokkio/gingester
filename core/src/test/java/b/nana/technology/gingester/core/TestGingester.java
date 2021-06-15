@@ -79,11 +79,6 @@ class TestGingester {
     }
 
     @Test
-    void testSyncBeforeLinkThrows() {
-        assertThrows(IllegalStateException.class, () -> new Builder().sync(new Emphasize(), new Emphasize()));
-    }
-
-    @Test
     void testTransformCalledByUpstreamWorkerByDefault() {
         Set<String> names = Collections.synchronizedSet(new HashSet<>());
         Gingester.Builder gBuilder = Gingester.newBuilder();
