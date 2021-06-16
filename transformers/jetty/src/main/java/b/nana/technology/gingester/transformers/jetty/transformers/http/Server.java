@@ -22,12 +22,14 @@ public class Server extends Transformer<Void, InputStream> {
     private final SslContextFactory.Server sslContextFactory;
     private final boolean stashHeaders;
     private final boolean stashQuery;
+    private final boolean stashCookies;
 
     public Server(Parameters parameters) {
         super(parameters);
         port = parameters.port;
         stashHeaders = parameters.stashHeaders;
         stashQuery = parameters.stashQuery;
+        stashCookies = parameters.stashCookies;
 
         if (parameters.keyStore != null) {
             sslContextFactory = new SslContextFactory.Server();
@@ -98,6 +100,10 @@ public class Server extends Transformer<Void, InputStream> {
                     stash.put("query", query);
                 }
 
+                if (stashCookies) {
+                    
+                }
+
                 contextBuilder.stash(stash);
 
                 emit(
@@ -124,6 +130,7 @@ public class Server extends Transformer<Void, InputStream> {
         public int port = 8080;
         public boolean stashHeaders = true;
         public boolean stashQuery = true;
+        public boolean stashCookies = true;
         public StoreParameters trustStore;
         public StoreParameters keyStore;
 
