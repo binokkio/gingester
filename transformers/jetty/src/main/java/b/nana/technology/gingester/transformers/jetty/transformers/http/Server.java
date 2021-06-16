@@ -8,20 +8,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 public class Server extends Transformer<Void, InputStream> {
 
     private final int port;
+    private final SslContextFactory.Server sslContextFactory;
     private final boolean stashHeaders;
     private final boolean stashQuery;
 
@@ -30,6 +28,21 @@ public class Server extends Transformer<Void, InputStream> {
         port = parameters.port;
         stashHeaders = parameters.stashHeaders;
         stashQuery = parameters.stashQuery;
+
+        if (parameters.keyStore != null) {
+            sslContextFactory = new SslContextFactory.Server();
+            sslContextFactory.setKeyStorePath(parameters.keyStore.path);
+            sslContextFactory.setKeyStorePassword(parameters.keyStore.password);
+            if (parameters.trustStore != null) {
+                sslContextFactory.setTrustStorePath(parameters.trustStore.path);
+                sslContextFactory.setTrustStorePassword(parameters.trustStore.password);
+                sslContextFactory.setNeedClientAuth(true);
+            }
+        } else if (parameters.trustStore != null) {
+            throw new IllegalArgumentException("Can't have trustStore without keyStore");
+        } else {
+            sslContextFactory = null;
+        }
     }
 
     @Override
@@ -43,7 +56,10 @@ public class Server extends Transformer<Void, InputStream> {
 
         org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server(new ServerQueuedThreadPool());
 
-        ServerConnector connector = new ServerConnector(server);
+        ServerConnector connector = sslContextFactory != null ?
+                new ServerConnector(server, sslContextFactory) :
+                new ServerConnector(server);
+
         connector.setPort(port);
         server.addConnector(connector);
 
@@ -108,6 +124,8 @@ public class Server extends Transformer<Void, InputStream> {
         public int port = 8080;
         public boolean stashHeaders = true;
         public boolean stashQuery = true;
+        public StoreParameters trustStore;
+        public StoreParameters keyStore;
 
         @JsonCreator
         public Parameters() {}
@@ -116,5 +134,10 @@ public class Server extends Transformer<Void, InputStream> {
         public Parameters(int port) {
             this.port = port;
         }
+    }
+
+    public static class StoreParameters {
+        public String path;
+        public String password;
     }
 }
