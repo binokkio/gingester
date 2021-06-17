@@ -45,6 +45,28 @@ class TestSplit {
     }
 
     @Test
+    void testSplitWithAdjacentDelimiters() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("HelloDELIMITERDELIMITERDELIMITERWorld!".getBytes());
+        Split.Splitter splitter = new Split.Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("Hello", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("World!", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
+    void testSplitWithOnlyDelimiters() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("DELIMITERDELIMITERDELIMITER".getBytes());
+        Split.Splitter splitter = new Split.Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
     void testSplit() {
 
         InputStream inputStream = new ByteArrayInputStream("Hello, World! Bye, World!".getBytes());

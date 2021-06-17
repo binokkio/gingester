@@ -51,7 +51,7 @@ public class Split extends Transformer<InputStream, InputStream> {
         private final byte[] delimiter;
         private InputStream source;
         private int seen;  // number of bytes of the delimiter that have been seen
-        private int knownRemaining;
+        private boolean peek = true;
 
         public Splitter(InputStream source, byte[] delimiter) {
             this.source = source;
@@ -60,14 +60,14 @@ public class Split extends Transformer<InputStream, InputStream> {
 
         public Optional<InputStream> getNextInputStream() throws IOException {
 
-            if (knownRemaining == 0) {
+            if (peek) {
                 byte[] peek = new byte[1];
                 int read = source.read(peek);
                 if (read == -1) return Optional.empty();
                 source = new SequenceInputStream(new ByteArrayInputStream(peek), source);
             }
 
-            knownRemaining = 0;
+            peek = true;
 
             return Optional.of(new InputStream() {
 
@@ -86,7 +86,7 @@ public class Split extends Transformer<InputStream, InputStream> {
                     int read;
                     while ((read = source.read(buffer, offset + total, length - total)) != -1) {
                         total += read;
-                        if (total == length) break;  // TODO move to while condition?
+                        if (total >= delimiter.length) break;
                     }
 
                     if (total != 0) {
@@ -97,11 +97,14 @@ public class Split extends Transformer<InputStream, InputStream> {
                             }
                             if (seen == delimiter.length) {
                                 done = true;
+                                peek = false;
                                 int nextStart = i + 1;
-                                knownRemaining = total - (nextStart - offset);
-                                byte[] remaining = new byte[knownRemaining];
-                                System.arraycopy(buffer, nextStart, remaining, 0, remaining.length);
-                                source = new SequenceInputStream(new ByteArrayInputStream(remaining), source);
+                                int knownRemaining = total - (nextStart - offset);
+                                if (knownRemaining > 0) {
+                                    byte[] remaining = new byte[knownRemaining];
+                                    System.arraycopy(buffer, nextStart, remaining, 0, remaining.length);
+                                    source = new SequenceInputStream(new ByteArrayInputStream(remaining), source);
+                                }
                                 total = i - offset - (seen - 1);
                                 seen = 0;
                                 return total > 0 ? total : -1;
@@ -113,6 +116,11 @@ public class Split extends Transformer<InputStream, InputStream> {
                         } else {
                             return total - seen;
                         }
+                    } else if (seen > 0) {
+                        System.arraycopy(delimiter, 0, buffer, offset, seen);
+                        int moribund = seen;
+                        seen = 0;
+                        return moribund;
                     } else {
                         return -1;
                     }
