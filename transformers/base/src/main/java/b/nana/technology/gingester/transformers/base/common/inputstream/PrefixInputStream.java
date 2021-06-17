@@ -20,6 +20,9 @@ public class PrefixInputStream extends InputStream {
 
     public void prefix(byte[] prefix, int offset, int length) {
         if (length > 0) {
+            if (!prefixes.isEmpty()) {
+                prefixes.getFirst().trimStart(prefixRemaining);
+            }
             prefixes.addFirst(new Slice(prefix, offset, length));
             prefixRemaining = length;
         }
@@ -70,13 +73,18 @@ public class PrefixInputStream extends InputStream {
     private static class Slice {
 
         final byte[] bytes;
-        final int offset;
-        final int length;
+        int offset;
+        int length;
 
-        public Slice(byte[] bytes, int offset, int length) {
+        Slice(byte[] bytes, int offset, int length) {
             this.bytes = bytes;
             this.offset = offset;
             this.length = length;
+        }
+
+        void trimStart(int newLength) {
+            offset += length - newLength;
+            length = newLength;
         }
     }
 }
