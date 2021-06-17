@@ -75,7 +75,7 @@ public class Split extends Transformer<InputStream, InputStream> {
                 private boolean done;
 
                 @Override
-                public int read(byte[] buffer, int offset, int length) throws IOException {
+                public int read(byte[] destination, int offset, int length) throws IOException {
 
                     if (done) return -1;
                     if (length == 0) return 0;  // TODO is this really necessary?
@@ -87,7 +87,7 @@ public class Split extends Transformer<InputStream, InputStream> {
                         byte[] temp = new byte[delimiter.length];
                         read = read(temp);
                         if (read > length) {
-                            System.arraycopy(temp, 0, buffer, offset, length);
+                            System.arraycopy(temp, 0, destination, offset, length);
                             source.prefix(delimiter, 0, seen);
                             source.prefix(temp, length, read - length);
                             seen = 0;
@@ -95,19 +95,19 @@ public class Split extends Transformer<InputStream, InputStream> {
                         } else if (read == -1) {
                             return -1;
                         } else {
-                            System.arraycopy(temp, 0, buffer, offset, read);
+                            System.arraycopy(temp, 0, destination, offset, read);
                             return read;
                         }
                     }
 
-                    while ((read = source.read(buffer, offset + total, length - total)) != -1) {
+                    while ((read = source.read(destination, offset + total, length - total)) != -1) {
                         total += read;
                         if (total >= delimiter.length) break;
                     }
 
                     if (total != 0) {
                         for (int i = offset; i < offset + total; i++) {
-                            if (buffer[i] != delimiter[seen++]) {
+                            if (destination[i] != delimiter[seen++]) {
                                 seen = 0;
                                 continue;
                             }
@@ -118,7 +118,7 @@ public class Split extends Transformer<InputStream, InputStream> {
                                 int knownRemaining = total - (nextStart - offset);
                                 if (knownRemaining > 0) {
                                     byte[] remaining = new byte[knownRemaining];
-                                    System.arraycopy(buffer, nextStart, remaining, 0, remaining.length);
+                                    System.arraycopy(destination, nextStart, remaining, 0, remaining.length);
                                     source.prefix(remaining);
                                 }
                                 total = i - offset - (seen - 1);
@@ -133,7 +133,7 @@ public class Split extends Transformer<InputStream, InputStream> {
                             return total - seen;
                         }
                     } else if (seen > 0) {
-                        System.arraycopy(delimiter, 0, buffer, offset, seen);
+                        System.arraycopy(delimiter, 0, destination, offset, seen);
                         int moribund = seen;
                         seen = 0;
                         return moribund;
@@ -159,7 +159,7 @@ public class Split extends Transformer<InputStream, InputStream> {
     public static class PrefixInputStream extends InputStream {
 
         private final InputStream source;
-        private final ArrayDeque<Prefix> prefixes = new ArrayDeque<>();
+        private final ArrayDeque<Slice> prefixes = new ArrayDeque<>();
         private int prefixRemaining;
 
         public PrefixInputStream(InputStream source) {
@@ -172,7 +172,7 @@ public class Split extends Transformer<InputStream, InputStream> {
 
         public void prefix(byte[] prefix, int offset, int length) {
             if (length > 0) {
-                prefixes.addFirst(new Prefix(prefix, offset, length));
+                prefixes.addFirst(new Slice(prefix, offset, length));
                 prefixRemaining = length;
             }
         }
@@ -180,13 +180,11 @@ public class Split extends Transformer<InputStream, InputStream> {
         @Override
         public int read() throws IOException {
             if (prefixRemaining > 1) {
-                Prefix prefix = prefixes.getFirst();
-                byte read = prefix.get(prefix.length() - prefixRemaining);
-                prefixRemaining--;
-                return read;
+                Slice prefix = prefixes.getFirst();
+                return prefix.bytes[prefix.offset + prefix.length - prefixRemaining--];
             } else if (prefixRemaining == 1) {
-                Prefix prefix = prefixes.remove();
-                byte read = prefix.get(prefix.length - 1);
+                Slice prefix = prefixes.remove();
+                byte read = prefix.bytes[prefix.offset + prefix.length - 1];
                 prefixRemaining = prefixes.isEmpty() ? 0 : prefixes.peek().length;
                 return read;
             } else {
@@ -195,55 +193,43 @@ public class Split extends Transformer<InputStream, InputStream> {
         }
 
         @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            int remaining = len;
+        public int read(byte[] destination, int offset, int length) throws IOException {
+            int remaining = length;
             while (prefixRemaining > 0) {
                 if (remaining >= prefixRemaining) {
-                    Prefix prefix = prefixes.remove();
-                    System.arraycopy(prefix.bytes, prefix.offset + prefix.length - prefixRemaining, b, off + len - remaining, prefixRemaining);
+                    Slice prefix = prefixes.remove();
+                    System.arraycopy(prefix.bytes, prefix.offset + prefix.length - prefixRemaining, destination, offset + length - remaining, prefixRemaining);
                     remaining -= prefixRemaining;
                     prefixRemaining = prefixes.isEmpty() ? 0 : prefixes.peek().length;
-                    if (remaining == 0) return len;
+                    if (remaining == 0) return length;
                 } else {
-                    Prefix prefix = prefixes.getFirst();
-                    System.arraycopy(prefix.bytes, prefix.offset + prefix.length - prefixRemaining, b, off + len - remaining, remaining);
+                    Slice prefix = prefixes.getFirst();
+                    System.arraycopy(prefix.bytes, prefix.offset + prefix.length - prefixRemaining, destination, offset + length - remaining, remaining);
                     prefixRemaining -= remaining;
-                    return len;
+                    return length;
                 }
             }
-            int read = source.read(b, off + len - remaining, remaining);
-            if (remaining == len) {
+            int read = source.read(destination, offset + length - remaining, remaining);
+            if (remaining == length) {
                 return read;
             } else if (read == -1) {
-                return len - remaining;
+                return length - remaining;
             } else {
-                return len - remaining + read;
+                return length - remaining + read;
             }
         }
     }
 
-    private static class Prefix {  // TODO rename
+    private static class Slice {
 
         private final byte[] bytes;
         private final int offset;
         private final int length;
 
-        private Prefix(byte[] bytes) {
-            this(bytes, 0, bytes.length);
-        }
-
-        private Prefix(byte[] bytes, int offset, int length) {
+        private Slice(byte[] bytes, int offset, int length) {
             this.bytes = bytes;
             this.offset = offset;
             this.length = length;
-        }
-
-        private byte get(int index) {
-            return bytes[offset + index];
-        }
-
-        private int length() {
-            return length;
         }
     }
 }
