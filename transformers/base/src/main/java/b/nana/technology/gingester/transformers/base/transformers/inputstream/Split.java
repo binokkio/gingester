@@ -94,7 +94,7 @@ public class Split extends Transformer<InputStream, InputStream> {
                         if (seen == delimiter.length) {
                             done = true;
                             int nextStart = i + 1;
-                            knownRemaining = read - nextStart + offset;
+                            knownRemaining = read - (nextStart - offset);
                             byte[] remaining = new byte[knownRemaining];
                             System.arraycopy(buffer, nextStart, remaining, 0, remaining.length);
                             source = new SequenceInputStream(new ByteArrayInputStream(remaining), source);
@@ -115,12 +115,12 @@ public class Split extends Transformer<InputStream, InputStream> {
                         read = read(buffer);
                     } while (read == 0);
                     if (read == -1) return -1;
-
-                    source = new SequenceInputStream(
-                            new ByteArrayInputStream(buffer, 1, buffer.length - 1),
-                            source
-                    );
-
+                    if (read > 1) {
+                        source = new SequenceInputStream(
+                                new ByteArrayInputStream(buffer, 1, read - 1),
+                                source
+                        );
+                    }
                     return buffer[0];
                 }
             });

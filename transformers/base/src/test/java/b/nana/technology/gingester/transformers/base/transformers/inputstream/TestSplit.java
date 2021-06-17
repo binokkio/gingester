@@ -16,13 +16,32 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TestSplit {
 
     @Test
-    void testSplitter() throws IOException {
+    void testSplitterReadAllBytes() throws IOException {
         InputStream inputStream = new ByteArrayInputStream("Hello, World! Bye, World!".getBytes());
         Split.Splitter splitter = new Split.Splitter(inputStream, ", ".getBytes());
         assertEquals("Hello", new String(splitter.getNextInputStream().orElseThrow().readAllBytes()));
         assertEquals("World! Bye", new String(splitter.getNextInputStream().orElseThrow().readAllBytes()));
         assertEquals("World!", new String(splitter.getNextInputStream().orElseThrow().readAllBytes()));
         assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
+    void testSplitterReadSingleBytes() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("Hello, World! Bye, World!".getBytes());
+        Split.Splitter splitter = new Split.Splitter(inputStream, ", ".getBytes());
+        assertEquals("Hello", readSingleBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("World! Bye", readSingleBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("World!", readSingleBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    private String readSingleBytesToString(InputStream inputStream) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        int read;
+        while ((read = inputStream.read()) != -1) {
+            stringBuilder.append((char) read);
+        }
+        return stringBuilder.toString();
     }
 
     @Test
