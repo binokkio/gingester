@@ -78,42 +78,50 @@ public class Split extends Transformer<InputStream, InputStream> {
 
                     if (done) return -1;
 
-                    if (buffer.length < delimiter.length) {
-                        throw new IllegalArgumentException("Buffer must be at least delimiter.length long");
+                    if (length < delimiter.length) {
+                        throw new IllegalArgumentException("Length must be at least delimiter.length");
                     }
 
-                    int read = source.read(buffer, offset, length);
-
-                    for (int i = offset; i < offset + read; i++) {
-
-                        if (buffer[i] != delimiter[seen++]) {
-                            seen = 0;
-                            continue;
-                        }
-
-                        if (seen == delimiter.length) {
-                            done = true;
-                            int nextStart = i + 1;
-                            knownRemaining = read - (nextStart - offset);
-                            byte[] remaining = new byte[knownRemaining];
-                            System.arraycopy(buffer, nextStart, remaining, 0, remaining.length);
-                            source = new SequenceInputStream(new ByteArrayInputStream(remaining), source);
-                            read = i - offset - (seen - 1);
-                            seen = 0;
-                            return Math.max(0, read);
-                        }
+                    int total = 0;
+                    int read;
+                    while ((read = source.read(buffer, offset + total, length - total)) != -1) {
+                        total += read;
+                        if (total == length) break;  // TODO move to while condition?
                     }
 
-                    return read - seen;
+                    if (total != 0) {
+                        for (int i = offset; i < offset + total; i++) {
+                            if (buffer[i] != delimiter[seen++]) {
+                                seen = 0;
+                                continue;
+                            }
+                            if (seen == delimiter.length) {
+                                done = true;
+                                int nextStart = i + 1;
+                                knownRemaining = total - (nextStart - offset);
+                                byte[] remaining = new byte[knownRemaining];
+                                System.arraycopy(buffer, nextStart, remaining, 0, remaining.length);
+                                source = new SequenceInputStream(new ByteArrayInputStream(remaining), source);
+                                total = i - offset - (seen - 1);
+                                seen = 0;
+                                return total > 0 ? total : -1;
+                            }
+                        }
+                        if (read == -1) {
+                            seen = 0;
+                            return total;
+                        } else {
+                            return total - seen;
+                        }
+                    } else {
+                        return -1;
+                    }
                 }
 
                 @Override
                 public int read() throws IOException {
                     byte[] buffer = new byte[delimiter.length];
-                    int read;
-                    do {
-                        read = read(buffer);
-                    } while (read == 0);
+                    int read = read(buffer);
                     if (read == -1) return -1;
                     if (read > 1) {
                         source = new SequenceInputStream(

@@ -19,9 +19,9 @@ class TestSplit {
     void testSplitterReadAllBytes() throws IOException {
         InputStream inputStream = new ByteArrayInputStream("Hello, World! Bye, World!".getBytes());
         Split.Splitter splitter = new Split.Splitter(inputStream, ", ".getBytes());
-        assertEquals("Hello", new String(splitter.getNextInputStream().orElseThrow().readAllBytes()));
-        assertEquals("World! Bye", new String(splitter.getNextInputStream().orElseThrow().readAllBytes()));
-        assertEquals("World!", new String(splitter.getNextInputStream().orElseThrow().readAllBytes()));
+        assertEquals("Hello", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("World! Bye", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("World!", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
         assertTrue(splitter.getNextInputStream().isEmpty());
     }
 
@@ -35,13 +35,13 @@ class TestSplit {
         assertTrue(splitter.getNextInputStream().isEmpty());
     }
 
-    private String readSingleBytesToString(InputStream inputStream) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        int read;
-        while ((read = inputStream.read()) != -1) {
-            stringBuilder.append((char) read);
-        }
-        return stringBuilder.toString();
+    @Test
+    void testSplitWithPartialDelimiterAtEndOfStream() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("Hello, World!DELIMITERBye, World!DELIM".getBytes());
+        Split.Splitter splitter = new Split.Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("Hello, World!", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertEquals("Bye, World!DELIM", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
+        assertTrue(splitter.getNextInputStream().isEmpty());
     }
 
     @Test
@@ -64,5 +64,18 @@ class TestSplit {
         assertEquals("World! Bye", results.get(1));
         assertEquals("World!", results.get(2));
         assertEquals(results.size(), 3);
+    }
+
+    private String readAllBytesToString(InputStream inputStream) throws IOException {
+        return new String(inputStream.readAllBytes());
+    }
+
+    private String readSingleBytesToString(InputStream inputStream) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        int read;
+        while ((read = inputStream.read()) != -1) {
+            stringBuilder.append((char) read);
+        }
+        return stringBuilder.toString();
     }
 }
