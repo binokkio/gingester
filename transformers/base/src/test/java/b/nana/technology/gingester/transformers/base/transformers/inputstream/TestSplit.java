@@ -111,6 +111,17 @@ class TestSplit {
     }
 
     @Test
+    void testSplitterSkip() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("HelloDELIMITERWorld!DELIMITERByeDELIMITERWorld!".getBytes());
+        Split.Splitter splitter = new Split.Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("Hello", readChunksOfBytesToString(splitter.getNextInputStream().orElseThrow(), 5));
+        assertEquals(6, splitter.getNextInputStream().orElseThrow().skip(Long.MAX_VALUE));
+        assertEquals("Bye", readChunksOfBytesToString(splitter.getNextInputStream().orElseThrow(), 5));
+        assertEquals(6, splitter.getNextInputStream().orElseThrow().skip(Long.MAX_VALUE));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
     void testPrefixInputStreamReadAllBytes() throws IOException {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("World!".getBytes());
         Split.PrefixInputStream prefixInputStream = new Split.PrefixInputStream(byteArrayInputStream);

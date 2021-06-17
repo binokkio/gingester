@@ -26,11 +26,10 @@ public class Split extends Transformer<InputStream, InputStream> {
     @Override
     protected void transform(Context context, InputStream input) throws Exception {
         Splitter splitter = new Splitter(input, delimiter);
-        Optional<InputStream> optionalSplit;
-        while ((optionalSplit = splitter.getNextInputStream()).isPresent()) {
-            InputStream split = optionalSplit.get();
-            emit(context, optionalSplit.get());
-            split.transferTo(OutputStream.nullOutputStream());
+        Optional<InputStream> split;
+        long counter = 0;
+        while ((split = splitter.getNextInputStream()).isPresent()) {
+            emit(context.extend(this).description(++counter), split.get());
         }
     }
 
@@ -59,6 +58,9 @@ public class Split extends Transformer<InputStream, InputStream> {
             this.delimiter = delimiter;
         }
 
+        /**
+         * The InputStream from the previous call to `getNextInputStream()` must be fully read before calling this method!
+         */
         public Optional<InputStream> getNextInputStream() throws IOException {
 
             if (peek) {
