@@ -20,7 +20,8 @@ class TestSplit {
         Split split = new Split();
         ToString toString = new ToString();
 
-        List<String> results = new ArrayList<>();
+        List<Context> contexts = new ArrayList<>();
+        List<String> values = new ArrayList<>();
 
         Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(
@@ -33,10 +34,17 @@ class TestSplit {
                 getClass().getResourceAsStream("/hello-world.multipart-formdata")
         );
         gBuilder.link(split, toString);
-        gBuilder.link(toString, (Consumer<String>) results::add);
+        gBuilder.link(toString, (context, value) -> {
+                contexts.add(context);
+                values.add(value);
+        });
         gBuilder.build().run();
 
-        assertEquals(1, results.size());
-        assertEquals(results.get(0), "Content-Disposition: form-data; name=\"file\"; filename=\"hello-world.txt\"\r\nContent-Type: text/plain\r\n\r\nHello, World!");
+        assertEquals(1, contexts.size());
+        assertEquals("file", contexts.get(0).fetch("name").orElseThrow());
+        assertEquals("hello-world.txt", contexts.get(0).fetch("filename").orElseThrow());
+
+        assertEquals(1, values.size());
+        assertEquals(values.get(0), "Hello, World!");
     }
 }

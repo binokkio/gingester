@@ -84,6 +84,10 @@ public class Splitter {
                             }
                         } else if (seen > 0) {
                             i -= seen;  // restart one character past where we saw a delimiter start
+                            if (i < 0) {
+                                // TODO
+                                i = 0;
+                            }
                             seen = 0;
                         }
                     }
@@ -114,5 +118,10 @@ public class Splitter {
                 return buffer[0];
             }
         });
+    }
+
+    public InputStream getRemaining() {
+        source.prefix(delimiter, 0, seen);
+        return source;
     }
 }

@@ -7,8 +7,8 @@ import b.nana.technology.gingester.transformers.base.common.inputstream.Splitter
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +17,10 @@ public class Split extends Transformer<InputStream, InputStream> {
 
     private static final Pattern BOUNDARY_PATTERN = Pattern.compile("(?:^|;| )boundary=([^; ]*)");
     private static final byte[] CR_LF = new byte[] { '\r', '\n' };
+    private static final byte[] CR_LF_CR_LF = new byte[] { '\r', '\n' , '\r', '\n' };
     private static final byte[] FINAL_BOUNDARY_SENTINEL = new byte[] { '-', '-' };
+    private static final Pattern NAME_PATTERN = Pattern.compile("[; ]name=\"(.*?)\"");
+    private static final Pattern FILENAME_PATTERN = Pattern.compile("[; ]filename=\"(.*?)\"");
 
     @Override
     protected void transform(Context context, InputStream input) throws IOException {
@@ -35,29 +38,47 @@ public class Split extends Transformer<InputStream, InputStream> {
 
         PrefixInputStream prefixedInput = new PrefixInputStream(input);
         prefixedInput.prefix(CR_LF);
-        Splitter splitter = new Splitter(prefixedInput, delimiter);
+        Splitter partsSplitter = new Splitter(prefixedInput, delimiter);
 
         // skip preamble
         //noinspection ResultOfMethodCallIgnored
-        splitter.getNextInputStream().orElseThrow().skip(Long.MAX_VALUE);
+        partsSplitter.getNextInputStream().orElseThrow().skip(Long.MAX_VALUE);
 
+        long counter = 0;
         byte[] peek = new byte[2];
-        Optional<InputStream> optionalSplit;
-        while ((optionalSplit = splitter.getNextInputStream()).isPresent()) {
-            InputStream split = optionalSplit.get();
+        Optional<InputStream> optionalPart;
+        while ((optionalPart = partsSplitter.getNextInputStream()).isPresent()) {
+            InputStream part = optionalPart.get();
 
             // must be either "--" or "\r\n" according to the RFC, and knowing the
             // InputStream implementation it is not possible for read to be less than 2
             //noinspection ResultOfMethodCallIgnored
-            split.read(peek);
+            part.read(peek);
 
             if (Arrays.equals(peek, FINAL_BOUNDARY_SENTINEL)) {
                 // skip epilogue
                 //noinspection ResultOfMethodCallIgnored
-                split.skip(Long.MAX_VALUE);
+                part.skip(Long.MAX_VALUE);
                 break;
             } else {
-                emit(context, split);
+                Splitter partSplitter = new Splitter(part, CR_LF_CR_LF);
+                String headersString = new String(partSplitter.getNextInputStream().orElseThrow().readAllBytes());
+                Matcher nameMatcher = NAME_PATTERN.matcher(headersString);
+                if (!nameMatcher.find()) throw new IllegalStateException("Can't find name");
+                String name = nameMatcher.group(1);
+                Matcher filenameMatcher = FILENAME_PATTERN.matcher(headersString);
+                Context.Builder contextBuilder = context.extend(this).description(++counter);
+                if (filenameMatcher.find()) {
+                    contextBuilder.stash(Map.of(
+                            "name", name,
+                            "filename", filenameMatcher.group(1)
+                    ));
+                } else {
+                    contextBuilder.stash(Map.of(
+                            "name", name
+                    ));
+                }
+                emit(contextBuilder, partSplitter.getRemaining());
             }
         }
     }
