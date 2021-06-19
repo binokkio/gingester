@@ -131,6 +131,11 @@ final class Builder implements Gingester.Builder {
         transformer.queue.add(new Batch<>(Context.SEED, seed));
     }
 
+    public <T> void seed(Transformer<T, ?> transformer, Context.Builder contextBuilder, T seed) {
+        add(transformer);
+        transformer.queue.add(new Batch<>(contextBuilder.build(), seed));
+    }
+
     @Override
     public final Gingester build() {
 
@@ -176,9 +181,6 @@ final class Builder implements Gingester.Builder {
                 seed(transformer, null);
             }
         }
-
-        // TODO do what is done in `public void sync(Transformer<?, ?> from, Transformer<?, ?> to)` here instead..
-        // TODO ..to account for links added after the call to sync, also exception links
 
         Map<String, Integer> counters = new HashMap<>();
 

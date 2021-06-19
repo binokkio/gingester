@@ -9,8 +9,12 @@ import java.util.stream.StreamSupport;
 
 public final class Context implements Iterable<Context> {
 
-    private static final int INDENT = 2;
+    public static Context.Builder newBuilder() {
+        return SEED.extend(null);
+    }
+
     static final Context SEED = new Context();
+    private static final int INDENT = 2;
 
     final Context parent;
     final int depth;
