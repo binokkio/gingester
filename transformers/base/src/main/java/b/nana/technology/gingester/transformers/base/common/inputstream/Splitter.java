@@ -4,17 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-// TODO try out reading a bit extra when we are half way through a delimiter, might simplify things
-
 public class Splitter {
 
     private final byte[] delimiter;
     private final PrefixInputStream source;
-    private int seen;  // number of bytes of the delimiter that have been seen
-    private boolean peek = true;
+    private boolean peek;
 
     public Splitter(InputStream source, byte[] delimiter) {
         this.source = new PrefixInputStream(source);
+        this.source.setMinimumBufferSize(delimiter.length);
         this.delimiter = delimiter;
     }
 
@@ -37,97 +35,67 @@ public class Splitter {
             private boolean done;
 
             @Override
-            public int read(byte[] destination, int offset, int length) throws IOException {
-
+            public int read() throws IOException {
                 if (done) return -1;
-                if (length == 0) return 0;  // TODO is this really necessary?
-
-                int total = 0;
-                int read;
-
-                if (length < delimiter.length) {
-                    byte[] temp = new byte[delimiter.length];
-                    read = read(temp);
-                    if (read > length) {
-                        System.arraycopy(temp, 0, destination, offset, length);
-                        source.prefix(delimiter, 0, seen);
-                        source.prefix(temp, length, read - length);
-                        seen = 0;
-                        return length;
-                    } else if (read == -1) {
-                        return -1;
-                    } else {
-                        System.arraycopy(temp, 0, destination, offset, read);
-                        return read;
-                    }
-                }
-
-                while ((read = source.read(destination, offset + total, length - total)) != -1) {
-                    total += read;
-                    if (total >= delimiter.length) break;
-                }
-
-                if (total != 0) {
-                    for (int i = offset; i < offset + total; i++) {
-                        if (destination[i] == delimiter[seen]) {
-                            if (++seen == delimiter.length) {
-                                done = true;
-                                peek = false;
-                                int nextStart = i + 1;
-                                int knownRemaining = total - (nextStart - offset);
-                                if (knownRemaining > 0) {
-                                    byte[] remaining = new byte[knownRemaining];
-                                    System.arraycopy(destination, nextStart, remaining, 0, remaining.length);
-                                    source.prefix(remaining);
-                                }
-                                total = i - offset - (seen - 1);
-                                seen = 0;
-                                return total > 0 ? total : -1;
-                            }
-                        } else if (seen > 0) {
-                            i -= seen;  // restart one character past where we saw a delimiter start
-                            if (i < 0) {
-                                byte[] prefix = new byte[total - i - seen];
-                                System.arraycopy(destination, offset + i + seen, prefix, 0, prefix.length);
-                                source.prefix(prefix);
-                                System.arraycopy(delimiter, 0, destination, offset, seen);
-                                total = seen;
-                                i = 0;
-                            }
-                            seen = 0;
-                        }
-                    }
-                    if (read == -1) {
-                        seen = 0;
-                        return total;
-                    } else {
-                        return total - seen;
-                    }
-                } else if (seen > 0) {
-                    System.arraycopy(delimiter, 0, destination, offset, seen);
-                    int moribund = seen;
-                    seen = 0;
-                    return moribund;
-                } else {
-                    return -1;
-                }
+                int read = source.read();
+                if (read != delimiter[0]) return read;
+                return peek(1) ? -1 : read;
             }
 
             @Override
-            public int read() throws IOException {
-                byte[] buffer = new byte[delimiter.length];
-                int read = read(buffer);
-                if (read == -1) return -1;
-                if (read > 1) {
-                    source.prefix(buffer, 1, read - 1);
+            public int read(byte[] destination, int offset, int length) throws IOException {
+                if (done) return -1;
+                int seen = 0;
+                int read = source.read(destination, offset, length);
+                for (int i = offset; i < offset + read; i++) {
+                    if (destination[i] == delimiter[seen]) {
+                        if (++seen == delimiter.length) {
+                            source.copyPrefix(destination, i + 1, read - (i - offset) - 1);
+                            peek = false;
+                            done = true;
+                            return i - offset - (seen - 1);
+                        }
+                    } else if (seen > 0) {
+                        i -= seen;
+                        seen = 0;
+                    }
                 }
-                return buffer[0];
+                if (seen == 0) return read;
+                return peek(seen) ? read - seen : read;
+            }
+
+            private boolean peek(int seen) throws IOException {
+                byte[] buffer = source.getBuffer();
+                int buffered = buffer(buffer, seen, delimiter.length - seen);
+                if (buffered != delimiter.length - seen) {  // reached EOS before filling buffer, can't be a full delimiter
+                    source.prefix(buffer, seen, buffered);
+                    return false;
+                } else {
+                    for (int i = seen; i < delimiter.length; i++) {
+                        if (buffer[i] != delimiter[i]) {
+                            source.prefix(buffer, seen, buffered);
+                            return false;
+                        }
+                    }
+                    peek = false;
+                    done = true;
+                    return true;
+                }
+            }
+
+            private int buffer(byte[] buffer, int offset, int length) throws IOException {
+                int total = 0;
+                while (total < length) {
+                    int read = source.read(buffer, offset + total, length - total);
+                    if (read == -1) return total;
+                    total += read;
+                }
+                return total;
             }
         });
     }
 
     public InputStream getRemaining() {
-        source.prefix(delimiter, 0, seen);
         return source;
     }
 }

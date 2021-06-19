@@ -9,9 +9,15 @@ public class PrefixInputStream extends InputStream {
     private final InputStream source;
     private final ArrayDeque<Slice> prefixes = new ArrayDeque<>();
     private int prefixRemaining;
+    private int bufferSize = 8192;
+    private byte[] recycle;
 
     public PrefixInputStream(InputStream source) {
         this.source = source;
+    }
+
+    public void setMinimumBufferSize(int minimumBufferSize) {
+        bufferSize = Math.max(minimumBufferSize, bufferSize);
     }
 
     public void prefix(byte[] prefix) {
@@ -28,6 +34,21 @@ public class PrefixInputStream extends InputStream {
         }
     }
 
+    public void copyPrefix(byte[] source, int offset, int length) {
+        byte[] prefix;
+        if (source.length > bufferSize) {
+            bufferSize = source.length;
+            prefix = new byte[bufferSize];
+        } else if (recycle != null) {
+            prefix = recycle;
+            recycle = null;
+        } else {
+            prefix = new byte[bufferSize];
+        }
+        System.arraycopy(source, offset, prefix, 0, length);
+        prefix(prefix, 0, length);
+    }
+
     @Override
     public int read() throws IOException {
         if (prefixRemaining > 1) {
@@ -35,6 +56,7 @@ public class PrefixInputStream extends InputStream {
             return prefix.bytes[prefix.offset + prefix.length - prefixRemaining--];
         } else if (prefixRemaining == 1) {
             Slice prefix = prefixes.remove();
+            recycle = prefix.bytes;
             byte read = prefix.bytes[prefix.offset + prefix.length - 1];
             prefixRemaining = prefixes.isEmpty() ? 0 : prefixes.peek().length;
             return read;
@@ -49,6 +71,7 @@ public class PrefixInputStream extends InputStream {
         while (prefixRemaining > 0) {
             if (remaining >= prefixRemaining) {
                 Slice prefix = prefixes.remove();
+                recycle = prefix.bytes;
                 System.arraycopy(prefix.bytes, prefix.offset + prefix.length - prefixRemaining, destination, offset + length - remaining, prefixRemaining);
                 remaining -= prefixRemaining;
                 prefixRemaining = prefixes.isEmpty() ? 0 : prefixes.peek().length;
@@ -67,6 +90,16 @@ public class PrefixInputStream extends InputStream {
             return length - remaining;
         } else {
             return length - remaining + read;
+        }
+    }
+
+    public byte[] getBuffer() {
+        if (recycle != null) {
+            byte[] moribund = recycle;
+            recycle = null;
+            return moribund;
+        } else {
+            return new byte[bufferSize];
         }
     }
 
