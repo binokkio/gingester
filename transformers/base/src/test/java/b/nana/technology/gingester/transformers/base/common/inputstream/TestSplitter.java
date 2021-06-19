@@ -104,4 +104,36 @@ class TestSplitter {
         assertEquals("World!", readAllBytesToString(splitter.getNextInputStream().orElseThrow()));
         assertTrue(splitter.getNextInputStream().isEmpty());
     }
+
+    @Test
+    void testSplitterWithLongPartialDelimiterAndBufferSize2() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("HelloDELIMITWorld!".getBytes());
+        Splitter splitter = new Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("HelloDELIMITWorld!", readChunksOfBytesToString(splitter.getNextInputStream().orElseThrow(), 2));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
+    void testSplitterWithLongPartialDelimiterAndBufferSize3() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("HelloDELIMITWorld!".getBytes());
+        Splitter splitter = new Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("HelloDELIMITWorld!", readChunksOfBytesToString(splitter.getNextInputStream().orElseThrow(), 3));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
+    void testSplitterWithLongPartialDelimiterAndBufferSize4() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("HelloDELIMITWorld!".getBytes());
+        Splitter splitter = new Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("HelloDELIMITWorld!", readChunksOfBytesToString(splitter.getNextInputStream().orElseThrow(), 4));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
+
+    @Test
+    void testSplitterWithLongPartialDelimiterAndBufferSize5() throws IOException {
+        InputStream inputStream = new ByteArrayInputStream("HelloDELIMITWorld!".getBytes());
+        Splitter splitter = new Splitter(inputStream, "DELIMITER".getBytes());
+        assertEquals("HelloDELIMITWorld!", readChunksOfBytesToString(splitter.getNextInputStream().orElseThrow(), 5));
+        assertTrue(splitter.getNextInputStream().isEmpty());
+    }
 }

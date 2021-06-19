@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+// TODO try out reading a bit extra when we are half way through a delimiter, might simplify things
+
 public class Splitter {
 
     private final byte[] delimiter;
@@ -85,7 +87,11 @@ public class Splitter {
                         } else if (seen > 0) {
                             i -= seen;  // restart one character past where we saw a delimiter start
                             if (i < 0) {
-                                // TODO
+                                byte[] prefix = new byte[total - i - seen];
+                                System.arraycopy(destination, offset + i + seen, prefix, 0, prefix.length);
+                                source.prefix(prefix);
+                                System.arraycopy(delimiter, 0, destination, offset, seen);
+                                total = seen;
                                 i = 0;
                             }
                             seen = 0;
