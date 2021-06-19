@@ -231,6 +231,7 @@ public final class Gingester {
         Transformer<?, ?> getTransformer(String name);
         <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass);
         <T> void seed(Transformer<T, ?> transformer, T seed);
+        <T> void seed(Transformer<T, ?> transformer, Context.Builder context, T seed);
         Link link(String fromName, String toName);
         <T> Link link(Transformer<?, T> from, Transformer<? super T, ?> to);
         <T> Link link(Transformer<?, T> from, Consumer<? super T> consumer);
