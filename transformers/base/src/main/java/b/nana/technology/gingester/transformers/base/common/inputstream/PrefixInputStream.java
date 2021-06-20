@@ -18,6 +18,7 @@ public class PrefixInputStream extends InputStream {
 
     public void setMinimumBufferSize(int minimumBufferSize) {
         bufferSize = Math.max(minimumBufferSize, bufferSize);
+        if (recycle != null && recycle.length < bufferSize) recycle = null;
     }
 
     public void prefix(byte[] prefix) {
@@ -37,7 +38,7 @@ public class PrefixInputStream extends InputStream {
     public void copyPrefix(byte[] source, int offset, int length) {
         byte[] prefix;
         if (source.length > bufferSize) {
-            bufferSize = source.length;
+            setMinimumBufferSize(source.length);
             prefix = new byte[bufferSize];
         } else if (recycle != null) {
             prefix = recycle;
@@ -56,7 +57,7 @@ public class PrefixInputStream extends InputStream {
             return prefix.bytes[prefix.offset + prefix.length - prefixRemaining--];
         } else if (prefixRemaining == 1) {
             Slice prefix = prefixes.remove();
-            recycle = prefix.bytes;
+            if (prefix.length >= bufferSize) recycle = prefix.bytes;
             byte read = prefix.bytes[prefix.offset + prefix.length - 1];
             prefixRemaining = prefixes.isEmpty() ? 0 : prefixes.peek().length;
             return read;
@@ -71,7 +72,7 @@ public class PrefixInputStream extends InputStream {
         while (prefixRemaining > 0) {
             if (remaining >= prefixRemaining) {
                 Slice prefix = prefixes.remove();
-                recycle = prefix.bytes;
+                if (prefix.length >= bufferSize) recycle = prefix.bytes;
                 System.arraycopy(prefix.bytes, prefix.offset + prefix.length - prefixRemaining, destination, offset + length - remaining, prefixRemaining);
                 remaining -= prefixRemaining;
                 prefixRemaining = prefixes.isEmpty() ? 0 : prefixes.peek().length;
