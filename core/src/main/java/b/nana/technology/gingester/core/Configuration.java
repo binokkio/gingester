@@ -182,7 +182,7 @@ public final class Configuration {
 
         public String id;
         public String transformer;
-        public Integer maxWorkers;
+        public Integer workers = 1;
         public JsonNode parameters;
         public List<String> hosts;
         public List<LinkConfiguration> links;
@@ -199,14 +199,14 @@ public final class Configuration {
 
         @JsonValue
         public JsonNode getJsonValue() {
-            if (Stream.of(id, maxWorkers, parameters, hosts, links, syncs).allMatch(Objects::isNull)) {
+            if (Stream.of(id, workers, parameters, hosts, links, syncs).allMatch(Objects::isNull)) {
                 return JsonNodeFactory.instance.textNode(transformer);
             } else {
                 // TODO find a less cumbersome solution
                 ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
                 if (id != null) objectNode.put("id", id);
                 if (transformer != null) objectNode.put("transformer", transformer);
-                if (maxWorkers != null) objectNode.put("maxWorkers", maxWorkers);
+                if (workers != null) objectNode.put("workers", workers);
                 if (parameters != null) objectNode.set("parameters", parameters);
                 if (hosts != null) objectNode.set("hosts", JsonNodeFactory.instance.pojoNode(hosts));
                 if (links != null) objectNode.set("links", JsonNodeFactory.instance.pojoNode(links));

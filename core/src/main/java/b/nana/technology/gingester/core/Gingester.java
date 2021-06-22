@@ -92,8 +92,11 @@ public final class Gingester {
             if (--unopened == 0) {
                 transformers.stream()
                         .filter(transformer -> !transformer.queue.isEmpty())
-                        .map(this::addWorker)
-                        .forEach(seeders::add);
+                        .forEach(transformer -> {
+                            for (int i = 0; i < transformer.getMaxWorkers(); i++) {
+                                seeders.add(addWorker(transformer));
+                            }
+                        });
             }
         });
     }
@@ -101,7 +104,9 @@ public final class Gingester {
     void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
             if (transformer.workers.isEmpty()) {
-                addWorker(transformer);
+                for (int i = 0; i < transformer.getMaxWorkers(); i++) {
+                    addWorker(transformer);
+                }
             } else {
                 for (Worker.Transform worker : transformer.workers) {
                     if (worker.starving) {

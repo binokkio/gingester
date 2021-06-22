@@ -29,7 +29,7 @@ public abstract class Transformer<I, O> {
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
     private final Threader threader = new Threader();
-    private int state = Integer.MAX_VALUE;
+    private int state = 1;
     int maxBatchSize = 65536;
     volatile int batchSize = 1;
 
@@ -97,8 +97,8 @@ public abstract class Transformer<I, O> {
     }
 
     void apply(Configuration.TransformerConfiguration configuration) {
-        if (configuration.maxWorkers != null) {
-            state = Math.min(state, configuration.maxWorkers);
+        if (configuration.workers != null) {
+            state = configuration.workers;
         }
     }
 
@@ -133,7 +133,9 @@ public abstract class Transformer<I, O> {
         state = -1;
     }
 
-
+    public int getMaxWorkers() {
+        return state;
+    }
 
     // methods to be overridden by subclasses
 
