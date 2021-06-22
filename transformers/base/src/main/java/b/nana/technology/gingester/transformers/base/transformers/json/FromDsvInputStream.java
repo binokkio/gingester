@@ -23,7 +23,7 @@ public class FromDsvInputStream extends Transformer<InputStream, JsonNode> {
         csvMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
 
         CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
-        csvSchemaBuilder.setColumnSeparator(parameters.separator);
+        csvSchemaBuilder.setColumnSeparator(parameters.delimiter);
         csvSchemaBuilder.setQuoteChar(parameters.quote);
         if (parameters.columnNames != null) {
             csvSchema = csvSchemaBuilder.addColumns(parameters.columnNames, CsvSchema.ColumnType.STRING).build();
@@ -52,7 +52,7 @@ public class FromDsvInputStream extends Transformer<InputStream, JsonNode> {
     }
 
     public static class Parameters {
-        public char separator = ',';
+        public char delimiter = ',';
         public char quote = '"';
         public List<String> columnNames;
     }
