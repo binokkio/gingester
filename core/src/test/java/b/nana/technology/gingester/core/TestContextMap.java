@@ -25,6 +25,14 @@ class TestContextMap {
     }
 
     @Test
+    void testSimpleRemove() {
+        ContextMap<String> contextMap = new ContextMap<>();
+        Context context = Context.SEED;
+        contextMap.put(context, "Hello, World!");
+        assertEquals(Optional.of("Hello, World!"), contextMap.remove(context));
+    }
+
+    @Test
     void testParentGet() {
         ContextMap<String> contextMap = new ContextMap<>();
         Context context = Context.newBuilder().build();
@@ -38,5 +46,13 @@ class TestContextMap {
         Context context = Context.newBuilder().build();
         contextMap.put(context, "Hello, World!");
         assertEquals("Hello, World!", contextMap.require(context.extend(null).build()));
+    }
+
+    @Test
+    void testParentRemove() {
+        ContextMap<String> contextMap = new ContextMap<>();
+        Context context = Context.newBuilder().build();
+        contextMap.put(context, "Hello, World!");
+        assertEquals(Optional.of("Hello, World!"), contextMap.remove(context.extend(null).build()));
     }
 }

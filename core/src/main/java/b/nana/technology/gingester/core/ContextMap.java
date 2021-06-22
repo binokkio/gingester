@@ -22,4 +22,16 @@ public class ContextMap<T> {
     public T require(Context context) {
         return get(context).orElseThrow();
     }
+
+    public Optional<T> remove(Context context) {
+        for (Context c : context) {
+            T t = map.remove(c);
+            if (t != null) return Optional.of(t);
+        }
+        return Optional.empty();
+    }
+
+    public T requireRemove(Context context) {
+        return remove(context).orElseThrow();
+    }
 }
