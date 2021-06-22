@@ -49,7 +49,7 @@ public final class Gingester {
 
         // enable statistics on the transformers that have no outputs
         transformers.stream()
-                .filter(transformer -> transformer.outgoing.isEmpty())
+                .filter(transformer -> transformer.report || transformer.outgoing.isEmpty())
                 .forEach(Transformer::enableStatistics);
 
         unopened = unclosed = transformers.size();

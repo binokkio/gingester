@@ -182,6 +182,7 @@ public final class Configuration {
 
         public String id;
         public String transformer;
+        public Boolean report;
         public Integer workers = 1;
         public JsonNode parameters;
         public List<String> hosts;

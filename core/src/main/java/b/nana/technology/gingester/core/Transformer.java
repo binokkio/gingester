@@ -32,6 +32,7 @@ public abstract class Transformer<I, O> {
     private int state = 1;
     int maxBatchSize = 65536;
     volatile int batchSize = 1;
+    boolean report;
 
     protected Transformer() {
         this(null);
@@ -99,6 +100,7 @@ public abstract class Transformer<I, O> {
     void apply(Configuration.TransformerConfiguration configuration) {
         if (configuration.workers != null) {
             state = configuration.workers;
+            report = configuration.report != null && configuration.report;
         }
     }
 
