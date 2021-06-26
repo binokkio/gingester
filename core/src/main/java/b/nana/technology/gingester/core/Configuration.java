@@ -61,7 +61,7 @@ public final class Configuration {
 
             TransformerConfiguration transformerConfiguration = new TransformerConfiguration();
             transformerConfiguration.transformer = Provider.name(transformer);
-            transformer.getName()
+            transformer.getId()
                     .filter(name -> !name.equals(transformerConfiguration.transformer))
                     .ifPresent(name -> transformerConfiguration.id = name);
 
@@ -77,7 +77,7 @@ public final class Configuration {
             if (!links.isEmpty()) transformerConfiguration.links = links;
 
             List<String> syncs = transformer.syncs.stream()
-                    .map(t -> t.getName().orElseGet(() -> Provider.name(t)))
+                    .map(t -> t.getId().orElseGet(() -> Provider.name(t)))
                     .collect(Collectors.toList());
             if (!syncs.isEmpty()) transformerConfiguration.syncs = syncs;
 
@@ -120,7 +120,7 @@ public final class Configuration {
         for (TransformerConfiguration transformerConfiguration : transformers) {
             Transformer<?, ?> transformer = Provider.instance(transformerConfiguration.transformer, transformerConfiguration.parameters);
             transformer.apply(transformerConfiguration);
-            if (transformerConfiguration.id != null) gBuilder.name(transformerConfiguration.id, transformer);
+            if (transformerConfiguration.id != null) gBuilder.id(transformerConfiguration.id, transformer);
             else gBuilder.add(transformer);
             if (autoLinkNext != null) {
                 gBuilder.linkUnchecked(autoLinkNext, transformer).markImplied();
@@ -200,7 +200,7 @@ public final class Configuration {
 
         @JsonValue
         public JsonNode getJsonValue() {
-            if (Stream.of(id, workers, parameters, hosts, links, syncs).allMatch(Objects::isNull)) {
+            if (Stream.of(id, report, maxWorkers, maxBatchSize, parameters, hosts, links, syncs, excepts).allMatch(Objects::isNull)) {
                 return JsonNodeFactory.instance.textNode(transformer);
             } else {
                 // TODO find a less cumbersome solution
@@ -231,9 +231,9 @@ public final class Configuration {
         }
 
         public LinkConfiguration(BaseLink<?, ?> link) {
-            to = link.to.getName().orElseThrow();
+            to = link.to.getId().orElseThrow();
             if (link.isSyncModeExplicit()) {
-                async = link.isSync();
+                async = !link.isSync();
             }
         }
 

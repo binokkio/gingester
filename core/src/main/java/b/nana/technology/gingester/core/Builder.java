@@ -27,35 +27,33 @@ final class Builder implements Gingester.Builder {
     }
 
     @Override
-    public Transformer<?, ?> getTransformer(String name) {
+    public Transformer<?, ?> getTransformer(String id) {
         return transformers.stream()
-                .filter(transformer -> transformer.getName().orElseGet(() -> Provider.name(transformer)).equals(name))
-                .reduce((a, b) -> {
-                    throw new IllegalStateException("Multiple matches for " + name);
-                })
-                .orElseThrow(() -> new NoSuchElementException("No transformer named " + name));
+                .filter(transformer -> transformer.getId().orElseGet(() -> Provider.name(transformer)).equals(id))
+                .reduce((a, b) -> { throw new IllegalStateException("Multiple matches for " + id); })
+                .orElseThrow(() -> new NoSuchElementException("No transformer with id " + id));
     }
 
     @SuppressWarnings("unchecked")  // checked at runtime
     @Override
-    public <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass) {
-        T transformer = (T) getTransformer(name);
+    public <T extends Transformer<?, ?>> T getTransformer(String id, Class<T> transformerClass) {
+        T transformer = (T) getTransformer(id);
         if (!transformerClass.isInstance(transformer)) throw new ClassCastException();  // TODO
         return transformer;
     }
 
     @Override
-    public void name(String name, Transformer<?, ?> transformer) {
-        if (transformer.name != null) throw new IllegalArgumentException("Transformer was already named");
-        if (transformers.stream().map(Transformer::getName).flatMap(Optional::stream).anyMatch(name::equals))
-            throw new IllegalArgumentException("Transformer name not unique: " + name);
-        transformer.name = name;
+    public void id(String id, Transformer<?, ?> transformer) {
+        if (transformer.id != null) throw new IllegalArgumentException("Transformer was already given an id");
+        if (transformers.stream().map(Transformer::getId).flatMap(Optional::stream).anyMatch(id::equals))
+            throw new IllegalArgumentException("Transformer id not unique: " + id);
+        transformer.id = id;
         add(transformer);
     }
 
     @Override
-    public NormalLink<?> link(String fromName, String toName) {
-        return linkUnchecked(getTransformer(fromName), getTransformer(toName));
+    public NormalLink<?> link(String fromId, String toId) {
+        return linkUnchecked(getTransformer(fromId), getTransformer(toId));
     }
 
     @SuppressWarnings("unchecked")
@@ -98,10 +96,10 @@ final class Builder implements Gingester.Builder {
 
     @SuppressWarnings("unchecked")
     @Override
-    public ExceptionLink except(String fromName, String toName) {
-        Transformer<Throwable, ?> to = (Transformer<Throwable, ?>) getTransformer(toName);
+    public ExceptionLink except(String fromId, String toId) {
+        Transformer<Throwable, ?> to = (Transformer<Throwable, ?>) getTransformer(toId);
         if (!to.inputClass.isAssignableFrom(Throwable.class)) throw new IllegalArgumentException("");  // TODO
-        return except(getTransformer(fromName), to);
+        return except(getTransformer(fromId), to);
     }
 
     @Override
@@ -116,8 +114,8 @@ final class Builder implements Gingester.Builder {
     }
 
     @Override
-    public void sync(String fromName, String toName) {
-        sync(getTransformer(fromName), getTransformer(toName));
+    public void sync(String fromId, String toId) {
+        sync(getTransformer(fromId), getTransformer(toId));
     }
 
     @Override
@@ -184,22 +182,22 @@ final class Builder implements Gingester.Builder {
 
         Map<String, Integer> counters = new HashMap<>();
 
-        // update every transformer name with a counter suffix
+        // update every transformer id with a counter suffix
         for (Transformer<?, ?> transformer : transformers) {
-            String name = transformer.getName().orElse(Provider.name(transformer));
-            Integer counter = counters.get(name);
+            String id = transformer.getId().orElse(Provider.name(transformer));
+            Integer counter = counters.get(id);
             counter = counter == null ? 1 : counter + 1;
-            counters.put(name, counter);
-            transformer.name = name + "-" + counter;
+            counters.put(id, counter);
+            transformer.id = id + "-" + counter;
         }
 
-        // remove the counter suffix from transformers with unique names
+        // remove the counter suffix from transformers with unique ids
         for (Transformer<?, ?> transformer : transformers) {
-            String name = transformer.getName().orElseThrow();
-            if (name.endsWith("-1")) {
-                String nameWithoutSuffix = name.substring(0, name.length() - 2);
-                if (counters.get(nameWithoutSuffix) == 1) {
-                    transformer.name = nameWithoutSuffix;
+            String id = transformer.getId().orElseThrow();
+            if (id.endsWith("-1")) {
+                String idWithoutSuffix = id.substring(0, id.length() - 2);
+                if (counters.get(idWithoutSuffix) == 1) {
+                    transformer.id = idWithoutSuffix;
                 }
             }
         }

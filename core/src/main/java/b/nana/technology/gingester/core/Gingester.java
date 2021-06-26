@@ -81,7 +81,7 @@ public final class Gingester {
             for (Transformer<?, ?> transformer : transformers) {
                 transformer.getStatistics().ifPresent(statistics -> {
                     statistics.sample();
-                    System.err.println(transformer.name + ": " + statistics);
+                    System.err.println(transformer.id + ": " + statistics);
                 });
             }
         });
@@ -226,15 +226,15 @@ public final class Gingester {
         void add(Transformer<?, ?> transformer);
 
         /**
-         * Allow the given transformer to be referenced by the given name.
+         * Allow the given transformer to be referenced by the given id.
          *
-         * The name must not have been given to any other transformer.
-         * A transformer may only be given 1 name.
+         * The id must not have been given to any other transformer.
+         * A transformer may only be given 1 id.
          */
-        void name(String name, Transformer<?, ?> transformer);
+        void id(String id, Transformer<?, ?> transformer);
 
-        Transformer<?, ?> getTransformer(String name);
-        <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass);
+        Transformer<?, ?> getTransformer(String id);
+        <T extends Transformer<?, ?>> T getTransformer(String id, Class<T> transformerClass);
         <T> void seed(Transformer<T, ?> transformer, T seed);
         <T> void seed(Transformer<T, ?> transformer, Context.Builder context, T seed);
         Link link(String fromName, String toName);
