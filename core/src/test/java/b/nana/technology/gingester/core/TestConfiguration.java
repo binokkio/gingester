@@ -31,7 +31,7 @@ public class TestConfiguration {
     @Test
     void testHelloWorldEmphasizeQuestionMinimal() throws IOException {
         AtomicReference<String> result = new AtomicReference<>();
-        Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json")).toBuilder();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json")).toBuilder();
         gBuilder.link(gBuilder.getTransformer("Question", Question.class), result::set);
         gBuilder.build().run();
         assertEquals("Hello, World!?", result.get());
@@ -40,7 +40,7 @@ public class TestConfiguration {
     @Test
     void testHelloWorldEmphasizeQuestionVerbose() throws IOException {
         AtomicReference<String> result = new AtomicReference<>();
-        Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-verbose.json")).toBuilder();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-verbose.json")).toBuilder();
         gBuilder.link(gBuilder.getTransformer("AddQuestion", Question.class), result::set);
         gBuilder.build().run();
         assertEquals("Hello, World!?", result.get());
@@ -49,7 +49,7 @@ public class TestConfiguration {
     @Test
     void testHelloWorldDiamond() throws IOException {
         Queue<String> results = new LinkedBlockingQueue<>();
-        Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-diamond.json")).toBuilder();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-diamond.json")).toBuilder();
         gBuilder.link(gBuilder.getTransformer("Emphasize", Emphasize.class), results::add);
         gBuilder.link(gBuilder.getTransformer("Question", Question.class), results::add);
         gBuilder.build().run();
@@ -60,7 +60,7 @@ public class TestConfiguration {
     @Test
     void testHelloException() throws IOException {
         Queue<String> results = new LinkedBlockingQueue<>();
-        Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-exception.json")).toBuilder();
+        Gingester.Builder gBuilder = Configuration.fromJson(getClass().getResourceAsStream("/hello-exception.json")).toBuilder();
         gBuilder.link(gBuilder.getTransformer("Emphasize", Emphasize.class), results::add);
         gBuilder.build().run();
         assertEquals("ExceptionThrower throws!", results.remove());

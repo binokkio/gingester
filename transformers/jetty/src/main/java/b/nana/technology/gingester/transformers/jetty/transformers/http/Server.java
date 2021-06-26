@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.jetty.transformers.http;
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
@@ -101,7 +102,14 @@ public class Server extends Transformer<Void, InputStream> {
                 }
 
                 if (stashCookies) {
-                    
+                    Cookie[] cookies = jettyRequest.getCookies();
+                    Map<String, Cookie> cookieMap = new HashMap<>();
+                    if (cookies != null) {
+                        for (Cookie cookie : jettyRequest.getCookies()) {
+                            cookieMap.put(cookie.getName(), cookie);
+                        }
+                    }
+                    stash.put("cookies", cookieMap);
                 }
 
                 contextBuilder.stash(stash);
