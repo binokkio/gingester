@@ -16,6 +16,10 @@ import java.util.stream.Stream;
 
 public abstract class Transformer<I, O> {
 
+    static boolean DEFAULT_REPORT_VALUE = false;
+    static int DEFAULT_MAX_WORKERS = 1;
+    static int DEFAULT_MAX_BATCH_SIZE = 65536;
+
     Gingester gingester;
     String id;
     boolean report = DEFAULT_REPORT_VALUE;
@@ -33,9 +37,7 @@ public abstract class Transformer<I, O> {
     final Set<Worker.Transform> workers = new HashSet<>();
     private final Threader threader = new Threader();
     private int state = 1;
-    int maxBatchSize = 65536;
     volatile int batchSize = 1;
-    boolean report;
 
     protected Transformer() {
         this(null);
@@ -101,10 +103,9 @@ public abstract class Transformer<I, O> {
     }
 
     void apply(Configuration.TransformerConfiguration configuration) {
-        if (configuration.workers != null) {
-            state = configuration.workers;
-            report = configuration.report != null && configuration.report;
-        }
+        if (configuration.report != null) report = configuration.report;
+        if (configuration.maxWorkers != null) maxWorkers = configuration.maxWorkers;
+        if (configuration.maxBatchSize != null) maxBatchSize = configuration.maxBatchSize;
     }
 
     void setup(Gingester gingester) {
@@ -138,10 +139,6 @@ public abstract class Transformer<I, O> {
         state = -1;
     }
 
-    public int getMaxWorkers() {
-        return state;
-    }
-
     // methods to be overridden by subclasses
 
     /**
@@ -163,6 +160,10 @@ public abstract class Transformer<I, O> {
 
     /**
      * Called before the first input arrives for the given context.
+     *
+     * Will only be called for contexts from upstream transformers that are synced
+     * with this transformer, i.e. those for which {@link Builder#sync(Transformer, Transformer)} sync}
+     * was called with the upstream transformer as first and this transformer as second argument.
      */
     protected void prepare(Context context) throws Exception {}
 
@@ -187,7 +188,7 @@ public abstract class Transformer<I, O> {
 
 
 
-    // methods available to (some) subclasses
+    // methods available to (some) subclasses, TODO move to Context
 
     final void emitUnchecked(Context.Builder context, Object output) {
         _emit(context.build(), check(output), outgoing);

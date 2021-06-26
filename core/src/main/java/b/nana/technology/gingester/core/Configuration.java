@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -38,14 +37,7 @@ public final class Configuration {
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
-    private static final PrettyPrinter PRETTY_PRINTER;
-    static {
-        DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
-        prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
-        PRETTY_PRINTER = prettyPrinter;
-    }
-
-    private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writer(PRETTY_PRINTER);
+    private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writer(new Printer());
 
     public static Configuration fromJson(InputStream inputStream) throws IOException {
         Objects.requireNonNull(inputStream, "Configuration.fromJson called with null InputStream");
@@ -64,6 +56,10 @@ public final class Configuration {
             transformer.getId()
                     .filter(name -> !name.equals(transformerConfiguration.transformer))
                     .ifPresent(name -> transformerConfiguration.id = name);
+
+            if (transformer.report != Transformer.DEFAULT_REPORT_VALUE) transformerConfiguration.report = transformer.report;
+            if (transformer.maxWorkers != Transformer.DEFAULT_MAX_WORKERS) transformerConfiguration.maxWorkers = transformer.maxWorkers;
+            if (transformer.maxBatchSize != Transformer.DEFAULT_MAX_BATCH_SIZE) transformerConfiguration.maxBatchSize = transformer.maxBatchSize;
 
             if (transformer.parameters != null) {
                 // TODO if equal to newly constructed parameters without parameters ignore
@@ -93,7 +89,6 @@ public final class Configuration {
         return configuration;
     }
 
-    public Integer maxWorkers;
     public boolean report = true;
     public List<HostConfiguration> hosts = new ArrayList<>();
     public List<TransformerConfiguration> transformers = new ArrayList<>();
@@ -183,7 +178,8 @@ public final class Configuration {
         public String id;
         public String transformer;
         public Boolean report;
-        public Integer workers = 1;
+        public Integer maxWorkers;
+        public Integer maxBatchSize;
         public JsonNode parameters;
         public List<String> hosts;
         public List<LinkConfiguration> links;
@@ -207,11 +203,14 @@ public final class Configuration {
                 ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
                 if (id != null) objectNode.put("id", id);
                 if (transformer != null) objectNode.put("transformer", transformer);
-                if (workers != null) objectNode.put("workers", workers);
+                if (report != null) objectNode.put("report", report);
+                if (maxWorkers != null) objectNode.put("maxWorkers", maxWorkers);
+                if (maxBatchSize != null) objectNode.put("maxBatchSize", maxBatchSize);
                 if (parameters != null) objectNode.set("parameters", parameters);
                 if (hosts != null) objectNode.set("hosts", JsonNodeFactory.instance.pojoNode(hosts));
                 if (links != null) objectNode.set("links", JsonNodeFactory.instance.pojoNode(links));
                 if (syncs != null) objectNode.set("syncs", JsonNodeFactory.instance.pojoNode(syncs));
+                if (excepts != null) objectNode.set("excepts", JsonNodeFactory.instance.pojoNode(excepts));
                 return objectNode;
             }
         }
@@ -248,6 +247,19 @@ public final class Configuration {
                 if (async != null) objectNode.put("async", async);
                 return objectNode;
             }
+        }
+    }
+
+    private static class Printer extends DefaultPrettyPrinter {
+
+        Printer() {
+            _objectFieldValueSeparatorWithSpaces = ": ";
+            _arrayIndenter = DefaultIndenter.SYSTEM_LINEFEED_INSTANCE;
+        }
+
+        @Override
+        public DefaultPrettyPrinter createInstance() {
+            return new Printer();
         }
     }
 }

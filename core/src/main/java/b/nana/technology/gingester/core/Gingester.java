@@ -93,7 +93,7 @@ public final class Gingester {
                 transformers.stream()
                         .filter(transformer -> !transformer.queue.isEmpty())
                         .forEach(transformer -> {
-                            for (int i = 0; i < transformer.getMaxWorkers(); i++) {
+                            for (int i = 0; i < transformer.maxWorkers; i++) {
                                 seeders.add(addWorker(transformer));
                             }
                         });
@@ -104,7 +104,7 @@ public final class Gingester {
     void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
             if (transformer.workers.isEmpty()) {
-                for (int i = 0; i < transformer.getMaxWorkers(); i++) {
+                for (int i = 0; i < transformer.maxWorkers; i++) {
                     addWorker(transformer);
                 }
             } else {
