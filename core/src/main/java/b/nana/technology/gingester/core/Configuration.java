@@ -101,7 +101,7 @@ public final class Configuration {
         }
     }
 
-    public Builder toBuilder() {
+    public Gingester.Builder toBuilder() {
         Builder gBuilder = new Builder();
         appendToBuilder(gBuilder);
         return gBuilder;
