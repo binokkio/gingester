@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.5.2</version>
+        <version>0.5.5</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -22,6 +22,12 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
+            <!-- TODO need only Splitter and PrefixInputStream from base not everything else -->
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>base</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
             <version>11.0.2</version>
@@ -29,12 +35,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>b.nana.technology.gingester.transformers</groupId>
-            <artifactId>base</artifactId>
-            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

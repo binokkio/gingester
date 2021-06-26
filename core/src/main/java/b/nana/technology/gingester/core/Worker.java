@@ -65,7 +65,7 @@ abstract class Worker extends Thread {
     }
 
     <T> void transform(Transformer<? super T, ?> transformer, Batch<T> batch) {
-        for (Batch.Entry<? extends T> value : batch) {
+        for (Item<? extends T> value : batch) {
             transform(transformer, value.getContext(), value.getValue());
         }
     }

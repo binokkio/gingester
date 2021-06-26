@@ -33,11 +33,11 @@ class TestRoute {
         Gingester.Builder gBuilder = Gingester.newBuilder();
         gBuilder.seed(route, "test.json");
 
-        gBuilder.name("CsvHandler", csvHandler);
+        gBuilder.id("CsvHandler", csvHandler);
         gBuilder.link(route, csvHandler);
         gBuilder.link(csvHandler, csvHandlerResult::set);
 
-        gBuilder.name("JsonHandler", jsonHandler);
+        gBuilder.id("JsonHandler", jsonHandler);
         gBuilder.link(route, jsonHandler);
         gBuilder.link(jsonHandler, jsonHandlerResult::set);
 

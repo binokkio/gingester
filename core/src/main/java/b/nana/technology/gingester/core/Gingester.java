@@ -49,7 +49,7 @@ public final class Gingester {
 
         // enable statistics on the transformers that have no outputs
         transformers.stream()
-                .filter(transformer -> transformer.outgoing.isEmpty())
+                .filter(transformer -> transformer.report || transformer.outgoing.isEmpty())
                 .forEach(Transformer::enableStatistics);
 
         unopened = unclosed = transformers.size();
@@ -81,7 +81,7 @@ public final class Gingester {
             for (Transformer<?, ?> transformer : transformers) {
                 transformer.getStatistics().ifPresent(statistics -> {
                     statistics.sample();
-                    System.err.println(transformer.name + ": " + statistics);
+                    System.err.println(transformer.id + ": " + statistics);
                 });
             }
         });
@@ -92,8 +92,11 @@ public final class Gingester {
             if (--unopened == 0) {
                 transformers.stream()
                         .filter(transformer -> !transformer.queue.isEmpty())
-                        .map(this::addWorker)
-                        .forEach(seeders::add);
+                        .forEach(transformer -> {
+                            for (int i = 0; i < transformer.maxWorkers; i++) {
+                                seeders.add(addWorker(transformer));
+                            }
+                        });
             }
         });
     }
@@ -101,7 +104,9 @@ public final class Gingester {
     void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
             if (transformer.workers.isEmpty()) {
-                addWorker(transformer);
+                for (int i = 0; i < transformer.maxWorkers; i++) {
+                    addWorker(transformer);
+                }
             } else {
                 for (Worker.Transform worker : transformer.workers) {
                     if (worker.starving) {
@@ -221,16 +226,17 @@ public final class Gingester {
         void add(Transformer<?, ?> transformer);
 
         /**
-         * Allow the given transformer to be referenced by the given name.
+         * Allow the given transformer to be referenced by the given id.
          *
-         * The name must not have been given to any other transformer.
-         * A transformer may only be given 1 name.
+         * The id must not have been given to any other transformer.
+         * A transformer may only be given 1 id.
          */
-        void name(String name, Transformer<?, ?> transformer);
+        void id(String id, Transformer<?, ?> transformer);
 
-        Transformer<?, ?> getTransformer(String name);
-        <T extends Transformer<?, ?>> T getTransformer(String name, Class<T> transformerClass);
+        Transformer<?, ?> getTransformer(String id);
+        <T extends Transformer<?, ?>> T getTransformer(String id, Class<T> transformerClass);
         <T> void seed(Transformer<T, ?> transformer, T seed);
+        <T> void seed(Transformer<T, ?> transformer, Context.Builder context, T seed);
         Link link(String fromName, String toName);
         <T> Link link(Transformer<?, T> from, Transformer<? super T, ?> to);
         <T> Link link(Transformer<?, T> from, Consumer<? super T> consumer);

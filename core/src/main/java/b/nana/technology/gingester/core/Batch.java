@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-final class Batch<T> implements Iterable<Batch.Entry<T>> {
+final class Batch<T> implements Iterable<Item<T>> {
 
     private final int capacity;
-    private final List<Entry<T>> values;
+    private final List<Item<T>> values;
 
     Batch(int capacity) {
         this.capacity = capacity;
@@ -17,16 +17,16 @@ final class Batch<T> implements Iterable<Batch.Entry<T>> {
 
     Batch(Context context, T value) {
         this.capacity = 1;
-        this.values = List.of(new Entry<>(context, value));
+        this.values = List.of(new Item<>(context, value));
     }
 
     boolean addAndIndicateFull(Context context, T value) {
         int space = capacity - values.size();
         if (space == 1) {
-            values.add(new Entry<>(context, value));
+            values.add(new Item<>(context, value));
             return true;
         } else if (space > 1) {
-            values.add(new Entry<>(context, value));
+            values.add(new Item<>(context, value));
             return false;
         } else {
             throw new IllegalStateException("Batch full");
@@ -38,30 +38,12 @@ final class Batch<T> implements Iterable<Batch.Entry<T>> {
     }
 
     @Override
-    public Iterator<Entry<T>> iterator() {
+    public Iterator<Item<T>> iterator() {
         return values.iterator();
     }
 
-    public Stream<Entry<T>> stream() {
+    public Stream<Item<T>> stream() {
         return values.stream();
     }
 
-    protected static class Entry<T> {
-
-        private final Context context;
-        private final T value;
-
-        private Entry(Context context, T value) {
-            this.context = context;
-            this.value = value;
-        }
-
-        public Context getContext() {
-            return context;
-        }
-
-        public T getValue() {
-            return value;
-        }
-    }
 }
