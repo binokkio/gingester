@@ -16,8 +16,15 @@ import java.util.stream.Stream;
 
 public abstract class Transformer<I, O> {
 
+    static boolean DEFAULT_REPORT_VALUE = false;
+    static int DEFAULT_MAX_WORKERS = 1;
+    static int DEFAULT_MAX_BATCH_SIZE = 65536;
+
     Gingester gingester;
-    String name;
+    String id;
+    boolean report = DEFAULT_REPORT_VALUE;
+    int maxWorkers = DEFAULT_MAX_WORKERS;
+    int maxBatchSize = DEFAULT_MAX_BATCH_SIZE;
     Object parameters;
     final Class<I> inputClass;
     final Class<O> outputClass;
@@ -25,12 +32,11 @@ public abstract class Transformer<I, O> {
     final List<NormalLink<O>> outgoing = new ArrayList<>();
     final List<Transformer<?, ?>> syncs = new ArrayList<>();
     final List<ExceptionLink> excepts = new ArrayList<>();
-    final Map<String, NormalLink<O>> outgoingByName = new HashMap<>();
+    final Map<String, NormalLink<O>> outgoingById = new HashMap<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
     final Set<Worker.Transform> workers = new HashSet<>();
     private final Threader threader = new Threader();
-    private int state = Integer.MAX_VALUE;
-    int maxBatchSize = 65536;
+    private int state = 1;
     volatile int batchSize = 1;
 
     protected Transformer() {
@@ -51,8 +57,8 @@ public abstract class Transformer<I, O> {
         this.parameters = null;
     }
 
-    public final Optional<String> getName() {
-        return Optional.ofNullable(name);
+    public final Optional<String> getId() {
+        return Optional.ofNullable(id);
     }
 
     List<Class<?>> getInputClasses() {
@@ -67,8 +73,8 @@ public abstract class Transformer<I, O> {
         if (to == this || to.getDownstream().contains(this)) {
             throw new IllegalStateException(String.format(
                     "Linking from %s to %s would create a circular route",
-                    getName().orElseGet(() -> Provider.name(this)),
-                    to.getName().orElseGet(() -> Provider.name(to))
+                    getId().orElseGet(() -> Provider.name(this)),
+                    to.getId().orElseGet(() -> Provider.name(to))
             ));
         }
     }
@@ -86,8 +92,8 @@ public abstract class Transformer<I, O> {
                 if (!inputClass.isAssignableFrom(outputClass)) {
                     throw new IllegalStateException(String.format(
                             "Can't link from %s to %s, %s can not be assigned to %s",
-                            getName().orElseGet(() -> Provider.name(this)),
-                            to.getName().orElseGet(() -> Provider.name(to)),
+                            getId().orElseGet(() -> Provider.name(this)),
+                            to.getId().orElseGet(() -> Provider.name(to)),
                             outputClass.getCanonicalName(),
                             inputClass.getCanonicalName()
                     ));
@@ -97,14 +103,14 @@ public abstract class Transformer<I, O> {
     }
 
     void apply(Configuration.TransformerConfiguration configuration) {
-        if (configuration.maxWorkers != null) {
-            state = Math.min(state, configuration.maxWorkers);
-        }
+        if (configuration.report != null) report = configuration.report;
+        if (configuration.maxWorkers != null) maxWorkers = configuration.maxWorkers;
+        if (configuration.maxBatchSize != null) maxBatchSize = configuration.maxBatchSize;
     }
 
     void setup(Gingester gingester) {
         this.gingester = gingester;
-        outgoing.forEach(link -> outgoingByName.put(link.to.getName().orElseThrow(), link));  // TODO bit out of place
+        outgoing.forEach(link -> outgoingById.put(link.to.getId().orElseThrow(), link));  // TODO bit out of place
         setup(new Setup());
     }
 
@@ -133,8 +139,6 @@ public abstract class Transformer<I, O> {
         state = -1;
     }
 
-
-
     // methods to be overridden by subclasses
 
     /**
@@ -156,6 +160,10 @@ public abstract class Transformer<I, O> {
 
     /**
      * Called before the first input arrives for the given context.
+     *
+     * Will only be called for contexts from upstream transformers that are synced
+     * with this transformer, i.e. those for which {@link Builder#sync(Transformer, Transformer)} sync}
+     * was called with the upstream transformer as first and this transformer as second argument.
      */
     protected void prepare(Context context) throws Exception {}
 
@@ -180,7 +188,7 @@ public abstract class Transformer<I, O> {
 
 
 
-    // methods available to (some) subclasses
+    // methods available to (some) subclasses, TODO move to Context
 
     final void emitUnchecked(Context.Builder context, Object output) {
         _emit(context.build(), check(output), outgoing);
@@ -199,19 +207,19 @@ public abstract class Transformer<I, O> {
     }
 
     protected final void emit(Context.Builder context, O output, String direction) {
-        _emit(context.build(), output, List.of(outgoingByName.get(direction)));
+        _emit(context.build(), output, List.of(outgoingById.get(direction)));
     }
 
     protected final void emit(Context context, O output, String direction) {
-        _emit(maybeExtend(context), output, List.of(outgoingByName.get(direction)));
+        _emit(maybeExtend(context), output, List.of(outgoingById.get(direction)));
     }
 
     protected final void emit(Context.Builder context, O output, List<String> directions) {
-        _emit(context.build(), output, directions.stream().map(outgoingByName::get).collect(Collectors.toList()));
+        _emit(context.build(), output, directions.stream().map(outgoingById::get).collect(Collectors.toList()));
     }
 
     protected final void emit(Context context, O output, List<String> directions) {
-        _emit(maybeExtend(context), output, directions.stream().map(outgoingByName::get).collect(Collectors.toList()));
+        _emit(maybeExtend(context), output, directions.stream().map(outgoingById::get).collect(Collectors.toList()));
     }
 
     private void _emit(Context context, O output, List<NormalLink<O>> directions) {
@@ -377,13 +385,13 @@ public abstract class Transformer<I, O> {
             state = Math.min(state, limit);
         }
 
-        public int getDirection(String transformerName) {
+        public int getDirection(String transformerId) {
             for (int i = 0; i < outgoing.size(); i++) {
-                if (outgoing.get(i).to.name.equals(transformerName)) {
+                if (outgoing.get(i).to.id.equals(transformerId)) {
                     return i;
                 }
             }
-            throw new IllegalStateException("No link to transformer named " + transformerName);
+            throw new IllegalStateException("No link to transformer with id " + transformerId);
         }
     }
 
