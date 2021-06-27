@@ -51,6 +51,7 @@ public class Keycloak<T> extends Passthrough<T> {
 
         Cookie cookie = (Cookie) context.fetch("cookies", cookieName)
                 .orElseGet(() -> new Cookie(cookieName, UUID.randomUUID().toString()));
+        cookie.setMaxAge(2592000);
         response.addCookie(cookie);
 
         UUID sessionId = UUID.fromString(cookie.getValue());
