@@ -147,7 +147,7 @@ public final class Context implements Iterable<Context> {
             return stringBuilder.toString();
 
         } else {
-            return object.toString() + '\n';
+            return object + "\n";
         }
     }
 
