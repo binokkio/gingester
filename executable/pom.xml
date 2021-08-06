@@ -43,6 +43,11 @@
         </dependency>
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>rabbitmq</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>unpack</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
