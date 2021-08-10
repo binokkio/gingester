@@ -11,6 +11,7 @@ public abstract class RedisTransformer<I, O> extends Transformer<I, O> {
     private final JedisPool jedisPool;
 
     public RedisTransformer(Parameters parameters) {
+        super(parameters);
         jedisPool = new JedisPool(new JedisPoolConfig(), parameters.host, parameters.port);
     }
 

@@ -32,6 +32,7 @@ public abstract class RabbitmqTransformer<I, O> extends Transformer<I, O> {
     protected void open() throws Exception {
 
         ConnectionFactory connectionFactory = new ConnectionFactory();
+        connectionFactory.setThreadFactory(runnable -> getThreader().newThread(runnable));
         connectionFactory.setUri(parameters.uri);
         if (parameters.username != null) connectionFactory.setUsername(parameters.username);
         if (parameters.password != null) connectionFactory.setPassword(parameters.password);
