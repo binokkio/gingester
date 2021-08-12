@@ -20,26 +20,23 @@ final class Worker extends Thread {
 
     Worker(Job... jobs) {
         setName("Gingester-Worker-" + COUNTER.incrementAndGet());
-        this.jobs.addAll(Arrays.asList(jobs));
+        add(jobs);
     }
 
-    public void add(Job job) {
-        try {
-            jobs.put(job);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO (should not happen, LinkedBlockingQueue is unbounded)
-        }
+    public Worker add(Job... jobs) {
+        this.jobs.addAll(Arrays.asList(jobs));
+        return this;
     }
 
     @Override
     public void run() {
-        for (Job job : jobs) {
+        while (true) {
             try {
-                job.run();
-                flushAll();
+                jobs.take().run();
             } catch (Exception e) {
-                e.printStackTrace();  // TODO
+                e.printStackTrace();
             }
+            flushAll();
         }
     }
 

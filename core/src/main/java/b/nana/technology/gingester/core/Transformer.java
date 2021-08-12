@@ -34,7 +34,8 @@ public abstract class Transformer<I, O> {
     final List<ExceptionLink> excepts = new ArrayList<>();
     final Map<String, NormalLink<O>> outgoingById = new HashMap<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
-    final Set<Transform> workers = new HashSet<>();
+    final Worker leader = new Worker();
+    final Set<TransformJob> workers = new HashSet<>();
     private final Threader threader = new Threader();
     private int state = 1;
     volatile int batchSize = 1;
@@ -382,7 +383,7 @@ public abstract class Transformer<I, O> {
         }
 
         public void limitWorkers(int limit) {
-            state = Math.min(state, limit);
+            maxWorkers = Math.min(maxWorkers, limit);
         }
 
         public int getDirection(String transformerId) {

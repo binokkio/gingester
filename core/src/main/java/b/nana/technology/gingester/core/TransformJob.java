@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core;
 
-class Transform implements Worker.Job {
+class TransformJob implements Worker.Job {
 
     private final Worker worker;
     final Gingester gingester;
@@ -9,7 +9,7 @@ class Transform implements Worker.Job {
     volatile boolean starving;
 //        long lastBatchReport = System.nanoTime();
 
-    Transform(Worker worker, Gingester gingester, Transformer<?, ?> transformer) {
+    TransformJob(Worker worker, Gingester gingester, Transformer<?, ?> transformer) {
         this.worker = worker;
         this.gingester = gingester;
         this.transformer = transformer;
@@ -83,8 +83,6 @@ class Transform implements Worker.Job {
         } catch (Throwable t) {
             t.printStackTrace();  // TODO
             throw t;
-        } finally {
-            gingester.signalQuit(this);
         }
     }
 }
