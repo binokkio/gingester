@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.rabbitmq.transformers.rabbitmq;
 
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.transformers.rabbitmq.common.RabbitmqTransformer;
+import com.rabbitmq.client.BasicProperties;
 import com.rabbitmq.client.GetResponse;
 
 public class Write extends RabbitmqTransformer<byte[], byte[]> {
@@ -32,6 +33,10 @@ public class Write extends RabbitmqTransformer<byte[], byte[]> {
         );
 
         emit(context, input);
+
+        synchronized (this) {
+            wait();
+        }
     }
 
     public static class Parameters extends RabbitmqTransformer.Parameters {
