@@ -3,23 +3,44 @@ package b.nana.technology.gingester.core;
 import b.nana.technology.gingester.core.link.BaseLink;
 import b.nana.technology.gingester.core.link.ExceptionLink;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract class Worker extends Thread {
+final class Worker extends Thread {
 
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
 
-    final Gingester gingester;
-    final Transformer<?, ?> transformer;
-    final Map<BaseLink<?, ?>, Batch<?>> batches = new HashMap<>();
+    private final BlockingQueue<Job> jobs = new LinkedBlockingQueue<>();
+    private final Map<BaseLink<?, ?>, Batch<?>> batches = new HashMap<>();
 
-    Worker(Gingester gingester, Transformer<?, ?> transformer) {
-        this.gingester = gingester;
-        this.transformer = transformer;
+    Worker(Job... jobs) {
         setName("Gingester-Worker-" + COUNTER.incrementAndGet());
+        this.jobs.addAll(Arrays.asList(jobs));
+    }
+
+    public void add(Job job) {
+        try {
+            jobs.put(job);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO (should not happen, LinkedBlockingQueue is unbounded)
+        }
+    }
+
+    @Override
+    public void run() {
+        for (Job job : jobs) {
+            try {
+                job.run();
+                flushAll();
+            } catch (Exception e) {
+                e.printStackTrace();  // TODO
+            }
+        }
     }
 
     <T> void accept(Transformer<?, ?> producer, Context context, T value, List<? extends BaseLink<?, T>> links) {
@@ -134,14 +155,23 @@ abstract class Worker extends Thread {
         }
     }
 
-    static class Transform extends Worker {
+    // TODO create a standalone Runnable for Worker
 
+    class Transform implements Job {
+
+        final Gingester gingester;
+        final Transformer<?, ?> transformer;
         final Object lock = new Object();
         volatile boolean starving;
 //        long lastBatchReport = System.nanoTime();
 
         Transform(Gingester gingester, Transformer<?, ?> transformer) {
-            super(gingester, transformer);
+            this.gingester = gingester;
+            this.transformer = transformer;
+        }
+
+        Worker getWorker() {
+            return Worker.this;
         }
 
         @Override
@@ -218,29 +248,7 @@ abstract class Worker extends Thread {
         }
     }
 
-    static class Jobs extends Worker {
-
-        interface Job {
-            void run() throws Exception;
-        }
-
-        private final List<Job> jobs;
-
-        Jobs(Gingester gingester, Transformer<?, ?> transformer, Job... jobs) {
-            super(gingester, transformer);
-            this.jobs = List.of(jobs);
-        }
-
-        @Override
-        public void run() {
-            for (Job job : jobs) {
-                try {
-                    job.run();
-                    flushAll();
-                } catch (Exception e) {
-                    e.printStackTrace();  // TODO
-                }
-            }
-        }
+    interface Job {
+        void run() throws Exception;
     }
 }
