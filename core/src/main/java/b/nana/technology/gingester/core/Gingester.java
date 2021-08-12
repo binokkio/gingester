@@ -18,8 +18,8 @@ public final class Gingester {
     private final Set<Transformer<?, ?>> transformers;
     final boolean report;
 
-    private final Set<Worker.Transform> seeders = new HashSet<>();
-    private final Set<Worker.Transform> workers = new HashSet<>();
+    private final Set<Transform> seeders = new HashSet<>();
+    private final Set<Transform> workers = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
     final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     State state = State.SETUP;
@@ -108,7 +108,7 @@ public final class Gingester {
                     addWorker(transformer);
                 }
             } else {
-                for (Worker.Transform worker : transformer.workers) {
+                for (Transform worker : transformer.workers) {
                     if (worker.starving) {
                         synchronized (worker.lock) {
                             worker.lock.notify();
@@ -120,7 +120,7 @@ public final class Gingester {
         });
     }
 
-    void signalStarving(Worker.Transform transform) {
+    void signalStarving(Transform transform) {
         signal(() -> {
             if (isWorkerRedundant(transform)) {
                 transform.getWorker().interrupt();
@@ -128,7 +128,7 @@ public final class Gingester {
         });
     }
 
-    void signalQuit(Worker.Transform quiter) {
+    void signalQuit(Transform quiter) {
         signal(() -> {
             workers.remove(quiter);
             Transformer<?, ?> transformer = quiter.transformer;
@@ -147,7 +147,7 @@ public final class Gingester {
                 state = State.DONE;
             } else {
                 maybeClose();
-                for (Worker.Transform worker : workers) {
+                for (Transform worker : workers) {
                     if (isWorkerRedundant(worker)) {
                         worker.getWorker().interrupt();
                     }
@@ -169,9 +169,9 @@ public final class Gingester {
         new Worker(transformer::open, this::signalOpen).start();
     }
 
-    private Worker.Transform addWorker(Transformer<?, ?> transformer) {
+    private Transform addWorker(Transformer<?, ?> transformer) {
         Worker worker = new Worker();
-        Worker.Transform transform = worker.new Transform(this, transformer);
+        Transform transform = new Transform(worker, this, transformer);
         worker.add(transform);
         workers.add(transform);
         transformer.workers.add(transform);
@@ -193,7 +193,7 @@ public final class Gingester {
         if (done) state = State.DONE;
     }
 
-    private static boolean isWorkerRedundant(Worker.Transform worker) {
+    private static boolean isWorkerRedundant(Transform worker) {
 
         // a worker is redundant if all its upstream transformers are closed...
         if (worker.transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {

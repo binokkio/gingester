@@ -34,7 +34,7 @@ public abstract class Transformer<I, O> {
     final List<ExceptionLink> excepts = new ArrayList<>();
     final Map<String, NormalLink<O>> outgoingById = new HashMap<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
-    final Set<Worker.Transform> workers = new HashSet<>();
+    final Set<Transform> workers = new HashSet<>();
     private final Threader threader = new Threader();
     private int state = 1;
     volatile int batchSize = 1;
