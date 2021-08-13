@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class Worker extends Thread {
 
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
+    private static final Job STOP_SENTINEL = () -> {};
 
     private final BlockingQueue<Job> jobs = new LinkedBlockingQueue<>();
     private final Map<BaseLink<?, ?>, Batch<?>> batches = new HashMap<>();
@@ -23,7 +24,7 @@ final class Worker extends Thread {
         add(jobs);
     }
 
-    public Worker add(Job... jobs) {
+    Worker add(Job... jobs) {
         this.jobs.addAll(Arrays.asList(jobs));
         return this;
     }
@@ -32,12 +33,18 @@ final class Worker extends Thread {
     public void run() {
         while (true) {
             try {
-                jobs.take().run();
+                Job job = jobs.take();
+                if (job == STOP_SENTINEL) break;
+                job.run();
             } catch (Exception e) {
                 e.printStackTrace();
             }
             flushAll();
         }
+    }
+
+    public void end() {
+        jobs.add(STOP_SENTINEL);
     }
 
     <T> void accept(Transformer<?, ?> producer, Context context, T value, List<? extends BaseLink<?, T>> links) {

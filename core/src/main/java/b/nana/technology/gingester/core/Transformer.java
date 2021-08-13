@@ -138,8 +138,11 @@ public abstract class Transformer<I, O> {
 
     void setIsClosed() {
         state = -1;
+        leader.end();
     }
 
+
+    
     // methods to be overridden by subclasses
 
     /**
