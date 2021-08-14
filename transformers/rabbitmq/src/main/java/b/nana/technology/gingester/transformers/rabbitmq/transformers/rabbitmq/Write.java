@@ -9,15 +9,17 @@ public class Write extends RabbitmqTransformer<byte[], byte[]> {
 
     private final String exchange;
     private final String routingKey;
-    private final boolean mandatory;
-    private final boolean immediate;
 
     public Write(Parameters parameters) {
         super(parameters);
         exchange = parameters.exchange;
-        routingKey = parameters.routingKey;
-        mandatory = parameters.mandatory;
-        immediate = parameters.immediate;
+        routingKey = parameters.routingKey != null ? parameters.routingKey : parameters.queue;
+    }
+
+    @Override
+    protected void open() throws Exception {
+        super.open();
+        // TODO implement a return listener
     }
 
     @Override
@@ -26,23 +28,17 @@ public class Write extends RabbitmqTransformer<byte[], byte[]> {
         getChannel().basicPublish(
                 exchange,
                 routingKey,
-                mandatory,
-                immediate,
+                true,
+                false,
                 null,
                 input
         );
 
         emit(context, input);
-
-        synchronized (this) {
-            wait();
-        }
     }
 
     public static class Parameters extends RabbitmqTransformer.Parameters {
         public String exchange = "";
-        public String routingKey = "";
-        public boolean mandatory;
-        public boolean immediate;
+        public String routingKey;
     }
 }
