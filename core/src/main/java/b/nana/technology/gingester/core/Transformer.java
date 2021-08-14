@@ -238,7 +238,7 @@ public abstract class Transformer<I, O> {
     }
 
     private Context maybeExtend(Context context) {
-        if ((!excepts.isEmpty() || !syncs.isEmpty()) && context.transformer != this) {
+        if (context.transformer != this && (!excepts.isEmpty() || !syncs.isEmpty())) {
             return context.extend(this).build();
         } else {
             return context;
@@ -400,7 +400,7 @@ public abstract class Transformer<I, O> {
         // TODO use a thread pool
 
         public final Thread newThread(Runnable runnable) {
-            return new Worker.Jobs(gingester, Transformer.this, runnable::run);
+            return new Worker(runnable::run);
         }
 
         public void execute(Runnable runnable) {
