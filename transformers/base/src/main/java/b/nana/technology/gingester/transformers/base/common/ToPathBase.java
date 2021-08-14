@@ -53,7 +53,6 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
 
         Context.Builder contextBuilder = context.extend(this).description(pathString);
 
-        // TODO make options configurable
         try (OutputStream output = Files.newOutputStream(path, openOptions)) {
             if (emitEarly) {
                 Monitor monitor = new Monitor();

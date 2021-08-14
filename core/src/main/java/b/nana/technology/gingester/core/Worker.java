@@ -9,42 +9,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 final class Worker extends Thread {
-
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private static final Job STOP_SENTINEL = () -> {};
 
     private final BlockingQueue<Job> jobs = new LinkedBlockingQueue<>();
     private final Map<BaseLink<?, ?>, Batch<?>> batches = new HashMap<>();
 
-    Worker(Job... jobs) {
-        setName("Gingester-Worker-" + COUNTER.incrementAndGet());
+    Worker(String name, Job... jobs) {
+        setName(name);
         add(jobs);
     }
 
-    Worker add(Job... jobs) {
+    void add(Job... jobs) {
         this.jobs.addAll(Arrays.asList(jobs));
-        return this;
     }
 
     @Override
     public void run() {
         while (true) {
+            Job job;
             try {
-                Job job = jobs.take();
-                if (job == STOP_SENTINEL) break;
+                job = jobs.take();
+            } catch (InterruptedException e) {
+                break;
+            }
+            try {
                 job.run();
             } catch (Exception e) {
                 e.printStackTrace();
             }
             flushAll();
         }
-    }
-
-    public void end() {
-        jobs.add(STOP_SENTINEL);
     }
 
     <T> void accept(Transformer<?, ?> producer, Context context, T value, List<? extends BaseLink<?, T>> links) {

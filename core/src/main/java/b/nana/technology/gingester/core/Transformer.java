@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,8 +35,7 @@ public abstract class Transformer<I, O> {
     final List<ExceptionLink> excepts = new ArrayList<>();
     final Map<String, NormalLink<O>> outgoingById = new HashMap<>();
     final BlockingQueue<Batch<? extends I>> queue = new ArrayBlockingQueue<>(100);
-    final Worker leader = new Worker();
-    final Set<TransformJob> workers = new HashSet<>();
+    final Set<TransformJob> transformJobs = new HashSet<>();
     private final Threader threader = new Threader();
     private int state = 1;
     volatile int batchSize = 1;
@@ -121,7 +121,7 @@ public abstract class Transformer<I, O> {
     }
 
     boolean isEmpty() {
-        return queue.isEmpty() && workers.isEmpty();
+        return queue.isEmpty() && transformJobs.isEmpty();
     }
 
     boolean isOpen() {
@@ -138,11 +138,10 @@ public abstract class Transformer<I, O> {
 
     void setIsClosed() {
         state = -1;
-        leader.end();
     }
 
 
-    
+
     // methods to be overridden by subclasses
 
     /**
@@ -403,8 +402,10 @@ public abstract class Transformer<I, O> {
 
         // TODO use a thread pool
 
+        private final AtomicInteger counter = new AtomicInteger();
+
         public final Thread newThread(Runnable runnable) {
-            return new Worker(runnable::run);
+            return new Worker(id + "_Worker-" + counter.incrementAndGet(), runnable::run);
         }
 
         public void execute(Runnable runnable) {
