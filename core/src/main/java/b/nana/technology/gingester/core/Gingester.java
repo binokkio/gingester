@@ -18,8 +18,8 @@ public final class Gingester {
     private final Set<Transformer<?, ?>> transformers;
     final boolean report;
 
-    private final Set<Worker.Transform> seeders = new HashSet<>();
-    private final Set<Worker.Transform> workers = new HashSet<>();
+    private final Map<Transformer<?, ?>, Worker> leaders = new HashMap<>();
+    private final Set<TransformJob> seeders = new HashSet<>();
     private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
     final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     State state = State.SETUP;
@@ -92,23 +92,18 @@ public final class Gingester {
             if (--unopened == 0) {
                 transformers.stream()
                         .filter(transformer -> !transformer.queue.isEmpty())
-                        .forEach(transformer -> {
-                            for (int i = 0; i < transformer.maxWorkers; i++) {
-                                seeders.add(addWorker(transformer));
-                            }
-                        });
+                        .map(this::startTransforming)
+                        .forEach(seeders::addAll);
             }
         });
     }
 
     void signalNewBatch(Transformer<?, ?> transformer) {
         signal(() -> {
-            if (transformer.workers.isEmpty()) {
-                for (int i = 0; i < transformer.maxWorkers; i++) {
-                    addWorker(transformer);
-                }
+            if (transformer.transformJobs.isEmpty()) {
+                startTransforming(transformer);
             } else {
-                for (Worker.Transform worker : transformer.workers) {
+                for (TransformJob worker : transformer.transformJobs) {
                     if (worker.starving) {
                         synchronized (worker.lock) {
                             worker.lock.notify();
@@ -120,22 +115,17 @@ public final class Gingester {
         });
     }
 
-    void signalStarving(Worker.Transform worker) {
-        signal(() -> {
-            if (isWorkerRedundant(worker)) {
-                worker.interrupt();
-            }
-        });
+    void signalStarving(TransformJob transformJob) {
+        signal(() -> interruptIfStarving(transformJob));
     }
 
-    void signalQuit(Worker.Transform quiter) {
+    void signalDone(TransformJob transformJob) {
         signal(() -> {
-            workers.remove(quiter);
-            Transformer<?, ?> transformer = quiter.transformer;
-            transformer.workers.remove(quiter);
+            Transformer<?, ?> transformer = transformJob.transformer;
+            transformer.transformJobs.remove(transformJob);
             if (transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
                 transformer.setIsClosing();
-                new Worker(transformer::close, () -> signalClosed(transformer)).start();
+                leaders.get(transformer).add(transformer::close, () -> signalClosed(transformer));
             }
         });
     }
@@ -143,21 +133,21 @@ public final class Gingester {
     void signalClosed(Transformer<?, ?> transformer) {
         signal(() -> {
             transformer.setIsClosed();
+            leaders.remove(transformer).interrupt();
             if (--unclosed == 0) {
                 state = State.DONE;
             } else {
                 maybeClose();
-                for (Worker.Transform worker : workers) {
-                    if (isWorkerRedundant(worker)) {
-                        worker.interrupt();
-                    }
-                }
+                transformers.stream()
+                        .filter(Gingester::isTransformerStarving)
+                        .flatMap(t -> t.transformJobs.stream())
+                        .forEach(Gingester::interruptIfStarving);
             }
         });
     }
 
     void signalShutdown() {
-        signal(() -> seeders.forEach(Worker::interrupt));
+        signal(() -> seeders.forEach(transformJob -> transformJob.getWorker().interrupt()));
     }
 
     private void signal(Runnable runnable) {
@@ -166,15 +156,27 @@ public final class Gingester {
     }
 
     private void open(Transformer<?, ?> transformer) {
-        new Worker(transformer::open, this::signalOpen).start();
+        Worker leader = new Worker(transformer.id + "_Leader", transformer::open, this::signalOpen);
+        leaders.put(transformer, leader);
+        leader.start();
     }
 
-    private Worker.Transform addWorker(Transformer<?, ?> transformer) {
-        Worker.Transform worker = new Worker.Transform(this, transformer);
-        workers.add(worker);
-        transformer.workers.add(worker);
-        worker.start();
-        return worker;
+    private List<TransformJob> startTransforming(Transformer<?, ?> transformer) {
+        List<TransformJob> jobs = new ArrayList<>();
+        jobs.add(startTransformJob(leaders.get(transformer), transformer));
+        for (int i = 1; i < transformer.maxWorkers; i++) {
+            Worker worker = new Worker(transformer.id + "_Worker-" + i);
+            worker.start();
+            jobs.add(startTransformJob(worker, transformer));
+        }
+        return jobs;
+    }
+
+    private TransformJob startTransformJob(Worker worker, Transformer<?, ?> transformer) {
+        TransformJob transformJob = new TransformJob(worker, this, transformer);
+        worker.add(transformJob, () -> signalDone(transformJob));
+        transformer.transformJobs.add(transformJob);
+        return transformJob;
     }
 
     private void maybeClose() {
@@ -184,25 +186,23 @@ public final class Gingester {
                 done = false;
                 if (transformer.isOpen() && transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
                     transformer.setIsClosing();
-                    new Worker(transformer::close, () -> signalClosed(transformer)).start();
+                    leaders.get(transformer).add(transformer::close, () -> signalClosed(transformer));
                 }
             }
         }
         if (done) state = State.DONE;
     }
 
-    private static boolean isWorkerRedundant(Worker.Transform worker) {
+    private static boolean isTransformerStarving(Transformer<?, ?> transformer) {
+        return transformer.getUpstream().stream().allMatch(Transformer::isClosed);
+    }
 
-        // a worker is redundant if all its upstream transformers are closed...
-        if (worker.transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
-
-            // ... and it is starving
-            synchronized (worker.lock) {
-                return worker.starving;
+    private static void interruptIfStarving(TransformJob transformJob) {
+        synchronized (transformJob.lock) {
+            if (transformJob.starving) {
+                transformJob.getWorker().interrupt();
             }
         }
-
-        return false;
     }
 
 

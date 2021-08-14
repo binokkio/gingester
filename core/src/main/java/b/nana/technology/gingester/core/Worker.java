@@ -3,32 +3,42 @@ package b.nana.technology.gingester.core;
 import b.nana.technology.gingester.core.link.BaseLink;
 import b.nana.technology.gingester.core.link.ExceptionLink;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-class Worker extends Thread {
+final class Worker extends Thread {
 
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-
-    private final List<Job> jobs;
+    private final BlockingQueue<Job> jobs = new LinkedBlockingQueue<>();
     private final Map<BaseLink<?, ?>, Batch<?>> batches = new HashMap<>();
 
-    Worker(Job... jobs) {
-        setName("Gingester-Worker-" + COUNTER.incrementAndGet());
-        this.jobs = List.of(jobs);
+    Worker(String name, Job... jobs) {
+        setName(name);
+        add(jobs);
+    }
+
+    void add(Job... jobs) {
+        this.jobs.addAll(Arrays.asList(jobs));
     }
 
     @Override
     public void run() {
-        for (Job job : jobs) {
+        while (true) {
+            Job job;
+            try {
+                job = jobs.take();
+            } catch (InterruptedException e) {
+                break;
+            }
             try {
                 job.run();
-                flushAll();
             } catch (Exception e) {
-                e.printStackTrace();  // TODO
+                e.printStackTrace();
             }
+            flushAll();
         }
     }
 
@@ -57,7 +67,7 @@ class Worker extends Thread {
 
             boolean batchFull = batch.addAndIndicateFull(context, value);
 
-            if (batchFull) {
+            if (batchFull) {  // TODO also flush if batch is old, maybe have a volatile boolean and a helper thread that sets it true every second and triggers a check of batch.createdAt here
                 flush(link, batch);
                 batches.remove(link);
             }
@@ -98,7 +108,7 @@ class Worker extends Thread {
         }
     }
 
-    void handleException(Transformer<?, ?> thrower, Context exceptionContext, Throwable exception) {
+    private void handleException(Transformer<?, ?> thrower, Context exceptionContext, Throwable exception) {
 
         // keep interrupt flag set
         if (exception instanceof InterruptedException) {
@@ -125,13 +135,13 @@ class Worker extends Thread {
     }
 
     @SuppressWarnings("unchecked")
-    <T> void flushAll() {
+    private <T> void flushAll() {
         for (Map.Entry<BaseLink<?, ?>, Batch<?>> linkBatchEntry : batches.entrySet()) {
             flush((BaseLink<?, T>) linkBatchEntry.getKey(), (Batch<T>) linkBatchEntry.getValue());
         }
     }
 
-    <T> void flush(BaseLink<?, T> link, Batch<? extends T> batch) {
+    private <T> void flush(BaseLink<?, T> link, Batch<? extends T> batch) {
         try {
             link.to.put(batch);
         } catch (InterruptedException e1) {
@@ -141,95 +151,6 @@ class Worker extends Thread {
                 throw new IllegalStateException("Interrupted twice", e2);
             }
             Thread.currentThread().interrupt();
-        }
-    }
-
-    // TODO create a standalone Runnable for Worker
-
-    static class Transform extends Worker {
-
-        final Gingester gingester;
-        final Transformer<?, ?> transformer;
-        final Object lock = new Object();
-        volatile boolean starving;
-//        long lastBatchReport = System.nanoTime();
-
-        Transform(Gingester gingester, Transformer<?, ?> transformer) {
-            this.gingester = gingester;
-            this.transformer = transformer;
-        }
-
-        @Override
-        public void run() {
-            run(transformer);
-        }
-
-        private <I, O> void run(Transformer<I, O> transformer) {
-
-            try {
-
-                while (true) {
-
-                    Batch<? extends I> batch = transformer.queue.poll();
-                    if (batch == null) {
-                        synchronized (lock) {
-                            starving = true;
-                            try {
-                                while ((batch = transformer.queue.poll()) == null) {
-                                    gingester.signalStarving(this);
-                                    lock.wait();
-                                }
-                            } catch (InterruptedException e) {
-                                break;
-                            } finally {
-                                starving = false;
-                            }
-                        }
-                    }
-
-                    if (transformer.maxBatchSize == 1) {
-                        // no batch optimizations possible, not tracking batch duration
-                        transform(transformer, batch);
-                    } else {
-
-                        long batchStarted = System.nanoTime();
-                        transform(transformer, batch);
-                        long batchFinished = System.nanoTime();
-                        double batchDuration = batchFinished - batchStarted;
-
-                        if ((batchDuration < 2_000_000 && batch.getSize() != transformer.maxBatchSize) ||
-                            (batchDuration > 4_000_000 && batch.getSize() != 1)) {
-
-                            double abrupt = 3_000_000 / batchDuration * batch.getSize();
-                            double dampened = (abrupt + batch.getSize() * 9) / 10;
-                            transformer.batchSize = (int) Math.min(transformer.maxBatchSize, dampened);
-                        }
-
-//                        if (lastBatchReport + 1_000_000_000 < batchFinished) {
-//                            lastBatchReport = batchFinished;
-//                            System.err.printf(
-//                                    "%s processed batch of %,d items in %,.3f seconds%n",
-//                                    transformer.name,
-//                                    batch.getSize(),
-//                                    batchDuration / 1_000_000_000
-//                            );
-//                        }
-                    }
-
-                    Transformer.Statistics statistics = transformer.getStatistics().orElse(null);
-                    if (statistics != null) statistics.delt.addAndGet(batch.getSize());
-
-                    // TODO flush all batches older than 1 second
-                }
-
-                flushAll();
-
-            } catch (Throwable t) {
-                t.printStackTrace();  // TODO
-                throw t;
-            } finally {
-                gingester.signalQuit(this);
-            }
         }
     }
 
