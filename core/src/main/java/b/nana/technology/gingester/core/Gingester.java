@@ -135,7 +135,7 @@ public final class Gingester {
             transformer.workers.remove(quiter);
             if (transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
                 transformer.setIsClosing();
-                new Worker.Jobs(this, transformer, transformer::close, () -> signalClosed(transformer)).start();
+                new Worker(transformer::close, () -> signalClosed(transformer)).start();
             }
         });
     }
@@ -166,7 +166,7 @@ public final class Gingester {
     }
 
     private void open(Transformer<?, ?> transformer) {
-        new Worker.Jobs(this, transformer, transformer::open, this::signalOpen).start();
+        new Worker(transformer::open, this::signalOpen).start();
     }
 
     private Worker.Transform addWorker(Transformer<?, ?> transformer) {
@@ -184,7 +184,7 @@ public final class Gingester {
                 done = false;
                 if (transformer.isOpen() && transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
                     transformer.setIsClosing();
-                    new Worker.Jobs(this, transformer, transformer::close, () -> signalClosed(transformer)).start();
+                    new Worker(transformer::close, () -> signalClosed(transformer)).start();
                 }
             }
         }

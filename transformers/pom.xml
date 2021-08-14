@@ -17,10 +17,11 @@
 
     <modules>
         <module>base</module>
-        <module>unpack</module>
-        <module>jetty</module>
-        <module>redis</module>
         <module>elasticsearch7</module>
+        <module>jetty</module>
+        <module>rabbitmq</module>
+        <module>redis</module>
+        <module>unpack</module>
     </modules>
 
 </project>
