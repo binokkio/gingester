@@ -9,6 +9,7 @@ final class Batch<T> implements Iterable<Item<T>> {
 
     private final int capacity;
     private final List<Item<T>> values;
+    private final long createdAt = System.nanoTime();
 
     Batch(int capacity) {
         this.capacity = capacity;
