@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.ContextMap;
 import b.nana.technology.gingester.core.Transformer;
 import com.dynatrace.dynahist.Histogram;
 import com.dynatrace.dynahist.bin.BinIterator;
+import com.dynatrace.dynahist.layout.CustomLayout;
 import com.dynatrace.dynahist.layout.LogQuadraticLayout;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,35 +14,46 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.util.DoubleArray;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
-import org.jfree.chart.plot.PiePlot;
-import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.RingPlot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.ui.RectangleInsets;
-import org.jfree.chart.util.DefaultShadowGenerator;
-import org.jfree.chart.util.PaintAlpha;
 import org.jfree.data.general.DefaultPieDataset;
-import org.jfree.data.general.PieDataset;
 import org.jfree.data.statistics.SimpleHistogramBin;
 import org.jfree.data.statistics.SimpleHistogramDataset;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.stream.DoubleStream;
 import java.util.stream.StreamSupport;
 
 public class Statistics extends Transformer<JsonNode, JsonNode> {
+
+    private static final NodeConfiguration DEFAULT_NODE_CONFIGURATION;
+    static {
+        NodeConfiguration defaultNodeConfiguration = new NodeConfiguration();
+        defaultNodeConfiguration.disabled = false;
+        defaultNodeConfiguration.frequencyConfiguration = new FrequencyConfiguration();
+        defaultNodeConfiguration.frequencyConfiguration.disabled = false;
+        defaultNodeConfiguration.frequencyConfiguration.frequencyLimit = 10000;
+        defaultNodeConfiguration.frequencyConfiguration.frequencyHead = 10;
+        defaultNodeConfiguration.histogramConfiguration = new HistogramConfiguration();
+        defaultNodeConfiguration.histogramConfiguration.disabled = false;
+        defaultNodeConfiguration.histogramConfiguration.precision = 1d;
+        HistogramLayout histogramLayout = new HistogramLayout();
+        histogramLayout.bars = 100;
+        defaultNodeConfiguration.histogramConfiguration.layouts = Collections.singletonList(histogramLayout);
+        DEFAULT_NODE_CONFIGURATION = defaultNodeConfiguration;
+    }
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ContextMap<NodeStatistics> contextMap = new ContextMap<>();
@@ -74,12 +86,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
         private final NodeStatistics root;
         private final String pointer;
-
-        private final boolean disabled;
-        private final int frequencyLimit;
-        private final int frequencyHead;
-        private final double initialBucketSize;
-        private final int finalBucketCount;
+        private final NodeConfiguration nodeConfiguration;
 
         private final List<NodeStatistics> arrayChildren = new ArrayList<>();
         private final Map<String, NodeStatistics> objectChildren = new LinkedHashMap<>();
@@ -95,21 +102,39 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             this.root = root != null ? root : this;
             this.pointer = pointer;
 
-            NodeConfiguration nodeConfiguration = nodeConfigurations.get(pointer);
-            if (nodeConfiguration == null) nodeConfiguration = new NodeConfiguration();
-
-            disabled = nodeConfiguration.disabled != null ? nodeConfiguration.disabled : parent != null && parent.disabled;
-            frequencyLimit = nodeConfiguration.frequencyLimit != null ? nodeConfiguration.frequencyLimit : parent != null ? parent.frequencyLimit : 10000;
-            frequencyHead = nodeConfiguration.frequencyHead != null ? nodeConfiguration.frequencyHead : parent != null ? parent.frequencyHead : 10;
-            initialBucketSize = nodeConfiguration.initialBucketSize != null ? nodeConfiguration.initialBucketSize : parent != null ? parent.initialBucketSize : 1;
-            finalBucketCount = nodeConfiguration.finalBucketCount != null ? nodeConfiguration.finalBucketCount : parent != null ? parent.finalBucketCount : 100;
+            nodeConfiguration = createNodeConfiguration(nodeConfigurations.get(pointer), parent != null ? parent.nodeConfiguration : DEFAULT_NODE_CONFIGURATION);
 
             histogram = Histogram.createDynamic(LogQuadraticLayout.create(
-                    initialBucketSize,
+                    nodeConfiguration.histogramConfiguration.precision,
                     1e-5,
-                    Double.MIN_VALUE,
+                    -Double.MAX_VALUE,
                     Double.MAX_VALUE
             ));
+        }
+
+        private NodeConfiguration createNodeConfiguration(NodeConfiguration given, NodeConfiguration parent) {
+
+            // TODO this is too cumbersome
+
+            NodeConfiguration nodeConfiguration = new NodeConfiguration();
+            if (given == null) given = nodeConfiguration;  // TODO hacky
+
+            nodeConfiguration.disabled =
+                    given.disabled != null ?
+                            given.disabled :
+                            parent.disabled;
+
+            nodeConfiguration.frequencyConfiguration = given.frequencyConfiguration != null ? given.frequencyConfiguration : parent.frequencyConfiguration;
+            nodeConfiguration.frequencyConfiguration.disabled = nodeConfiguration.frequencyConfiguration.disabled != null ? nodeConfiguration.frequencyConfiguration.disabled : parent.frequencyConfiguration.disabled;
+            nodeConfiguration.frequencyConfiguration.frequencyLimit = nodeConfiguration.frequencyConfiguration.frequencyLimit != null ? nodeConfiguration.frequencyConfiguration.frequencyLimit : parent.frequencyConfiguration.frequencyLimit;
+            nodeConfiguration.frequencyConfiguration.frequencyHead = nodeConfiguration.frequencyConfiguration.frequencyHead != null ? nodeConfiguration.frequencyConfiguration.frequencyHead : parent.frequencyConfiguration.frequencyHead;
+
+            nodeConfiguration.histogramConfiguration = given.histogramConfiguration != null ? given.histogramConfiguration : parent.histogramConfiguration;
+            nodeConfiguration.histogramConfiguration.disabled = nodeConfiguration.histogramConfiguration.disabled != null ? nodeConfiguration.histogramConfiguration.disabled : parent.histogramConfiguration.disabled;
+            nodeConfiguration.histogramConfiguration.precision = nodeConfiguration.histogramConfiguration.precision != null ? nodeConfiguration.histogramConfiguration.precision : parent.histogramConfiguration.precision;
+            nodeConfiguration.histogramConfiguration.layouts = nodeConfiguration.histogramConfiguration.layouts != null ? nodeConfiguration.histogramConfiguration.layouts : parent.histogramConfiguration.layouts;
+
+            return nodeConfiguration;
         }
 
         private void accept(JsonNode jsonNode) {
@@ -139,12 +164,11 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                             .accept(jsonNode.get(fieldName));
                 }
 
-            } else if (!disabled) {
+            } else if (!nodeConfiguration.disabled) {
 
-                if (!frequencyLimitReached) {
+                if (!nodeConfiguration.frequencyConfiguration.disabled && !frequencyLimitReached) {
                     frequency.addValue(jsonNode.asText());
-                    if (frequency.getUniqueCount() > frequencyLimit) {
-                        frequency.clear();
+                    if (frequency.getUniqueCount() > nodeConfiguration.frequencyConfiguration.frequencyLimit) {
                         frequencyLimitReached = true;
                     }
                 }
@@ -184,10 +208,9 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                 rootNode.set("frequency", frequencyNode);
                 if (frequencyLimitReached) {
                     frequencyNode.put("frequencyLimitReached", true);
-                    frequencyNode.put("frequencyLimit", frequencyLimit);
-                } else {
-                    fillFrequencyNode(frequencyNode);
+                    frequencyNode.put("frequencyLimit", nodeConfiguration.frequencyConfiguration.frequencyLimit);
                 }
+                fillFrequencyNode(frequencyNode);
 
                 ObjectNode numericalNode = objectMapper.createObjectNode();
                 rootNode.set("numerical", numericalNode);
@@ -234,7 +257,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
             double remaining = count - StreamSupport.stream(Spliterators.spliteratorUnknownSize(frequency.entrySetIterator(), 0), false)
                     .sorted(Comparator.comparingLong(Map.Entry<Comparable<?>, Long>::getValue).reversed())
-                    .limit(frequencyHead)
+                    .limit(nodeConfiguration.frequencyConfiguration.frequencyHead)
                     .mapToDouble(frequencyEntry -> {
                         String frequencyEntryKey = (String) frequencyEntry.getKey();
                         ObjectNode frequencyEntryNode = objectMapper.createObjectNode();
@@ -259,7 +282,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             ringPlot.setSectionDepth(1d/3);
             ringPlot.setBackgroundAlpha(0);
             ringPlot.setShadowPaint(new Color(0, true));
-            ringPlot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {1}x / {2}"));
+            ringPlot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}\n{1}x / {2}"));
             ringPlot.setLabelPadding(new RectangleInsets(4, 8, 4, 8));
             ringPlot.setLabelBackgroundPaint(Color.white);
             ringPlot.setSectionPaint("<other>", new Color(240, 240, 240));
@@ -279,7 +302,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
         private void fillNumericalNode(ObjectNode numericalNode) {
 
-            numericalNode.put("percentage", numerical.getN() / count * 100);
+            numericalNode.put("percentage", ((double) numerical.getN()) / count * 100);
             numericalNode.put("sum", numerical.getSum());
             numericalNode.put("min", numerical.getMin());
             numericalNode.put("max", numerical.getMax());
@@ -287,57 +310,73 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             numericalNode.put("variance", numerical.getVariance());
             numericalNode.put("standardDeviation", numerical.getStandardDeviation());
 
-            ArrayNode buckets = objectMapper.createArrayNode();
-            numericalNode.set("buckets", buckets);
-
             SimpleHistogramDataset data = new SimpleHistogramDataset(pointer);
             data.setAdjustForBinSize(false);
 
-            BinIterator binIterator = histogram.getFirstNonEmptyBin();
-            while (true) {
-                double lowerBound = binIterator.getLowerBound();
-                double upperBound = binIterator.getUpperBound();
-                ObjectNode bucketNode = objectMapper.createObjectNode();
-                buckets.add(bucketNode);
-                bucketNode.put("from", lowerBound);
-                bucketNode.put("to", upperBound);
-                bucketNode.put("count", binIterator.getBinCount());
+            // TODO maybe add getBinByRank(0..9) to numericalNode
 
-                double barFrom = binIterator.isFirstNonEmptyBin() ?
-                        roundNearest(upperBound, initialBucketSize) - initialBucketSize :
-                        roundNearest(lowerBound, initialBucketSize);
+            ArrayNode histogramsNode = objectMapper.createArrayNode();
+            numericalNode.set("histograms", histogramsNode);
 
-                double barTo = (binIterator.isLastNonEmptyBin() ?
-                        roundNearest(lowerBound, initialBucketSize) + initialBucketSize :
-                        roundNearest(upperBound, initialBucketSize)) - 1e-5;
+            for (HistogramLayout layout : nodeConfiguration.histogramConfiguration.layouts) {
 
-                SimpleHistogramBin bin = new SimpleHistogramBin(barFrom, barTo);
-                bin.setItemCount((int) binIterator.getBinCount());
-                data.addBin(bin);
+                double from = layout.from != null ? layout.from : histogram.getMin();
+                double to = layout.to != null ? layout.to : histogram.getMax();
+                double step = (to - from) / layout.bars;
+                double current = from;
+                double[] boundaries = new double[layout.bars + 1];
+                for (int i = 0; i < boundaries.length; i++) {
+                    boundaries[i] = current += step;
+                }
+                CustomLayout customLayout = CustomLayout.create(boundaries);
+                Histogram customHistogram = Histogram.createDynamic(customLayout);
+                customHistogram.addHistogram(histogram);
 
-                if (binIterator.isLastNonEmptyBin()) break;
-                binIterator.next();
+                BinIterator binIterator = customHistogram.getFirstNonEmptyBin();
+                while (true) {
+
+                    if (!binIterator.isUnderflowBin() && !binIterator.isOverflowBin()) {
+
+                        double lowerBound = binIterator.getLowerBound();
+                        double upperBound = binIterator.getUpperBound();
+
+                        try {
+                            SimpleHistogramBin bin = new SimpleHistogramBin(lowerBound, upperBound != lowerBound ? upperBound : upperBound + 1e-5);
+                            bin.setItemCount((int) binIterator.getBinCount());
+                            data.addBin(bin);
+                        } catch (Exception e) {
+                            // TODO
+                            System.err.printf(
+                                    "Bad bin: %f, %f\n",
+                                    lowerBound, upperBound
+                            );
+                        }
+                    }
+
+                    if (binIterator.isLastNonEmptyBin()) break;
+                    binIterator.next();
+                }
+
+                JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
+                chart.removeLegend();
+                XYPlot xyPlot = chart.getXYPlot();
+                xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
+                XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
+                renderer.setDrawBarOutline(true);
+                renderer.setBarPainter(new StandardXYBarPainter());
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                try {
+                    ChartUtils.writeChartAsPNG(
+                            bytes,
+                            chart,
+                            800,
+                            600
+                    );
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+                histogramsNode.add(bytes.toByteArray());
             }
-
-            JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
-            chart.removeLegend();
-            XYPlot xyPlot = chart.getXYPlot();
-            xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
-            XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
-            renderer.setDrawBarOutline(true);
-            renderer.setBarPainter(new StandardXYBarPainter());
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            try {
-                ChartUtils.writeChartAsPNG(
-                        bytes,
-                        chart,
-                        800,
-                        600
-                );
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-            numericalNode.put("histogram", bytes.toByteArray());
         }
     }
 
@@ -351,17 +390,25 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
     public static class NodeConfiguration {
         public Boolean disabled;
-        public Integer frequencyLimit;
-        public Integer frequencyHead;
-        public Double initialBucketSize;
-        public Integer finalBucketCount;
+        public FrequencyConfiguration frequencyConfiguration;
+        public HistogramConfiguration histogramConfiguration;
     }
 
-    private static double roundNearest(double v, double target) {
-        if (v >= 0) {
-            return target * Math.floor((v + 0.5f * target) / target);
-        } else {
-            return target * Math.ceil((v - 0.5f * target) / target);
-        }
+    public static class FrequencyConfiguration {
+        public Boolean disabled;
+        public Integer frequencyLimit;
+        public Integer frequencyHead;
+    }
+
+    public static class HistogramConfiguration {
+        public Boolean disabled;
+        public Double precision;
+        public List<HistogramLayout> layouts;
+    }
+
+    public static class HistogramLayout {
+        public Double from;
+        public Double to;
+        public Integer bars;
     }
 }
