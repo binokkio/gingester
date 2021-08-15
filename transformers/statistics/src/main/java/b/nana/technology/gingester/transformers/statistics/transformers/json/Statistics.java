@@ -13,8 +13,32 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.plot.RingPlot;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.ui.RectangleInsets;
+import org.jfree.chart.util.DefaultShadowGenerator;
+import org.jfree.chart.util.PaintAlpha;
+import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.data.general.PieDataset;
+import org.jfree.data.statistics.SimpleHistogramBin;
+import org.jfree.data.statistics.SimpleHistogramDataset;
 
+import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 public class Statistics extends Transformer<JsonNode, JsonNode> {
@@ -54,7 +78,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
         private final boolean disabled;
         private final int frequencyLimit;
         private final int frequencyHead;
-        private final int initialBucketSize;
+        private final double initialBucketSize;
         private final int finalBucketCount;
 
         private final List<NodeStatistics> arrayChildren = new ArrayList<>();
@@ -162,48 +186,14 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                     frequencyNode.put("frequencyLimitReached", true);
                     frequencyNode.put("frequencyLimit", frequencyLimit);
                 } else {
-                    frequencyNode.put("unique", frequency.getUniqueCount());
-                    frequencyNode.put("percentage", ((double) frequency.getUniqueCount()) / count * 100);
-
-                    ArrayNode headNode = objectMapper.createArrayNode();
-                    frequencyNode.set("head", headNode);
-                    StreamSupport.stream(Spliterators.spliteratorUnknownSize(frequency.entrySetIterator(), 0), false)
-                            .sorted(Comparator.comparingLong(Map.Entry<Comparable<?>, Long>::getValue).reversed())
-                            .limit(frequencyHead)
-                            .forEach(frequencyEntry -> {
-                                String frequencyEntryKey = (String) frequencyEntry.getKey();
-                                ObjectNode frequencyEntryNode = objectMapper.createObjectNode();
-                                frequencyEntryNode.put("value", frequencyEntryKey);
-                                frequencyEntryNode.put("count", frequency.getCount(frequencyEntryKey));
-                                frequencyEntryNode.put("percentage", frequency.getPct(frequencyEntryKey) * 100);
-                                headNode.add(frequencyEntryNode);
-                            });
+                    fillFrequencyNode(frequencyNode);
                 }
 
                 ObjectNode numericalNode = objectMapper.createObjectNode();
                 rootNode.set("numerical", numericalNode);
                 numericalNode.put("count", numerical.getN());
-                numericalNode.put("percentage", numerical.getN() / count * 100);
-                numericalNode.put("sum", numerical.getSum());
-                numericalNode.put("min", numerical.getMin());
-                numericalNode.put("max", numerical.getMax());
-                numericalNode.put("mean", numerical.getMean());
-                numericalNode.put("variance", numerical.getVariance());
-                numericalNode.put("standardDeviation", numerical.getStandardDeviation());
-
-                if (histogram.getTotalCount() > 0) {
-                    ArrayNode buckets = objectMapper.createArrayNode();
-                    numericalNode.set("buckets", buckets);
-                    BinIterator binIterator = histogram.getFirstNonEmptyBin();
-                    while (true) {
-                        ObjectNode bucketNode = objectMapper.createObjectNode();
-                        buckets.add(bucketNode);
-                        bucketNode.put("from", binIterator.getLowerBound());
-                        bucketNode.put("to", binIterator.getUpperBound());
-                        bucketNode.put("count", binIterator.getBinCount());
-                        if (binIterator.isLastNonEmptyBin()) break;
-                        binIterator.next();
-                    }
+                if (numerical.getN() > 0) {
+                    fillNumericalNode(numericalNode);
                 }
 
                 if (!objectChildren.isEmpty()) {
@@ -231,7 +221,129 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                 }
             }
         }
+
+        private void fillFrequencyNode(ObjectNode frequencyNode) {
+
+            frequencyNode.put("unique", frequency.getUniqueCount());
+            frequencyNode.put("percentage", ((double) frequency.getUniqueCount()) / count * 100);
+
+            ArrayNode headNode = objectMapper.createArrayNode();
+            frequencyNode.set("head", headNode);
+
+            DefaultPieDataset<String> pieDataset = new DefaultPieDataset<>();
+
+            double remaining = count - StreamSupport.stream(Spliterators.spliteratorUnknownSize(frequency.entrySetIterator(), 0), false)
+                    .sorted(Comparator.comparingLong(Map.Entry<Comparable<?>, Long>::getValue).reversed())
+                    .limit(frequencyHead)
+                    .mapToDouble(frequencyEntry -> {
+                        String frequencyEntryKey = (String) frequencyEntry.getKey();
+                        ObjectNode frequencyEntryNode = objectMapper.createObjectNode();
+                        headNode.add(frequencyEntryNode);
+                        double count = frequency.getCount(frequencyEntryKey);
+                        frequencyEntryNode.put("value", frequencyEntryKey);
+                        frequencyEntryNode.put("count", count);
+                        frequencyEntryNode.put("percentage", frequency.getPct(frequencyEntryKey) * 100);
+                        pieDataset.setValue(frequencyEntryKey, count);
+                        return count;
+                    }).sum();
+
+            if (remaining > 0) {
+                pieDataset.setValue("<other>", remaining);
+            }
+
+            JFreeChart chart = ChartFactory.createRingChart(null, pieDataset, false, false, false);
+            chart.removeLegend();
+            RingPlot ringPlot = (RingPlot) chart.getPlot();
+            ringPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
+            ringPlot.setOutlineVisible(false);
+            ringPlot.setSectionDepth(1d/3);
+            ringPlot.setBackgroundAlpha(0);
+            ringPlot.setShadowPaint(new Color(0, true));
+            ringPlot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {1}x / {2}"));
+            ringPlot.setLabelPadding(new RectangleInsets(4, 8, 4, 8));
+            ringPlot.setLabelBackgroundPaint(Color.white);
+            ringPlot.setSectionPaint("<other>", new Color(240, 240, 240));
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try {
+                ChartUtils.writeChartAsPNG(
+                        bytes,
+                        chart,
+                        800,
+                        600
+                );
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            frequencyNode.put("ringPlot", bytes.toByteArray());
+        }
+
+        private void fillNumericalNode(ObjectNode numericalNode) {
+
+            numericalNode.put("percentage", numerical.getN() / count * 100);
+            numericalNode.put("sum", numerical.getSum());
+            numericalNode.put("min", numerical.getMin());
+            numericalNode.put("max", numerical.getMax());
+            numericalNode.put("mean", numerical.getMean());
+            numericalNode.put("variance", numerical.getVariance());
+            numericalNode.put("standardDeviation", numerical.getStandardDeviation());
+
+            ArrayNode buckets = objectMapper.createArrayNode();
+            numericalNode.set("buckets", buckets);
+
+            SimpleHistogramDataset data = new SimpleHistogramDataset(pointer);
+            data.setAdjustForBinSize(false);
+
+            BinIterator binIterator = histogram.getFirstNonEmptyBin();
+            while (true) {
+                double lowerBound = binIterator.getLowerBound();
+                double upperBound = binIterator.getUpperBound();
+                ObjectNode bucketNode = objectMapper.createObjectNode();
+                buckets.add(bucketNode);
+                bucketNode.put("from", lowerBound);
+                bucketNode.put("to", upperBound);
+                bucketNode.put("count", binIterator.getBinCount());
+
+                double barFrom = binIterator.isFirstNonEmptyBin() ?
+                        roundNearest(upperBound, initialBucketSize) - initialBucketSize :
+                        roundNearest(lowerBound, initialBucketSize);
+
+                double barTo = (binIterator.isLastNonEmptyBin() ?
+                        roundNearest(lowerBound, initialBucketSize) + initialBucketSize :
+                        roundNearest(upperBound, initialBucketSize)) - 1e-5;
+
+                SimpleHistogramBin bin = new SimpleHistogramBin(barFrom, barTo);
+                bin.setItemCount((int) binIterator.getBinCount());
+                data.addBin(bin);
+
+                if (binIterator.isLastNonEmptyBin()) break;
+                binIterator.next();
+            }
+
+            JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
+            chart.removeLegend();
+            XYPlot xyPlot = chart.getXYPlot();
+            xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
+            XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
+            renderer.setDrawBarOutline(true);
+            renderer.setBarPainter(new StandardXYBarPainter());
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try {
+                ChartUtils.writeChartAsPNG(
+                        bytes,
+                        chart,
+                        800,
+                        600
+                );
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+            numericalNode.put("histogram", bytes.toByteArray());
+        }
     }
+
+
+
+    //
 
     public static class Parameters extends HashMap<String, NodeConfiguration> {
 
@@ -241,7 +353,15 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
         public Boolean disabled;
         public Integer frequencyLimit;
         public Integer frequencyHead;
-        public Integer initialBucketSize;
+        public Double initialBucketSize;
         public Integer finalBucketCount;
+    }
+
+    private static double roundNearest(double v, double target) {
+        if (v >= 0) {
+            return target * Math.floor((v + 0.5f * target) / target);
+        } else {
+            return target * Math.ceil((v - 0.5f * target) / target);
+        }
     }
 }
