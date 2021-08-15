@@ -14,7 +14,12 @@ class TestStatistics {
         Open.Parameters openParameters = new Open.Parameters("/basic.csv");
         Open open = new Open(openParameters);
         FromDsvInputStream fromDsvInputStream = new FromDsvInputStream(new FromDsvInputStream.Parameters());
-        Statistics statistics = new Statistics(new Statistics.Parameters());
+        Statistics.Parameters statisticsParameters = new Statistics.Parameters();
+        statisticsParameters.put("", new Statistics.NodeConfiguration());
+        statisticsParameters.get("").disabled = true;
+        statisticsParameters.put("/popularity", new Statistics.NodeConfiguration());
+        statisticsParameters.get("/popularity").disabled = false;
+        Statistics statistics = new Statistics(statisticsParameters);
         ToString.Parameters toStringParameters = new ToString.Parameters(true);
         ToString toString = new ToString(toStringParameters);
 
