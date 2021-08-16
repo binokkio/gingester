@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.commons.math3.util.DoubleArray;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -33,7 +32,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.stream.DoubleStream;
 import java.util.stream.StreamSupport;
 
 public class Statistics extends Transformer<JsonNode, JsonNode> {
@@ -166,10 +164,15 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
             } else if (!nodeConfiguration.disabled) {
 
-                if (!nodeConfiguration.frequencyConfiguration.disabled && !frequencyLimitReached) {
-                    frequency.addValue(jsonNode.asText());
-                    if (frequency.getUniqueCount() > nodeConfiguration.frequencyConfiguration.frequencyLimit) {
-                        frequencyLimitReached = true;
+                if (!nodeConfiguration.frequencyConfiguration.disabled) {
+                    String asText = jsonNode.asText();
+                    if (!frequencyLimitReached) {
+                        frequency.addValue(asText);
+                        if (frequency.getUniqueCount() == nodeConfiguration.frequencyConfiguration.frequencyLimit) {
+                            frequencyLimitReached = true;
+                        }
+                    } else if (frequency.getCount(asText) > 0) {
+                        frequency.addValue(asText);
                     }
                 }
 
@@ -204,20 +207,15 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                 presenceNode.put("count", count);
                 presenceNode.put("percentage", ((double) count) / root.count * 100);
 
-                ObjectNode frequencyNode = objectMapper.createObjectNode();
-                rootNode.set("frequency", frequencyNode);
-                if (frequencyLimitReached) {
-                    frequencyNode.put("frequencyLimitReached", true);
-                    frequencyNode.put("frequencyLimit", nodeConfiguration.frequencyConfiguration.frequencyLimit);
+                if (!nodeConfiguration.frequencyConfiguration.disabled) {
+                    ObjectNode frequencyNode = objectMapper.createObjectNode();
+                    rootNode.set("frequency", frequencyNode);
+                    fillFrequencyNode(frequencyNode);
                 }
-                fillFrequencyNode(frequencyNode);
 
                 ObjectNode numericalNode = objectMapper.createObjectNode();
                 rootNode.set("numerical", numericalNode);
-                numericalNode.put("count", numerical.getN());
-                if (numerical.getN() > 0) {
-                    fillNumericalNode(numericalNode);
-                }
+                fillNumericalNode(numericalNode);
 
                 if (!objectChildren.isEmpty()) {
                     rootNode.set("object", objectMapper.valueToTree(objectChildren));
@@ -247,7 +245,12 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
         private void fillFrequencyNode(ObjectNode frequencyNode) {
 
-            frequencyNode.put("unique", frequency.getUniqueCount());
+            if (frequencyLimitReached) {
+                frequencyNode.put("frequencyLimitReached", true);
+                frequencyNode.put("frequencyLimit", nodeConfiguration.frequencyConfiguration.frequencyLimit);
+            }
+
+            frequencyNode.put("distinct", frequency.getUniqueCount());
             frequencyNode.put("percentage", ((double) frequency.getUniqueCount()) / count * 100);
 
             ArrayNode headNode = objectMapper.createArrayNode();
@@ -302,80 +305,97 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
         private void fillNumericalNode(ObjectNode numericalNode) {
 
-            numericalNode.put("percentage", ((double) numerical.getN()) / count * 100);
-            numericalNode.put("sum", numerical.getSum());
-            numericalNode.put("min", numerical.getMin());
-            numericalNode.put("max", numerical.getMax());
-            numericalNode.put("mean", numerical.getMean());
-            numericalNode.put("variance", numerical.getVariance());
-            numericalNode.put("standardDeviation", numerical.getStandardDeviation());
+            numericalNode.put("count", numerical.getN());
 
-            SimpleHistogramDataset data = new SimpleHistogramDataset(pointer);
-            data.setAdjustForBinSize(false);
+            if (numerical.getN() > 0) {
 
-            // TODO maybe add getBinByRank(0..9) to numericalNode
+                numericalNode.put("percentage", ((double) numerical.getN()) / count * 100);
+                numericalNode.put("sum", numerical.getSum());
+                numericalNode.put("min", numerical.getMin());
+                numericalNode.put("max", numerical.getMax());
+                numericalNode.put("mean", numerical.getMean());
+                numericalNode.put("variance", numerical.getVariance());
+                numericalNode.put("standardDeviation", numerical.getStandardDeviation());
 
-            ArrayNode histogramsNode = objectMapper.createArrayNode();
-            numericalNode.set("histograms", histogramsNode);
+                // TODO maybe add getBinByRank(0..9) to numericalNode
 
-            for (HistogramLayout layout : nodeConfiguration.histogramConfiguration.layouts) {
+                ArrayNode histogramsNode = objectMapper.createArrayNode();
+                numericalNode.set("histograms", histogramsNode);
 
-                double from = layout.from != null ? layout.from : histogram.getMin();
-                double to = layout.to != null ? layout.to : histogram.getMax();
-                double step = (to - from) / layout.bars;
-                double current = from;
-                double[] boundaries = new double[layout.bars + 1];
-                for (int i = 0; i < boundaries.length; i++) {
-                    boundaries[i] = current += step;
-                }
-                CustomLayout customLayout = CustomLayout.create(boundaries);
-                Histogram customHistogram = Histogram.createDynamic(customLayout);
-                customHistogram.addHistogram(histogram);
+                for (HistogramLayout layout : nodeConfiguration.histogramConfiguration.layouts) {
 
-                BinIterator binIterator = customHistogram.getFirstNonEmptyBin();
-                while (true) {
+                    SimpleHistogramDataset data = new SimpleHistogramDataset(pointer);
+                    data.setAdjustForBinSize(false);
 
-                    if (!binIterator.isUnderflowBin() && !binIterator.isOverflowBin()) {
+                    double from = layout.from != null ? layout.from : histogram.getMin();
+                    double to = layout.to != null ? layout.to : histogram.getMax();
+                    double step = Math.max((to - from) / layout.bars, nodeConfiguration.histogramConfiguration.precision);
+                    double current = from;
+                    double[] boundaries = new double[layout.bars + 1];
+                    for (int i = 0; i < boundaries.length; i++) {
+                        boundaries[i] = current;
+                        current += step;
+                    }
+                    CustomLayout customLayout = CustomLayout.create(boundaries);
+                    Histogram customHistogram = Histogram.createDynamic(customLayout);
+                    customHistogram.addHistogram(histogram);
 
-                        double lowerBound = binIterator.getLowerBound();
-                        double upperBound = binIterator.getUpperBound();
+                    BinIterator binIterator = customHistogram.getFirstNonEmptyBin();
+                    while (true) {
 
-                        try {
-                            SimpleHistogramBin bin = new SimpleHistogramBin(lowerBound, upperBound != lowerBound ? upperBound : upperBound + 1e-5);
-                            bin.setItemCount((int) binIterator.getBinCount());
-                            data.addBin(bin);
-                        } catch (Exception e) {
-                            // TODO
-                            System.err.printf(
-                                    "Bad bin: %f, %f\n",
-                                    lowerBound, upperBound
-                            );
+                        if (!binIterator.isUnderflowBin() && !binIterator.isOverflowBin()) {
+
+                            double lowerBound = binIterator.getLowerBound();
+                            double upperBound = binIterator.getUpperBound();
+
+                            if (binIterator.isFirstNonEmptyBin()) {
+                                if (upperBound - lowerBound < step / 2) {
+                                    lowerBound = upperBound - step;
+                                }
+                            } else if (binIterator.isLastNonEmptyBin()) {
+                                if (upperBound - lowerBound < step / 2) {
+                                    upperBound = lowerBound + step;
+                                }
+                            }
+
+                            try {
+                                SimpleHistogramBin bin = new SimpleHistogramBin(lowerBound, upperBound, true, false);
+                                bin.setItemCount((int) binIterator.getBinCount());
+                                data.addBin(bin);
+                            } catch (Exception e) {
+                                // TODO
+                                System.err.printf(
+                                        "Bad bin: %f, %f\n",
+                                        lowerBound, upperBound
+                                );
+                                e.printStackTrace();
+                            }
                         }
+
+                        if (binIterator.isLastNonEmptyBin()) break;
+                        binIterator.next();
                     }
 
-                    if (binIterator.isLastNonEmptyBin()) break;
-                    binIterator.next();
+                    JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
+                    chart.removeLegend();
+                    XYPlot xyPlot = chart.getXYPlot();
+                    xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
+                    XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
+                    renderer.setDrawBarOutline(true);
+                    renderer.setBarPainter(new StandardXYBarPainter());
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    try {
+                        ChartUtils.writeChartAsPNG(
+                                bytes,
+                                chart,
+                                800,
+                                600
+                        );
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                    histogramsNode.add(bytes.toByteArray());
                 }
-
-                JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
-                chart.removeLegend();
-                XYPlot xyPlot = chart.getXYPlot();
-                xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
-                XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
-                renderer.setDrawBarOutline(true);
-                renderer.setBarPainter(new StandardXYBarPainter());
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                try {
-                    ChartUtils.writeChartAsPNG(
-                            bytes,
-                            chart,
-                            800,
-                            600
-                    );
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
-                histogramsNode.add(bytes.toByteArray());
             }
         }
     }
