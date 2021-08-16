@@ -18,11 +18,12 @@
     <modules>
         <module>base</module>
         <module>elasticsearch7</module>
+        <module>freemarker</module>
         <module>jetty</module>
         <module>rabbitmq</module>
         <module>redis</module>
-        <module>unpack</module>
         <module>statistics</module>
+        <module>unpack</module>
     </modules>
 
 </project>

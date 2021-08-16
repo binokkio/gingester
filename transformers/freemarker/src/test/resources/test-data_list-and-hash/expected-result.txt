@@ -1,0 +1,9 @@
+List:
+- foo
+- bar
+- baz
+
+Hash:
+- foo: 123
+- bar: 234
+- baz: 345

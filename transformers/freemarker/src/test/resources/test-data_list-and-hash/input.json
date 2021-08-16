@@ -1,0 +1,12 @@
+{
+  "testList": [
+    "foo",
+    "bar",
+    "baz"
+  ],
+  "testHash": {
+    "foo": 123,
+    "bar": 234,
+    "baz": 345
+  }
+}
