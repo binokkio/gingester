@@ -323,78 +323,78 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                 numericalNode.set("histograms", histogramsNode);
 
                 for (HistogramLayout layout : nodeConfiguration.histogramConfiguration.layouts) {
+                    try {
 
-                    SimpleHistogramDataset data = new SimpleHistogramDataset(pointer);
-                    data.setAdjustForBinSize(false);
+                        SimpleHistogramDataset data = new SimpleHistogramDataset(pointer);
+                        data.setAdjustForBinSize(false);
 
-                    double from = layout.from != null ? layout.from : histogram.getMin();
-                    double to = layout.to != null ? layout.to : histogram.getMax();
-                    double step = Math.max((to - from) / layout.bars, nodeConfiguration.histogramConfiguration.precision);
-                    double current = from;
-                    double[] boundaries = new double[layout.bars + 1];
-                    for (int i = 0; i < boundaries.length; i++) {
-                        boundaries[i] = current;
-                        current += step;
-                    }
-                    CustomLayout customLayout = CustomLayout.create(boundaries);
-                    Histogram customHistogram = Histogram.createDynamic(customLayout);
-                    customHistogram.addHistogram(histogram);
+                        double from = layout.from != null ? layout.from : histogram.getMin();
+                        double to = layout.to != null ? layout.to : histogram.getMax();
+                        double step = Math.max((to - from) / layout.bars, nodeConfiguration.histogramConfiguration.precision);
+                        double current = from;
+                        double[] boundaries = new double[layout.bars + 1];
+                        for (int i = 0; i < boundaries.length; i++) {
+                            boundaries[i] = current;
+                            current += step;
+                        }
+                        CustomLayout customLayout = CustomLayout.create(boundaries);
+                        Histogram customHistogram = Histogram.createDynamic(customLayout);
+                        customHistogram.addHistogram(histogram);
 
-                    BinIterator binIterator = customHistogram.getFirstNonEmptyBin();
-                    while (true) {
+                        BinIterator binIterator = customHistogram.getFirstNonEmptyBin();
+                        while (true) {
 
-                        if (!binIterator.isUnderflowBin() && !binIterator.isOverflowBin()) {
+                            if (!binIterator.isUnderflowBin() && !binIterator.isOverflowBin()) {
 
-                            double lowerBound = binIterator.getLowerBound();
-                            double upperBound = binIterator.getUpperBound();
+                                double lowerBound = binIterator.getLowerBound();
+                                double upperBound = binIterator.getUpperBound();
 
-                            if (binIterator.isFirstNonEmptyBin()) {
-                                if (upperBound - lowerBound < step / 2) {
-                                    lowerBound = upperBound - step;
+                                if (binIterator.isFirstNonEmptyBin()) {
+                                    if (upperBound - lowerBound < step / 2) {
+                                        lowerBound = upperBound - step;
+                                    }
+                                } else if (binIterator.isLastNonEmptyBin()) {
+                                    if (upperBound - lowerBound < step / 2) {
+                                        upperBound = lowerBound + step;
+                                    }
                                 }
-                            } else if (binIterator.isLastNonEmptyBin()) {
-                                if (upperBound - lowerBound < step / 2) {
-                                    upperBound = lowerBound + step;
+
+                                try {
+                                    SimpleHistogramBin bin = new SimpleHistogramBin(lowerBound, upperBound, true, false);
+                                    bin.setItemCount((int) binIterator.getBinCount());
+                                    data.addBin(bin);
+                                } catch (Exception e) {
+                                    // TODO
+                                    System.err.printf(
+                                            "Bad bin: %f, %f\n",
+                                            lowerBound, upperBound
+                                    );
+                                    e.printStackTrace();
                                 }
                             }
 
-                            try {
-                                SimpleHistogramBin bin = new SimpleHistogramBin(lowerBound, upperBound, true, false);
-                                bin.setItemCount((int) binIterator.getBinCount());
-                                data.addBin(bin);
-                            } catch (Exception e) {
-                                // TODO
-                                System.err.printf(
-                                        "Bad bin: %f, %f\n",
-                                        lowerBound, upperBound
-                                );
-                                e.printStackTrace();
-                            }
+                            if (binIterator.isLastNonEmptyBin()) break;
+                            binIterator.next();
                         }
 
-                        if (binIterator.isLastNonEmptyBin()) break;
-                        binIterator.next();
-                    }
-
-                    JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
-                    chart.removeLegend();
-                    XYPlot xyPlot = chart.getXYPlot();
-                    xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
-                    XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
-                    renderer.setDrawBarOutline(true);
-                    renderer.setBarPainter(new StandardXYBarPainter());
-                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    try {
+                        JFreeChart chart = ChartFactory.createHistogram(null, "value", "count", data);
+                        chart.removeLegend();
+                        XYPlot xyPlot = chart.getXYPlot();
+                        xyPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
+                        XYBarRenderer renderer = (XYBarRenderer) xyPlot.getRenderer();
+                        renderer.setDrawBarOutline(true);
+                        renderer.setBarPainter(new StandardXYBarPainter());
+                        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                         ChartUtils.writeChartAsPNG(
                                 bytes,
                                 chart,
                                 800,
                                 600
                         );
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
+                        histogramsNode.add(bytes.toByteArray());
+                    } catch (Exception e) {
+                        e.printStackTrace();  // TODO
                     }
-                    histogramsNode.add(bytes.toByteArray());
                 }
             }
         }
