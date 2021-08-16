@@ -22,6 +22,7 @@
         <module>rabbitmq</module>
         <module>redis</module>
         <module>unpack</module>
+        <module>statistics</module>
     </modules>
 
 </project>
