@@ -1,0 +1,2 @@
+{"hello": "world", "array": [1, 2, 3], "object": {"foo": 1, "bar": 2, "baz": 3}}
+{"bye": "world", "array": [2, 3, 4], "object": {"foo": 2, "bar": 3, "baz": 4}}
