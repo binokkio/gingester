@@ -7,7 +7,6 @@ import com.dynatrace.dynahist.Histogram;
 import com.dynatrace.dynahist.bin.BinIterator;
 import com.dynatrace.dynahist.layout.CustomLayout;
 import com.dynatrace.dynahist.layout.LogQuadraticLayout;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -74,10 +73,22 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
     @Override
     protected void finish(Context context) {
-        emit(
-                context.extend(this).description("statistics"),
-                objectMapper.valueToTree(contextMap.requireRemove(context))
-        );
+        ObjectNode result = objectMapper.createObjectNode();
+        add(result, contextMap.requireRemove(context));
+        emit(context.extend(this).description("statistics"), result);
+    }
+
+    private void add(ObjectNode objectNode, NodeStatistics nodeStatistics) {
+
+        if (nodeStatistics.frequency.getUniqueCount() > 0) {
+            objectNode.set(nodeStatistics.pointer, nodeStatistics.getJsonValue());
+        }
+
+        nodeStatistics.objectChildren
+                .entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .forEach(entry -> add(objectNode, entry.getValue()));
+
+        nodeStatistics.arrayChildren.forEach(value -> add(objectNode, value));
     }
 
     private class NodeStatistics {
@@ -149,7 +160,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                     } else {
                         nodeStatistics = arrayChildren.get(i);
                     }
-                    nodeStatistics.accept(jsonNode);
+                    nodeStatistics.accept(jsonNode.get(i));
                 }
 
             } else if (jsonNode.isObject()) {
@@ -193,54 +204,34 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             histogram.addValue(numericalValue);
         }
 
-        @JsonValue
-        public Object getJsonValue() {
+        public ObjectNode getJsonValue() {
 
-            if (frequency.getUniqueCount() > 0 || frequencyLimitReached || numerical.getN() > 0) {
+            ObjectNode rootNode = objectMapper.createObjectNode();
 
-                ObjectNode rootNode = objectMapper.createObjectNode();
+            ObjectNode presenceNode = objectMapper.createObjectNode();
+            rootNode.set("presence", presenceNode);
+            presenceNode.put("count", count);
+            presenceNode.put("percentage", ((double) count) / root.count * 100);
 
-                rootNode.put("pointer", pointer);
-
-                ObjectNode presenceNode = objectMapper.createObjectNode();
-                rootNode.set("presence", presenceNode);
-                presenceNode.put("count", count);
-                presenceNode.put("percentage", ((double) count) / root.count * 100);
-
-                if (!nodeConfiguration.frequencyConfiguration.disabled) {
-                    ObjectNode frequencyNode = objectMapper.createObjectNode();
-                    rootNode.set("frequency", frequencyNode);
-                    fillFrequencyNode(frequencyNode);
-                }
-
-                ObjectNode numericalNode = objectMapper.createObjectNode();
-                rootNode.set("numerical", numericalNode);
-                fillNumericalNode(numericalNode);
-
-                if (!objectChildren.isEmpty()) {
-                    rootNode.set("object", objectMapper.valueToTree(objectChildren));
-                }
-
-                if (!arrayChildren.isEmpty()) {
-                    rootNode.set("array", objectMapper.valueToTree(arrayChildren));
-                }
-
-                return rootNode;
-
-            } else {
-                if (!objectChildren.isEmpty() && !arrayChildren.isEmpty()) {
-                    ObjectNode rootNode = objectMapper.createObjectNode();
-                    rootNode.set("object", objectMapper.valueToTree(objectChildren));
-                    rootNode.set("array", objectMapper.valueToTree(arrayChildren));
-                    return rootNode;
-                } else if (!objectChildren.isEmpty()) {
-                    return objectChildren;
-                } else if (!arrayChildren.isEmpty()) {
-                    return arrayChildren;
-                } else {
-                    return null;  // TODO
-                }
+            if (!nodeConfiguration.frequencyConfiguration.disabled) {
+                ObjectNode frequencyNode = objectMapper.createObjectNode();
+                rootNode.set("frequency", frequencyNode);
+                fillFrequencyNode(frequencyNode);
             }
+
+            ObjectNode numericalNode = objectMapper.createObjectNode();
+            rootNode.set("numerical", numericalNode);
+            fillNumericalNode(numericalNode);
+
+            if (!objectChildren.isEmpty()) {
+                rootNode.set("object", objectMapper.valueToTree(objectChildren));
+            }
+
+            if (!arrayChildren.isEmpty()) {
+                rootNode.set("array", objectMapper.valueToTree(arrayChildren));
+            }
+
+            return rootNode;
         }
 
         private void fillFrequencyNode(ObjectNode frequencyNode) {
