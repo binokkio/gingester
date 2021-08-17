@@ -62,7 +62,6 @@ public class Freemarker extends Transformer<Object, String> {
 
     @Override
     protected void transform(Context context, Object input) throws TemplateException, IOException {
-        System.out.println(input);
         StringWriter stringWriter = new StringWriter();
         template.process(input, stringWriter);
         emit(context, stringWriter.toString());
