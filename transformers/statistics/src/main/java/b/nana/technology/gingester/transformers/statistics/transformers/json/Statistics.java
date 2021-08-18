@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.statistics.transformers.json;
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.ContextMap;
 import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.transformers.statistics.common.FrequencyNode;
 import com.dynatrace.dynahist.Histogram;
 import com.dynatrace.dynahist.bin.BinIterator;
 import com.dynatrace.dynahist.layout.CustomLayout;
@@ -16,22 +17,15 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
-import org.jfree.chart.plot.RingPlot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.chart.ui.RectangleInsets;
-import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.statistics.SimpleHistogramBin;
 import org.jfree.data.statistics.SimpleHistogramDataset;
 
-import java.awt.*;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.List;
 import java.util.*;
-import java.util.stream.StreamSupport;
 
 public class Statistics extends Transformer<JsonNode, JsonNode> {
 
@@ -214,9 +208,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             presenceNode.put("percentage", ((double) count) / root.count * 100);
 
             if (!nodeConfiguration.frequencyConfiguration.disabled) {
-                ObjectNode frequencyNode = objectMapper.createObjectNode();
-                rootNode.set("frequency", frequencyNode);
-                fillFrequencyNode(frequencyNode);
+                rootNode.set("frequency", FrequencyNode.createFrequencyNode(frequency, nodeConfiguration.frequencyConfiguration.frequencyLimit, frequencyLimitReached, nodeConfiguration.frequencyConfiguration.frequencyHead));
             }
 
             ObjectNode numericalNode = objectMapper.createObjectNode();
@@ -232,66 +224,6 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             }
 
             return rootNode;
-        }
-
-        private void fillFrequencyNode(ObjectNode frequencyNode) {
-
-            if (frequencyLimitReached) {
-                frequencyNode.put("frequencyLimitReached", true);
-                frequencyNode.put("frequencyLimit", nodeConfiguration.frequencyConfiguration.frequencyLimit);
-            }
-
-            frequencyNode.put("distinct", frequency.getUniqueCount());
-            frequencyNode.put("percentage", ((double) frequency.getUniqueCount()) / count * 100);
-
-            ArrayNode headNode = objectMapper.createArrayNode();
-            frequencyNode.set("head", headNode);
-
-            DefaultPieDataset<String> pieDataset = new DefaultPieDataset<>();
-
-            double remaining = count - StreamSupport.stream(Spliterators.spliteratorUnknownSize(frequency.entrySetIterator(), 0), false)
-                    .sorted(Comparator.comparingLong(Map.Entry<Comparable<?>, Long>::getValue).reversed())
-                    .limit(nodeConfiguration.frequencyConfiguration.frequencyHead)
-                    .mapToDouble(frequencyEntry -> {
-                        String frequencyEntryKey = (String) frequencyEntry.getKey();
-                        ObjectNode frequencyEntryNode = objectMapper.createObjectNode();
-                        headNode.add(frequencyEntryNode);
-                        double count = frequency.getCount(frequencyEntryKey);
-                        frequencyEntryNode.put("value", frequencyEntryKey);
-                        frequencyEntryNode.put("count", count);
-                        frequencyEntryNode.put("percentage", frequency.getPct(frequencyEntryKey) * 100);
-                        pieDataset.setValue(frequencyEntryKey, count);
-                        return count;
-                    }).sum();
-
-            if (remaining > 0) {
-                pieDataset.setValue("<other>", remaining);
-            }
-
-            JFreeChart chart = ChartFactory.createRingChart(null, pieDataset, false, false, false);
-            chart.removeLegend();
-            RingPlot ringPlot = (RingPlot) chart.getPlot();
-            ringPlot.setInsets(new RectangleInsets(0, 0, 0, 0));
-            ringPlot.setOutlineVisible(false);
-            ringPlot.setSectionDepth(1d/3);
-            ringPlot.setBackgroundAlpha(0);
-            ringPlot.setShadowPaint(new Color(0, true));
-            ringPlot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}\n{1}x / {2}"));
-            ringPlot.setLabelPadding(new RectangleInsets(4, 8, 4, 8));
-            ringPlot.setLabelBackgroundPaint(Color.white);
-            ringPlot.setSectionPaint("<other>", new Color(240, 240, 240));
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            try {
-                ChartUtils.writeChartAsPNG(
-                        bytes,
-                        chart,
-                        800,
-                        600
-                );
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-            frequencyNode.put("ringPlot", bytes.toByteArray());
         }
 
         private void fillNumericalNode(ObjectNode numericalNode) {

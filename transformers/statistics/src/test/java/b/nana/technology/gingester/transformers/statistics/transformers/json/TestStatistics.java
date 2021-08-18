@@ -30,7 +30,7 @@ class TestStatistics {
         gBuilder.sync(open, statistics);
         gBuilder.build().run();
 
-        System.out.println(result.get().toPrettyString());
+//        System.out.println(result.get().toPrettyString());
     }
 
     @Test
@@ -52,6 +52,6 @@ class TestStatistics {
         gBuilder.sync(open, statistics);
         gBuilder.build().run();
 
-        System.out.println(result.get().toPrettyString());
+//        System.out.println(result.get().toPrettyString());
     }
 }
