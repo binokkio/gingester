@@ -3,12 +3,15 @@ package b.nana.technology.gingester.transformers.base.common;
 import b.nana.technology.gingester.core.Context;
 import b.nana.technology.gingester.core.Transformer;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class ToJsonBase<I> extends Transformer<I, JsonNode> {
 
@@ -17,8 +20,7 @@ public abstract class ToJsonBase<I> extends Transformer<I, JsonNode> {
     public ToJsonBase(Parameters parameters) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
-        if (parameters.allowSingleQuotes) objectMapper.enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES);
-        if (parameters.allowUnquotedFieldNames) objectMapper.enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
+        parameters.features.forEach(feature -> objectMapper.enable(feature.mappedFeature()));
         objectReader = objectMapper.reader();
     }
 
@@ -30,7 +32,6 @@ public abstract class ToJsonBase<I> extends Transformer<I, JsonNode> {
     protected abstract InputStream toInputStream(I input) throws IOException;
 
     public static class Parameters {
-        public boolean allowSingleQuotes;
-        public boolean allowUnquotedFieldNames;
+        public List<JsonReadFeature> features = Collections.emptyList();
     }
 }
