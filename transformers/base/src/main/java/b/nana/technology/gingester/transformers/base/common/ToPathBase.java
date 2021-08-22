@@ -47,7 +47,7 @@ public abstract class ToPathBase<I> extends Transformer<I, Path> {
         Path path = Paths.get(pathString);
 
         Path parent = path.getParent();
-        if (mkdirs && !Files.exists(path.getParent())) {
+        if (mkdirs && parent != null && !Files.exists(parent)) {
             Files.createDirectories(parent);
         }
 
