@@ -1,9 +1,8 @@
 package b.nana.technology.transformers.base;
 
 import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
-
-import java.util.function.BiConsumer;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
 public class GenerateString implements Transformer<Object, String> {
 
@@ -16,9 +15,9 @@ public class GenerateString implements Transformer<Object, String> {
     }
 
     @Override
-    public void transform(Context context, Object input, BiConsumer<Context, String> output) {
+    public void transform(Context context, Object in, Receiver<String> out) {
         for (int i = 0; i < count; i++) {
-            output.accept(context, string);
+            out.accept(context, string);
         }
     }
 
