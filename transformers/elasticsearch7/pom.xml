@@ -16,6 +16,7 @@
     <artifactId>elasticsearch7</artifactId>
 
     <dependencies>
+
         <dependency>
             <groupId>b.nana.technology.gingester</groupId>
             <artifactId>core</artifactId>
@@ -26,6 +27,17 @@
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <version>7.12.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

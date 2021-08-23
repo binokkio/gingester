@@ -10,6 +10,8 @@ import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,6 +21,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class Write extends ElasticsearchTransformer<byte[], Void> implements BulkProcessor.Listener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Write.class);
 
     private final Context.StringFormat indexFormat;
     private final Context.StringFormat idFormat;
@@ -41,7 +45,6 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
 
     @Override
     protected void setup(Setup setup) {
-        setup.preferUpstreamAsync();
         setup.limitWorkers(1);
     }
 
@@ -98,19 +101,21 @@ public class Write extends ElasticsearchTransformer<byte[], Void> implements Bul
         if (!bulkResponse.hasFailures()) {
             ack(bulkResponse.getItems().length);
         } else {
+            Set<String> failureMessages = new HashSet<>();
             for (BulkItemResponse itemResponse : bulkResponse) {
                 if (!itemResponse.isFailed()) {
                     ack();
                 } else {
-                    // TODO
+                    failureMessages.add(itemResponse.getFailureMessage());
                 }
             }
+            failureMessages.forEach(message -> LOGGER.warn("Bulk item failed: {}", message));
         }
     }
 
     @Override
     public void afterBulk(long l, BulkRequest bulkRequest, Throwable throwable) {
-
+        LOGGER.warn("Bulk request failed", throwable);
     }
 
     public static class Parameters extends ElasticsearchTransformer.Parameters {

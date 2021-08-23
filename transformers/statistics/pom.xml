@@ -16,6 +16,7 @@
     <artifactId>statistics</artifactId>
 
     <dependencies>
+
         <dependency>
             <groupId>b.nana.technology.gingester</groupId>
             <artifactId>core</artifactId>
@@ -37,8 +38,18 @@
             <version>1.5.3</version>
         </dependency>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -47,6 +58,7 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
 </project>

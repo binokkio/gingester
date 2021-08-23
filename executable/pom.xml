@@ -16,6 +16,7 @@
     <packaging>jar</packaging>
 
     <dependencies>
+        
         <dependency>
             <groupId>b.nana.technology.gingester</groupId>
             <artifactId>core</artifactId>
@@ -69,11 +70,13 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
