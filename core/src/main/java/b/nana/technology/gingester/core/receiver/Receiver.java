@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.receiver;
 
-import b.nana.technology.gingester.core.Context;
+import b.nana.technology.gingester.core.context.Context;
 
 public interface Receiver<O> {
 

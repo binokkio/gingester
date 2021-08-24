@@ -2,8 +2,12 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.core.transformers.Seed;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Gingester {
 
@@ -30,7 +34,7 @@ public class Gingester {
 
         Controller<?, ?> controller = new Controller<>(
                 id,
-                new DriverInterface(),
+                new ControllerInterface(id),
                 transformer,
                 parameters
         );
@@ -39,12 +43,53 @@ public class Gingester {
     }
 
     public void run() {
+
         controllers.values().forEach(Controller::initialize);
+
+        Controller.Parameters seedControllerParameters = new Controller.Parameters();
+        seedControllerParameters.links = controllers.entrySet().stream()
+                .filter(entry -> entry.getValue().outgoing.isEmpty())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        controllers.put("__seed__", new Controller<>(
+                "__seed__",
+                new ControllerInterface("__seed__"),
+                new Seed(),
+                seedControllerParameters
+        ));
+        controllers.get("__seed__").initialize();
+
+        controllers.values().forEach(Controller::discover);
     }
 
 
 
-    public class DriverInterface {
-        private DriverInterface() {}
+    public class ControllerInterface {
+
+        private final String controllerId;
+
+        private ControllerInterface(String controllerId) {
+            this.controllerId = controllerId;
+        }
+
+        public Optional<Controller<?, ?>> getController(String id) {
+
+            if (id.equals("__maybe_next__")) {
+                boolean next = false;
+                for (Map.Entry<String, Controller<?, ?>> idControllerEntry : controllers.entrySet()) {
+                    if (next) {
+                        return Optional.of(idControllerEntry.getValue());
+                    } else if (idControllerEntry.getKey().equals(controllerId)) {
+                        next = true;
+                    }
+                }
+                return Optional.empty();
+            }
+
+            Controller<?, ?> controller = controllers.get(id);
+            if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
+            return Optional.of(controller);
+        }
     }
 }

@@ -1,19 +1,14 @@
 package b.nana.technology.gingester.core.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SimpleSetupControls implements SetupControls {
 
-    @Override
-    public void link(String id, boolean sync) {
-
-    }
+    final List<String> links = new ArrayList<>();
 
     @Override
-    public void requireSyncLinks() {
-
-    }
-
-    @Override
-    public void requireAsyncLinks() {
-
+    public void link(String id) {
+        links.add(id);
     }
 }

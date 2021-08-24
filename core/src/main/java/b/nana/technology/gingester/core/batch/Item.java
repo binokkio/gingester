@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.batch;
 
-import b.nana.technology.gingester.core.Context;
+import b.nana.technology.gingester.core.context.Context;
 
 public final class Item<T> {
 
