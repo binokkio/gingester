@@ -10,6 +10,12 @@ public class Worker extends Thread {
 
     @Override
     public void run() {
-
+        while (true) {
+            try {
+                controller.work();
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
     }
 }

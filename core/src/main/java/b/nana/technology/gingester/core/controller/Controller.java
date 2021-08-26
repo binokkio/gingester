@@ -10,13 +10,15 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
+    private final String id;
     private final Gingester.ControllerInterface gingester;
     private final Transformer<I, O> transformer;
-
     private final Parameters parameters;
+
     private final SimpleSetupControls setupControls;
     private final boolean async;
     private final int queueSize;
@@ -26,14 +28,15 @@ public final class Controller<I, O> {
     private final Condition queueNotFull = lock.newCondition();
     private final ArrayDeque<Job> queue = new ArrayDeque<>();
     private final List<Worker> workers = new ArrayList<>();
-    private final Set<Controller<?, ?>> incoming = new HashSet<>();
-    public final Map<String, Controller<?, ?>> outgoing = new HashMap<>();
+    public final Set<Controller<?, I>> incoming = new HashSet<>();
+    public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
     private final Set<Controller<?, ?>> syncs = new HashSet<>();
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
     private final Map<Context, FinishTracker> finishing = new HashMap<>();
 
     public Controller(String id, Gingester.ControllerInterface gingester, Transformer<I, O> transformer, Parameters parameters) {
 
+        this.id = id;
         this.gingester = gingester;
         this.transformer = transformer;
         this.parameters = parameters;
@@ -50,14 +53,16 @@ public final class Controller<I, O> {
         if (!setupControls.links.isEmpty()) {
             for (String controllerId : setupControls.links) {
                 gingester.getController(controllerId).ifPresent(
-                        controller -> outgoing.put(controllerId, controller));
+                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         } else {
             for (String controllerId : parameters.links) {
                 gingester.getController(controllerId).ifPresent(
-                        controller -> outgoing.put(controllerId, controller));
+                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         }
+
+        System.out.println(id + " " + outgoing.values().stream().map(oController -> oController.id).collect(Collectors.joining(", ")));
 
         for (String controllerId : parameters.syncs) {
             gingester.getController(controllerId).ifPresent(syncs::add);
@@ -69,7 +74,11 @@ public final class Controller<I, O> {
     }
 
     public void discover() {
-
+        for (Controller<?, ?> controller : gingester.getControllers()) {
+            if (controller.outgoing.containsValue(this)) {
+                incoming.add((Controller<?, I>) controller);
+            }
+        }
     }
 
     public void start() {
@@ -79,7 +88,7 @@ public final class Controller<I, O> {
 
         // TODO start workers
         for (int i = 0; i < parameters.maxWorkers; i++) {
-
+            new Worker(this).start();
         }
     }
 
@@ -155,17 +164,20 @@ public final class Controller<I, O> {
         }
     }
 
-    private final Receiver<O> receiver = new Receiver<O>() {
+    private final Receiver<O> receiver = new Receiver<>() {
 
         @Override
         public void accept(Context context, O output) {
-
+            for (Controller<O, ?> controller : outgoing.values()) {
+                controller.accept(new Batch<>(context, output));
+            }
         }
 
         @Override
         public void accept(Context context, O output, String target) {
-            Controller<?, ?> controller = outgoing.get(target);
-            if (controller == null) throw new IllegalStateException("Link not configured!");  // TODO
+            Controller<O, ?> controller = outgoing.get(target);
+            if (controller == null) throw new IllegalStateException("Link not configured!");
+            controller.accept(new Batch<>(context, output));
         }
     };
 
@@ -173,7 +185,7 @@ public final class Controller<I, O> {
 
     //
 
-    private void work() throws InterruptedException {
+    void work() throws InterruptedException {
         Job job;
         lock.lockInterruptibly();
         try {

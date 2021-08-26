@@ -1,17 +1,25 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.batch.Batch;
+import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class Gingester {
 
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
+
+    public <T> void add(Consumer<T> consumer) {
+        add((Transformer<T, Void>) (context, in, out) -> consumer.accept(in));
+    }
 
     public void add(Transformer<?, ?> transformer) {
         add(transformer, new Controller.Parameters());
@@ -45,22 +53,33 @@ public class Gingester {
     public void run() {
 
         controllers.values().forEach(Controller::initialize);
+        controllers.values().forEach(Controller::discover);
 
         Controller.Parameters seedControllerParameters = new Controller.Parameters();
         seedControllerParameters.links = controllers.entrySet().stream()
-                .filter(entry -> entry.getValue().outgoing.isEmpty())
+                .filter(entry -> entry.getValue().incoming.isEmpty())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-
-        controllers.put("__seed__", new Controller<>(
+        
+        Controller<Void, Object> seedController = new Controller<>(
                 "__seed__",
                 new ControllerInterface("__seed__"),
                 new Seed(),
                 seedControllerParameters
-        ));
-        controllers.get("__seed__").initialize();
+        );
+        seedController.initialize();
+        controllers.put("__seed__", seedController);
 
-        controllers.values().forEach(Controller::discover);
+        controllers.values().forEach(Controller::start);
+
+        Batch<Void> seedBatch = new Batch<>(Context.SEED, null);
+        seedController.accept(seedBatch);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -90,6 +109,10 @@ public class Gingester {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
             return Optional.of(controller);
+        }
+
+        public Collection<Controller<?, ?>> getControllers() {
+            return controllers.values();
         }
     }
 }
