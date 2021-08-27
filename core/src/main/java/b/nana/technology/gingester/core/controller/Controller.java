@@ -1,10 +1,9 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
-import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
@@ -20,19 +19,21 @@ public final class Controller<I, O> {
     private final Parameters parameters;
 
     private final SimpleSetupControls setupControls;
-    private final boolean async;
+    final boolean async;
     private final int queueSize;
 
-    private final ReentrantLock lock = new ReentrantLock();
-    private final Condition queueNotEmpty = lock.newCondition();
-    private final Condition queueNotFull = lock.newCondition();
-    private final ArrayDeque<Job> queue = new ArrayDeque<>();
-    private final List<Worker> workers = new ArrayList<>();
+    private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
+    final ReentrantLock lock = new ReentrantLock();
+    final Condition queueNotEmpty = lock.newCondition();
+    final Condition queueNotFull = lock.newCondition();
+    final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
+    final List<Worker> workers = new ArrayList<>();
+
     public final Set<Controller<?, I>> incoming = new HashSet<>();
     public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
-    private final Set<Controller<?, ?>> syncs = new HashSet<>();
+    final Set<Controller<?, ?>> syncs = new HashSet<>();
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
-    private final Map<Context, FinishTracker> finishing = new HashMap<>();
+    final Map<Context, Worker.FinishTracker> finishing = new HashMap<>();
 
     public Controller(String id, Gingester.ControllerInterface gingester, Transformer<I, O> transformer, Parameters parameters) {
 
@@ -120,9 +121,10 @@ public final class Controller<I, O> {
 
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
-        finishing.computeIfAbsent(context, x -> new FinishTracker()).indicated.add(from);
+        finishing.computeIfAbsent(context, x -> new Worker.FinishTracker()).indicated.add(from);
         // TODO check if every controller between the `context.controller` and `this` is accounted for
         // TODO e.g. finishing.indicated.size() == TODO.size()
+        // TODO as a temporary solution finish can be triggered on __seed__ and TODO.size() equals incoming.size()
         try {
             while (queue.size() >= queueSize) queueNotFull.await();
             queue.add(() -> {
@@ -160,67 +162,8 @@ public final class Controller<I, O> {
         try {
             transformer.transform(context, input, receiver);
         } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO
+            throw new RuntimeException(e);  // TODO pass `e` to `excepts`
         }
-    }
-
-    private final Receiver<O> receiver = new Receiver<>() {
-
-        @Override
-        public void accept(Context context, O output) {
-            for (Controller<O, ?> controller : outgoing.values()) {
-                controller.accept(new Batch<>(context, output));
-            }
-        }
-
-        @Override
-        public void accept(Context context, O output, String target) {
-            Controller<O, ?> controller = outgoing.get(target);
-            if (controller == null) throw new IllegalStateException("Link not configured!");
-            controller.accept(new Batch<>(context, output));
-        }
-    };
-
-
-
-    //
-
-    void work() throws InterruptedException {
-        Job job;
-        lock.lockInterruptibly();
-        try {
-            handleFinishingContexts();
-            while (queue.isEmpty()) {
-                queueNotEmpty.await();
-                handleFinishingContexts();
-            }
-            job = queue.removeFirst();
-            queueNotFull.signal();
-        } finally {
-            lock.unlock();
-        }
-        try {
-            job.perform();
-        } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO check `excepts` first, in `this` and parent context controllers
-        }
-    }
-
-    private void handleFinishingContexts() {
-        Iterator<Map.Entry<Context, FinishTracker>> iterator = finishing.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Context, FinishTracker> entry = iterator.next();
-            Set<Thread> acknowledged = entry.getValue().acknowledged;
-            acknowledged.add(Thread.currentThread());
-            if (acknowledged.size() == workers.size()) {
-                iterator.remove();
-                outgoing.values().forEach(controller -> controller.finish(this, entry.getKey()));
-            }
-        }
-    }
-
-    interface Job {
-        void perform() throws Exception;
     }
 
 
@@ -236,14 +179,5 @@ public final class Controller<I, O> {
         public int queueSize = 100;
         public int maxWorkers = 1;
         public int maxBatchSize = 65536;
-    }
-
-
-
-    //
-
-    private static class FinishTracker {
-        private final Set<Controller<?, ?>> indicated = new HashSet<>();
-        private final Set<Thread> acknowledged = new HashSet<>();
     }
 }

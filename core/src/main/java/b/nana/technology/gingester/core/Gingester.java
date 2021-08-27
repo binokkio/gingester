@@ -60,7 +60,7 @@ public class Gingester {
                 .filter(entry -> entry.getValue().incoming.isEmpty())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-        
+
         Controller<Void, Object> seedController = new Controller<>(
                 "__seed__",
                 new ControllerInterface("__seed__"),
@@ -72,8 +72,8 @@ public class Gingester {
 
         controllers.values().forEach(Controller::start);
 
-        Batch<Void> seedBatch = new Batch<>(Context.SEED, null);
-        seedController.accept(seedBatch);
+        seedController.accept(new Batch<>(Context.SEED, null));
+        seedController.finish(seedController, Context.SEED);
 
         try {
             Thread.sleep(1000);
