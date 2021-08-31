@@ -73,7 +73,7 @@ public class Gingester {
         controllers.values().forEach(Controller::start);
 
         seedController.accept(new Batch<>(Context.SEED, null));
-        seedController.finish(seedController, Context.SEED);
+        seedController.finish(null, Context.SEED);
 
         try {
             Thread.sleep(1000);

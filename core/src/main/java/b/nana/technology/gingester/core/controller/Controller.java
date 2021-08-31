@@ -33,7 +33,7 @@ public final class Controller<I, O> {
     public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
-    final Map<Context, Worker.FinishTracker> finishing = new HashMap<>();
+    final Map<Context, FinishTracker> finishing = new HashMap<>();
 
     public Controller(String id, Gingester.ControllerInterface gingester, Transformer<I, O> transformer, Parameters parameters) {
 
@@ -63,7 +63,7 @@ public final class Controller<I, O> {
             }
         }
 
-        System.out.println(id + " " + outgoing.values().stream().map(oController -> oController.id).collect(Collectors.joining(", ")));
+        System.err.println(id + " " + outgoing.values().stream().map(oController -> oController.id).collect(Collectors.joining(", ")));
 
         for (String controllerId : parameters.syncs) {
             gingester.getController(controllerId).ifPresent(syncs::add);
@@ -87,10 +87,11 @@ public final class Controller<I, O> {
         // queue transformer open runnable
         queue.add(transformer::open);
 
-        // TODO start workers
         for (int i = 0; i < parameters.maxWorkers; i++) {
-            new Worker(this).start();
+            workers.add(new Worker(this));
         }
+
+        workers.forEach(Thread::start);
     }
 
     public void prepare(Context context) {
@@ -121,31 +122,13 @@ public final class Controller<I, O> {
 
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
-        finishing.computeIfAbsent(context, x -> new Worker.FinishTracker()).indicated.add(from);
-        // TODO check if every controller between the `context.controller` and `this` is accounted for
-        // TODO e.g. finishing.indicated.size() == TODO.size()
-        // TODO as a temporary solution finish can be triggered on __seed__ and TODO.size() equals incoming.size()
         try {
-            while (queue.size() >= queueSize) queueNotFull.await();
-            queue.add(() -> {
-                lock.lock();
-                try {
-                    finishing.get(context).acknowledged.add(Thread.currentThread());
-                    queueNotEmpty.signalAll();
-                } finally {
-                    lock.unlock();
-                }
-            });
-            queueNotEmpty.signal();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
+            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker());
+            finishTracker.indicated.add(from);
+            queueNotEmpty.signalAll();  // TODO check indicated.size() before signalAll(), must equal number of incoming controllers leading to context.transformer
         } finally {
             lock.unlock();
         }
-    }
-
-    public void stop() {
-
     }
 
 
