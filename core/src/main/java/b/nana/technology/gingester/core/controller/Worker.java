@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.context.Context;
 import java.util.Iterator;
 import java.util.Map;
 
-final class Worker extends Thread {
+public final class Worker extends Thread {
 
     private final Controller<?, ?> controller;
     private boolean done;
@@ -52,15 +52,17 @@ final class Worker extends Thread {
             FinishTracker finishTracker = entry.getValue();
 
             if (finishTracker.isFullyIndicated()) {
+                if (finishTracker.acknowledge(this)) {
 
-                finishTracker.acknowledged.add(this);
+                    if (context.controller.syncs.contains(controller)) {
+                        controller.finish(context);
+                    }
 
-                if (finishTracker.isFullyAcknowledged()) {
                     System.err.println("Context " + context + " fully acknowledged by " + controller.transformer.getClass().getSimpleName());
                     iterator.remove();
                     controller.outgoing.values().forEach(controller -> controller.finish(controller, entry.getKey()));
 
-                    if (entry.getKey() == Context.SEED) {
+                    if (context.isSeed()) {
                         done = true;
                     }
                 }

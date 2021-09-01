@@ -7,25 +7,39 @@ import java.util.Set;
 
 final class FinishTracker {
 
-    final Controller<?, ?> trackedBy;
-    final Context context;
-    final Set<Controller<?, ?>> indicated = new HashSet<>();
-    final Set<Thread> acknowledged = new HashSet<>();
+    private final Controller<?, ?> tracker;
+    private final Context context;
+    private final Set<Controller<?, ?>> indicated = new HashSet<>();
+    private final Set<Thread> acknowledged = new HashSet<>();
 
-    FinishTracker(Controller<?, ?> trackedBy, Context context) {
-        this.trackedBy = trackedBy;
+    FinishTracker(Controller<?, ?> tracker, Context context) {
+        this.tracker = tracker;
         this.context = context;
     }
 
-    boolean isFullyIndicated() {
-        if (context == Context.SEED) {
-            return indicated.size() >= trackedBy.incoming.size();
+    boolean indicate(Controller<?, ?> indicator) {
+        indicated.add(indicator);
+        return isReadyForQueue();
+    }
+
+    boolean acknowledge(Thread thread) {
+        acknowledged.add(thread);
+        return isFullyAcknowledged();
+    }
+
+    private boolean isReadyForQueue() {
+        if (context.isSeed()) {
+            return indicated.size() >= tracker.incoming.size();
         } else {
-            return indicated.size() == trackedBy.syncedThrough.get(context.controller).size();
+            return indicated.size() == tracker.syncedThrough.get(context.controller).size();  // untested
         }
     }
 
-    boolean isFullyAcknowledged() {
-        return acknowledged.size() == trackedBy.workers.size();
+    boolean isFullyIndicated() {
+        return indicated.contains(tracker);
+    }
+
+    private boolean isFullyAcknowledged() {
+        return acknowledged.size() == tracker.workers.size();
     }
 }

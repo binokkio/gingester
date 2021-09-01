@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.Controller;
+import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;
 
@@ -70,15 +71,22 @@ public class Gingester {
         seedController.initialize();
         controllers.put("__seed__", seedController);
 
+        // TODO start reporting thread
+
         controllers.values().forEach(Controller::start);
 
-        seedController.accept(new Batch<>(Context.SEED, null));
-        seedController.finish(null, Context.SEED);
+        Context seed = Context.newSeed(seedController);
+        seedController.accept(new Batch<>(seed, null));
+        seedController.finish(null, seed);
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        for (Controller<?, ?> controller : controllers.values()) {
+            for (Worker worker : controller.workers) {
+                try {
+                    worker.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);  // TODO
+                }
+            }
         }
     }
 

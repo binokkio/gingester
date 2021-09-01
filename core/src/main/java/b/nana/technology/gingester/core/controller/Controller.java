@@ -27,7 +27,7 @@ public final class Controller<I, O> {
     final Condition queueNotEmpty = lock.newCondition();
     final Condition queueNotFull = lock.newCondition();
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
-    final List<Worker> workers = new ArrayList<>();
+    public final List<Worker> workers = new ArrayList<>();
 
     public final Set<Controller<?, I>> incoming = new HashSet<>();
     public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
@@ -151,10 +151,21 @@ public final class Controller<I, O> {
         lock.lock();
         try {
             FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker(this, context));
-            finishTracker.indicated.add(from);
-            if (finishTracker.isFullyIndicated()) {
-                queueNotEmpty.signalAll();
+            if (finishTracker.indicate(from)) {
+                while (queue.size() >= queueSize) queueNotFull.await();
+                queue.add(() -> {
+                    lock.lock();
+                    try {
+                        finishTracker.indicate(this);
+                        queueNotEmpty.signalAll();
+                    } finally {
+                        lock.unlock();
+                    }
+                });
+                queueNotEmpty.signal();
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
         } finally {
             lock.unlock();
         }
@@ -173,6 +184,14 @@ public final class Controller<I, O> {
     public void transform(Context context, I input) {
         try {
             transformer.transform(context, input, receiver);
+        } catch (Exception e) {
+            throw new RuntimeException(e);  // TODO pass `e` to `excepts`
+        }
+    }
+
+    public void finish(Context context) {
+        try {
+            transformer.finish(context, receiver);
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO pass `e` to `excepts`
         }

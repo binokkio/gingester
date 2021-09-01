@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.context.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
