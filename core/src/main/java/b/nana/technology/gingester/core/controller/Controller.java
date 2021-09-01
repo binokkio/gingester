@@ -15,7 +15,7 @@ public final class Controller<I, O> {
 
     private final String id;
     private final Gingester.ControllerInterface gingester;
-    private final Transformer<I, O> transformer;
+    final Transformer<I, O> transformer;
     private final Parameters parameters;
 
     private final SimpleSetupControls setupControls;
@@ -32,6 +32,7 @@ public final class Controller<I, O> {
     public final Set<Controller<?, I>> incoming = new HashSet<>();
     public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
     final Set<Controller<?, ?>> syncs = new HashSet<>();
+    final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
     final Map<Context, FinishTracker> finishing = new HashMap<>();
 
@@ -75,11 +76,37 @@ public final class Controller<I, O> {
     }
 
     public void discover() {
+
         for (Controller<?, ?> controller : gingester.getControllers()) {
             if (controller.outgoing.containsValue(this)) {
                 incoming.add((Controller<?, I>) controller);
             }
         }
+
+        for (Controller<?, ?> controller : gingester.getControllers()) {
+            if (controller.syncs.contains(this)) {
+                Set<Controller<?, ?>> downstream = controller.getDownstream();
+                downstream.retainAll(incoming);
+                syncedThrough.put(controller, downstream);
+            }
+        }
+    }
+
+    private Set<Controller<?, ?>> getDownstream() {
+
+        Set<Controller<?, ?>> downstream = new HashSet<>();
+        Set<Controller<?, ?>> found = new HashSet<>(outgoing.values());
+
+        while (!found.isEmpty()) {
+            downstream.addAll(found);
+            Set<Controller<?, ?>> next = new HashSet<>();
+            for (Controller<?, ?> controller : found) {
+                next.addAll(controller.outgoing.values());
+            }
+            found = next;
+        }
+
+        return downstream;
     }
 
     public void start() {
@@ -123,9 +150,11 @@ public final class Controller<I, O> {
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
         try {
-            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker());
+            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker(this, context));
             finishTracker.indicated.add(from);
-            queueNotEmpty.signalAll();  // TODO check indicated.size() before signalAll(), must equal number of incoming controllers leading to context.transformer
+            if (finishTracker.isFullyIndicated()) {
+                queueNotEmpty.signalAll();
+            }
         } finally {
             lock.unlock();
         }

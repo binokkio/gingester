@@ -27,6 +27,7 @@ final class Worker extends Thread {
                     handleFinishingContexts();
                     if (done) break;
                 }
+                if (done) break;
                 job = controller.queue.removeFirst();
                 controller.queueNotFull.signal();
             } catch (InterruptedException e) {
@@ -47,19 +48,21 @@ final class Worker extends Thread {
         while (iterator.hasNext()) {
 
             Map.Entry<Context, FinishTracker> entry = iterator.next();
+            Context context = entry.getKey();
             FinishTracker finishTracker = entry.getValue();
 
-            if (finishTracker.indicated.size() == controller.incoming.size()) {
+            if (finishTracker.isFullyIndicated()) {
 
                 finishTracker.acknowledged.add(this);
 
-                if (finishTracker.acknowledged.size() == controller.workers.size()) {
+                if (finishTracker.isFullyAcknowledged()) {
+                    System.err.println("Context " + context + " fully acknowledged by " + controller.transformer.getClass().getSimpleName());
                     iterator.remove();
                     controller.outgoing.values().forEach(controller -> controller.finish(controller, entry.getKey()));
-                }
 
-                if (entry.getKey() == Context.SEED) {
-                    done = true;
+                    if (entry.getKey() == Context.SEED) {
+                        done = true;
+                    }
                 }
             }
         }
