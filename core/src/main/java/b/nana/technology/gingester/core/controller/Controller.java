@@ -177,8 +177,38 @@ public final class Controller<I, O> {
     //
 
     public void transform(Batch<I> batch) {
-        for (Item<I> item : batch) {
-            transform(item.getContext(), item.getValue());
+
+        if (parameters.maxBatchSize == 1) {
+            // no batch optimizations possible, not tracking batch duration
+            for (Item<I> item : batch) {
+                transform(item.getContext(), item.getValue());
+            }
+        } else {
+
+            long batchStarted = System.nanoTime();
+            for (Item<I> item : batch) {
+                transform(item.getContext(), item.getValue());
+            }
+            long batchFinished = System.nanoTime();
+            double batchDuration = batchFinished - batchStarted;
+
+            if ((batchDuration < 2_000_000 && batch.getSize() != parameters.maxBatchSize) ||
+                    (batchDuration > 4_000_000 && batch.getSize() != 1)) {
+
+                double abrupt = 3_000_000 / batchDuration * batch.getSize();
+                double dampened = (abrupt + batch.getSize() * 9) / 10;
+                batchSize = (int) Math.min(parameters.maxBatchSize, dampened);
+            }
+
+//            if (lastBatchReport + 1_000_000_000 < batchFinished) {
+//                lastBatchReport = batchFinished;
+//                System.err.printf(
+//                        "%s processed batch of %,d items in %,.3f seconds%n",
+//                        transformer.name,
+//                        batch.getSize(),
+//                        batchDuration / 1_000_000_000
+//                );
+//            }
         }
     }
 
