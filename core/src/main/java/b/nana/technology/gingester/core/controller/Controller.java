@@ -21,6 +21,7 @@ public final class Controller<I, O> {
     private final SimpleSetupControls setupControls;
     final boolean async;
     private final int queueSize;
+    volatile int batchSize = 1;
 
     private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
     final ReentrantLock lock = new ReentrantLock();

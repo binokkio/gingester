@@ -1,6 +1,7 @@
 package b.nana.technology.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.receiver.SimpleReceiver;
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +24,11 @@ class GenerateStringTest {
         parameters.string = "Hello, World!";
         parameters.count = 3;
 
+        Controller.Parameters controllerParameters = new Controller.Parameters();
+        controllerParameters.async = true;
+
         gingester.add(new GenerateString(parameters));
-        gingester.add(new StringAppend());
+        gingester.add(new StringAppend(), controllerParameters);
         gingester.add(new StringAppend());
         gingester.add(result::add);
 
