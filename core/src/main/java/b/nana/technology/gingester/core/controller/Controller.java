@@ -9,7 +9,6 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
@@ -64,8 +63,6 @@ public final class Controller<I, O> {
                         controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         }
-
-        System.err.println(id + " " + outgoing.values().stream().map(oController -> oController.id).collect(Collectors.joining(", ")));
 
         for (String controllerId : parameters.syncs) {
             gingester.getController(controllerId).ifPresent(syncs::add);

@@ -39,10 +39,10 @@ public final class Worker extends Thread {
             }
             try {
                 job.perform();
-                flush();
             } catch (Exception e) {
-                throw new RuntimeException(e);  // TODO pass `e` to `controller.excepts`
+                e.printStackTrace();  // TODO pass `e` to `controller.excepts`
             }
+            flush();
         }
     }
 
@@ -56,14 +56,13 @@ public final class Worker extends Thread {
 
             if (finishTracker.isFullyIndicated()) {
                 if (finishTracker.acknowledge(this)) {
+                    iterator.remove();
 
                     if (context.controller.syncs.contains(controller)) {
                         controller.finish(context);
                     }
 
-                    System.err.println("Context " + context + " fully acknowledged by " + controller.transformer.getClass().getSimpleName());
-                    iterator.remove();
-                    controller.outgoing.values().forEach(controller -> controller.finish(controller, entry.getKey()));
+                    controller.outgoing.values().forEach(controller -> controller.finish(this.controller, entry.getKey()));
 
                     if (context.isSeed()) {
                         done = true;
@@ -95,6 +94,7 @@ public final class Worker extends Thread {
                 (Controller<T, ?>) target,
                 (Batch<T>) batch
         ));
+        batches.clear();
     }
 
     private <O> void flush(Controller<O, ?> target, Batch<O> batch) {
