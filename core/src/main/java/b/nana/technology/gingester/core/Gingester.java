@@ -35,6 +35,13 @@ public class Gingester {
         });
     }
 
+    public <T> String add(Consumer<T> consumer, Parameters parameters) {
+        return add((Transformer<T, T>) (context, in, out) -> {
+            consumer.accept(in);
+            out.accept(context, in);
+        }, parameters);
+    }
+
     public String add(Transformer<?, ?> transformer) {
         return add(transformer, new Parameters());
     }
@@ -64,10 +71,11 @@ public class Gingester {
             }
             id = parameters.getId();
         } else {
+            id = parameters.getTransformer();
             int i = 1;
-            do {
+            while (controllers.containsKey(id)) {
                 id = parameters.getTransformer() + '-' + i++;
-            } while (controllers.containsKey(id));
+            }
         }
         return id;
     }

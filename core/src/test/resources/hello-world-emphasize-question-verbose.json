@@ -8,26 +8,23 @@
         "string": "Hello, World",
         "count": 1
       },
+      "async": false,
       "links": [
-        {
-          "to": "AddEmphasis",
-          "async": false
-        }
+        "AddEmphasis"
       ]
     },
     {
       "id": "AddEmphasis",
       "transformer": "Emphasize",
+      "async": false,
       "links": [
-        {
-          "to": "AddQuestion",
-          "async": false
-        }
+        "AddQuestion"
       ]
     },
     {
       "id": "AddQuestion",
-      "transformer": "Question"
+      "transformer": "Question",
+      "async": false
     }
   ]
 }
