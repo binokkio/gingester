@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.controller.Controller;
 import java.util.Collections;
 import java.util.Map;
 
-public class Context {
+public final class Context {
 
     public static Context newSeed(Controller<?, ?> seedController) {
         return new Context(seedController);

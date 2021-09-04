@@ -4,7 +4,7 @@ import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-public class Seed implements Transformer<Void, Object> {
+public final class Seed implements Transformer<Void, Object> {
 
     @Override
     public void transform(Context context, Void in, Receiver<Object> out) {

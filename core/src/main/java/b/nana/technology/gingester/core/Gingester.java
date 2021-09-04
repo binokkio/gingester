@@ -15,52 +15,49 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class Gingester {
+public final class Gingester {
 
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
 
-    public String add(Parameters parameters) {
+    public void add(Parameters parameters) {
         String id = getId(parameters);
         controllers.put(id, new Controller<>(
                 parameters,
                 new ControllerInterface(id)
         ));
-        return id;
     }
 
-    public <T> String add(Consumer<T> consumer) {
-        return add((Transformer<T, T>) (context, in, out) -> {
-            consumer.accept(in);
-            out.accept(context, in);
-        });
+    public void add(Transformer<?, ?> transformer) {
+        add(transformer, new Parameters());
     }
 
-    public <T> String add(Consumer<T> consumer, Parameters parameters) {
-        return add((Transformer<T, T>) (context, in, out) -> {
-            consumer.accept(in);
-            out.accept(context, in);
-        }, parameters);
-    }
-
-    public String add(Transformer<?, ?> transformer) {
-        return add(transformer, new Parameters());
-    }
-
-    public String add(Transformer<?, ?> transformer, Parameters parameters) {
+    public void add(Transformer<?, ?> transformer, Parameters parameters) {
 
         if (parameters.getTransformer() == null) {
             parameters.setTransformer(transformer.getClass().getSimpleName());
         }
 
         String id = getId(parameters);
-
         controllers.put(id, new Controller<>(
                 transformer,
                 parameters,
                 new ControllerInterface(id)
         ));
+    }
 
-        return id;
+    public <T> void add(Consumer<T> consumer) {
+        add(wrap(consumer));
+    }
+
+    public <T> void add(Consumer<T> consumer, Parameters parameters) {
+        add(wrap(consumer), parameters);
+    }
+
+    private <T> Transformer<T, T> wrap(Consumer<T> consumer) {
+        return (context, in, out) -> {
+            consumer.accept(in);
+            out.accept(context, in);
+        };
     }
 
     private String getId(Parameters parameters) {

@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  *
  * Useful for testing.
  */
-public interface SimpleReceiver<T> extends Receiver<T>, Consumer<T> {
+public interface ConsumerReceiver<T> extends Receiver<T>, Consumer<T> {
 
     @Override
     default void accept(Context context, T output) {
