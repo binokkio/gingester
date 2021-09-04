@@ -22,6 +22,10 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.github.jsurfer</groupId>
+            <artifactId>jsurfer-jackson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-csv</artifactId>
         </dependency>
