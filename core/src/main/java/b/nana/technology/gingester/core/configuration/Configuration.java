@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.controller.Parameters;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Configuration {
+public final class Configuration {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)

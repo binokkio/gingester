@@ -3,7 +3,7 @@ package b.nana.technology.gingester.core;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.Controller;
-import b.nana.technology.gingester.core.controller.Parameters;
+import b.nana.technology.gingester.core.configuration.Parameters;
 import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;

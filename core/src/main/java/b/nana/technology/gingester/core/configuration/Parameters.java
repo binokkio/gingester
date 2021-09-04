@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.controller;
+package b.nana.technology.gingester.core.configuration;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,8 +29,7 @@ public final class Parameters {
 
 
     @JsonCreator
-    public Parameters() {
-    }
+    public Parameters() {}
 
     @JsonCreator
     public Parameters(String transformer) {

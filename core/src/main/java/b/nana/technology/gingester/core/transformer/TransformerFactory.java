@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformer;
 
-import b.nana.technology.gingester.core.controller.Parameters;
+import b.nana.technology.gingester.core.configuration.Parameters;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

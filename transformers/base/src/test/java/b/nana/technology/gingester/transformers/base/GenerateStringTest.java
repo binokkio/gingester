@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.controller.Parameters;
+import b.nana.technology.gingester.core.configuration.Parameters;
 import b.nana.technology.gingester.core.receiver.SimpleReceiver;
 import b.nana.technology.gingester.transformers.base.transformers.GenerateString;
 import b.nana.technology.gingester.transformers.base.transformers.StringAppend;
