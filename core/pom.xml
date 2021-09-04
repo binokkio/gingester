@@ -21,8 +21,8 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.jodah</groupId>
-            <artifactId>typetools</artifactId>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

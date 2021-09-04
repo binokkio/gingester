@@ -18,7 +18,7 @@ public class Generate implements Transformer<Void, String> {
     @Override
     public void transform(Context context, Void in, Receiver<String> out) {
         for (int i = 0; i < count; i++) {
-            out.accept(context.extend(), string);
+            out.accept(context, string);
         }
     }
 

@@ -20,7 +20,7 @@ public final class Fetch implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
-                context.extend().stash(Map.of("description", description)),
+                context.stash(Map.of("description", description)),
                 context.fetch(name).findFirst().orElseThrow()
         );
     }

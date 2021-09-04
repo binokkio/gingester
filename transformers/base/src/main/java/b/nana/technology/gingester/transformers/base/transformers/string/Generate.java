@@ -21,7 +21,7 @@ public class Generate implements Transformer<Object, String> {
     public void transform(Context context, Object in, Receiver<String> out) throws InterruptedException {
         for (int i = 0; i < count; i++) {
             if (Thread.interrupted()) throw new InterruptedException();
-            out.accept(context.extend().stash(Map.of("description", i)), string);
+            out.accept(context.stash(Map.of("description", i)), string);
         }
     }
 

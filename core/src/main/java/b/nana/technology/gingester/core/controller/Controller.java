@@ -17,7 +17,7 @@ public final class Controller<I, O> {
     private final Parameters parameters;
     private final Gingester.ControllerInterface gingester;
     public final String id;
-    final Transformer<I, O> transformer;
+    public final Transformer<I, O> transformer;
 
     private final SimpleSetupControls setupControls;
     final boolean async;

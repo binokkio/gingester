@@ -1,6 +1,9 @@
 package b.nana.technology.gingester.core.context;
 
 import b.nana.technology.gingester.core.controller.Controller;
+import b.nana.technology.gingester.core.freemarker.FreemarkerContextWrapper;
+import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
+import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
@@ -18,6 +21,11 @@ public final class Context implements Iterable<Context> {
 
     public static Context newSeed(Controller<?, ?> seedController) {
         return new Context(seedController);
+    }
+
+    public static Template newTemplate(String template) {
+        FreemarkerTemplateWrapper wrapper = FreemarkerTemplateFactory.createTemplate(template, FreemarkerContextWrapper::new);
+        return wrapper::render;
     }
 
 
@@ -39,6 +47,10 @@ public final class Context implements Iterable<Context> {
 
     public boolean isSeed() {
         return parent == null;
+    }
+
+    public Optional<Context> rewind(String id) {
+        return stream().filter(c -> id.equals(c.controller.id)).findFirst();
     }
 
     public Stream<Object> fetch(String... name) {
@@ -140,7 +152,11 @@ public final class Context implements Iterable<Context> {
         return new Builder(this);
     }
 
-    public static class Builder {
+    public Builder stash(Map<String, Object> stash) {
+        return new Builder(this).stash(stash);
+    }
+
+    public static final class Builder {
 
         private final Context parent;
         private Controller<?, ?> controller;
@@ -163,5 +179,9 @@ public final class Context implements Iterable<Context> {
         public Context build() {
             return new Context(this);
         }
+    }
+
+    public interface Template {
+        String render(Context context);
     }
 }
