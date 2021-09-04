@@ -79,6 +79,10 @@ public final class Gingester {
 
     public void run() {
 
+        if (controllers.isEmpty()) {
+            throw new IllegalStateException("No transformers");
+        }
+
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discover);
 

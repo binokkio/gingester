@@ -15,6 +15,7 @@
     <modules>
         <module>core</module>
         <module>transformers</module>
+        <module>executable</module>
     </modules>
 
     <properties>

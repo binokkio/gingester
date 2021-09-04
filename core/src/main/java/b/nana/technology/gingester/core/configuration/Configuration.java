@@ -6,10 +6,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,11 +19,13 @@ public final class Configuration {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
+            .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
             .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
-    private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writer(new Printer());
+    public static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader();
+    public static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writer(new Printer());
 
     public static Configuration fromJson(InputStream inputStream) throws IOException {
         Objects.requireNonNull(inputStream, "Configuration.fromJson called with null InputStream");

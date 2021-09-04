@@ -21,14 +21,12 @@ public final class TransformerFactory {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private TransformerFactory() {
-
-    }
+    private TransformerFactory() {}
 
     public static <I, O> Transformer<I, O> instance(Parameters parameters) {
 
         List<Class<? extends Transformer<?, ?>>> transformerClasses = TRANSFORMERS.stream()
-                .filter(c -> c.getCanonicalName().endsWith(parameters.getTransformer()))
+                .filter(c -> c.getCanonicalName().toLowerCase(Locale.ENGLISH).endsWith(parameters.getTransformer().toLowerCase(Locale.ENGLISH)))
                 .collect(Collectors.toList());
 
         if (transformerClasses.isEmpty()) {
