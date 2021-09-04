@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.test.transformers;
 
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import com.fasterxml.jackson.annotation.JsonCreator;

@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.controller.Controller;
+import b.nana.technology.gingester.core.controller.Parameters;
 import b.nana.technology.gingester.core.receiver.SimpleReceiver;
 import b.nana.technology.gingester.transformers.base.transformers.GenerateString;
 import b.nana.technology.gingester.transformers.base.transformers.StringAppend;
@@ -43,8 +43,8 @@ class GenerateStringTest {
         parameters.string = "Hello, World!";
         parameters.count = 3;
 
-        Controller.Parameters async = new Controller.Parameters();
-        async.async = true;
+        Parameters async = new Parameters();
+        async.setAsync(true);
 
         gingester.add(new GenerateString(parameters));
         gingester.add(new StringAppend(), async);

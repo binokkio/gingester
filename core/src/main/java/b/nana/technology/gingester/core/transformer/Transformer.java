@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core;
+package b.nana.technology.gingester.core.transformer;
 
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.SetupControls;

@@ -4,7 +4,8 @@ import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.context.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.util.*;
 import java.util.concurrent.locks.Condition;
@@ -12,14 +13,16 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public final class Controller<I, O> {
 
-    private final String id;
-    private final Gingester.ControllerInterface gingester;
-    final Transformer<I, O> transformer;
     private final Parameters parameters;
+    private final Gingester.ControllerInterface gingester;
+    private final String id;
+    final Transformer<I, O> transformer;
 
     private final SimpleSetupControls setupControls;
     final boolean async;
-    private final int queueSize;
+    private final int maxQueueSize;
+    private final int maxWorkers;
+    private final int maxBatchSize;
     volatile int batchSize = 1;
 
     private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
@@ -36,18 +39,24 @@ public final class Controller<I, O> {
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
     final Map<Context, FinishTracker> finishing = new HashMap<>();
 
-    public Controller(String id, Gingester.ControllerInterface gingester, Transformer<I, O> transformer, Parameters parameters) {
+    public Controller(Parameters parameters, Gingester.ControllerInterface gingester) {
+        this(TransformerFactory.instance(parameters), parameters, gingester);
+    }
 
-        this.id = id;
-        this.gingester = gingester;
-        this.transformer = transformer;
+    public Controller(Transformer<I, O> transformer, Parameters parameters, Gingester.ControllerInterface gingester) {
+
         this.parameters = parameters;
+        this.gingester = gingester;
+        this.id = gingester.getId();
+        this.transformer = transformer;
 
         setupControls = new SimpleSetupControls();
         transformer.setup(setupControls);
 
-        async = parameters.async;
-        queueSize = parameters.queueSize;
+        async = parameters.getAsync();
+        maxQueueSize = parameters.getMaxQueueSize();
+        maxWorkers = parameters.getMaxWorkers();
+        maxBatchSize = parameters.getMaxBatchSize();
     }
 
     public void initialize() {
@@ -58,17 +67,17 @@ public final class Controller<I, O> {
                         controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         } else {
-            for (String controllerId : parameters.links) {
+            for (String controllerId : parameters.getLinks()) {
                 gingester.getController(controllerId).ifPresent(
                         controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         }
 
-        for (String controllerId : parameters.syncs) {
+        for (String controllerId : parameters.getSyncs()) {
             gingester.getController(controllerId).ifPresent(syncs::add);
         }
 
-        for (String controllerId : parameters.excepts) {
+        for (String controllerId : parameters.getExcepts()) {
             gingester.getController(controllerId).ifPresent(excepts::add);
         }
     }
@@ -112,7 +121,7 @@ public final class Controller<I, O> {
         // queue transformer open runnable
         queue.add(transformer::open);
 
-        for (int i = 0; i < parameters.maxWorkers; i++) {
+        for (int i = 0; i < maxWorkers; i++) {
             workers.add(new Worker(this));
         }
 
@@ -122,7 +131,7 @@ public final class Controller<I, O> {
     public void prepare(Context context) {
         lock.lock();
         try {
-            while (queue.size() >= queueSize) queueNotFull.await();
+            while (queue.size() >= maxQueueSize) queueNotFull.await();
             queue.add(() -> transformer.prepare(context));
             queueNotEmpty.signal();
         } catch (InterruptedException e) {
@@ -135,7 +144,7 @@ public final class Controller<I, O> {
     public void accept(Batch<I> batch) {
         lock.lock();
         try {
-            while (queue.size() >= queueSize) queueNotFull.await();
+            while (queue.size() >= maxQueueSize) queueNotFull.await();
             queue.add(() -> transform(batch));
             queueNotEmpty.signal();
         } catch (InterruptedException e) {
@@ -150,7 +159,7 @@ public final class Controller<I, O> {
         try {
             FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker(this, context));
             if (finishTracker.indicate(from)) {
-                while (queue.size() >= queueSize) queueNotFull.await();
+                while (queue.size() >= maxQueueSize) queueNotFull.await();
                 queue.add(() -> {
                     lock.lock();
                     try {
@@ -175,7 +184,7 @@ public final class Controller<I, O> {
 
     public void transform(Batch<I> batch) {
 
-        if (parameters.maxBatchSize == 1) {
+        if (maxBatchSize == 1) {
             // no batch optimizations possible, not tracking batch duration
             for (Item<I> item : batch) {
                 transform(item.getContext(), item.getValue());
@@ -189,12 +198,12 @@ public final class Controller<I, O> {
             long batchFinished = System.nanoTime();
             double batchDuration = batchFinished - batchStarted;
 
-            if ((batchDuration < 2_000_000 && batch.getSize() != parameters.maxBatchSize) ||
+            if ((batchDuration < 2_000_000 && batch.getSize() != maxBatchSize) ||
                     (batchDuration > 4_000_000 && batch.getSize() != 1)) {
 
                 double abrupt = 3_000_000 / batchDuration * batch.getSize();
                 double dampened = (abrupt + batch.getSize() * 9) / 10;
-                batchSize = (int) Math.min(parameters.maxBatchSize, dampened);
+                batchSize = (int) Math.min(maxBatchSize, dampened);
             }
 
 //            if (lastBatchReport + 1_000_000_000 < batchFinished) {
@@ -223,20 +232,5 @@ public final class Controller<I, O> {
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO pass `e` to `excepts`
         }
-    }
-
-
-
-    //
-
-    public static class Parameters {
-        public String id = null;
-        public boolean async = false;
-        public List<String> links = Collections.singletonList("__maybe_next__");
-        public List<String> syncs = Collections.emptyList();
-        public List<String> excepts = Collections.emptyList();
-        public int queueSize = 100;
-        public int maxWorkers = 1;
-        public int maxBatchSize = 65536;
     }
 }

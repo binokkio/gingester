@@ -18,6 +18,7 @@ class ConfigurationTest {
 
         Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json"));
         configuration.applyTo(gingester);
+        System.out.println(configuration.toJson());
 
         Queue<String> results = new ArrayDeque<>();
         gingester.add(results::add);

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.provider;
 
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.Collection;
 
