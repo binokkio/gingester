@@ -1,8 +1,8 @@
-package b.nana.technology.transformers.base;
+package b.nana.technology.gingester.transformers.base.transformers;
 
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.core.Transformer;
 
 public class GenerateString implements Transformer<Object, String> {
 

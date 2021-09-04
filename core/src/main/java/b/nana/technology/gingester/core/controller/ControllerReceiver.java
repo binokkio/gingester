@@ -23,6 +23,16 @@ final class ControllerReceiver<O> implements Receiver<O> {
     }
 
     @Override
+    public void accept(Context.Builder contextBuilder, O output) {
+        Context context = contextBuilder.controller(controller).build();
+        prepare(context);
+        for (Controller<O, ?> controller : controller.outgoing.values()) {
+            accept(context, output, controller);
+        }
+        finish(context);
+    }
+
+    @Override
     public void accept(Context context, O output, String targetId) {
         context = maybeExtend(context);
         Controller<O, ?> target = controller.outgoing.get(targetId);
@@ -32,9 +42,19 @@ final class ControllerReceiver<O> implements Receiver<O> {
         finish(context);
     }
 
+    @Override
+    public void accept(Context.Builder contextBuilder, O output, String targetId) {
+        Context context = contextBuilder.controller(controller).build();
+        Controller<O, ?> target = controller.outgoing.get(targetId);
+        if (target == null) throw new IllegalStateException("Link not configured!");
+        prepare(context);
+        accept(context, output, target);
+        finish(context);
+    }
+
     private Context maybeExtend(Context context) {
         if (!controller.syncs.isEmpty() && context.controller != controller) {
-            return context.extend(controller).build();
+            return context.extend().controller(controller).build();
         } else {
             return context;
         }

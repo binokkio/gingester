@@ -1,8 +1,10 @@
-package b.nana.technology.transformers.base;
+package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.receiver.SimpleReceiver;
+import b.nana.technology.gingester.transformers.base.transformers.GenerateString;
+import b.nana.technology.gingester.transformers.base.transformers.StringAppend;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;

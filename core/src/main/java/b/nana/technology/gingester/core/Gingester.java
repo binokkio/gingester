@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
-import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;
 
 import java.util.Collection;
@@ -18,15 +17,18 @@ public class Gingester {
 
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
 
-    public <T> void add(Consumer<T> consumer) {
-        add((Transformer<T, Void>) (context, in, out) -> consumer.accept(in));
+    public <T> String add(Consumer<T> consumer) {
+        return add((Transformer<T, T>) (context, in, out) -> {
+            consumer.accept(in);
+            out.accept(context, in);
+        });
     }
 
-    public void add(Transformer<?, ?> transformer) {
-        add(transformer, new Controller.Parameters());
+    public String add(Transformer<?, ?> transformer) {
+        return add(transformer, new Controller.Parameters());
     }
 
-    public void add(Transformer<?, ?> transformer, Controller.Parameters parameters) {
+    public String add(Transformer<?, ?> transformer, Controller.Parameters parameters) {
 
         String id;
         if (parameters.id != null) {
@@ -41,14 +43,14 @@ public class Gingester {
             } while (controllers.containsKey(id));
         }
 
-        Controller<?, ?> controller = new Controller<>(
+        controllers.put(id, new Controller<>(
                 id,
                 new ControllerInterface(id),
                 transformer,
                 parameters
-        );
+        ));
 
-        controllers.put(id, controller);
+        return id;
     }
 
     public void run() {

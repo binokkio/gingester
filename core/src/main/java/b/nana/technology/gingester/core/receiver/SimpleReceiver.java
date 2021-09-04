@@ -17,7 +17,17 @@ public interface SimpleReceiver<T> extends Receiver<T>, Consumer<T> {
     }
 
     @Override
+    default void accept(Context.Builder contextBuilder, T output) {
+        accept(output);
+    }
+
+    @Override
     default void accept(Context context, T output, String target) {
+        accept(output);
+    }
+
+    @Override
+    default void accept(Context.Builder contextBuilder, T output, String targetId) {
         accept(output);
     }
 }

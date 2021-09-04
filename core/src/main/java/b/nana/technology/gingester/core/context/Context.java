@@ -32,19 +32,23 @@ public class Context {
         return parent == null;
     }
 
-    public Builder extend(Controller<?, ?> controller) {
-        return new Builder(this, controller);
+    public Builder extend() {
+        return new Builder(this);
     }
 
     public static class Builder {
 
         private final Context parent;
-        private final Controller<?, ?> controller;
+        private Controller<?, ?> controller;
         private Map<String, Object> stash;
 
-        private Builder(Context parent, Controller<?, ?> controller) {
+        private Builder(Context parent) {
             this.parent = parent;
+        }
+
+        public Builder controller(Controller<?, ?> controller) {
             this.controller = controller;
+            return this;
         }
 
         public Builder stash(Map<String, Object> stash) {
