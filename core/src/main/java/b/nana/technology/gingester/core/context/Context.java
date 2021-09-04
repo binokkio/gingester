@@ -76,7 +76,7 @@ public final class Context implements Iterable<Context> {
 
             @Override
             public boolean hasNext() {
-                return !pointer.isSeed();
+                return pointer != null;
             }
 
             @Override

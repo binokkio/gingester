@@ -133,7 +133,7 @@ public final class Controller<I, O> {
         lock.lock();
         try {
             while (queue.size() >= maxQueueSize) queueNotFull.await();
-            queue.add(() -> transformer.prepare(context));
+            queue.add(() -> transformer.prepare(context, receiver));
             queueNotEmpty.signal();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO

@@ -10,7 +10,7 @@ public interface Transformer<I, O> {
 
     default void open() throws Exception {}
 
-    default void prepare(Context context) throws Exception {}
+    default void prepare(Context context, Receiver<O> out) throws Exception {}
 
     void transform(Context context, I in, Receiver<O> out) throws Exception;
 
