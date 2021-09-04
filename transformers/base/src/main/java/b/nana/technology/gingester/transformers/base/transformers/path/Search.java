@@ -16,17 +16,15 @@ public class Search implements Transformer<Object, Path> {
 
     private final Path root;
     private final String[] globs;
-    private final boolean stash;
 
     public Search(Parameters parameters) {
         root = Paths.get(parameters.root).toAbsolutePath();
         globs = parameters.globs;
-        stash = parameters.stash;
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
-        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + globs[0]);
+        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + globs[0]);  // TODO don't ignore the other globs
         Files.walkFileTree(root, new Visitor(context, pathMatcher, out));
     }
 
@@ -70,23 +68,17 @@ public class Search implements Transformer<Object, Path> {
             Path relative = root.relativize(path);
 
             if (pathMatcher.matches(relative)) {
-
-                Context.Builder contextBuilder = context.extend();
-
-                if (stash) {
-                    contextBuilder.stash(Map.of(
-                            "description", relative.toString(),
-                            "path", Map.of(
-                                    "tail", path.getFileName(),
-                                    "relative", relative,
-                                    "full", path
-                            )
-                    ));
-                } else {
-                    contextBuilder.stash(Map.of("description", relative.toString()));
-                }
-
-                out.accept(contextBuilder, path);
+                out.accept(
+                        context.stash(Map.of(
+                                "description", relative.toString(),
+                                "path", Map.of(
+                                        "tail", path.getFileName(),
+                                        "relative", relative,
+                                        "full", path
+                                )
+                        )),
+                        path
+                );
             }
         }
     }
@@ -95,7 +87,6 @@ public class Search implements Transformer<Object, Path> {
 
         public String root = "";
         public String[] globs = new String[] { "**/*" };
-        public boolean stash = true;
 
         @JsonCreator
         public Parameters() {}
