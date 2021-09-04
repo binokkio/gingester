@@ -15,14 +15,6 @@ public final class Context implements Iterable<Context> {
 
     private static final int INDENT = 2;
 
-    public static Context newSeed() {
-        return newSeed(null);
-    }
-
-    public static Context newSeed(Controller<?, ?> seedController) {
-        return new Context(seedController);
-    }
-
     public static Template newTemplate(String template) {
         FreemarkerTemplateWrapper wrapper = FreemarkerTemplateFactory.createTemplate(template, FreemarkerContextWrapper::new);
         return wrapper::render;
@@ -32,12 +24,6 @@ public final class Context implements Iterable<Context> {
     private final Context parent;
     public final Controller<?, ?> controller;
     private final Map<String, Object> stash;
-
-    private Context(Controller<?, ?> seedController) {
-        parent = null;
-        controller = seedController;
-        stash = Collections.emptyMap();
-    }
 
     private Context(Builder builder) {
         parent = builder.parent;
@@ -162,7 +148,11 @@ public final class Context implements Iterable<Context> {
         private Controller<?, ?> controller;
         private Map<String, Object> stash;
 
-        private Builder(Context parent) {
+        public Builder() {
+            parent = null;
+        }
+
+        public Builder(Context parent) {
             this.parent = parent;
         }
 

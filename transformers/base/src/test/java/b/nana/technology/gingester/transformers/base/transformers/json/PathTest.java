@@ -19,7 +19,7 @@ class PathTest {
 
         Path path = new Path(new Path.Parameters("$..message"));
         path.transform(
-                Context.newSeed(),
+                new Context.Builder().build(),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json"),
                 (UniReceiver<JsonNode>) results::add
         );

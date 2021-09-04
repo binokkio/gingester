@@ -1,7 +1,16 @@
 {
   "array": [
-    {"message": "Hello, World 1!"},
-    {"message": "Hello, World 2!"},
-    {"message": "Hello, World 3!"}
+    {
+      "id": 123,
+      "message": "Hello, World 1!"
+    },
+    {
+      "id": 234,
+      "message": "Hello, World 2!"
+    },
+    {
+      "id": 345,
+      "message": "Hello, World 3!"
+    }
   ]
 }

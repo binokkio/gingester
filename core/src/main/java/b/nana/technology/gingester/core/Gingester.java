@@ -8,10 +8,7 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -78,6 +75,10 @@ public final class Gingester {
     }
 
     public void run() {
+        run(Collections.emptyMap());
+    }
+
+    public void run(Map<String, Object> seedStash) {
 
         if (controllers.isEmpty()) {
             throw new IllegalStateException("No transformers");
@@ -104,7 +105,11 @@ public final class Gingester {
 
         controllers.values().forEach(Controller::start);
 
-        Context seed = Context.newSeed(seedController);
+        Context seed = new Context.Builder()
+                .controller(seedController)
+                .stash(seedStash)
+                .build();
+
         seedController.accept(new Batch<>(seed, null));
         seedController.finish(null, seed);
 

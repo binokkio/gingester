@@ -22,7 +22,7 @@ class GenerateTest {
 
         Queue<String> result = new ArrayDeque<>();
 
-        generate.transform(Context.newSeed(), null, (UniReceiver<String>) result::add);
+        generate.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());

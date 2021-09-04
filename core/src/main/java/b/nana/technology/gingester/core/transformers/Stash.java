@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Map;
 
@@ -11,10 +12,12 @@ public final class Stash implements Transformer<Object, Object> {
 
     private final String name;
     private final String description;
+    private final Object value;
 
     public Stash(Parameters parameters) {
         name = parameters.name;
         description = String.format("Stash \"%s\"", name);
+        value = parameters.value;
     }
 
     @Override
@@ -22,7 +25,7 @@ public final class Stash implements Transformer<Object, Object> {
         out.accept(
                 context.stash(Map.of(
                         "description", description,
-                        name, in
+                        name, value == null ? in : value
                 )),
                 in
         );
@@ -31,6 +34,7 @@ public final class Stash implements Transformer<Object, Object> {
     public static class Parameters {
 
         public String name = "stash";
+        public Object value;
 
         @JsonCreator
         public Parameters() {}

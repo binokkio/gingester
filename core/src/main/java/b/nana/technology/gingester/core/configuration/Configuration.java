@@ -43,8 +43,9 @@ public final class Configuration {
         }
     }
 
-    public void applyTo(Gingester gingester) {
+    public Gingester applyTo(Gingester gingester) {
         transformers.forEach(gingester::add);
+        return gingester;
     }
 
     private static class Printer extends DefaultPrettyPrinter {

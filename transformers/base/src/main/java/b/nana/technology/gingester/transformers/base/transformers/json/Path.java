@@ -19,7 +19,7 @@ public class Path implements Transformer<InputStream, JsonNode> {
     private final JsonPath jsonPath;
 
     public Path(Parameters parameters) {
-        descriptionFormat = parameters.path + " %d";
+        descriptionFormat = parameters.path + " :: %d";
         jsonPath = JsonPathCompiler.compile(parameters.path);
     }
 
