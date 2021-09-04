@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.Parameters;
-import b.nana.technology.gingester.core.receiver.ConsumerReceiver;
+import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.transformers.base.transformers.GenerateString;
 import b.nana.technology.gingester.transformers.base.transformers.StringAppend;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ class GenerateStringTest {
 
         Queue<String> result = new ArrayDeque<>();
 
-        generateString.transform(null, null, (ConsumerReceiver<String>) result::add);
+        generateString.transform(null, null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());

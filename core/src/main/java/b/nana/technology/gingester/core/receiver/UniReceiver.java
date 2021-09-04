@@ -2,14 +2,12 @@ package b.nana.technology.gingester.core.receiver;
 
 import b.nana.technology.gingester.core.context.Context;
 
-import java.util.function.Consumer;
-
 /**
  * Ignores context and target and passes given output through to `accept`.
  *
  * Useful for testing.
  */
-public interface ConsumerReceiver<T> extends Receiver<T>, Consumer<T> {
+public interface UniReceiver<T> extends Receiver<T> {
 
     @Override
     default void accept(Context context, T output) {
@@ -30,4 +28,6 @@ public interface ConsumerReceiver<T> extends Receiver<T>, Consumer<T> {
     default void accept(Context.Builder contextBuilder, T output, String targetId) {
         accept(output);
     }
+
+    void accept(T output);
 }
