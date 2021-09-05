@@ -68,18 +68,6 @@ public final class Controller<I, O> {
 
     public void initialize() {
 
-        if (!setupControls.links.isEmpty()) {
-            for (String controllerId : setupControls.links) {
-                gingester.getController(controllerId).ifPresent(
-                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
-            }
-        } else {
-            for (String controllerId : configuration.getLinks()) {
-                gingester.getController(controllerId).ifPresent(
-                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
-            }
-        }
-
         if (setupControls.requireDownstreamSync) {
             String notSync = filterAndName(outgoing.values(), c -> c.async);
             if (!notSync.isEmpty()) {
@@ -100,13 +88,25 @@ public final class Controller<I, O> {
             }
         }
 
+        if (!setupControls.links.isEmpty()) {
+            for (String controllerId : setupControls.links) {
+                gingester.getController(controllerId).ifPresent(
+                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
+            }
+        } else {
+            for (String controllerId : configuration.getLinks()) {
+                gingester.getController(controllerId).ifPresent(
+                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
+            }
+        }
+
         if (!setupControls.syncs.isEmpty()) {
             for (String controllerId : setupControls.syncs) {
-                gingester.getController(controllerId).ifPresent(syncs::add);
+                gingester.getController(controllerId).ifPresent(c -> c.syncs.add(this));
             }
         } else {
             for (String controllerId : configuration.getSyncs()) {
-                gingester.getController(controllerId).ifPresent(syncs::add);
+                gingester.getController(controllerId).ifPresent(c -> c.syncs.add(this));
             }
         }
 
@@ -124,10 +124,12 @@ public final class Controller<I, O> {
         }
 
         for (Controller<?, ?> controller : gingester.getControllers()) {
-            Set<Controller<?, ?>> downstream = controller.getDownstream();
-            if (downstream.contains(this)) {
-                downstream.retainAll(incoming);
-                syncedThrough.put(controller, downstream);
+            if (!controller.syncs.isEmpty()) {
+                Set<Controller<?, ?>> downstream = controller.getDownstream();
+                if (downstream.contains(this)) {
+                    downstream.retainAll(incoming);
+                    syncedThrough.put(controller, downstream);
+                }
             }
         }
     }

@@ -16,6 +16,12 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/*
+ * TODO adding 1 more step between `configuration` and `controllers` would allow
+ *      all controllers to have final unmodifiable maps for their incoming and outgoing
+ *      maps. Could be called `setup`.
+ */
+
 public final class Gingester {
 
     private final LinkedHashMap<String, Configuration> configurations = new LinkedHashMap<>();

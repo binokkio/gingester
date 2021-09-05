@@ -20,11 +20,14 @@ class TestStatistics {
 
         gingester.configure(c -> c
                 .transformer("Resource.Open")
-                .parameters("/basic.csv")
-                .syncs(List.of("Json.Statistics")));
+                .parameters("/basic.csv"));
 
         gingester.add("Dsv.ToJson");
-        gingester.add("Json.Statistics");
+
+        gingester.configure(c -> c
+                .transformer("Json.Statistics")
+                .syncs(List.of("Resource.Open")));
+
         gingester.add(result::set);
         gingester.run();
 
@@ -76,15 +79,18 @@ class TestStatistics {
 
         gingester.configure(c -> c
                 .transformer("Resource.Open")
-                .parameters("/basic.ndjson")
-                .syncs(List.of("Json.Statistics")));
+                .parameters("/basic.ndjson"));
 
         gingester.configure(c -> c
                 .transformer("InputStream.Split")
                 .parameters("\n"));
 
         gingester.add("InputStream.ToJson");
-        gingester.add("Json.Statistics");
+
+        gingester.configure(c -> c
+                .transformer("Json.Statistics")
+                .syncs(List.of("Resource.Open")));
+
         gingester.add(result::set);
         gingester.run();
     }
@@ -98,15 +104,18 @@ class TestStatistics {
 
         gingester.configure(c -> c
                 .transformer("Resource.Open")
-                .parameters("/nulls.ndjson")
-                .syncs(List.of("Json.Statistics")));
+                .parameters("/nulls.ndjson"));
 
         gingester.configure(c -> c
                 .transformer("InputStream.Split")
                 .parameters("\n"));
 
         gingester.add("InputStream.ToJson");
-        gingester.add("Json.Statistics");
+
+        gingester.configure(c -> c
+                .transformer("Json.Statistics")
+                .syncs(List.of("Resource.Open")));
+
         gingester.add(result::set);
         gingester.run();
 
