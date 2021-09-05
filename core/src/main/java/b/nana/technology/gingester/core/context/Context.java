@@ -68,6 +68,12 @@ public final class Context implements Iterable<Context> {
                 .filter(Objects::nonNull);
     }
 
+    public Stream<Object> fetchReverse(String... name) {
+        List<Object> results = fetch(name).collect(Collectors.toCollection(ArrayList::new));
+        Collections.reverse(results);
+        return results.stream();
+    }
+
     @Override
     public Iterator<Context> iterator() {
         return new Iterator<>() {

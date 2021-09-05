@@ -5,8 +5,6 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class Out implements Transformer<Object, Object> {
@@ -20,11 +18,9 @@ public class Out implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
         if (decorate) {
-            List<String> descriptions = context.fetch("description")
+            String description = context.fetchReverse("description")
                     .map(Object::toString)
-                    .collect(Collectors.toList());
-            Collections.reverse(descriptions);
-            String description = String.join(" :: ", descriptions);
+                    .collect(Collectors.joining(" :: "));
             String prettyStash = context.prettyStash();
             System.out.print(
                     "---- " + description + " ----\n" +
