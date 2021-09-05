@@ -31,6 +31,7 @@ public final class Configuration {
     private Integer maxQueueSize;
     private Integer maxWorkers;
     private Integer maxBatchSize;
+    private Boolean report;
 
     @JsonIgnore
     private Transformer<?, ?> instance;
@@ -151,11 +152,21 @@ public final class Configuration {
 
 
     public int getMaxBatchSize() {
-        return maxBatchSize == null ? 65536 : maxBatchSize;
+        return maxBatchSize == null ? 50000 : maxBatchSize;
     }
 
     public Configuration maxBatchSize(Integer maxBatchSize) {
         this.maxBatchSize = maxBatchSize;
+        return this;
+    }
+
+
+    public Boolean report() {
+        return report;
+    }
+
+    public Configuration report(boolean report) {
+        this.report = report;
         return this;
     }
 

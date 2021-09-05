@@ -4,6 +4,8 @@ import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.reporting.Counter;
+import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
@@ -27,33 +29,30 @@ public final class Controller<I, O> {
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
-    private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
-    final ReentrantLock lock = new ReentrantLock();
-    final Condition queueNotEmpty = lock.newCondition();
-    final Condition queueNotFull = lock.newCondition();
-    final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
-    public final List<Worker> workers = new ArrayList<>();
-
     public final Set<Controller<?, I>> incoming = new HashSet<>();
     public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
+
+    final ReentrantLock lock = new ReentrantLock();
+    final Condition queueNotEmpty = lock.newCondition();
+    final Condition queueNotFull = lock.newCondition();
+    final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new HashMap<>();
+    public final List<Worker> workers = new ArrayList<>();
+    private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
+
+    public final boolean report;
+    public final Counter delt;
+    public final Counter acks;
 
     public Controller(Configuration configuration, Gingester.ControllerInterface gingester) {
-        this(
-                (Transformer<I, O>) configuration.getInstance().orElseGet(() -> TransformerFactory.instance(configuration)),
-                configuration, gingester
-        );
-    }
-
-    public Controller(Transformer<I, O> transformer, Configuration configuration, Gingester.ControllerInterface gingester) {
 
         this.configuration = configuration;
         this.gingester = gingester;
         this.id = gingester.getId();
-        this.transformer = transformer;
+        this.transformer = (Transformer<I, O>) configuration.getInstance().orElseGet(() -> TransformerFactory.instance(configuration));
 
         setupControls = new SetupControls();
         transformer.setup(setupControls);
@@ -62,6 +61,9 @@ public final class Controller<I, O> {
         maxQueueSize = configuration.getMaxQueueSize();
         maxWorkers = configuration.getMaxWorkers();
         maxBatchSize = configuration.getMaxBatchSize();
+        report = configuration.report() != null ? configuration.report() : (setupControls.links.isEmpty() && configuration.getLinks().equals(Collections.singletonList("__maybe_next__")) && !gingester.hasNext());
+        acks = setupControls.acksCounter;
+        delt = new SimpleCounter(acks != null || report);
     }
 
     public void initialize() {
@@ -151,6 +153,7 @@ public final class Controller<I, O> {
 
         // queue transformer open runnable
         queue.add(transformer::open);
+        // TODO queue.add(start remaining workers) and start only 1 worker, to prevent transform being called before open returns (still some problems with prepare?)
 
         for (int i = 0; i < maxWorkers; i++) {
             workers.add(new Worker(this, i));
@@ -215,13 +218,13 @@ public final class Controller<I, O> {
         if (maxBatchSize == 1) {
             // no batch optimizations possible, not tracking batch duration
             for (Item<I> item : batch) {
-                transform(item.getContext(), item.getValue());
+                _transform(item.getContext(), item.getValue());
             }
         } else {
 
             long batchStarted = System.nanoTime();
             for (Item<I> item : batch) {
-                transform(item.getContext(), item.getValue());
+                _transform(item.getContext(), item.getValue());
             }
             long batchFinished = System.nanoTime();
             double batchDuration = batchFinished - batchStarted;
@@ -244,9 +247,16 @@ public final class Controller<I, O> {
 //                );
 //            }
         }
+
+        if (report) delt.count(batch.getSize());
     }
 
     public void transform(Context context, I input) {
+        _transform(context, input);
+        if (report) delt.count();
+    }
+
+    private void _transform(Context context, I input) {
         try {
             transformer.transform(context, input, receiver);
         } catch (RuntimeException e) {

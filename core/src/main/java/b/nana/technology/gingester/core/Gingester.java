@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
+import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 public final class Gingester {
 
+    private final LinkedHashMap<String, Configuration> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
 
     public void add(String transformer) {
@@ -53,23 +55,20 @@ public final class Gingester {
 
     public void add(Configuration configuration) {
         String id = getId(configuration);
-        controllers.put(id, new Controller<>(
-                configuration,
-                new ControllerInterface(id)
-        ));
+        configurations.put(id, configuration);
     }
 
     private String getId(Configuration configuration) {
         String id;
         if (configuration.getId() != null) {
-            if (controllers.containsKey(configuration.getId())) {
+            if (configurations.containsKey(configuration.getId())) {
                 throw new IllegalArgumentException("Controller id " + configuration.getId() + " already in use");
             }
             id = configuration.getId();
         } else {
             id = configuration.getTransformer();
             int i = 1;
-            while (controllers.containsKey(id)) {
+            while (configurations.containsKey(id)) {
                 id = configuration.getTransformer() + '-' + i++;
             }
         }
@@ -78,46 +77,53 @@ public final class Gingester {
 
     public void run() {
 
-        if (controllers.isEmpty()) {
-            throw new IllegalStateException("No transformers");
+        if (configurations.isEmpty()) {
+            throw new IllegalStateException("No transformers configured");
         }
+
+        configurations.forEach((id, configuration) -> controllers.put(
+                id,
+                new Controller<>(configuration, new ControllerInterface(id))
+        ));
 
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discover);
 
         Configuration seedControllerConfiguration = new Configuration();
+        seedControllerConfiguration.transformer(new Seed());
         seedControllerConfiguration.links(controllers.entrySet().stream()
                 .filter(entry -> entry.getValue().incoming.isEmpty())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList()));
 
         Controller<Void, Object> seedController = new Controller<>(
-                new Seed(),
                 seedControllerConfiguration,
                 new ControllerInterface("__seed__")
         );
         seedController.initialize();
         controllers.put("__seed__", seedController);
-
-        // TODO start reporting thread
-
         controllers.values().forEach(Controller::start);
 
         Context seed = new Context.Builder()
                 .controller(seedController)
                 .build();
 
+        Reporter reporter = new Reporter(controllers.values());
+        reporter.start();
+
         seedController.accept(new Batch<>(seed, null));
         seedController.finish(null, seed);
 
-        for (Controller<?, ?> controller : controllers.values()) {
-            for (Worker worker : controller.workers) {
-                try {
+        try {
+            for (Controller<?, ?> controller : controllers.values()) {
+                for (Worker worker : controller.workers) {
                     worker.join();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);  // TODO
                 }
             }
+            reporter.interrupt();
+            reporter.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
         }
     }
 
@@ -155,6 +161,18 @@ public final class Gingester {
 
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
+        }
+
+        public boolean hasNext() {
+            boolean next = false;
+            for (String id : configurations.keySet()) {
+                if (next) {
+                    return true;
+                } else if (id.equals(controllerId)) {
+                    next = true;
+                }
+            }
+            return false;
         }
     }
 
