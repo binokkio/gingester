@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformer;
 
-import b.nana.technology.gingester.core.configuration.Parameters;
+import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,21 +23,21 @@ public final class TransformerFactory {
 
     private TransformerFactory() {}
 
-    public static <I, O> Transformer<I, O> instance(Parameters parameters) {
+    public static <I, O> Transformer<I, O> instance(Configuration configuration) {
 
         List<Class<? extends Transformer<?, ?>>> transformerClasses = TRANSFORMERS.stream()
-                .filter(c -> c.getCanonicalName().toLowerCase(Locale.ENGLISH).endsWith(parameters.getTransformer().toLowerCase(Locale.ENGLISH)))
+                .filter(c -> c.getCanonicalName().toLowerCase(Locale.ENGLISH).endsWith(configuration.getTransformer().toLowerCase(Locale.ENGLISH)))
                 .collect(Collectors.toList());
 
         if (transformerClasses.isEmpty()) {
-            throw new IllegalStateException("No transformer named " + parameters.getTransformer());
+            throw new IllegalStateException("No transformer named " + configuration.getTransformer());
         } else if (transformerClasses.size() > 1) {
-            throw new IllegalStateException("Multiple transformers named " + parameters.getTransformer());
+            throw new IllegalStateException("Multiple transformers named " + configuration.getTransformer());
         }
 
         Class<? extends Transformer<I, O>> transformerClass = (Class<? extends Transformer<I, O>>) transformerClasses.get(0);
 
-        if (parameters.getParameters() == null) {
+        if (configuration.getParameters() == null) {
             try {
                 return transformerClass.getConstructor().newInstance();
             } catch (NoSuchMethodException e) {
@@ -55,23 +55,23 @@ public final class TransformerFactory {
 
         Class<?> parameterClass = constructor.getParameterTypes()[0];
 
-        Object params;
-        if (parameters.getParameters() != null) {
+        Object parameters;
+        if (configuration.getParameters() != null) {
             try {
-                params = OBJECT_MAPPER.treeToValue(parameters.getParameters(), parameterClass);
+                parameters = OBJECT_MAPPER.treeToValue(configuration.getParameters(), parameterClass);
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException("Failed to map json parameters to " + parameterClass, e);
             }
         } else {
             try {
-                params = parameterClass.getConstructor().newInstance();
+                parameters = parameterClass.getConstructor().newInstance();
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
                 throw new IllegalStateException("Calling parameter-less constructor on " + parameterClass.getCanonicalName() + " failed", e);
             }
         }
 
         try {
-            return constructor.newInstance(params);
+            return constructor.newInstance(parameters);
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
             throw new IllegalStateException("Calling parameter-rich constructor on " + parameterClass.getCanonicalName() + " failed", e);
         }

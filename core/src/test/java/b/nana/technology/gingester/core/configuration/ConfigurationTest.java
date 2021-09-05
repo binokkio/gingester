@@ -16,12 +16,12 @@ class ConfigurationTest {
 
         Gingester gingester = new Gingester();
 
-        Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json"));
-        configuration.applyTo(gingester);
+        Configuration
+                .fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json"))
+                .applyTo(gingester);
 
         Queue<String> results = new ArrayDeque<>();
         gingester.add(results::add);
-
         gingester.run();
 
         assertEquals(1, results.size());
@@ -33,12 +33,12 @@ class ConfigurationTest {
 
         Gingester gingester = new Gingester();
 
-        Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-verbose.json"));
-        configuration.applyTo(gingester);
+        Configuration
+                .fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-verbose.json"))
+                .applyTo(gingester);
 
         Queue<String> results = new ArrayDeque<>();
         gingester.add(results::add);
-
         gingester.run();
 
         assertEquals(1, results.size());
@@ -50,15 +50,13 @@ class ConfigurationTest {
 
         Gingester gingester = new Gingester();
 
-        Configuration configuration = Configuration.fromJson(getClass().getResourceAsStream("/hello-world-diamond.json"));
-        configuration.applyTo(gingester);
+        Configuration
+                .fromJson(getClass().getResourceAsStream("/hello-world-diamond.json"))
+                .applyTo(gingester);
 
-        Parameters resultsCollectorParameters = new Parameters();
-        resultsCollectorParameters.setId("ResultsCollector");
 
         Queue<String> results = new ArrayDeque<>();
-        gingester.add(results::add, resultsCollectorParameters);
-
+        gingester.add("ResultsCollector", results::add);
         gingester.run();
 
         assertEquals(2, results.size());

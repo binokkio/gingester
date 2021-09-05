@@ -1,8 +1,7 @@
 package b.nana.technology.gingester.core.main;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.Configuration;
-import b.nana.technology.gingester.core.configuration.Parameters;
+import b.nana.technology.gingester.core.controller.Configuration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
@@ -21,10 +20,10 @@ public final class Main {
 
         boolean printConfig = false;
 
-        Configuration configuration = new Configuration();
+        b.nana.technology.gingester.core.configuration.Configuration configuration = new b.nana.technology.gingester.core.configuration.Configuration();
         configuration.report = true;
 
-        Parameters syncFrom = null;
+        Configuration syncFrom = null;
 
         for (int i = 0; i < args.length; i++) {
 
@@ -44,7 +43,7 @@ public final class Main {
                 case "--file-config":
                     Path path = Paths.get(args[++i]);
                     try {
-                        Configuration append = Configuration.fromJson(Files.newInputStream(path));
+                        b.nana.technology.gingester.core.configuration.Configuration append = b.nana.technology.gingester.core.configuration.Configuration.fromJson(Files.newInputStream(path));
                         configuration.report = append.report;
                         configuration.transformers.addAll(append.transformers);
                     } catch (IOException e) {
@@ -70,16 +69,16 @@ public final class Main {
                 case "--transformer":
 
 
-                    Parameters parameters = new Parameters();
+                    Configuration parameters = new Configuration();
 
                     // TODO -s for -t Stash and -f for -t Fetch
 
-                    parameters.setTransformer(args[++i]);
+                    parameters.transformer(args[++i]);
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
                         try {
-                            parameters.setParameters(Configuration.OBJECT_READER.readTree(args[++i]));
+                            parameters.parameters(b.nana.technology.gingester.core.configuration.Configuration.OBJECT_READER.readTree(args[++i]));
                         } catch (JsonProcessingException e) {
-                            parameters.setParameters(JsonNodeFactory.instance.textNode(args[i]));
+                            parameters.parameters(JsonNodeFactory.instance.textNode(args[i]));
                         }
                     }
 
@@ -91,7 +90,7 @@ public final class Main {
                         if (syncFrom == null) throw new IllegalArgumentException("Unmatched -stt/--sync-to-transformer");
                         List<String> syncs = new ArrayList<>(syncFrom.getSyncs());
                         syncs.add(parameters.getTransformer());
-                        syncFrom.setSyncs(syncs);
+                        syncFrom.syncs(syncs);
                         syncFrom = null;
                     }
                     break;

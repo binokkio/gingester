@@ -1,10 +1,6 @@
 package b.nana.technology.gingester.transformers.statistics.transformers.json;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.Parameters;
-import b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson;
-import b.nana.technology.gingester.transformers.base.transformers.inputstream.Split;
-import b.nana.technology.gingester.transformers.base.transformers.resource.Open;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -18,14 +14,17 @@ class TestStatistics {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester();
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Parameters parameters = new Parameters();
-        parameters.setSyncs(List.of("Statistics"));
-        gingester.add(new Open(new Open.Parameters("/basic.csv")), parameters);
-        gingester.add(new ToJson(new ToJson.Parameters()));
-        gingester.add(new Statistics(new Statistics.Parameters()));
+        Gingester gingester = new Gingester();
+
+        gingester.configure(c -> c
+                .transformer("Resource.Open")
+                .parameters("/basic.csv")
+                .syncs(List.of("Json.Statistics")));
+
+        gingester.add("Dsv.ToJson");
+        gingester.add("Json.Statistics");
         gingester.add(result::set);
         gingester.run();
 
@@ -71,18 +70,21 @@ class TestStatistics {
     @Test
     void testJson() {
 
-        Gingester gingester = new Gingester();
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Parameters parameters = new Parameters();
-        parameters.setSyncs(List.of("Statistics"));
-        gingester.add(new Open(new Open.Parameters("/basic.ndjson")), parameters);
-        gingester.add(new Split(new Split.Parameters("\n")));
+        Gingester gingester = new Gingester();
 
-        Parameters parameters1 = new Parameters();
-        parameters1.setTransformer("InputStream.ToJson");
-        gingester.add(parameters1);
-        gingester.add(new Statistics(new Statistics.Parameters()));
+        gingester.configure(c -> c
+                .transformer("Resource.Open")
+                .parameters("/basic.ndjson")
+                .syncs(List.of("Json.Statistics")));
+
+        gingester.configure(c -> c
+                .transformer("InputStream.Split")
+                .parameters("\n"));
+
+        gingester.add("InputStream.ToJson");
+        gingester.add("Json.Statistics");
         gingester.add(result::set);
         gingester.run();
     }
@@ -90,18 +92,21 @@ class TestStatistics {
     @Test
     void testNulls() {
 
-        Gingester gingester = new Gingester();
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Parameters parameters = new Parameters();
-        parameters.setSyncs(List.of("Statistics"));
-        gingester.add(new Open(new Open.Parameters("/nulls.ndjson")), parameters);
-        gingester.add(new Split(new Split.Parameters("\n")));
+        Gingester gingester = new Gingester();
 
-        Parameters parameters1 = new Parameters();
-        parameters1.setTransformer("InputStream.ToJson");
-        gingester.add(parameters1);
-        gingester.add(new Statistics(new Statistics.Parameters()));
+        gingester.configure(c -> c
+                .transformer("Resource.Open")
+                .parameters("/nulls.ndjson")
+                .syncs(List.of("Json.Statistics")));
+
+        gingester.configure(c -> c
+                .transformer("InputStream.Split")
+                .parameters("\n"));
+
+        gingester.add("InputStream.ToJson");
+        gingester.add("Json.Statistics");
         gingester.add(result::set);
         gingester.run();
 

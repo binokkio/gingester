@@ -1,18 +1,22 @@
-package b.nana.technology.gingester.core.configuration;
+package b.nana.technology.gingester.core.controller;
 
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 @JsonAutoDetect(
         fieldVisibility = JsonAutoDetect.Visibility.ANY,
         getterVisibility = JsonAutoDetect.Visibility.NONE
 )
-public final class Parameters {
+public final class Configuration {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -27,12 +31,15 @@ public final class Parameters {
     private Integer maxWorkers;
     private Integer maxBatchSize;
 
+    @JsonIgnore
+    private Transformer<?, ?> instance;
+
 
     @JsonCreator
-    public Parameters() {}
+    public Configuration() {}
 
     @JsonCreator
-    public Parameters(String transformer) {
+    public Configuration(String transformer) {
         this.transformer = transformer;
     }
 
@@ -41,8 +48,9 @@ public final class Parameters {
         return id;
     }
 
-    public void setId(String id) {
+    public Configuration id(String id) {
         this.id = id;
+        return this;
     }
 
 
@@ -50,8 +58,24 @@ public final class Parameters {
         return transformer;
     }
 
-    public void setTransformer(String transformer) {
+    public Configuration transformer(String transformer) {
         this.transformer = transformer;
+        return this;
+    }
+
+    public Configuration transformer(Transformer<?, ?> transformer) {
+        // TODO set `this.transformer` to the smallest unique tail of `transformer.getClass().getCanonicalName()`
+        instance = transformer;
+        return this;
+    }
+
+    public <T> Configuration transformer(Consumer<T> consumer) {
+        transformer = "Consumer";
+        instance = ((Transformer<T, T>) (context, in, out) -> {
+            consumer.accept(in);
+            out.accept(context, in);
+        });
+        return this;
     }
 
 
@@ -59,8 +83,9 @@ public final class Parameters {
         return parameters;
     }
 
-    public void setParameters(Object parameters) {
+    public Configuration parameters(Object parameters) {
         this.parameters = OBJECT_MAPPER.valueToTree(parameters);
+        return this;
     }
 
 
@@ -68,8 +93,9 @@ public final class Parameters {
         return async != null && async;
     }
 
-    public void setAsync(boolean async) {
+    public Configuration async(boolean async) {
         this.async = async;
+        return this;
     }
 
 
@@ -77,8 +103,9 @@ public final class Parameters {
         return links == null ? Collections.singletonList("__maybe_next__") : links;
     }
 
-    public void setLinks(List<String> links) {
+    public Configuration links(List<String> links) {
         this.links = links;
+        return this;
     }
 
 
@@ -86,8 +113,9 @@ public final class Parameters {
         return syncs == null ? Collections.emptyList() : syncs;
     }
 
-    public void setSyncs(List<String> syncs) {
+    public Configuration syncs(List<String> syncs) {
         this.syncs = syncs;
+        return this;
     }
 
 
@@ -95,8 +123,9 @@ public final class Parameters {
         return excepts == null ? Collections.emptyList() : excepts;
     }
 
-    public void setExcepts(List<String> excepts) {
+    public Configuration excepts(List<String> excepts) {
         this.excepts = excepts;
+        return this;
     }
 
 
@@ -104,8 +133,9 @@ public final class Parameters {
         return maxQueueSize == null ? 100 : maxQueueSize;
     }
 
-    public void setMaxQueueSize(Integer maxQueueSize) {
+    public Configuration maxQueueSize(Integer maxQueueSize) {
         this.maxQueueSize = maxQueueSize;
+        return this;
     }
 
 
@@ -113,8 +143,9 @@ public final class Parameters {
         return maxWorkers == null ? 1 : maxWorkers;
     }
 
-    public void setMaxWorkers(Integer maxWorkers) {
+    public Configuration maxWorkers(Integer maxWorkers) {
         this.maxWorkers = maxWorkers;
+        return this;
     }
 
 
@@ -122,7 +153,13 @@ public final class Parameters {
         return maxBatchSize == null ? 65536 : maxBatchSize;
     }
 
-    public void setMaxBatchSize(Integer maxBatchSize) {
+    public Configuration maxBatchSize(Integer maxBatchSize) {
         this.maxBatchSize = maxBatchSize;
+        return this;
+    }
+
+
+    public Optional<Transformer<?, ?>> getInstance() {
+        return Optional.ofNullable(instance);
     }
 }

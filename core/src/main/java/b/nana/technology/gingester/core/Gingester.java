@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.configuration.Parameters;
+import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
@@ -19,65 +19,59 @@ public final class Gingester {
 
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
 
-    public void add(Parameters parameters) {
-        String id = getId(parameters);
-        controllers.put(id, new Controller<>(
-                parameters,
-                new ControllerInterface(id)
-        ));
+    public void add(String transformer) {
+        configure(c -> c.transformer(transformer));
     }
 
     public void add(Transformer<?, ?> transformer) {
-        add(transformer, new Parameters());
+        configure(c -> c.transformer(transformer));
+    }
+
+    public <T> void add(Consumer<T> consumer) {
+        configure(c -> c.transformer(consumer));
     }
 
     public void add(String id, Transformer<?, ?> transformer) {
-        Parameters parameters = new Parameters();
-        parameters.setId(id);
-        add(transformer, parameters);
+        configure(c -> {
+            c.id(id);
+            c.transformer(transformer);
+        });
     }
 
-    public void add(Transformer<?, ?> transformer, Parameters parameters) {
+    public <T> void add(String id, Consumer<T> consumer) {
+        configure(c -> {
+            c.id(id);
+            c.transformer(consumer);
+        });
+    }
 
-        if (parameters.getTransformer() == null) {
-            parameters.setTransformer(transformer.getClass().getSimpleName());
-        }
+    public void configure(Configurator configurator) {
+        Configuration configuration = new Configuration();
+        configurator.configure(configuration);
+        add(configuration);
+    }
 
-        String id = getId(parameters);
+    public void add(Configuration configuration) {
+        String id = getId(configuration);
         controllers.put(id, new Controller<>(
-                transformer,
-                parameters,
+                configuration,
                 new ControllerInterface(id)
         ));
     }
 
-    public <T> void add(Consumer<T> consumer) {
-        add(wrap(consumer));
-    }
-
-    public <T> void add(Consumer<T> consumer, Parameters parameters) {
-        add(wrap(consumer), parameters);
-    }
-
-    private <T> Transformer<T, T> wrap(Consumer<T> consumer) {
-        return (context, in, out) -> {
-            consumer.accept(in);
-            out.accept(context, in);
-        };
-    }
-
-    private String getId(Parameters parameters) {
+    private String getId(Configuration configuration) {
         String id;
-        if (parameters.getId() != null) {
-            if (controllers.containsKey(parameters.getId())) {
-                throw new IllegalArgumentException("Controller id " + parameters.getId() + " already in use");
+        if (configuration.getId() != null) {
+            if (controllers.containsKey(configuration.getId())) {
+                throw new IllegalArgumentException("Controller id " + configuration.getId() + " already in use");
             }
-            id = parameters.getId();
+            id = configuration.getId();
         } else {
-            id = parameters.getTransformer();
+            id = configuration.getTransformer();
+            if (id == null) id = configuration.getInstance().orElseThrow().getClass().getSimpleName();
             int i = 1;
             while (controllers.containsKey(id)) {
-                id = parameters.getTransformer() + '-' + i++;
+                id = configuration.getTransformer() + '-' + i++;
             }
         }
         return id;
@@ -92,15 +86,15 @@ public final class Gingester {
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discover);
 
-        Parameters seedControllerParameters = new Parameters();
-        seedControllerParameters.setLinks(controllers.entrySet().stream()
+        Configuration seedControllerConfiguration = new Configuration();
+        seedControllerConfiguration.links(controllers.entrySet().stream()
                 .filter(entry -> entry.getValue().incoming.isEmpty())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList()));
 
         Controller<Void, Object> seedController = new Controller<>(
                 new Seed(),
-                seedControllerParameters,
+                seedControllerConfiguration,
                 new ControllerInterface("__seed__")
         );
         seedController.initialize();
@@ -163,5 +157,9 @@ public final class Gingester {
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
         }
+    }
+
+    public interface Configurator {
+        void configure(Configuration configuration);
     }
 }

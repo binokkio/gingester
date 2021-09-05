@@ -3,7 +3,6 @@ package b.nana.technology.gingester.core.controller;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
-import b.nana.technology.gingester.core.configuration.Parameters;
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -14,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public final class Controller<I, O> {
 
-    private final Parameters parameters;
+    private final Configuration configuration;
     private final Gingester.ControllerInterface gingester;
     public final String id;
     public final Transformer<I, O> transformer;
@@ -40,13 +39,16 @@ public final class Controller<I, O> {
     private final Set<Controller<?, ?>> excepts = new HashSet<>();
     final Map<Context, FinishTracker> finishing = new HashMap<>();
 
-    public Controller(Parameters parameters, Gingester.ControllerInterface gingester) {
-        this(TransformerFactory.instance(parameters), parameters, gingester);
+    public Controller(Configuration configuration, Gingester.ControllerInterface gingester) {
+        this(
+                (Transformer<I, O>) configuration.getInstance().orElseGet(() -> TransformerFactory.instance(configuration)),
+                configuration, gingester
+        );
     }
 
-    public Controller(Transformer<I, O> transformer, Parameters parameters, Gingester.ControllerInterface gingester) {
+    public Controller(Transformer<I, O> transformer, Configuration configuration, Gingester.ControllerInterface gingester) {
 
-        this.parameters = parameters;
+        this.configuration = configuration;
         this.gingester = gingester;
         this.id = gingester.getId();
         this.transformer = transformer;
@@ -54,10 +56,10 @@ public final class Controller<I, O> {
         setupControls = new SimpleSetupControls();
         transformer.setup(setupControls);
 
-        async = parameters.getAsync();
-        maxQueueSize = parameters.getMaxQueueSize();
-        maxWorkers = parameters.getMaxWorkers();
-        maxBatchSize = parameters.getMaxBatchSize();
+        async = configuration.getAsync();
+        maxQueueSize = configuration.getMaxQueueSize();
+        maxWorkers = configuration.getMaxWorkers();
+        maxBatchSize = configuration.getMaxBatchSize();
     }
 
     public void initialize() {
@@ -68,17 +70,17 @@ public final class Controller<I, O> {
                         controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         } else {
-            for (String controllerId : parameters.getLinks()) {
+            for (String controllerId : configuration.getLinks()) {
                 gingester.getController(controllerId).ifPresent(
                         controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
             }
         }
 
-        for (String controllerId : parameters.getSyncs()) {
+        for (String controllerId : configuration.getSyncs()) {
             gingester.getController(controllerId).ifPresent(syncs::add);
         }
 
-        for (String controllerId : parameters.getExcepts()) {
+        for (String controllerId : configuration.getExcepts()) {
             gingester.getController(controllerId).ifPresent(excepts::add);
         }
     }

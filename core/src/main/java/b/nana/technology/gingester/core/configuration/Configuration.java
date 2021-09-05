@@ -33,7 +33,7 @@ public final class Configuration {
     }
 
     public Boolean report;
-    public List<Parameters> transformers = new ArrayList<>();
+    public List<b.nana.technology.gingester.core.controller.Configuration> transformers = new ArrayList<>();
 
     public String toJson() {
         try {
