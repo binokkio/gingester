@@ -25,14 +25,21 @@ public final class TransformerFactory {
 
     public static <I, O> Transformer<I, O> instance(Configuration configuration) {
 
-        List<Class<? extends Transformer<?, ?>>> transformerClasses = TRANSFORMERS.stream()
-                .filter(c -> c.getCanonicalName().toLowerCase(Locale.ENGLISH).endsWith(configuration.getTransformer().toLowerCase(Locale.ENGLISH)))
-                .collect(Collectors.toList());
+        List<Class<? extends Transformer<?, ?>>> transformerClasses =
+                getTransformersByName(configuration.getTransformer().toLowerCase(Locale.ENGLISH));
 
         if (transformerClasses.isEmpty()) {
-            throw new IllegalStateException("No transformer named " + configuration.getTransformer());
+            throw new IllegalArgumentException("No transformer named " + configuration.getTransformer());
         } else if (transformerClasses.size() > 1) {
-            throw new IllegalStateException("Multiple transformers named " + configuration.getTransformer());
+            String uniqueNames = transformerClasses.stream()
+                    .map(TransformerFactory::getUniqueName)
+                    .sorted()
+                    .collect(Collectors.joining(", "));
+            throw new IllegalArgumentException(String.format(
+                    "Multiple transformers named %s: %s",
+                    configuration.getTransformer(),
+                    uniqueNames
+            ));
         }
 
         Class<? extends Transformer<I, O>> transformerClass = (Class<? extends Transformer<I, O>>) transformerClasses.get(0);
@@ -75,5 +82,25 @@ public final class TransformerFactory {
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
             throw new IllegalStateException("Calling parameter-rich constructor on " + parameterClass.getCanonicalName() + " failed", e);
         }
+    }
+
+    public static String getUniqueName(Transformer<?, ?> transformer) {
+        return getUniqueName((Class<? extends Transformer<?, ?>>) transformer.getClass());
+    }
+
+    public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
+        String[] parts = transformer.getCanonicalName().split("\\.");
+        String name = parts[parts.length - 1];
+        int pointer = parts.length - 2;
+        while (getTransformersByName(name).size() > 1) {
+            name = parts[pointer--] + "." + name;
+        }
+        return name;
+    }
+
+    private static List<Class<? extends Transformer<?, ?>>> getTransformersByName(String name) {
+        return TRANSFORMERS.stream()
+                .filter(c -> c.getCanonicalName().toLowerCase(Locale.ENGLISH).endsWith(name.toLowerCase(Locale.ENGLISH)))
+                .collect(Collectors.toList());
     }
 }

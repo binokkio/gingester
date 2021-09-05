@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -64,8 +65,8 @@ public final class Configuration {
     }
 
     public Configuration transformer(Transformer<?, ?> transformer) {
-        // TODO set `this.transformer` to the smallest unique tail of `transformer.getClass().getCanonicalName()`
-        instance = transformer;
+        this.transformer = TransformerFactory.getUniqueName(transformer);
+        this.instance = transformer;
         return this;
     }
 

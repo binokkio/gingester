@@ -68,7 +68,6 @@ public final class Gingester {
             id = configuration.getId();
         } else {
             id = configuration.getTransformer();
-            if (id == null) id = configuration.getInstance().orElseThrow().getClass().getSimpleName();
             int i = 1;
             while (controllers.containsKey(id)) {
                 id = configuration.getTransformer() + '-' + i++;
