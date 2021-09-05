@@ -24,22 +24,18 @@ final class FinishTracker {
 
     boolean acknowledge(Thread thread) {
         acknowledged.add(thread);
-        return isFullyAcknowledged();
+        return acknowledged.size() == tracker.workers.size();
     }
 
     private boolean isReadyForQueue() {
-        if (context.isSeed()) {
-            return indicated.size() >= tracker.incoming.size();
+        if (context.isSeed() && context.controller == tracker) {
+            return true;
         } else {
-            return indicated.size() == tracker.syncedThrough.get(context.controller).size();  // untested
+            return indicated.size() == tracker.syncedThrough.get(context.controller).size();
         }
     }
 
     boolean isFullyIndicated() {
         return indicated.contains(tracker);
-    }
-
-    private boolean isFullyAcknowledged() {
-        return acknowledged.size() == tracker.workers.size();
     }
 }

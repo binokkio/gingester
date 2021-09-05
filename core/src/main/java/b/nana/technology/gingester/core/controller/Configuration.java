@@ -142,7 +142,7 @@ public final class Configuration {
 
 
     public int getMaxWorkers() {
-        return maxWorkers == null ? 1 : maxWorkers;
+        return maxWorkers == null ? 4 : maxWorkers;
     }
 
     public Configuration maxWorkers(Integer maxWorkers) {

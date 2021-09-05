@@ -23,13 +23,13 @@ public final class Main {
         b.nana.technology.gingester.core.configuration.Configuration configuration = new b.nana.technology.gingester.core.configuration.Configuration();
         configuration.report = true;
 
-        Configuration syncFrom = null;
+        String syncFrom = "__seed__";
 
         for (int i = 0; i < args.length; i++) {
 
             boolean markSyncFrom = false;
             boolean syncTo = false;
-            boolean asyncLink = false;
+            boolean async = false;
 
             switch (args[i]) {
 
@@ -64,16 +64,16 @@ public final class Main {
                     syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
                 case "-at":
                 case "--async-transformer":
-                    asyncLink = !markSyncFrom && !syncTo;  // similar trickery as above
+                    async = !markSyncFrom && !syncTo;  // similar trickery as above
                 case "-t":
                 case "--transformer":
-
 
                     Configuration parameters = new Configuration();
 
                     // TODO -s for -t Stash and -f for -t Fetch
 
                     parameters.transformer(args[++i]);
+                    if (async) parameters.async(true);
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
                         try {
                             parameters.parameters(b.nana.technology.gingester.core.configuration.Configuration.OBJECT_READER.readTree(args[++i]));
@@ -82,25 +82,20 @@ public final class Main {
                         }
                     }
 
+                    if (markSyncFrom) {
+                        syncFrom = parameters.getTransformer();
+                    } else if (syncTo) {
+                        List<String> syncs = new ArrayList<>(parameters.getSyncs());
+                        syncs.add(syncFrom);
+                        parameters.syncs(syncs);
+                    }
+
                     configuration.transformers.add(parameters);
 
-                    if (markSyncFrom) {
-                        syncFrom = parameters;
-                    } else if (syncTo) {
-                        if (syncFrom == null) throw new IllegalArgumentException("Unmatched -stt/--sync-to-transformer");
-                        List<String> syncs = new ArrayList<>(syncFrom.getSyncs());
-                        syncs.add(parameters.getTransformer());
-                        syncFrom.syncs(syncs);
-                        syncFrom = null;
-                    }
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
             }
-        }
-
-        if (syncFrom != null) {
-            throw new IllegalArgumentException("Unmatched -sft/--sync-from-transformer");
         }
 
         if (printConfig) {

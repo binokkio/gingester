@@ -81,9 +81,7 @@ final class ControllerReceiver<O> implements Receiver<O> {
 
     private void finish(Context context) {
         if (!controller.syncs.isEmpty()) {
-            for (Controller<O, ?> controller : controller.outgoing.values()) {
-                controller.finish(controller, context);
-            }
+            controller.signalFinish(context);
         }
     }
 }

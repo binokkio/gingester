@@ -9,10 +9,7 @@ import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Seed;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -88,26 +85,23 @@ public final class Gingester {
         }
 
         configurations.forEach((id, configuration) -> controllers.put(
-                id,
-                new Controller<>(configuration, new ControllerInterface(id))
-        ));
+                id, new Controller<>(configuration, new ControllerInterface(id))));
 
         controllers.values().forEach(Controller::initialize);
-        controllers.values().forEach(Controller::discover);
 
         Configuration seedControllerConfiguration = new Configuration();
         seedControllerConfiguration.transformer(new Seed());
-        seedControllerConfiguration.links(controllers.entrySet().stream()
-                .filter(entry -> entry.getValue().incoming.isEmpty())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList()));
-
+        Set<Controller<?, ?>> noIncoming = new HashSet<>(controllers.values());
+        controllers.values().stream().map(c -> c.outgoing.values()).forEach(noIncoming::removeAll);
+        seedControllerConfiguration.links(noIncoming.stream().map(c -> c.id).collect(Collectors.toList()));
         Controller<Void, Object> seedController = new Controller<>(
                 seedControllerConfiguration,
                 new ControllerInterface("__seed__")
         );
         seedController.initialize();
         controllers.put("__seed__", seedController);
+
+        controllers.values().forEach(Controller::discover);
         controllers.values().forEach(Controller::start);
 
         Context seed = new Context.Builder()

@@ -39,7 +39,7 @@ public final class Controller<I, O> {
     final Condition queueNotEmpty = lock.newCondition();
     final Condition queueNotFull = lock.newCondition();
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
-    final Map<Context, FinishTracker> finishing = new HashMap<>();
+    final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
     private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
 
@@ -124,11 +124,14 @@ public final class Controller<I, O> {
         }
 
         for (Controller<?, ?> controller : gingester.getControllers()) {
-            if (!controller.syncs.isEmpty()) {
+            if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
                 Set<Controller<?, ?>> downstream = controller.getDownstream();
+                downstream.add(controller);
                 if (downstream.contains(this)) {
                     downstream.retainAll(incoming);
-                    syncedThrough.put(controller, downstream);
+                    if (!downstream.isEmpty()) {
+                        syncedThrough.put(controller, downstream);
+                    }
                 }
             }
         }
@@ -177,20 +180,32 @@ public final class Controller<I, O> {
         }
     }
 
+    public void signalFinish(Context context) {
+        lock.lock();
+        try {
+            while (queue.size() >= maxQueueSize) queueNotFull.await();
+            queue.add(() -> {
+                for (Controller<O, ?> controller : outgoing.values()) {
+                    controller.finish(this, context);
+                }
+            });
+            queueNotEmpty.signal();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
         try {
             FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker(this, context));
             if (finishTracker.indicate(from)) {
                 while (queue.size() >= maxQueueSize) queueNotFull.await();
-                queue.add(() -> {
-                    lock.lock();
-                    try {
-                        finishTracker.indicate(this);
-                        queueNotEmpty.signalAll();
-                    } finally {
-                        lock.unlock();
-                    }
+                queue.add((Worker.SyncJob) () -> {
+                    finishTracker.indicate(this);
+                    queueNotEmpty.signalAll();
                 });
                 queueNotEmpty.signal();
             }

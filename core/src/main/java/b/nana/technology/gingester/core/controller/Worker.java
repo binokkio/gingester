@@ -33,21 +33,30 @@ public final class Worker extends Thread {
                 }
                 job = controller.queue.removeFirst();
                 controller.queueNotFull.signal();
+                if (job instanceof SyncJob) {
+                    perform(job);
+                    continue;
+                }
             } catch (InterruptedException e) {
                 break;
             } finally {
                 controller.lock.unlock();
             }
-            try {
-                job.perform();
-            } catch (Exception e) {
-                e.printStackTrace();  // TODO pass `e` to `controller.excepts`
-            }
+            perform(job);
             flush();
         }
     }
 
-    private void handleFinishingContexts() {
+    private void perform(Job job) {
+        try {
+            job.perform();
+        } catch (Exception e) {
+            e.printStackTrace();  // TODO pass `e` to `controller.excepts`
+        }
+    }
+
+    private void handleFinishingContexts() throws InterruptedException {
+
         Iterator<Map.Entry<Context, FinishTracker>> iterator = controller.finishing.entrySet().iterator();
         while (iterator.hasNext()) {
 
@@ -63,11 +72,11 @@ public final class Worker extends Thread {
                         controller.finish(context);
                     }
 
-                    controller.outgoing.values().forEach(controller -> controller.finish(this.controller, entry.getKey()));
+                    controller.outgoing.values().forEach(controller -> controller.finish(this.controller, context));
+                }
 
-                    if (context.isSeed()) {
-                        done = true;
-                    }
+                if (context.isSeed()) {
+                    done = true;
                 }
             }
         }
@@ -105,4 +114,6 @@ public final class Worker extends Thread {
     interface Job {
         void perform() throws Exception;
     }
+
+    interface SyncJob extends Job {}
 }

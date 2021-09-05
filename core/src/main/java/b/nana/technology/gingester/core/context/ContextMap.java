@@ -26,7 +26,7 @@ public final class ContextMap<T> {
                 return map.computeIfAbsent(c, x -> supplier.get());
             }
         }
-        throw new IllegalStateException("No value for context " + context);
+        throw new IllegalStateException("No value for context from " + context.controller.id);
     }
 
     public Stream<T> remove(Context context) {

@@ -2,10 +2,7 @@ package b.nana.technology.gingester.test;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.provider.Provider;
-import b.nana.technology.gingester.test.transformers.Emphasize;
-import b.nana.technology.gingester.test.transformers.Generate;
-import b.nana.technology.gingester.test.transformers.Question;
-import b.nana.technology.gingester.test.transformers.Seed;
+import b.nana.technology.gingester.test.transformers.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +15,8 @@ public class TestProvider implements Provider {
                 Emphasize.class,
                 Generate.class,
                 Question.class,
-                Seed.class
+                Seed.class,
+                Sync.class
         );
     }
 }
