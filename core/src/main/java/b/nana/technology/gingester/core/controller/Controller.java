@@ -92,8 +92,8 @@ public final class Controller<I, O> {
         }
 
         for (Controller<?, ?> controller : gingester.getControllers()) {
-            if (controller.syncs.contains(this)) {
-                Set<Controller<?, ?>> downstream = controller.getDownstream();
+            Set<Controller<?, ?>> downstream = controller.getDownstream();
+            if (downstream.contains(this)) {
                 downstream.retainAll(incoming);
                 syncedThrough.put(controller, downstream);
             }
@@ -123,23 +123,10 @@ public final class Controller<I, O> {
         queue.add(transformer::open);
 
         for (int i = 0; i < maxWorkers; i++) {
-            workers.add(new Worker(this));
+            workers.add(new Worker(this, i));
         }
 
         workers.forEach(Thread::start);
-    }
-
-    public void prepare(Context context) {
-        lock.lock();
-        try {
-            while (queue.size() >= maxQueueSize) queueNotFull.await();
-            queue.add(() -> transformer.prepare(context, receiver));
-            queueNotEmpty.signal();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
-        } finally {
-            lock.unlock();
-        }
     }
 
     public void accept(Batch<I> batch) {
@@ -183,6 +170,16 @@ public final class Controller<I, O> {
 
     //
 
+    public void prepare(Context context) {
+        try {
+            transformer.prepare(context, receiver);
+        } catch (RuntimeException e) {
+            throw e;  // TODO pass `e` to `excepts`
+        } catch (Exception e) {
+            throw new RuntimeException(e);  // TODO pass `e` to `excepts`
+        }
+    }
+
     public void transform(Batch<I> batch) {
 
         if (maxBatchSize == 1) {
@@ -222,6 +219,8 @@ public final class Controller<I, O> {
     public void transform(Context context, I input) {
         try {
             transformer.transform(context, input, receiver);
+        } catch (RuntimeException e) {
+            throw e;  // TODO pass `e` to `excepts`
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO pass `e` to `excepts`
         }
@@ -230,6 +229,8 @@ public final class Controller<I, O> {
     public void finish(Context context) {
         try {
             transformer.finish(context, receiver);
+        } catch (RuntimeException e) {
+            throw e;  // TODO pass `e` to `excepts`
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO pass `e` to `excepts`
         }

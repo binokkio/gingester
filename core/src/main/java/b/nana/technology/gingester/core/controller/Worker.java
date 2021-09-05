@@ -13,8 +13,9 @@ public final class Worker extends Thread {
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
     private boolean done;
 
-    Worker(Controller<?, ?> controller) {
+    Worker(Controller<?, ?> controller, int id) {
         this.controller = controller;
+        setName(controller.id + "_" + id);
     }
 
     @Override

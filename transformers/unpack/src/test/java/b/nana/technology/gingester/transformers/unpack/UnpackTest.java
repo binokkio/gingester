@@ -38,8 +38,6 @@ class UnpackTest {
                 }
         );
 
-        results.forEach(System.out::println);
-
         assertEquals(4, results.size());
         assertEquals("/tmp/test.tar.gz :: test.tar :: b.gz :: b -> Hello, World!", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: c -> Hello, World!", results.remove());

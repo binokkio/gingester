@@ -31,6 +31,12 @@ public final class Gingester {
         add(transformer, new Parameters());
     }
 
+    public void add(String id, Transformer<?, ?> transformer) {
+        Parameters parameters = new Parameters();
+        parameters.setId(id);
+        add(transformer, parameters);
+    }
+
     public void add(Transformer<?, ?> transformer, Parameters parameters) {
 
         if (parameters.getTransformer() == null) {

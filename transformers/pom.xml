@@ -17,6 +17,7 @@
 
     <modules>
         <module>base</module>
+        <module>statistics</module>
         <module>unpack</module>
     </modules>
 
