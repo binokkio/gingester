@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.unpack;
 
 import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -16,6 +17,11 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 public class Unpack implements Transformer<InputStream, InputStream> {
+
+    @Override
+    public void setup(SetupControls controls) {
+        controls.requireDownstreamSync = true;
+    }
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws IOException {

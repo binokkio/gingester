@@ -17,7 +17,7 @@ public class Open implements Transformer<Path, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        // TODO require downstream sync
+        controls.requireDownstreamSync = true;
     }
 
     @Override

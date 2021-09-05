@@ -34,9 +34,7 @@ public class Write implements Transformer<InputStream, Path> {
 
     @Override
     public void setup(SetupControls controls) {
-        if (emitEarly) {
-//            setup.requireDownstreamAsync();
-        }
+        controls.requireDownstreamAsync = emitEarly;
     }
 
     @Override

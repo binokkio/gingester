@@ -1,6 +1,10 @@
 package b.nana.technology.gingester.core.controller;
 
-public interface SetupControls {
-    void requireAsync();
-    void link(String id);
+import java.util.ArrayList;
+
+public final class SetupControls {
+    public boolean requireDownstreamSync;
+    public boolean requireDownstreamAsync;
+    public final ArrayList<String> links = new ArrayList<>();
+    public final ArrayList<String> syncs = new ArrayList<>();
 }

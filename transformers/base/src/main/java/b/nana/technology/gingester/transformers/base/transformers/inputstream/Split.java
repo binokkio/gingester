@@ -22,7 +22,7 @@ public class Split implements Transformer<InputStream, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireAsync();
+        controls.requireDownstreamSync = true;
     }
 
     @Override

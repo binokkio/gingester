@@ -10,6 +10,8 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
@@ -18,7 +20,7 @@ public final class Controller<I, O> {
     public final String id;
     public final Transformer<I, O> transformer;
 
-    private final SimpleSetupControls setupControls;
+    private final SetupControls setupControls;
     final boolean async;
     private final int maxQueueSize;
     private final int maxWorkers;
@@ -53,7 +55,7 @@ public final class Controller<I, O> {
         this.id = gingester.getId();
         this.transformer = transformer;
 
-        setupControls = new SimpleSetupControls();
+        setupControls = new SetupControls();
         transformer.setup(setupControls);
 
         async = configuration.getAsync();
@@ -76,8 +78,34 @@ public final class Controller<I, O> {
             }
         }
 
-        for (String controllerId : configuration.getSyncs()) {
-            gingester.getController(controllerId).ifPresent(syncs::add);
+        if (setupControls.requireDownstreamSync) {
+            String notSync = filterAndName(outgoing.values(), c -> c.async);
+            if (!notSync.isEmpty()) {
+                throw new IllegalStateException(String.format(
+                        "%s requires downstream sync but links to async %s",
+                        id, notSync
+                ));
+            }
+        }
+
+        if (setupControls.requireDownstreamAsync) {
+            String notAsync = filterAndName(outgoing.values(), c -> !c.async);
+            if (!notAsync.isEmpty()) {
+                throw new IllegalStateException(String.format(
+                        "%s requires downstream async but links to sync %s",
+                        id, notAsync
+                ));
+            }
+        }
+
+        if (!setupControls.syncs.isEmpty()) {
+            for (String controllerId : setupControls.syncs) {
+                gingester.getController(controllerId).ifPresent(syncs::add);
+            }
+        } else {
+            for (String controllerId : configuration.getSyncs()) {
+                gingester.getController(controllerId).ifPresent(syncs::add);
+            }
         }
 
         for (String controllerId : configuration.getExcepts()) {
@@ -236,5 +264,15 @@ public final class Controller<I, O> {
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO pass `e` to `excepts`
         }
+    }
+
+
+
+    private String filterAndName(Collection<Controller<O, ?>> controllers, Predicate<Controller<O, ?>> filter) {
+        return controllers.stream()
+                .filter(filter)
+                .map(c -> c.id)
+                .sorted()
+                .collect(Collectors.joining(", "));
     }
 }

@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.resource;
 
 import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,12 +18,20 @@ public class Open implements Transformer<Object, InputStream> {
     }
 
     @Override
+    public void setup(SetupControls controls) {
+        controls.requireDownstreamSync = true;
+    }
+
+    @Override
     public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
         String resourcePath = pathTemplate.render(context);
+        InputStream inputStream = getClass().getResourceAsStream(resourcePath);
+        if (inputStream == null) throw new NullPointerException("getResourceAsStream(\"" + resourcePath + "\") returned null");
         out.accept(
                 context.stash(Map.of("description", resourcePath)),
-                getClass().getResourceAsStream(resourcePath)  // TODO close?
+                inputStream
         );
+        inputStream.close();
     }
 
     public static class Parameters {

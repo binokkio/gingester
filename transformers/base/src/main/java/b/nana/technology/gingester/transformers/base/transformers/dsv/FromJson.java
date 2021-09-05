@@ -38,7 +38,7 @@ public class FromJson implements Transformer<JsonNode, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-//        setup.requireDownstreamAsync();
+        controls.requireDownstreamAsync = true;
     }
 
     @Override
