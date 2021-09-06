@@ -31,7 +31,8 @@ public class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.resource.Open.class,
                 b.nana.technology.gingester.transformers.base.transformers.std.Out.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Append.class,
-                b.nana.technology.gingester.transformers.base.transformers.string.Generate.class
+                b.nana.technology.gingester.transformers.base.transformers.string.Generate.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.Template.class
         );
     }
 }
