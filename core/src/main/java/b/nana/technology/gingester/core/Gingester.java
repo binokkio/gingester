@@ -23,6 +23,11 @@ public final class Gingester {
 
     private final LinkedHashMap<String, Configuration> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
+    private boolean report;
+
+    public void report(Boolean report) {
+        this.report = report != null && report;
+    }
 
     public void add(String transformer) {
         configure(c -> c.transformer(transformer));
@@ -109,7 +114,7 @@ public final class Gingester {
                 .build();
 
         Reporter reporter = new Reporter(controllers.values());
-        reporter.start();
+        if (report) reporter.start();
 
         seedController.accept(new Batch<>(seed, null));
         seedController.finish(null, seed);
@@ -120,8 +125,10 @@ public final class Gingester {
                     worker.join();
                 }
             }
-            reporter.interrupt();
-            reporter.join();
+            if (report) {
+                reporter.interrupt();
+                reporter.join();
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
         }

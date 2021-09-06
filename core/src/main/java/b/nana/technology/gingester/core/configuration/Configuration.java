@@ -44,6 +44,7 @@ public final class Configuration {
     }
 
     public Gingester applyTo(Gingester gingester) {
+        gingester.report(report);
         transformers.forEach(gingester::add);
         return gingester;
     }

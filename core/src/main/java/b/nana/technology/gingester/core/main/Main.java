@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core.main;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.controller.Configuration;
+import b.nana.technology.gingester.core.configuration.Configuration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class Main {
@@ -20,7 +19,7 @@ public final class Main {
 
         boolean printConfig = false;
 
-        b.nana.technology.gingester.core.configuration.Configuration configuration = new b.nana.technology.gingester.core.configuration.Configuration();
+        Configuration configuration = new Configuration();
         configuration.report = true;
 
         String syncFrom = "__seed__";
@@ -29,7 +28,6 @@ public final class Main {
 
             boolean markSyncFrom = false;
             boolean syncTo = false;
-            boolean async = false;
 
             switch (args[i]) {
 
@@ -38,22 +36,22 @@ public final class Main {
                     printConfig = true;
                     break;
 
+                case "-nr":
+                case "--no-report":
+                    configuration.report = false;
+                    break;
+
                 case "-fc":
                 case "--from-config":
                 case "--file-config":
                     Path path = Paths.get(args[++i]);
                     try {
-                        b.nana.technology.gingester.core.configuration.Configuration append = b.nana.technology.gingester.core.configuration.Configuration.fromJson(Files.newInputStream(path));
+                        Configuration append = Configuration.fromJson(Files.newInputStream(path));
                         configuration.report = append.report;
                         configuration.transformers.addAll(append.transformers);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
-                    break;
-
-                case "-nr":
-                case "--no-report":
-                    configuration.report = false;
                     break;
 
                 case "-sft":
@@ -62,35 +60,38 @@ public final class Main {
                 case "-stt":
                 case "--sync-to-transformer":
                     syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
-                case "-at":
-                case "--async-transformer":
-                    async = !markSyncFrom && !syncTo;  // similar trickery as above
                 case "-t":
                 case "--transformer":
 
-                    Configuration parameters = new Configuration();
-
                     // TODO -s for -t Stash and -f for -t Fetch
 
-                    parameters.transformer(args[++i]);
-                    if (async) parameters.async(true);
+                    b.nana.technology.gingester.core.controller.Configuration controller = new b.nana.technology.gingester.core.controller.Configuration();
+
+                    String next = args[++i];
+
+                    if (next.matches("\\d+")) {
+                        controller.async(true);
+                        controller.maxWorkers(Integer.parseInt(next));
+                        controller.transformer(args[++i]);
+                    } else {
+                        controller.transformer(next);
+                    }
+
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
                         try {
-                            parameters.parameters(b.nana.technology.gingester.core.configuration.Configuration.OBJECT_READER.readTree(args[++i]));
+                            controller.parameters(Configuration.OBJECT_READER.readTree(args[++i]));
                         } catch (JsonProcessingException e) {
-                            parameters.parameters(JsonNodeFactory.instance.textNode(args[i]));
+                            controller.parameters(JsonNodeFactory.instance.textNode(args[i]));
                         }
                     }
 
                     if (markSyncFrom) {
-                        syncFrom = parameters.getTransformer();
+                        syncFrom = controller.getTransformer();
                     } else if (syncTo) {
-                        List<String> syncs = new ArrayList<>(parameters.getSyncs());
-                        syncs.add(syncFrom);
-                        parameters.syncs(syncs);
+                        controller.syncs(List.of(syncFrom));
                     }
 
-                    configuration.transformers.add(parameters);
+                    configuration.transformers.add(controller);
 
                     break;
 

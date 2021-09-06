@@ -45,7 +45,7 @@ public class Reporter extends Thread {
             sampler.sample();
 
             System.err.printf(
-                    "%s: %,d processed at %,.2f/s over the last %,.2f seconds, %,.2f/s overall%n",
+                    "%s: %,d processed at %,.2f/s over the last %,.0f seconds, %,.2f/s overall%n",
                     controller.id,
                     sampler.getValue(),
                     sampler.getCurrentChangePerSecond(),

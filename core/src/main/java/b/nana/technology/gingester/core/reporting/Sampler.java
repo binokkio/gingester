@@ -5,7 +5,7 @@ import java.util.function.LongSupplier;
 
 public final class Sampler {
 
-    private static final int SAMPLE_COUNT = 10;
+    private static final int SAMPLE_COUNT = 6;
 
     private final LongSupplier supplier;
     private Sample epoch;
