@@ -5,22 +5,21 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public final class Fetch implements Transformer<Object, Object> {
 
-    private final String name;
-    private final String description;
+    private final String[] name;
 
     public Fetch(Parameters parameters) {
-        name = parameters.name;
-        description = String.format("Fetch \"%s\"", name);
+        name = parameters.name.split("\\.");  // TODO support escape sequence
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
-                context.stash(Map.of("description", description)),
+                context,
                 context.fetch(name).findFirst().orElseThrow()
         );
     }

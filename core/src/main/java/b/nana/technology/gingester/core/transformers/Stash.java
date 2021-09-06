@@ -11,22 +11,17 @@ import java.util.Map;
 public final class Stash implements Transformer<Object, Object> {
 
     private final String name;
-    private final String description;
     private final Object value;
 
     public Stash(Parameters parameters) {
         name = parameters.name;
-        description = String.format("Stash \"%s\"", name);
         value = parameters.value;
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
-                context.stash(Map.of(
-                        "description", description,
-                        name, value == null ? in : value
-                )),
+                context.stash(Map.of(name, value == null ? in : value)),
                 in
         );
     }

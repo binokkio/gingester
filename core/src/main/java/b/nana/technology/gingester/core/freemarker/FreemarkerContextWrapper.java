@@ -24,9 +24,7 @@ public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
 
             @Override
             public TemplateModel get(String name) throws TemplateModelException {
-                return handleUnknownType(context.fetch(name)
-                        .findFirst()
-                        .orElseGet(() -> context.rewind(name)));
+                return handleUnknownType(context.fetch(name).findFirst().orElse(TemplateModel.NOTHING));
             }
 
             @Override

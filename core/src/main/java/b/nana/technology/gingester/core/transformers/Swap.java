@@ -10,20 +10,15 @@ import java.util.Map;
 public final class Swap implements Transformer<Object, Object> {
 
     private final String name;
-    private final String description;
 
     public Swap(Parameters parameters) {
         name = parameters.name;
-        description = String.format("Swap \"%s\"", name);
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
-                context.stash(Map.of(
-                        "description", description,
-                        name, in
-                )),
+                context.stash(Map.of(name, in)),
                 context.fetch(name).findFirst().orElseThrow()
         );
     }

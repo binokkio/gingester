@@ -31,6 +31,7 @@ public class Out implements Transformer<Object, Object> {
         } else {
             System.out.println(in);
         }
+        out.accept(context, in);
     }
 
     public static class Parameters {

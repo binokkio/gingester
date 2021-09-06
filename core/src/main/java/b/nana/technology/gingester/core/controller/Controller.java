@@ -223,10 +223,8 @@ public final class Controller<I, O> {
     public void prepare(Context context) {
         try {
             transformer.prepare(context, receiver);
-        } catch (RuntimeException e) {
-            throw e;  // TODO pass `e` to `excepts`
         } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO pass `e` to `excepts`
+            e.printStackTrace();  // TODO pass `e` to `excepts`
         }
     }
 
@@ -276,20 +274,16 @@ public final class Controller<I, O> {
     private void _transform(Context context, I input) {
         try {
             transformer.transform(context, input, receiver);
-        } catch (RuntimeException e) {
-            throw e;  // TODO pass `e` to `excepts`
         } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO pass `e` to `excepts`
+            e.printStackTrace();  // TODO pass `e` to `excepts`
         }
     }
 
     public void finish(Context context) {
         try {
             transformer.finish(context, receiver);
-        } catch (RuntimeException e) {
-            throw e;  // TODO pass `e` to `excepts`
         } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO pass `e` to `excepts`
+            e.printStackTrace();  // TODO pass `e` to `excepts`
         }
     }
 
@@ -301,5 +295,25 @@ public final class Controller<I, O> {
                 .map(c -> c.id)
                 .sorted()
                 .collect(Collectors.joining(", "));
+    }
+
+
+
+    /**
+     * Create a dummy controller just for holding an id.
+     */
+    public Controller(String id) {
+        this.id = id;
+        configuration = null;
+        gingester = null;
+        transformer = null;
+        setupControls = null;
+        async = false;
+        maxQueueSize = 0;
+        maxWorkers = 0;
+        maxBatchSize = 0;
+        report = false;
+        delt = null;
+        acks = null;
     }
 }

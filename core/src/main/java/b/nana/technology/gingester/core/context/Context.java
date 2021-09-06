@@ -35,15 +35,11 @@ public final class Context implements Iterable<Context> {
         return parent == null;
     }
 
-    public Optional<Context> rewind(String id) {
-        return stream().filter(c -> id.equals(c.controller.id)).findFirst();
-    }
-
     public Stream<Object> fetch(String... name) {
-        return stream()
-                .map(c -> c.stash)
-                .filter(Objects::nonNull)
-                .map(s -> {
+        return Stream.concat(
+                        stream().map(c -> c.stash).filter(Objects::nonNull),
+                        stream().filter(c -> c.stash != null).map(c -> Map.of(c.controller.id, c.stash))
+                ).map(s -> {
                     Object result = s;
                     for (String n : name) {
                         if (result instanceof Map) {
@@ -60,7 +56,7 @@ public final class Context implements Iterable<Context> {
                         } else if (result instanceof List) {
                             result = ((List<?>) result).get(Integer.parseInt(n));
                         } else {
-                            result = null;
+                            return null;
                         }
                     }
                     return result;
@@ -144,6 +140,10 @@ public final class Context implements Iterable<Context> {
         return new Builder(this);
     }
 
+    public Builder Stash(String key, Object value) {
+        return new Builder(this).stash(Map.of(key, value));
+    }
+
     public Builder stash(Map<String, Object> stash) {
         return new Builder(this).stash(stash);
     }
@@ -156,14 +156,21 @@ public final class Context implements Iterable<Context> {
 
         public Builder() {
             parent = null;
+            controller = new Controller<>("__none__");
         }
 
         public Builder(Context parent) {
             this.parent = parent;
+            this.controller = parent.controller;
         }
 
         public Builder controller(Controller<?, ?> controller) {
             this.controller = controller;
+            return this;
+        }
+
+        public Builder stash(String key, Object value) {
+            this.stash = Map.of(key, value);
             return this;
         }
 

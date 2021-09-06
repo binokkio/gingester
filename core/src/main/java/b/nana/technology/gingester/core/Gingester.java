@@ -77,7 +77,7 @@ public final class Gingester {
             id = configuration.getTransformer();
             int i = 1;
             while (configurations.containsKey(id)) {
-                id = configuration.getTransformer() + '-' + i++;
+                id = configuration.getTransformer() + '_' + i++;
             }
         }
         return id;

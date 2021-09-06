@@ -71,7 +71,7 @@ public class Template implements Transformer<Object, String> {
 
     private static Optional<String> readTemplateFile(String template) {
         Path path = Paths.get(template);
-        if (Files.exists(path)) return Optional.empty();
+        if (!Files.exists(path)) return Optional.empty();
         try {
             return Optional.of(Files.readString(Paths.get(template)));
         } catch (IOException e) {
