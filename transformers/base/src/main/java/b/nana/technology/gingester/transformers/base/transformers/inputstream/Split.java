@@ -31,7 +31,7 @@ public class Split implements Transformer<InputStream, InputStream> {
         Optional<InputStream> split;
         long counter = 0;
         while ((split = splitter.getNextInputStream()).isPresent()) {
-            out.accept(context.stash(Map.of("description", ++counter)), split.get());
+            out.accept(context.stash("description", counter++), split.get());
         }
     }
 

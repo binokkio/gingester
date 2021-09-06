@@ -18,7 +18,7 @@ public final class Swap implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
-                context.stash(Map.of(name, in)),
+                context.stash(name, in),
                 context.fetch(name).findFirst().orElseThrow()
         );
     }

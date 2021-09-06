@@ -27,10 +27,7 @@ public class Open implements Transformer<Object, InputStream> {
         String resourcePath = pathTemplate.render(context);
         InputStream inputStream = getClass().getResourceAsStream(resourcePath);
         if (inputStream == null) throw new NullPointerException("getResourceAsStream(\"" + resourcePath + "\") returned null");
-        out.accept(
-                context.stash(Map.of("description", resourcePath)),
-                inputStream
-        );
+        out.accept(context.stash("description", resourcePath), inputStream);
         inputStream.close();
     }
 

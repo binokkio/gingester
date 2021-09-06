@@ -61,7 +61,7 @@ public class Write implements Transformer<InputStream, Path> {
             } else {
                 write(in, output);
                 output.close();
-                out.accept(context.stash(Map.of("description", pathString)), path);
+                out.accept(context.stash("description", pathString), path);
             }
         }
     }

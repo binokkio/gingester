@@ -140,7 +140,7 @@ public final class Context implements Iterable<Context> {
         return new Builder(this);
     }
 
-    public Builder Stash(String key, Object value) {
+    public Builder stash(String key, Object value) {
         return new Builder(this).stash(Map.of(key, value));
     }
 

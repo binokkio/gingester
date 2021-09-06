@@ -20,10 +20,7 @@ public final class Stash implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-        out.accept(
-                context.stash(Map.of(name, value == null ? in : value)),
-                in
-        );
+        out.accept(context.stash(name, value == null ? in : value), in);
     }
 
     public static class Parameters {

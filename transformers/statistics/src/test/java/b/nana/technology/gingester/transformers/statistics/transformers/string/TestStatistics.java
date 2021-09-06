@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.statistics.transformers.string;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.transformers.base.transformers.string.Generate;
 import b.nana.technology.gingester.transformers.statistics.transformers.string.Statistics;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;

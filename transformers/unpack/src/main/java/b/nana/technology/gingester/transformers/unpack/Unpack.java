@@ -36,9 +36,8 @@ public class Unpack implements Transformer<InputStream, InputStream> {
 
         if (descriptionLowerCase.endsWith(".gz")) {
             transform(
-                    context.stash(Map.of("description", trimEnd(description, 3))).build(),
-                    new GZIPInputStream(in),
-                    out
+                    context.stash("description", trimEnd(description, 3)).build(),
+                    new GZIPInputStream(in), out
             );
         } else if (descriptionLowerCase.endsWith(".tar")) {
             TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in);
@@ -46,9 +45,8 @@ public class Unpack implements Transformer<InputStream, InputStream> {
             while ((tarArchiveEntry = tarArchiveInputStream.getNextTarEntry()) != null) {
                 if (tarArchiveEntry.isFile()) {
                     transform(
-                            context.stash(Map.of("description", tarArchiveEntry.getName())).build(),
-                            tarArchiveInputStream,
-                            out
+                            context.stash("description", tarArchiveEntry.getName()).build(),
+                            tarArchiveInputStream, out
                     );
                 }
             }
@@ -58,17 +56,15 @@ public class Unpack implements Transformer<InputStream, InputStream> {
             while ((zipArchiveEntry = zipArchiveInputStream.getNextZipEntry()) != null) {
                 if (!zipArchiveEntry.isDirectory()) {
                     transform(
-                            context.stash(Map.of("description", zipArchiveEntry.getName())).build(),
-                            zipArchiveInputStream,
-                            out
+                            context.stash("description", zipArchiveEntry.getName()).build(),
+                            zipArchiveInputStream, out
                     );
                 }
             }
         } else if (descriptionLowerCase.endsWith(".bz2")) {
             transform(
-                    context.stash(Map.of("description", trimEnd(description, 4))).build(),
-                    new BZip2CompressorInputStream(in),
-                    out
+                    context.stash("description", trimEnd(description, 4)).build(),
+                    new BZip2CompressorInputStream(in), out
             );
         } else {
             out.accept(context, in);

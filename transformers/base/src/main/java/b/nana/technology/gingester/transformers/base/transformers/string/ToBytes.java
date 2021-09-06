@@ -1,18 +1,18 @@
-package b.nana.technology.gingester.transformers.base.transformers.bytes;
+package b.nana.technology.gingester.transformers.base.transformers.string;
 
 import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.base.transformers.string.ToBytes;
 
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class ToString implements Transformer<byte[], String> {
+public class ToBytes implements Transformer<String, byte[]> {
 
     private final Charset charset;
 
-    public ToString(Parameters parameters) {
+    public ToBytes(Parameters parameters) {
         charset = switchCharsetParameter(parameters.charset);
     }
 
@@ -29,8 +29,8 @@ public class ToString implements Transformer<byte[], String> {
     }
 
     @Override
-    public void transform(Context context, byte[] in, Receiver<String> out) throws Exception {
-        out.accept(context, new String(in, charset));
+    public void transform(Context context, String in, Receiver<byte[]> out) throws Exception {
+        out.accept(context, in.getBytes(charset));
     }
 
     public static class Parameters {

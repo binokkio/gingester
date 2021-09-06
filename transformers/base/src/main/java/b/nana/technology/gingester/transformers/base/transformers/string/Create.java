@@ -14,11 +14,13 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class Template implements Transformer<Object, String> {
+public class Create implements Transformer<Object, String> {
 
+    private final int count;
     private final Context.Template template;
 
-    public Template(Parameters parameters) {
+    public Create(Parameters parameters) {
+        count = parameters.count;
         template = Context.newTemplate(getTemplateString(parameters.template, parameters.interpretation));
     }
 
@@ -28,6 +30,7 @@ public class Template implements Transformer<Object, String> {
 
             case FILE: return readTemplateFile(template).orElseThrow();
             case RESOURCE: return readTemplateResource(template).orElseThrow();
+            case TEMPLATE: return template;
 
             case AUTO:
                 return Stream.of(
@@ -36,7 +39,7 @@ public class Template implements Transformer<Object, String> {
                         .map(Supplier::get)
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .findFirst().orElseThrow();
+                        .findFirst().orElse(template);
 
             default:
                 throw new IllegalStateException("No case for " + interpretation);
@@ -44,13 +47,20 @@ public class Template implements Transformer<Object, String> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<String> out) throws Exception {
-        out.accept(context, template.render(context));
+    public void transform(Context context, Object in, Receiver<String> out) throws InterruptedException {
+        for (int i = 0; i < count; i++) {
+            if (Thread.interrupted()) throw new InterruptedException();
+            out.accept(
+                    context.stash("description", i),
+                    template.render(context)
+            );
+        }
     }
 
 
     public static class Parameters {
 
+        public int count = 1;
         public String template;
         public TemplateParameterInterpretation interpretation = TemplateParameterInterpretation.AUTO;
 
@@ -66,7 +76,8 @@ public class Template implements Transformer<Object, String> {
     public enum TemplateParameterInterpretation {
         AUTO,
         FILE,
-        RESOURCE
+        RESOURCE,
+        TEMPLATE
     }
 
     private static Optional<String> readTemplateFile(String template) {
@@ -80,7 +91,7 @@ public class Template implements Transformer<Object, String> {
     }
 
     private static Optional<String> readTemplateResource(String template) {
-        InputStream inputStream = Template.class.getResourceAsStream(template);
+        InputStream inputStream = Create.class.getResourceAsStream(template);
         if (inputStream == null) return Optional.empty();
         try {
             return Optional.of(new String(inputStream.readAllBytes()));

@@ -9,20 +9,37 @@ import java.util.Queue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class GenerateTest {
+class CreateTest {
 
     @Test
-    void testStringGenerate() throws InterruptedException {
-
-        Generate.Parameters parameters = new Generate.Parameters();
-        parameters.string = "Hello, World!";
-        parameters.count = 3;
-
-        Generate generate = new Generate(parameters);
+    void testStringCreate() throws InterruptedException {
 
         Queue<String> result = new ArrayDeque<>();
 
-        generate.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
+        Create.Parameters parameters = new Create.Parameters();
+        parameters.template = "Hello, World!";
+        parameters.count = 3;
+
+        Create create = new Create(parameters);
+        create.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
+
+        assertEquals(3, result.size());
+        assertEquals("Hello, World!", result.remove());
+        assertEquals("Hello, World!", result.remove());
+        assertEquals("Hello, World!", result.remove());
+    }
+
+    @Test
+    void testStringCreateTemplating() throws InterruptedException {
+
+        Queue<String> result = new ArrayDeque<>();
+
+        Create.Parameters parameters = new Create.Parameters();
+        parameters.template = "Hello, ${target}!";
+        parameters.count = 3;
+
+        Create create = new Create(parameters);
+        create.transform(new Context.Builder().stash("target", "World").build(), null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());

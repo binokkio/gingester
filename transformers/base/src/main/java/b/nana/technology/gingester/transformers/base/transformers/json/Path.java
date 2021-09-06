@@ -15,11 +15,11 @@ import java.util.Map;
 
 public class Path implements Transformer<InputStream, JsonNode> {
 
-    private final String descriptionFormat;
+    private final String descriptionPrefix;
     private final JsonPath jsonPath;
 
     public Path(Parameters parameters) {
-        descriptionFormat = parameters.path + " :: %d";
+        descriptionPrefix = parameters.path + " :: ";
         jsonPath = JsonPathCompiler.compile(parameters.path);
     }
 
@@ -29,7 +29,7 @@ public class Path implements Transformer<InputStream, JsonNode> {
         Iterator<Object> iterator = JsonSurferJackson.INSTANCE.iterator(in, jsonPath);
         while (iterator.hasNext()) {
             JsonNode jsonNode = (JsonNode) iterator.next();
-            out.accept(context.stash(Map.of("description", String.format(descriptionFormat, counter++))), jsonNode);
+            out.accept(context.stash("description", descriptionPrefix + counter++), jsonNode);
         }
     }
 

@@ -12,10 +12,6 @@ public class Wrap implements Transformer<JsonNode, JsonNode> {
 
     private final String key;
 
-    public Wrap() {
-        this(new Parameters());
-    }
-
     public Wrap(Parameters parameters) {
         key = parameters.key;
     }
@@ -29,7 +25,7 @@ public class Wrap implements Transformer<JsonNode, JsonNode> {
 
     public static class Parameters {
 
-        public String key = "content";
+        public String key = "value";
 
         @JsonCreator
         public Parameters() {}

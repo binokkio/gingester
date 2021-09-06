@@ -45,7 +45,7 @@ public class Statistics implements Transformer<String, JsonNode> {
     public void finish(Context context, Receiver<JsonNode> out) {
         FrequencyWrapper frequencyWrapper = contextMap.remove(context).findFirst().orElseThrow();
         out.accept(
-                context.stash(Map.of("description", "statistics")),
+                context.stash("description", "statistics"),
                 FrequencyNode.createFrequencyNode(
                         frequencyWrapper.frequency,
                         frequencyLimit,

@@ -46,7 +46,7 @@ public class ToJson implements Transformer<InputStream, JsonNode> {
         while (iterator.hasNext()) {
             JsonNode jsonNode = iterator.next();
             out.accept(
-                    context.stash(Map.of("description", counter++)),
+                    context.stash("description", counter++),
                     jsonNode
             );
         }

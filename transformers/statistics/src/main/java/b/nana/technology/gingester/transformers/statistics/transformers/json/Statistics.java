@@ -74,7 +74,7 @@ public class Statistics implements Transformer<JsonNode, JsonNode> {
     public void finish(Context context, Receiver<JsonNode> out) {
         ObjectNode result = objectMapper.createObjectNode();
         add(result, contextMap.remove(context).findFirst().orElseThrow());
-        out.accept(context.stash(Map.of("description", "statistics")), result);
+        out.accept(context.stash("description", "statistics"), result);
     }
 
     private void add(ObjectNode objectNode, NodeStatistics nodeStatistics) {
