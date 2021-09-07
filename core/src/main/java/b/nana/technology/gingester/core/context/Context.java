@@ -101,10 +101,9 @@ public final class Context implements Iterable<Context> {
         for (Context context : contexts) {
             combined.put(
                     context.controller.id,
-                    context.stash
+                    context.stash != null ? context.stash : "{}"
             );
         }
-        if (combined.isEmpty()) return "";
         return pretty(combined, 0, false);
     }
 
@@ -122,7 +121,7 @@ public final class Context implements Iterable<Context> {
             stream.forEach(e -> stringBuilder
                     .append(" ".repeat(indentation + INDENT))
                     .append(e.getKey())
-                    .append('=')
+                    .append(": ")
                     .append(pretty(e.getValue(), indentation + INDENT, true)));
 
             stringBuilder
