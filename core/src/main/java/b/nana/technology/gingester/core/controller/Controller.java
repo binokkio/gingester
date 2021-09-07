@@ -66,7 +66,27 @@ public final class Controller<I, O> {
         delt = new SimpleCounter(acks != null || report);
     }
 
+    public List<String> getLinks() {
+        return setupControls.links.isEmpty() ?
+                configuration.getLinks() :
+                setupControls.links;
+    }
+
+    public List<String> getSyncs() {
+        return setupControls.syncs.isEmpty() ?
+                configuration.getSyncs() :
+                setupControls.syncs;
+    }
+
+    public List<String> getExcepts() {
+        return configuration.getExcepts();
+    }
+
     public void initialize() {
+
+        getLinks().forEach(linkId -> gingester.getController(linkId).ifPresent(controller -> outgoing.put(linkId, (Controller<O, ?>) controller)));
+        getSyncs().forEach(syncId -> gingester.getController(syncId).ifPresent(sync -> sync.syncs.add(this)));
+        getExcepts().forEach(exceptId -> gingester.getController(exceptId).ifPresent(excepts::add));
 
         if (setupControls.requireDownstreamSync) {
             String notSync = filterAndName(outgoing.values(), c -> c.async);
@@ -86,32 +106,6 @@ public final class Controller<I, O> {
                         id, notAsync
                 ));
             }
-        }
-
-        if (!setupControls.links.isEmpty()) {
-            for (String controllerId : setupControls.links) {
-                gingester.getController(controllerId).ifPresent(
-                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
-            }
-        } else {
-            for (String controllerId : configuration.getLinks()) {
-                gingester.getController(controllerId).ifPresent(
-                        controller -> outgoing.put(controllerId, (Controller<O, ?>) controller));
-            }
-        }
-
-        if (!setupControls.syncs.isEmpty()) {
-            for (String controllerId : setupControls.syncs) {
-                gingester.getController(controllerId).ifPresent(c -> c.syncs.add(this));
-            }
-        } else {
-            for (String controllerId : configuration.getSyncs()) {
-                gingester.getController(controllerId).ifPresent(c -> c.syncs.add(this));
-            }
-        }
-
-        for (String controllerId : configuration.getExcepts()) {
-            gingester.getController(controllerId).ifPresent(excepts::add);
         }
     }
 

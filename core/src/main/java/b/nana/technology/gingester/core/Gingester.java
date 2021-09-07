@@ -1,8 +1,8 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
@@ -11,7 +11,6 @@ import b.nana.technology.gingester.core.transformers.Seed;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /*
  * TODO adding 1 more step between `configuration` and `controllers` would allow
@@ -89,33 +88,30 @@ public final class Gingester {
             throw new IllegalStateException("No transformers configured");
         }
 
-        configurations.forEach((id, configuration) -> controllers.put(
-                id, new Controller<>(configuration, new ControllerInterface(id))));
+        configurations.forEach((id, configuration) ->
+                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
 
-        controllers.values().forEach(Controller::initialize);
+        Set<String> noIncoming = new HashSet<>(controllers.keySet());
+        controllers.values().stream()
+                .flatMap(controller -> controller.getLinks().stream()
+                        .map(link -> link.equals("__maybe_next__") ? resolveMaybeNext(controller.id).orElse("__none__") : link))
+                .forEach(noIncoming::remove);
 
-        Configuration seedControllerConfiguration = new Configuration();
-        seedControllerConfiguration.transformer(new Seed());
-        Set<Controller<?, ?>> noIncoming = new HashSet<>(controllers.values());
-        controllers.values().stream().map(c -> c.outgoing.values()).forEach(noIncoming::removeAll);
-        seedControllerConfiguration.links(noIncoming.stream().map(c -> c.id).collect(Collectors.toList()));
         Controller<Void, Object> seedController = new Controller<>(
-                seedControllerConfiguration,
+                new Configuration().transformer(new Seed()).links(noIncoming),
                 new ControllerInterface("__seed__")
         );
-        seedController.initialize();
+
         controllers.put("__seed__", seedController);
 
+        controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discover);
         controllers.values().forEach(Controller::start);
-
-        Context seed = new Context.Builder()
-                .controller(seedController)
-                .build();
 
         Reporter reporter = new Reporter(controllers.values());
         if (report) reporter.start();
 
+        Context seed = new Context.Builder().controller(seedController).build();
         seedController.accept(new Batch<>(seed, null));
         seedController.finish(null, seed);
 
@@ -134,6 +130,17 @@ public final class Gingester {
         }
     }
 
+    private Optional<String> resolveMaybeNext(String from) {
+        boolean next = false;
+        for (String id : configurations.keySet()) {
+            if (next) {
+                return Optional.of(id);
+            } else if (id.equals(from)) {
+                next = true;
+            }
+        }
+        return Optional.empty();
+    }
 
     public class ControllerInterface {
 
@@ -148,22 +155,13 @@ public final class Gingester {
         }
 
         public Optional<Controller<?, ?>> getController(String id) {
-
             if (id.equals("__maybe_next__")) {
-                boolean next = false;
-                for (Map.Entry<String, Controller<?, ?>> idControllerEntry : controllers.entrySet()) {
-                    if (next) {
-                        return Optional.of(idControllerEntry.getValue());
-                    } else if (idControllerEntry.getKey().equals(controllerId)) {
-                        next = true;
-                    }
-                }
-                return Optional.empty();
+                return resolveMaybeNext(controllerId).map(controllers::get);
+            } else {
+                Controller<?, ?> controller = controllers.get(id);
+                if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
+                return Optional.of(controller);
             }
-
-            Controller<?, ?> controller = controllers.get(id);
-            if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
-            return Optional.of(controller);
         }
 
         public Collection<Controller<?, ?>> getControllers() {

@@ -8,9 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 @JsonAutoDetect(
@@ -105,8 +103,8 @@ public final class Configuration {
         return links == null ? Collections.singletonList("__maybe_next__") : links;
     }
 
-    public Configuration links(List<String> links) {
-        this.links = links;
+    public Configuration links(Collection<String> links) {
+        this.links = links instanceof List ? (List<String>) links : new ArrayList<>(links);
         return this;
     }
 
