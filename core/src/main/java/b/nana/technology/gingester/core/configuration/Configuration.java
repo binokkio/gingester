@@ -35,6 +35,11 @@ public final class Configuration {
     public Boolean report;
     public List<b.nana.technology.gingester.core.controller.Configuration> transformers = new ArrayList<>();
 
+    public void append(Configuration append) {
+        if (append.report != null) report = append.report;
+        transformers.addAll(append.transformers);
+    }
+
     public String toJson() {
         try {
             return OBJECT_WRITER.writeValueAsString(this);

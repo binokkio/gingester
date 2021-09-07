@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -51,11 +50,19 @@ public final class Main {
                 case "-fc":
                 case "--from-config":
                 case "--file-config":
-                    Path path = Paths.get(args[++i]);
                     try {
-                        Configuration append = Configuration.fromJson(Files.newInputStream(path));
-                        configuration.report = append.report;
-                        configuration.transformers.addAll(append.transformers);
+                        Configuration append = Configuration.fromJson(Files.newInputStream(Paths.get(args[++i])));
+                        configuration.append(append);
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException(e);  // TODO
+                    }
+                    break;
+
+                case "-rc":
+                case "--resource-config":
+                    try {
+                        Configuration append = Configuration.fromJson(Main.class.getResourceAsStream(args[++i]));
+                        configuration.append(append);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
