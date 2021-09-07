@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(new ToJson.Parameters());
         toJson.transform(
-                new Context.Builder().build(),
+                new Context.Builder().build(null),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/test.csv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -41,7 +41,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(),
+                new Context.Builder().build(null),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/test.dsv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -61,7 +61,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(),
+                new Context.Builder().build(null),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/test.csv"),
                 (UniReceiver<JsonNode>) results::add
         );

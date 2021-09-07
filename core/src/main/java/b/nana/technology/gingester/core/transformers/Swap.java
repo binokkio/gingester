@@ -1,11 +1,9 @@
 package b.nana.technology.gingester.core.transformers;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
-
-import java.util.Map;
 
 public final class Swap implements Transformer<Object, Object> {
 

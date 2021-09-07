@@ -6,9 +6,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public final class Main {
 
@@ -61,7 +64,13 @@ public final class Main {
                 case "-rc":
                 case "--resource-config":
                     try {
-                        Configuration append = Configuration.fromJson(Main.class.getResourceAsStream(args[++i]));
+                        String resource = args[++i];
+                        InputStream resourceStream = Stream.of(resource, "/gingester/rc/" + resource, "/gingester/rc/" + resource + ".json")
+                                .map(Main.class::getResourceAsStream)
+                                .filter(Objects::nonNull)
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
+                        Configuration append = Configuration.fromJson(resourceStream);
                         configuration.append(append);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO

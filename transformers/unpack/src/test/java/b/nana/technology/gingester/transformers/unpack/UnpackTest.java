@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.unpack;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.BiReceiver;
 import org.junit.jupiter.api.Test;
 
@@ -20,11 +20,11 @@ class UnpackTest {
 
         Context context = new Context.Builder()
                 .stash(Map.of("description", "/tmp/test.tar.gz"))
-                .build();
+                .build(null);
 
         Queue<String> results = new ArrayDeque<>();
 
-        Unpack unpack = new Unpack();
+        Unpack unpack = new Unpack(new Unpack.Parameters());
         unpack.transform(
                 context,
                 getClass().getResourceAsStream("/test.tar.gz"),

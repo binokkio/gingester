@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.core.JsonParser;
@@ -11,7 +11,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 public class ToJson implements Transformer<InputStream, JsonNode> {
 

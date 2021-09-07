@@ -1,6 +1,5 @@
-package b.nana.technology.gingester.core.context;
+package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.freemarker.FreemarkerContextWrapper;
 import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
@@ -22,7 +21,7 @@ public final class Context implements Iterable<Context> {
 
 
     private final Context parent;
-    public final Controller<?, ?> controller;
+    final Controller<?, ?> controller;
     private final Map<String, Object> stash;
 
     private Context(Builder builder) {
@@ -38,7 +37,9 @@ public final class Context implements Iterable<Context> {
     public Stream<Object> fetch(String... name) {
         return Stream.concat(
                         stream().map(c -> c.stash).filter(Objects::nonNull),
-                        stream().filter(c -> c.stash != null).map(c -> Map.of(c.controller.id, c.stash))
+                        stream().filter(c -> c.stash != null)
+                                .filter(c -> c.controller != null)  // TODO remove once controller is guaranteed not to be null
+                                .map(c -> Map.of(c.controller.id, c.stash))
                 ).map(s -> {
                     Object result = s;
                     for (String n : name) {
@@ -163,11 +164,6 @@ public final class Context implements Iterable<Context> {
             this.controller = parent.controller;
         }
 
-        public Builder controller(Controller<?, ?> controller) {
-            this.controller = controller;
-            return this;
-        }
-
         public Builder stash(String key, Object value) {
             this.stash = Map.of(key, value);
             return this;
@@ -178,7 +174,8 @@ public final class Context implements Iterable<Context> {
             return this;
         }
 
-        public Context build() {
+        public Context build(Controller<?, ?> controller) {
+            this.controller = controller;
             return new Context(this);
         }
     }

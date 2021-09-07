@@ -1,13 +1,12 @@
 package b.nana.technology.gingester.transformers.base.transformers.resource;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.InputStream;
-import java.util.Map;
 
 public class Open implements Transformer<Object, InputStream> {
 

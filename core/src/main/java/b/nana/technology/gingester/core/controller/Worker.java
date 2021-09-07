@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.context.Context;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -105,6 +104,11 @@ public final class Worker extends Thread {
                 (Batch<T>) batch
         ));
         batches.clear();
+    }
+
+    <O> void flush(Controller<O, ?> target) {
+        Batch<O> batch = (Batch<O>) batches.remove(target);
+        if (batch != null) target.accept(batch);
     }
 
     private <O> void flush(Controller<O, ?> target, Batch<O> batch) {

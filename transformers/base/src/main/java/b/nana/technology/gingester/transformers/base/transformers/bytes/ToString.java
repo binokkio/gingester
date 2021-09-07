@@ -1,9 +1,8 @@
 package b.nana.technology.gingester.transformers.base.transformers.bytes;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.base.transformers.string.ToBytes;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

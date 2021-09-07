@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,7 +23,7 @@ class FromJsonTest {
         parameters.quote = '2';
 
         FromJson fromJson = new FromJson(parameters);
-        Context context = new Context.Builder().build();
+        Context context = new Context.Builder().build(null);
 
         AtomicReference<InputStream> output = new AtomicReference<>();
 

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.freemarker;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import freemarker.template.*;
 
 public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {

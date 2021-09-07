@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +18,7 @@ class FetchTest {
 
         Context context = new Context.Builder()
                 .stash("hello", "Hello, World!")
-                .build();
+                .build(null);
 
         Fetch fetch = new Fetch(new Fetch.Parameters("hello"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);
@@ -37,9 +37,9 @@ class FetchTest {
                                 "world", "Hello, World!"
                         )
                 )
-                .build();
+                .build(null);
 
-        Fetch fetch = new Fetch(new Fetch.Parameters("hello.world"));
+        Fetch fetch = new Fetch(new Fetch.Parameters("hello/world"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);
 
         assertEquals("Hello, World!", result.get());

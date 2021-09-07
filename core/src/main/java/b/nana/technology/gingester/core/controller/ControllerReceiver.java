@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
 final class ControllerReceiver<O> implements Receiver<O> {
@@ -24,7 +23,7 @@ final class ControllerReceiver<O> implements Receiver<O> {
 
     @Override
     public void accept(Context.Builder contextBuilder, O output) {
-        Context context = contextBuilder.controller(controller).build();
+        Context context = contextBuilder.build(controller);
         prepare(context);
         for (Controller<O, ?> controller : controller.outgoing.values()) {
             accept(context, output, controller);
@@ -44,7 +43,7 @@ final class ControllerReceiver<O> implements Receiver<O> {
 
     @Override
     public void accept(Context.Builder contextBuilder, O output, String targetId) {
-        Context context = contextBuilder.controller(controller).build();
+        Context context = contextBuilder.build(controller);
         Controller<O, ?> target = controller.outgoing.get(targetId);
         if (target == null) throw new IllegalStateException("Link not configured!");
         prepare(context);
@@ -52,9 +51,14 @@ final class ControllerReceiver<O> implements Receiver<O> {
         finish(context);
     }
 
+    @Override
+    public Context build(Context.Builder contextBuilder) {
+        return contextBuilder.build(controller);
+    }
+
     private Context maybeExtend(Context context) {
         if (!controller.syncs.isEmpty() && context.controller != controller) {
-            return context.extend().controller(controller).build();
+            return context.extend().build(controller);
         } else {
             return context;
         }
@@ -81,7 +85,10 @@ final class ControllerReceiver<O> implements Receiver<O> {
 
     private void finish(Context context) {
         if (!controller.syncs.isEmpty()) {
-            controller.signalFinish(context);
+            for (Controller<O, ?> controller : controller.outgoing.values()) {
+                ((Worker) Thread.currentThread()).flush(controller);
+                controller.finish(controller, context);
+            }
         }
     }
 }

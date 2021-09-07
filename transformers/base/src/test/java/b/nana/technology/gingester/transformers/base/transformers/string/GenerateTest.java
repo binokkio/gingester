@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.string;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class CreateTest {
         parameters.count = 3;
 
         Create create = new Create(parameters);
-        create.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
+        create.transform(new Context.Builder().build(null), null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());
@@ -39,7 +39,7 @@ class CreateTest {
         parameters.count = 3;
 
         Create create = new Create(parameters);
-        create.transform(new Context.Builder().stash("target", "World").build(), null, (UniReceiver<String>) result::add);
+        create.transform(new Context.Builder().stash("target", "World").build(null), null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());

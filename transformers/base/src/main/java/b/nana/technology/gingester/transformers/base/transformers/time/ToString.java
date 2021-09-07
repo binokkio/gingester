@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.time;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
 import java.time.ZoneId;

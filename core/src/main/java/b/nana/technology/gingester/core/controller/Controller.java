@@ -3,7 +3,6 @@ package b.nana.technology.gingester.core.controller;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
-import b.nana.technology.gingester.core.context.Context;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -58,12 +57,22 @@ public final class Controller<I, O> {
         transformer.setup(setupControls);
 
         async = configuration.getAsync();
-        maxQueueSize = configuration.getMaxQueueSize();
-        maxWorkers = configuration.getMaxWorkers();
-        maxBatchSize = configuration.getMaxBatchSize();
+        if (setupControls.requireAsync && !async) throw new IllegalArgumentException(id + " must be configured async");
+        maxBatchSize = checkMax(setupControls.maxBatchSize, configuration.getMaxBatchSize(), "maxBatchSize");
+        maxQueueSize = checkMax(setupControls.maxQueueSize, configuration.getMaxQueueSize(), "maxQueueSize");
+        maxWorkers = checkMax(setupControls.maxWorkers, configuration.getMaxWorkers(), "maxWorkers");
         report = configuration.report() != null ? configuration.report() : (setupControls.links.isEmpty() && configuration.getLinks().equals(Collections.singletonList("__maybe_next__")) && !gingester.hasNext());
         acks = setupControls.acksCounter;
         delt = new SimpleCounter(acks != null || report);
+
+        if (setupControls.maxBatchSize > 0 && maxBatchSize > setupControls.maxBatchSize)
+            throw new IllegalArgumentException("`maxBatchSize` for " + id + " must not be higher than " + setupControls.maxBatchSize);
+    }
+
+    private int checkMax(int max, int configured, String field) {
+        if (max > 0 && configured > max)
+            throw new IllegalArgumentException("`" + field + "` for " + id + " must not be higher than " + max);
+        return configured;
     }
 
     public List<String> getLinks() {
@@ -166,23 +175,6 @@ public final class Controller<I, O> {
         try {
             while (queue.size() >= maxQueueSize) queueNotFull.await();
             queue.add(() -> transform(batch));
-            queueNotEmpty.signal();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public void signalFinish(Context context) {
-        lock.lock();
-        try {
-            while (queue.size() >= maxQueueSize) queueNotFull.await();
-            queue.add(() -> {
-                for (Controller<O, ?> controller : outgoing.values()) {
-                    controller.finish(this, context);
-                }
-            });
             queueNotEmpty.signal();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO

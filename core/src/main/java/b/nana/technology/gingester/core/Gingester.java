@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
@@ -111,7 +111,7 @@ public final class Gingester {
         Reporter reporter = new Reporter(controllers.values());
         if (report) reporter.start();
 
-        Context seed = new Context.Builder().controller(seedController).build();
+        Context seed = new Context.Builder().build(seedController);
         seedController.accept(new Batch<>(seed, null));
         seedController.finish(null, seed);
 

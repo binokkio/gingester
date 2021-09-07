@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.batch;
 
-import b.nana.technology.gingester.core.context.Context;
+import b.nana.technology.gingester.core.controller.Context;
 
 import java.util.ArrayList;
 import java.util.Iterator;
