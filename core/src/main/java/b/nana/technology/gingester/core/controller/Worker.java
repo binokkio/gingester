@@ -69,6 +69,7 @@ public final class Worker extends Thread {
 
                     if (context.controller.syncs.contains(controller)) {
                         controller.finish(context);
+                        flush(controller);
                     }
 
                     controller.outgoing.values().forEach(controller -> controller.finish(this.controller, context));
