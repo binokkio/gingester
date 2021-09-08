@@ -37,9 +37,7 @@ public final class Context implements Iterable<Context> {
     public Stream<Object> fetch(String... name) {
         return Stream.concat(
                         stream().map(c -> c.stash).filter(Objects::nonNull),
-                        stream().filter(c -> c.stash != null)
-                                .filter(c -> c.controller != null)  // TODO remove once controller is guaranteed not to be null
-                                .map(c -> Map.of(c.controller.id, c.stash))
+                        stream().filter(c -> c.stash != null).map(c -> Map.of(c.controller.id, c.stash))
                 ).map(s -> {
                     Object result = s;
                     for (String n : name) {
@@ -156,12 +154,10 @@ public final class Context implements Iterable<Context> {
 
         public Builder() {
             parent = null;
-            controller = new Controller<>("__none__");
         }
 
         public Builder(Context parent) {
             this.parent = parent;
-            this.controller = parent.controller;
         }
 
         public Builder stash(String key, Object value) {
@@ -172,6 +168,11 @@ public final class Context implements Iterable<Context> {
         public Builder stash(Map<String, Object> stash) {
             this.stash = stash;
             return this;
+        }
+
+        public Context build() {
+            this.controller = new Controller<>();
+            return new Context(this);
         }
 
         public Context build(Controller<?, ?> controller) {

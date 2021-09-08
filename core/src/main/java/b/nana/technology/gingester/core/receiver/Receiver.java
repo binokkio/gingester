@@ -7,5 +7,4 @@ public interface Receiver<O> {
     void accept(Context.Builder contextBuilder, O output);
     void accept(Context context, O output, String targetId);
     void accept(Context.Builder contextBuilder, O output, String targetId);
-    Context build(Context.Builder contextBuilder);
 }

@@ -285,11 +285,8 @@ public final class Controller<I, O> {
 
 
 
-    /**
-     * Create a dummy controller just for holding an id.
-     */
-    public Controller(String id) {
-        this.id = id;
+    Controller() {
+        this.id = "__unknown__";
         configuration = null;
         gingester = null;
         transformer = null;

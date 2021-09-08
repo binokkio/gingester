@@ -21,7 +21,7 @@ class CreateTest {
         parameters.count = 3;
 
         Create create = new Create(parameters);
-        create.transform(new Context.Builder().build(null), null, (UniReceiver<String>) result::add);
+        create.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());
@@ -39,7 +39,7 @@ class CreateTest {
         parameters.count = 3;
 
         Create create = new Create(parameters);
-        create.transform(new Context.Builder().stash("target", "World").build(null), null, (UniReceiver<String>) result::add);
+        create.transform(new Context.Builder().stash("target", "World").build(), null, (UniReceiver<String>) result::add);
 
         assertEquals(3, result.size());
         assertEquals("Hello, World!", result.remove());

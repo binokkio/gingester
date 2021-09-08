@@ -14,7 +14,11 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 public class Unpack implements Transformer<InputStream, InputStream> {
@@ -32,55 +36,52 @@ public class Unpack implements Transformer<InputStream, InputStream> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws IOException {
+        unpack(context, in, out, new ArrayDeque<>(Collections.singleton(descriptionTemplate.render(context))));
+    }
 
-        String description = descriptionTemplate.render(context);
-        description = description.substring(description.lastIndexOf('/') + 1);
-        String descriptionLowerCase = description.toLowerCase(Locale.ENGLISH);
+    private void unpack(Context context, InputStream in, Receiver<InputStream> out, Deque<String> descriptions) throws IOException {
 
-        if (descriptionLowerCase.endsWith(".bz2")) {
-            transform(
-                    out.build(context.stash("description", trimEnd(description, 4))),
-                    new BZip2CompressorInputStream(in), out
-            );
-        } else if (descriptionLowerCase.endsWith(".gz")) {
-            transform(
-                    out.build(context.stash("description", trimEnd(description, 3))),
-                    new GZIPInputStream(in), out
-            );
-        } else if (descriptionLowerCase.endsWith(".xz")) {
-            transform(
-                    out.build(context.stash("description", trimEnd(description, 3))),
-                    new XZCompressorInputStream(in), out
-            );
-        } else if (descriptionLowerCase.endsWith(".tar")) {
+        String tailLowerCase = descriptions.getLast().toLowerCase(Locale.ENGLISH);
+
+        if (tailLowerCase.endsWith(".bz2")) {
+            Deque<String> copy = new ArrayDeque<>(descriptions);
+            copy.add(trim(descriptions.getLast(), 4));
+            unpack(context, new BZip2CompressorInputStream(in), out, copy);
+        } else if (tailLowerCase.endsWith(".gz")) {
+            Deque<String> copy = new ArrayDeque<>(descriptions);
+            copy.add(trim(descriptions.getLast(), 3));
+            unpack(context, new GZIPInputStream(in), out, copy);
+        } else if (tailLowerCase.endsWith(".xz")) {
+            Deque<String> copy = new ArrayDeque<>(descriptions);
+            copy.add(trim(descriptions.getLast(), 3));
+            unpack(context, new XZCompressorInputStream(in), out, copy);
+        } else if (tailLowerCase.endsWith(".tar")) {
             TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in);
             TarArchiveEntry tarArchiveEntry;
             while ((tarArchiveEntry = tarArchiveInputStream.getNextTarEntry()) != null) {
                 if (tarArchiveEntry.isFile()) {
-                    transform(
-                            out.build(context.stash("description", tarArchiveEntry.getName())),
-                            tarArchiveInputStream, out
-                    );
+                    Deque<String> copy = new ArrayDeque<>(descriptions);
+                    copy.add(tarArchiveEntry.getName());
+                    unpack(context, tarArchiveInputStream, out, copy);
                 }
             }
-        } else if (descriptionLowerCase.endsWith(".zip")) {
+        } else if (tailLowerCase.endsWith(".zip")) {
             ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(in);
             ZipArchiveEntry zipArchiveEntry;
             while ((zipArchiveEntry = zipArchiveInputStream.getNextZipEntry()) != null) {
                 if (!zipArchiveEntry.isDirectory()) {
-                    transform(
-                            out.build(context.stash("description", zipArchiveEntry.getName())),
-                            zipArchiveInputStream, out
-                    );
+                    Deque<String> copy = new ArrayDeque<>(descriptions);
+                    copy.add(zipArchiveEntry.getName());
+                    unpack(context, zipArchiveInputStream, out, copy);
                 }
             }
         } else {
-            out.accept(context, in);
+            out.accept(context.stash("description", descriptions.stream().skip(1).collect(Collectors.joining(" :: "))), in);
         }
     }
 
-    private String trimEnd(String input, int trim) {
-        return input.substring(0, input.length() - trim);
+    private String trim(String input, int trim) {
+        return input.substring(input.lastIndexOf('/') + 1, input.length() - trim);
     }
 
     public static class Parameters {

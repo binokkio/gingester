@@ -18,7 +18,7 @@ class FetchTest {
 
         Context context = new Context.Builder()
                 .stash("hello", "Hello, World!")
-                .build(null);
+                .build();
 
         Fetch fetch = new Fetch(new Fetch.Parameters("hello"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);
@@ -37,7 +37,7 @@ class FetchTest {
                                 "world", "Hello, World!"
                         )
                 )
-                .build(null);
+                .build();
 
         Fetch fetch = new Fetch(new Fetch.Parameters("hello/world"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);

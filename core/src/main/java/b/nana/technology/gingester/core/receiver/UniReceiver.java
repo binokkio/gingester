@@ -29,10 +29,5 @@ public interface UniReceiver<T> extends Receiver<T> {
         accept(output);
     }
 
-    @Override
-    default Context build(Context.Builder contextBuilder) {
-        return contextBuilder.build(null);
-    }
-
     void accept(T output);
 }

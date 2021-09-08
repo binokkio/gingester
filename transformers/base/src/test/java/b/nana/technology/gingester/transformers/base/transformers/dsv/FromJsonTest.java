@@ -23,7 +23,7 @@ class FromJsonTest {
         parameters.quote = '2';
 
         FromJson fromJson = new FromJson(parameters);
-        Context context = new Context.Builder().build(null);
+        Context context = new Context.Builder().build();
 
         AtomicReference<InputStream> output = new AtomicReference<>();
 

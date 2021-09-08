@@ -20,7 +20,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(new ToJson.Parameters());
         toJson.transform(
-                new Context.Builder().build(null),
+                new Context.Builder().build(),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/test.csv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -41,7 +41,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(null),
+                new Context.Builder().build(),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/test.dsv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -61,7 +61,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(null),
+                new Context.Builder().build(),
                 getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/test.csv"),
                 (UniReceiver<JsonNode>) results::add
         );

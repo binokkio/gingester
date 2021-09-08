@@ -20,7 +20,7 @@ class UnpackTest {
 
         Context context = new Context.Builder()
                 .stash(Map.of("description", "/tmp/test.tar.gz"))
-                .build(null);
+                .build();
 
         Queue<String> results = new ArrayDeque<>();
 

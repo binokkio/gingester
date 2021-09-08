@@ -51,11 +51,6 @@ final class ControllerReceiver<O> implements Receiver<O> {
         finish(context);
     }
 
-    @Override
-    public Context build(Context.Builder contextBuilder) {
-        return contextBuilder.build(controller);
-    }
-
     private Context maybeExtend(Context context) {
         if (!controller.syncs.isEmpty() && context.controller != controller) {
             return context.extend().build(controller);

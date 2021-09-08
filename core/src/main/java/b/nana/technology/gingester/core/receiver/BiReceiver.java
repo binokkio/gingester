@@ -11,7 +11,7 @@ public interface BiReceiver<T> extends Receiver<T> {
 
     @Override
     default void accept(Context.Builder contextBuilder, T output) {
-        accept(contextBuilder.build(null), output);
+        accept(contextBuilder.build(), output);
     }
 
     @Override
@@ -21,11 +21,6 @@ public interface BiReceiver<T> extends Receiver<T> {
 
     @Override
     default void accept(Context.Builder contextBuilder, T output, String targetId) {
-        accept(contextBuilder.build(null), output);
-    }
-
-    @Override
-    default Context build(Context.Builder contextBuilder) {
-        return contextBuilder.build(null);
+        accept(contextBuilder.build(), output);
     }
 }
