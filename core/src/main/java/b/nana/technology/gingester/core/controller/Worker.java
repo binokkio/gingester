@@ -66,18 +66,22 @@ public final class Worker extends Thread {
             if (finishTracker.isFullyIndicated()) {
                 if (finishTracker.acknowledge(this)) {
                     iterator.remove();
+                    controller.queue.add(() -> {
+                        if (context.controller.syncs.contains(controller)) {
+                            controller.finish(context);
+                            flush(controller);
+                        }
 
-                    if (context.controller.syncs.contains(controller)) {
-                        controller.finish(context);
-                        flush(controller);
-                    }
+                        controller.outgoing.values().forEach(controller -> controller.finish(this.controller, context));
 
-                    controller.outgoing.values().forEach(controller -> controller.finish(this.controller, context));
-                }
-
-                if (context.isSeed()) {
+                        if (context.isSeed()) {
+                            done = true;
+                        }
+                    });
+                } else if (context.isSeed()) {
                     done = true;
                 }
+
             }
         }
     }
