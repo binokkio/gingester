@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +43,14 @@ public final class Configuration {
 
     public String toJson() {
         try {
-            return OBJECT_WRITER.writeValueAsString(this);
+            JsonNode tree = OBJECT_MAPPER.valueToTree(this);
+            ArrayNode transformers = (ArrayNode) tree.get("transformers");
+            for (int i = 0; i < transformers.size(); i++) {
+                if (transformers.get(i).size() == 1) {
+                    transformers.set(i, transformers.get(i).get("transformer"));
+                }
+            }
+            return OBJECT_WRITER.writeValueAsString(tree);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
