@@ -9,7 +9,7 @@
     <parent>
         <artifactId>gingester</artifactId>
         <groupId>b.nana.technology.gingester</groupId>
-        <version>ng-0.0.8</version>
+        <version>ng-0.0.9</version>
     </parent>
 
     <artifactId>core</artifactId>
