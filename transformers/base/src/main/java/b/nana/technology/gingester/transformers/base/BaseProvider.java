@@ -30,6 +30,7 @@ public class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.json.ObjectToArray.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Path.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.ReplaceBytesWithPaths.class,
+                b.nana.technology.gingester.transformers.base.transformers.json.Stream.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Wrap.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Move.class,

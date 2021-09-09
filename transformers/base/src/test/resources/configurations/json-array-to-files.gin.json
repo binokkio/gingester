@@ -5,13 +5,13 @@
       "parameters": "/b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json"
     },
     {
-      "transformer": "Json.Path",
+      "transformer": "Json.Stream",
       "parameters": "$.array.*"
     },
     "Stash",
     "Json.ToInputStream",
     {
-      "transformer": "Json.Path",
+      "transformer": "Json.Stream",
       "parameters": "$.message"
     },
     "Json.ToInputStream",
