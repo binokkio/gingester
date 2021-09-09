@@ -9,27 +9,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class Move implements Transformer<Path, Path> {
+public class Link implements Transformer<Path, Path> {
 
     private final Context.Template pathTemplate;
     private final boolean mkdirs;
 
-    public Move(Parameters parameters) {
+    public Link(Parameters parameters) {
         pathTemplate = Context.newTemplate(parameters.path);
         mkdirs = parameters.mkdirs;
     }
 
     @Override
     public void transform(Context context, Path in, Receiver<Path> out) throws Exception {
-        
+
         Path target = Path.of(pathTemplate.render(context));
 
         Path parent = target.getParent();
         if (mkdirs && parent != null && !Files.exists(parent)) {
             Files.createDirectories(parent);
         }
-        
-        Files.move(in, target);
+
+        Files.createLink(target, in);
         out.accept(
                 context.stash(Map.of(
                         "description", target.toString(),
