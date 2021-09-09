@@ -80,8 +80,8 @@ final class ControllerReceiver<O> implements Receiver<O> {
 
     private void finish(Context context) {
         if (!controller.syncs.isEmpty()) {
+            ((Worker) Thread.currentThread()).flush();
             for (Controller<O, ?> controller : controller.outgoing.values()) {
-                ((Worker) Thread.currentThread()).flush(controller);
                 controller.finish(controller, context);
             }
         }

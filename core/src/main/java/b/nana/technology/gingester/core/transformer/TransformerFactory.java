@@ -99,8 +99,16 @@ public final class TransformerFactory {
     }
 
     private static List<Class<? extends Transformer<?, ?>>> getTransformersByName(String name) {
+        String[] queryParts = name.toLowerCase(Locale.ENGLISH).split("\\.");
         return TRANSFORMERS.stream()
-                .filter(c -> c.getCanonicalName().toLowerCase(Locale.ENGLISH).endsWith(name.toLowerCase(Locale.ENGLISH)))
+                .filter(c -> {
+                    String[] nameParts = c.getCanonicalName().toLowerCase(Locale.ENGLISH).split("\\.");
+                    if (queryParts.length > nameParts.length) return false;
+                    for (int i = 1; i <= queryParts.length; i++) {
+                        if (!queryParts[queryParts.length - i].equals(nameParts[nameParts.length - i])) return false;
+                    }
+                    return true;
+                })
                 .collect(Collectors.toList());
     }
 }

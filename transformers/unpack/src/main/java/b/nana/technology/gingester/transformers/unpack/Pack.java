@@ -88,6 +88,11 @@ public class Pack implements Transformer<byte[], Object> {
         if (passthrough != null) out.accept(context, in, passthrough);
     }
 
+    @Override
+    public void finish(Context context, Receiver<Object> out) throws Exception {
+        contextMap.remove(context).findFirst().orElseThrow().close();
+    }
+
     public static class Parameters {
 
         public String entry;

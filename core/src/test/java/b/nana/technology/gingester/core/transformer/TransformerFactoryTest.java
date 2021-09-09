@@ -8,19 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TransformerFactoryTest {
 
     @Test
-    void testAmbiguousShortName() {
-
-        Configuration configuration = new Configuration().transformer("e");
-
-        IllegalArgumentException e = assertThrows(
-                IllegalArgumentException.class,
-                () -> TransformerFactory.instance(configuration));
-
-        assertEquals("Multiple transformers named e: Emphasize, Generate", e.getMessage());
-    }
-
-    @Test
-    void testAmbiguousLongName() {
+    void testAmbiguousName() {
 
         Configuration configuration = new Configuration().transformer("Seed");
 

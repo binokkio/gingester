@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -85,6 +86,15 @@ public final class Configuration {
 
     public Configuration parameters(Object parameters) {
         this.parameters = OBJECT_MAPPER.valueToTree(parameters);
+        return this;
+    }
+
+    public Configuration jsonParameters(String json) {
+        try {
+            this.parameters = b.nana.technology.gingester.core.configuration.Configuration.OBJECT_READER.readTree(json);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
+        }
         return this;
     }
 

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public final class Controller<I, O> {
 
     private final Configuration configuration;
-    private final Gingester.ControllerInterface gingester;
+    final Gingester.ControllerInterface gingester;
     public final String id;
     public final Transformer<I, O> transformer;
 
@@ -188,15 +188,13 @@ public final class Controller<I, O> {
         try {
             FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker(this, context));
             if (finishTracker.indicate(from)) {
-                while (queue.size() >= maxQueueSize) queueNotFull.await();
+//                while (queue.size() >= maxQueueSize) queueNotFull.await();  // TODO deadlocks PackTest.testPackIndividually(), look into
                 queue.add((Worker.SyncJob) () -> {
                     finishTracker.indicate(this);
                     queueNotEmpty.signalAll();
                 });
                 queueNotEmpty.signal();
             }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
         } finally {
             lock.unlock();
         }

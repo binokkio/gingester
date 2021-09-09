@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 public final class Gingester {
 
+    private final Object lock = new Object();
     private final LinkedHashMap<String, Configuration> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private boolean report;
@@ -116,15 +117,25 @@ public final class Gingester {
         seedController.finish(null, seed);
 
         try {
+
+            synchronized (lock) {
+                while (controllers.values().stream().flatMap(c -> c.workers.stream()).anyMatch(w -> !w.done)) {
+                    lock.wait();
+                }
+            }
+
             for (Controller<?, ?> controller : controllers.values()) {
                 for (Worker worker : controller.workers) {
+                    worker.interrupt();
                     worker.join();
                 }
             }
+
             if (report) {
                 reporter.interrupt();
                 reporter.join();
             }
+
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
         }
@@ -178,6 +189,12 @@ public final class Gingester {
                 }
             }
             return false;
+        }
+
+        public void signalDone() {
+            synchronized (lock) {
+                lock.notify();
+            }
         }
     }
 

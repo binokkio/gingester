@@ -10,7 +10,7 @@ public final class Worker extends Thread {
 
     private final Controller<?, ?> controller;
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
-    private boolean done;
+    public boolean done;
 
     Worker(Controller<?, ?> controller, int id) {
         this.controller = controller;
@@ -19,6 +19,23 @@ public final class Worker extends Thread {
 
     @Override
     public void run() {
+
+        main();
+
+        // TODO temp fix for PipedInputStream detecting dead write ends too eagerly (imho)
+        controller.gingester.signalDone();
+        synchronized (this) {
+            try {
+                while (done) {
+                    this.wait();
+                }
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+    }
+
+    public void main() {
         while (true) {
             Job job;
             controller.lock.lock();
@@ -34,7 +51,7 @@ public final class Worker extends Thread {
                 controller.queueNotFull.signal();
                 if (job instanceof SyncJob) {
                     perform(job);
-                    continue;
+                    continue;  // TODO the unlock re-lock happening here is a bit unfortunate
                 }
             } catch (InterruptedException e) {
                 break;
@@ -66,22 +83,18 @@ public final class Worker extends Thread {
             if (finishTracker.isFullyIndicated()) {
                 if (finishTracker.acknowledge(this)) {
                     iterator.remove();
-                    controller.queue.add(() -> {
+                    controller.queue.add(() -> {  // not checking max queue size, worker is adding to their own queue
                         if (context.controller.syncs.contains(controller)) {
                             controller.finish(context);
-                            flush(controller);
+                            flush();
                         }
-
                         controller.outgoing.values().forEach(controller -> controller.finish(this.controller, context));
-
-                        if (context.isSeed()) {
-                            done = true;
-                        }
+                        if (context.isSeed()) done = true;
                     });
+                    controller.queueNotEmpty.signal();
                 } else if (context.isSeed()) {
                     done = true;
                 }
-
             }
         }
     }
@@ -98,26 +111,14 @@ public final class Worker extends Thread {
         boolean batchFull = batch.addAndIndicateFull(context, value);
 
         if (batchFull) {  // TODO also flush if batch is old, maybe have a volatile boolean and a helper thread that sets it true every second and triggers a check of batch.createdAt here
-            flush(target, batch);
+            target.accept(batch);
             batches.remove(target);
         }
     }
 
-    private <T> void flush() {
-        batches.forEach((target, batch) -> flush(
-                (Controller<T, ?>) target,
-                (Batch<T>) batch
-        ));
+    <T> void flush() {
+        batches.forEach((target, batch) -> ((Controller<T, ?>) target).accept((Batch<T>) batch));
         batches.clear();
-    }
-
-    <O> void flush(Controller<O, ?> target) {
-        Batch<O> batch = (Batch<O>) batches.remove(target);
-        if (batch != null) target.accept(batch);
-    }
-
-    private <O> void flush(Controller<O, ?> target, Batch<O> batch) {
-        target.accept(batch);
     }
 
     interface Job {
