@@ -200,7 +200,9 @@ public class Statistics implements Transformer<JsonNode, JsonNode> {
 
         private void handleNumericalValue(double numericalValue) {
             numerical.addValue(numericalValue);
-            histogram.addValue(numericalValue);
+            if (!nodeConfiguration.histogramConfiguration.disabled) {
+                histogram.addValue(numericalValue);
+            }
         }
 
         public ObjectNode getJsonValue() {
@@ -244,6 +246,8 @@ public class Statistics implements Transformer<JsonNode, JsonNode> {
                 numericalNode.put("mean", numerical.getMean());
                 numericalNode.put("variance", numerical.getVariance());
                 numericalNode.put("standardDeviation", numerical.getStandardDeviation());
+
+                if (nodeConfiguration.histogramConfiguration.disabled) return;
 
                 // TODO maybe add getBinByRank(0..9) to numericalNode
 

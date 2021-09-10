@@ -9,12 +9,14 @@
       "parameters": "$.array.*"
     },
     "Stash",
-    "Json.ToInputStream",
+    "Json.ToBytes",
+    "Bytes.ToInputStream",
     {
       "transformer": "Json.Stream",
       "parameters": "$.message"
     },
-    "Json.ToInputStream",
+    "Json.ToBytes",
+    "Bytes.ToInputStream",
     {
       "transformer": "Path.Write",
       "parameters": "${tempDir}/message-${stash.id}.txt"

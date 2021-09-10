@@ -42,6 +42,9 @@ public class Pack implements Transformer<byte[], Object> {
             case "gzip":
                 return GZIPOutputStream::new;
 
+            case "none":
+                return outputStream -> outputStream;
+
             case "xz":
                 return XZCompressorOutputStream::new;
 
@@ -52,7 +55,7 @@ public class Pack implements Transformer<byte[], Object> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.maxWorkers = 1;
+
         controls.requireAsync = true;
         controls.requireDownstreamAsync = true;
 
@@ -82,9 +85,11 @@ public class Pack implements Transformer<byte[], Object> {
         TarArchiveOutputStream tar = contextMap.get(context);
         TarArchiveEntry entry = new TarArchiveEntry(entryTemplate.render(context));
         entry.setSize(in.length);
-        tar.putArchiveEntry(entry);
-        tar.write(in);
-        tar.closeArchiveEntry();
+        synchronized (tar) {
+            tar.putArchiveEntry(entry);
+            tar.write(in);
+            tar.closeArchiveEntry();
+        }
         if (passthrough != null) out.accept(context, in, passthrough);
     }
 
