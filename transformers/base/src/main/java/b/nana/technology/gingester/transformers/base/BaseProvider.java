@@ -15,6 +15,7 @@ public class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
+                b.nana.technology.gingester.transformers.base.transformers.exec.Exec.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Drain.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Gunzip.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Split.class,
