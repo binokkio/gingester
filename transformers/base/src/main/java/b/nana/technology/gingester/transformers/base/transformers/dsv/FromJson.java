@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +38,7 @@ public class FromJson implements Transformer<JsonNode, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireDownstreamAsync = true;
+        controls.requireOutgoingAsync();
     }
 
     @Override

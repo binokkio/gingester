@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
 public interface Transformer<I, O> {

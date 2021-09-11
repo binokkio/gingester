@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.main;
 
-import b.nana.technology.gingester.core.configuration.Configuration;
+import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.Test;
@@ -14,96 +15,96 @@ class MainTest {
 
     @Test
     void testTransformer() {
-        Configuration configuration = Main.parseArgs(createArgs("-t Hello"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals(Collections.singletonList("__maybe_next__"), configuration.transformers.get(0).getLinks());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t Hello"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
     }
 
     @Test
     void testBreak() {
-        Configuration configuration = Main.parseArgs(createArgs("-t Hello -b -t World"));
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t Hello -b -t World"));
         assertEquals(1, configuration.transformers.size());
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
     }
 
     @Test
     void testTransformerWithId() {
-        Configuration configuration = Main.parseArgs(createArgs("-t HelloId:Hello"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals("HelloId", configuration.transformers.get(0).getId());
-        assertEquals(Collections.singletonList("__maybe_next__"), configuration.transformers.get(0).getLinks());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t HelloId:Hello"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals("HelloId", configuration.transformers.get(0).getId().orElseThrow());
     }
 
     @Test
     void testTerminalTransformer() {
-        Configuration configuration = Main.parseArgs(createArgs("-t Hello --"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals(Collections.emptyList(), configuration.transformers.get(0).getLinks());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t Hello --"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals(Optional.of(Collections.emptyList()), configuration.transformers.get(0).getLinks());
     }
 
     @Test
     void testSyncToTransformer() {
-        Configuration configuration = Main.parseArgs(createArgs("-stt Hello"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals(Collections.singletonList("__seed__"), configuration.transformers.get(0).getSyncs());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-stt Hello"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals(Collections.singletonList("__seed__"), configuration.transformers.get(0).getSyncs().orElseThrow());
     }
 
     @Test
     void testSyncFromTransformer() {
-        Configuration configuration = Main.parseArgs(createArgs("-sft Hello -stt World"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals(Collections.emptyList(), configuration.transformers.get(0).getSyncs());
-        assertEquals("World", configuration.transformers.get(1).getTransformer());
-        assertEquals(Collections.singletonList("Hello"), configuration.transformers.get(1).getSyncs());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-sft Hello -stt World"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals(Optional.empty(), configuration.transformers.get(0).getSyncs());
+        assertEquals("World", configuration.transformers.get(1).getName().orElseThrow());
+        assertEquals(Collections.singletonList("Hello"), configuration.transformers.get(1).getSyncs().orElseThrow());
     }
 
     @Test
     void testSyncFromTransformerWithId() {
-        Configuration configuration = Main.parseArgs(createArgs("-sft HelloId:Hello -stt World"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals("HelloId", configuration.transformers.get(0).getId());
-        assertEquals(Collections.emptyList(), configuration.transformers.get(0).getSyncs());
-        assertEquals("World", configuration.transformers.get(1).getTransformer());
-        assertEquals(Collections.singletonList("HelloId"), configuration.transformers.get(1).getSyncs());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-sft HelloId:Hello -stt World"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals("HelloId", configuration.transformers.get(0).getId().orElseThrow());
+        assertEquals(Optional.empty(), configuration.transformers.get(0).getSyncs());
+        assertEquals("World", configuration.transformers.get(1).getName().orElseThrow());
+        assertEquals(Collections.singletonList("HelloId"), configuration.transformers.get(1).getSyncs().orElseThrow());
     }
 
     @Test
     void testLinks() {
-        Configuration configuration = Main.parseArgs(createArgs("-t Hello -l A B C"));
-        assertEquals("Hello", configuration.transformers.get(0).getTransformer());
-        assertEquals(Arrays.asList("A", "B", "C"), configuration.transformers.get(0).getLinks());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t Hello -l A B C"));
+        assertEquals("Hello", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals(Arrays.asList("A", "B", "C"), configuration.transformers.get(0).getLinks().orElseThrow());
     }
 
     @Test
     void testFetch() {
-        Configuration configuration = Main.parseArgs(createArgs("-f"));
-        assertEquals("Fetch", configuration.transformers.get(0).getTransformer());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-f"));
+        assertEquals("Fetch", configuration.transformers.get(0).getName().orElseThrow());
     }
 
     @Test
     void testStash() {
-        Configuration configuration = Main.parseArgs(createArgs("-s"));
-        assertEquals("Stash", configuration.transformers.get(0).getTransformer());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-s"));
+        assertEquals("Stash", configuration.transformers.get(0).getName().orElseThrow());
     }
 
     @Test
     void testSwap() {
-        Configuration configuration = Main.parseArgs(createArgs("-w"));
-        assertEquals("Swap", configuration.transformers.get(0).getTransformer());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-w"));
+        assertEquals("Swap", configuration.transformers.get(0).getName().orElseThrow());
     }
 
     @Test
     void testJsonParameters() {
-        Configuration configuration = Main.parseArgs(createArgs("-t Hello {\"target\":\"World!\"}"));
-        assertTrue(configuration.transformers.get(0).getParameters() instanceof ObjectNode);
-        assertEquals("{\"target\":\"World!\"}", configuration.transformers.get(0).getParameters().toString());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t Hello {\"target\":\"World!\"}"));
+        JsonNode parameters = configuration.transformers.get(0).getParameters().orElseThrow();
+        assertTrue(parameters instanceof ObjectNode);
+        assertEquals("{\"target\":\"World!\"}", parameters.toString());
     }
 
     @Test
     void testStringParameters() {
-        Configuration configuration = Main.parseArgs(createArgs("-t Hello World!"));
-        assertTrue(configuration.transformers.get(0).getParameters() instanceof TextNode);
-        assertEquals("World!", configuration.transformers.get(0).getParameters().asText());
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-t Hello World!"));
+        JsonNode parameters = configuration.transformers.get(0).getParameters().orElseThrow();
+        assertTrue(parameters instanceof TextNode);
+        assertEquals("World!", parameters.asText());
     }
 
     private static String[] createArgs(String cli) {

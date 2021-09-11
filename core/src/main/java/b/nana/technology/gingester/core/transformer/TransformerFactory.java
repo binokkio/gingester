@@ -1,8 +1,8 @@
 package b.nana.technology.gingester.core.transformer;
 
-import b.nana.technology.gingester.core.controller.Configuration;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.lang.reflect.Constructor;
@@ -24,13 +24,17 @@ public final class TransformerFactory {
 
     private TransformerFactory() {}
 
-    public static <I, O> Transformer<I, O> instance(Configuration configuration) {
+    public static <I, O> Transformer<I, O> instance(String name) {
+        return instance(name, null);
+    }
+
+    public static <I, O> Transformer<I, O> instance(String name, JsonNode jsonParameters) {
 
         List<Class<? extends Transformer<?, ?>>> transformerClasses =
-                getTransformersByName(configuration.getTransformer().toLowerCase(Locale.ENGLISH));
+                getTransformersByName(name.toLowerCase(Locale.ENGLISH));
 
         if (transformerClasses.isEmpty()) {
-            throw new IllegalArgumentException("No transformer named " + configuration.getTransformer());
+            throw new IllegalArgumentException("No transformer named " + name);
         } else if (transformerClasses.size() > 1) {
             String uniqueNames = transformerClasses.stream()
                     .map(TransformerFactory::getUniqueName)
@@ -38,14 +42,14 @@ public final class TransformerFactory {
                     .collect(Collectors.joining(", "));
             throw new IllegalArgumentException(String.format(
                     "Multiple transformers named %s: %s",
-                    configuration.getTransformer(),
+                    name,
                     uniqueNames
             ));
         }
 
         Class<? extends Transformer<I, O>> transformerClass = (Class<? extends Transformer<I, O>>) transformerClasses.get(0);
 
-        if (configuration.getParameters() == null) {
+        if (jsonParameters == null) {
             try {
                 return transformerClass.getConstructor().newInstance();
             } catch (NoSuchMethodException e) {
@@ -64,9 +68,9 @@ public final class TransformerFactory {
         Class<?> parameterClass = constructor.getParameterTypes()[0];
 
         Object parameters;
-        if (configuration.getParameters() != null) {
+        if (jsonParameters != null) {
             try {
-                parameters = OBJECT_MAPPER.treeToValue(configuration.getParameters(), parameterClass);
+                parameters = OBJECT_MAPPER.treeToValue(jsonParameters, parameterClass);
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException("Failed to map json parameters to " + parameterClass, e);
             }

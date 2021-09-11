@@ -32,12 +32,10 @@ class PackTest {
         gingester.configure(c -> c
                 .transformer("Pack")
                 .syncs(Collections.singletonList("String.Create"))
-                .async(true)
                 .parameters("hello.txt"));
 
         gingester.configure(c -> c
                 .transformer("Path.Write")
-                .async(true)
                 .parameters(tempDir.resolve("result-${description}.tar.gz").toString()));
 
         gingester.run();
@@ -77,12 +75,10 @@ class PackTest {
         gingester.configure(c -> c
                 .transformer("Pack")
                 .syncs(Collections.singletonList("__seed__"))
-                .async(true)
                 .parameters("hello-${description}.txt"));
 
         gingester.configure(c -> c
                 .transformer("Path.Write")
-                .async(true)
                 .parameters(tempDir.resolve("result.tar.gz").toString()));
 
         gingester.run();

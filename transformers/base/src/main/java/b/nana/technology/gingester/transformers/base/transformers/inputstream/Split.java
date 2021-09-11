@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.inputstream.Splitter;
@@ -21,7 +21,7 @@ public class Split implements Transformer<InputStream, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireDownstreamSync = true;
+        controls.requireOutgoingSync();
     }
 
     @Override

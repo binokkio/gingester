@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public final class Configuration {
+public final class GingesterConfiguration {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
@@ -28,15 +28,15 @@ public final class Configuration {
     public static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader();
     public static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writer(new Printer());
 
-    public static Configuration fromJson(InputStream inputStream) throws IOException {
-        Objects.requireNonNull(inputStream, "Configuration.fromJson called with null InputStream");
-        return OBJECT_MAPPER.readValue(inputStream, Configuration.class);
+    public static GingesterConfiguration fromJson(InputStream inputStream) throws IOException {
+        Objects.requireNonNull(inputStream, "GingesterConfiguration.fromJson called with null InputStream");
+        return OBJECT_MAPPER.readValue(inputStream, GingesterConfiguration.class);
     }
 
     public Boolean report;
-    public List<b.nana.technology.gingester.core.controller.Configuration> transformers = new ArrayList<>();
+    public List<TransformerConfiguration> transformers = new ArrayList<>();
 
-    public void append(Configuration append) {
+    public void append(GingesterConfiguration append) {
         if (append.report != null) report = append.report;
         transformers.addAll(append.transformers);
     }

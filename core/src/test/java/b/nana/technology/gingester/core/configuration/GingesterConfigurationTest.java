@@ -9,14 +9,14 @@ import java.util.Queue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ConfigurationTest {
+class GingesterConfigurationTest {
 
     @Test
     void testEmphasizeQuestionMinimal() throws IOException {
 
         Gingester gingester = new Gingester();
 
-        Configuration
+        GingesterConfiguration
                 .fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-minimal.json"))
                 .applyTo(gingester);
 
@@ -33,7 +33,7 @@ class ConfigurationTest {
 
         Gingester gingester = new Gingester();
 
-        Configuration
+        GingesterConfiguration
                 .fromJson(getClass().getResourceAsStream("/hello-world-emphasize-question-verbose.json"))
                 .applyTo(gingester);
 
@@ -50,7 +50,7 @@ class ConfigurationTest {
 
         Gingester gingester = new Gingester();
 
-        Configuration
+        GingesterConfiguration
                 .fromJson(getClass().getResourceAsStream("/hello-world-diamond.json"))
                 .applyTo(gingester);
 

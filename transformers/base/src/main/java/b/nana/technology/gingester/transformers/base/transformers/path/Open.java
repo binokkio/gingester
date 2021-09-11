@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
@@ -17,7 +17,7 @@ public class Open implements Transformer<Path, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireDownstreamSync = true;
+        controls.requireOutgoingSync();
     }
 
     @Override

@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.Configuration;
+import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.transformers.Stash;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +26,7 @@ class JsonArrayToFilesTest {
         stashParameters.value = tempDir;
         gingester.add(new Stash(stashParameters));
 
-        Configuration
+        GingesterConfiguration
                 .fromJson(getClass().getResourceAsStream("/configurations/json-array-to-files.gin.json"))
                 .applyTo(gingester)
                 .run();

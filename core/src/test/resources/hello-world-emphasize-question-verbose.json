@@ -8,7 +8,6 @@
         "string": "Hello, World",
         "count": 1
       },
-      "async": false,
       "links": [
         "AddEmphasis"
       ]
@@ -16,15 +15,13 @@
     {
       "id": "AddEmphasis",
       "transformer": "Emphasize",
-      "async": false,
       "links": [
         "AddQuestion"
       ]
     },
     {
       "id": "AddQuestion",
-      "transformer": "Question",
-      "async": false
+      "transformer": "Question"
     }
   ]
 }

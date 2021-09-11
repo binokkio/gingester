@@ -3,25 +3,22 @@ package b.nana.technology.gingester.core.controller;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
+import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
-    private final Configuration configuration;
+    private final ControllerConfiguration<I, O> configuration;
     final Gingester.ControllerInterface gingester;
     public final String id;
     public final Transformer<I, O> transformer;
 
-    private final SetupControls setupControls;
     final boolean async;
     private final int maxQueueSize;
     private final int maxWorkers;
@@ -46,45 +43,28 @@ public final class Controller<I, O> {
     public final Counter delt;
     public final Counter acks;
 
-    public Controller(Configuration configuration, Gingester.ControllerInterface gingester) {
+    public Controller(ControllerConfiguration<I, O> configuration, Gingester.ControllerInterface gingester) {
 
         this.configuration = configuration;
         this.gingester = gingester;
-        this.id = gingester.getId();
-        this.transformer = (Transformer<I, O>) configuration.getInstance().orElseGet(() -> TransformerFactory.instance(configuration));
 
-        setupControls = new SetupControls();
-        transformer.setup(setupControls);
-
-        async = configuration.getAsync();
-        if (setupControls.requireAsync && !async) throw new IllegalArgumentException(id + " must be configured async");
-        maxBatchSize = checkMax(setupControls.maxBatchSize, configuration.getMaxBatchSize(), "maxBatchSize");
-        maxQueueSize = checkMax(setupControls.maxQueueSize, configuration.getMaxQueueSize(), "maxQueueSize");
-        maxWorkers = checkMax(setupControls.maxWorkers, configuration.getMaxWorkers(), "maxWorkers");
-        report = configuration.report() != null ? configuration.report() : (setupControls.links.isEmpty() && configuration.getLinks().equals(Collections.singletonList("__maybe_next__")) && !gingester.hasNext());
-        acks = setupControls.acksCounter;
+        id = configuration.getId();
+        transformer = configuration.getTransformer();
+        async = configuration.getMaxWorkers().orElse(0) > 0;
+        maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
+        maxQueueSize = configuration.getMaxQueueSize().orElse(100);
+        maxWorkers = configuration.getMaxWorkers().orElse(1);
+        report = configuration.getReport();
+        acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
-
-        if (setupControls.maxBatchSize > 0 && maxBatchSize > setupControls.maxBatchSize)
-            throw new IllegalArgumentException("`maxBatchSize` for " + id + " must not be higher than " + setupControls.maxBatchSize);
-    }
-
-    private int checkMax(int max, int configured, String field) {
-        if (max > 0 && configured > max)
-            throw new IllegalArgumentException("`" + field + "` for " + id + " must not be higher than " + max);
-        return configured;
     }
 
     public List<String> getLinks() {
-        return setupControls.links.isEmpty() ?
-                configuration.getLinks() :
-                setupControls.links;
+        return configuration.getLinks();
     }
 
     public List<String> getSyncs() {
-        return setupControls.syncs.isEmpty() ?
-                configuration.getSyncs() :
-                setupControls.syncs;
+        return configuration.getSyncs();
     }
 
     public List<String> getExcepts() {
@@ -92,30 +72,9 @@ public final class Controller<I, O> {
     }
 
     public void initialize() {
-
         getLinks().forEach(linkId -> gingester.getController(linkId).ifPresent(controller -> outgoing.put(linkId, (Controller<O, ?>) controller)));
         getSyncs().forEach(syncId -> gingester.getController(syncId).ifPresent(sync -> sync.syncs.add(this)));
         getExcepts().forEach(exceptId -> gingester.getController(exceptId).ifPresent(excepts::add));
-
-        if (setupControls.requireDownstreamSync) {
-            String notSync = filterAndName(outgoing.values(), c -> c.async);
-            if (!notSync.isEmpty()) {
-                throw new IllegalStateException(String.format(
-                        "%s requires downstream sync but links to async %s",
-                        id, notSync
-                ));
-            }
-        }
-
-        if (setupControls.requireDownstreamAsync) {
-            String notAsync = filterAndName(outgoing.values(), c -> !c.async);
-            if (!notAsync.isEmpty()) {
-                throw new IllegalStateException(String.format(
-                        "%s requires downstream async but links to sync %s",
-                        id, notAsync
-                ));
-            }
-        }
     }
 
     public void discover() {
@@ -273,22 +232,11 @@ public final class Controller<I, O> {
 
 
 
-    private String filterAndName(Collection<Controller<O, ?>> controllers, Predicate<Controller<O, ?>> filter) {
-        return controllers.stream()
-                .filter(filter)
-                .map(c -> c.id)
-                .sorted()
-                .collect(Collectors.joining(", "));
-    }
-
-
-
     Controller() {
-        this.id = "__unknown__";
         configuration = null;
         gingester = null;
+        id = "__unknown__";
         transformer = null;
-        setupControls = null;
         async = false;
         maxQueueSize = 0;
         maxWorkers = 0;

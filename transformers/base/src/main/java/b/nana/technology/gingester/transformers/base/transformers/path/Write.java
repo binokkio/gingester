@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,7 +34,7 @@ public class Write implements Transformer<InputStream, Path> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireDownstreamAsync = emitEarly;
+        if (emitEarly) controls.requireOutgoingAsync();
     }
 
     @Override

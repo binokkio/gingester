@@ -26,7 +26,7 @@ class AsyncTest {
 
         gingester.configure(c -> c
                 .transformer(result::set)
-                .async(true));
+                .maxWorkers(1));
 
         gingester.run();
 

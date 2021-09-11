@@ -1,17 +1,13 @@
 package b.nana.technology.gingester.transformers.base.transformers.exec;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Exec implements Transformer<InputStream, InputStream> {
 
@@ -27,7 +23,7 @@ public class Exec implements Transformer<InputStream, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireDownstreamAsync = true;
+        controls.requireOutgoingAsync();
     }
 
     @Override

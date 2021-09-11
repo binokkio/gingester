@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.resource;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -18,7 +18,7 @@ public class Open implements Transformer<Object, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireDownstreamSync = true;
+        controls.requireOutgoingSync();
     }
 
     @Override

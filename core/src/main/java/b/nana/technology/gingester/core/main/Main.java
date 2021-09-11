@@ -1,7 +1,8 @@
 package b.nana.technology.gingester.core.main;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.Configuration;
+import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
+import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -24,22 +25,22 @@ public final class Main {
     private Main() {}
 
     public static void main(String[] args) {
-        Configuration configuration = parseArgs(args);
+        GingesterConfiguration configuration = parseArgs(args);
         Gingester gingester = new Gingester();
         configuration.applyTo(gingester);
         gingester.run();
     }
 
-    static Configuration parseArgs(String[] args) {
+    static GingesterConfiguration parseArgs(String[] args) {
 
         boolean break_ = false;
         boolean printConfig = false;
 
-        Configuration configuration = new Configuration();
+        GingesterConfiguration configuration = new GingesterConfiguration();
         configuration.report = true;
 
         String syncFrom = "__seed__";
-        b.nana.technology.gingester.core.controller.Configuration previous = null;
+        TransformerConfiguration previous = null;
 
         for (int i = 0; i < args.length; i++) {
 
@@ -68,7 +69,7 @@ public final class Main {
                 case "--from-config":
                 case "--file-config":
                     try {
-                        Configuration append = Configuration.fromJson(Files.newInputStream(Paths.get(args[++i])));
+                        GingesterConfiguration append = GingesterConfiguration.fromJson(Files.newInputStream(Paths.get(args[++i])));
                         configuration.append(append);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
@@ -84,7 +85,7 @@ public final class Main {
                                 .filter(Objects::nonNull)
                                 .findFirst()
                                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
-                        Configuration append = Configuration.fromJson(resourceStream);
+                        GingesterConfiguration append = GingesterConfiguration.fromJson(resourceStream);
                         configuration.append(append);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
@@ -112,7 +113,6 @@ public final class Main {
                 case "-stt":
                 case "--sync-to-transformer":
                     syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
-
                 case "-f":
                 case "--fetch":
                 case "-s":
@@ -123,47 +123,42 @@ public final class Main {
                 case "-t":
                 case "--transformer":
 
-                    b.nana.technology.gingester.core.controller.Configuration controller = new b.nana.technology.gingester.core.controller.Configuration();
+                    TransformerConfiguration transformer = new TransformerConfiguration();
 
                     if (fsw) {
-                        if (args[i].contains("f")) controller.transformer("Fetch");
-                        else if (args[i].contains("w")) controller.transformer("Swap");
-                        else controller.transformer("Stash");
+                        if (args[i].contains("f")) transformer.transformer("Fetch");
+                        else if (args[i].contains("w")) transformer.transformer("Swap");
+                        else transformer.transformer("Stash");
                     } else {
                         String next = args[++i];
                         if (next.matches("\\d+")) {
-                            controller.async(true);
-                            controller.maxWorkers(Integer.parseInt(next));
+                            transformer.maxWorkers(Integer.parseInt(next));
                             next = args[++i];
                         }
                         String[] parts = next.split(":");
                         if (parts.length == 1) {
-                            controller.transformer(parts[0]);
+                            transformer.transformer(parts[0]);
                         } else {
-                            controller.id(parts[0]);
-                            controller.transformer(parts[1]);
+                            transformer.id(parts[0]);
+                            transformer.transformer(parts[1]);
                         }
                     }
 
                     if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
-                        try {
-                            controller.parameters(Configuration.OBJECT_READER.readTree(args[++i]));
-                        } catch (JsonProcessingException e) {
-                            controller.parameters(JsonNodeFactory.instance.textNode(args[i]));
-                        }
+                        transformer.jsonParameters(args[++i]);
                     }
 
                     if (markSyncFrom) {
-                        syncFrom = controller.getId() != null ? controller.getId() : controller.getTransformer();
+                        syncFrom = transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given")));
                     } else if (syncTo) {
-                        controller.syncs(List.of(syncFrom));
+                        transformer.syncs(List.of(syncFrom));
                     }
 
-                    previous = controller;
+                    previous = transformer;
 
                     if (break_) break;
 
-                    configuration.transformers.add(controller);
+                    configuration.transformers.add(transformer);
 
                     break;
 

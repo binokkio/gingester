@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.unpack;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
-import b.nana.technology.gingester.core.controller.SetupControls;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Arrays;
 import java.util.zip.GZIPOutputStream;
 
 public class Pack implements Transformer<byte[], Object> {
@@ -55,14 +56,10 @@ public class Pack implements Transformer<byte[], Object> {
 
     @Override
     public void setup(SetupControls controls) {
-
-        controls.requireAsync = true;
-        controls.requireDownstreamAsync = true;
-
+        controls.requireOutgoingAsync();
         if (passthrough != null) {
             if (link == null) throw new IllegalStateException("Given `passthrough` but not `link`");
-            controls.links.add(link);
-            controls.links.add(passthrough);
+            controls.links(Arrays.asList(link, passthrough));
         }
     }
 
