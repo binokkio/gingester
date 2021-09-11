@@ -1,8 +1,8 @@
 package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,7 +18,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class FromJson implements Transformer<JsonNode, InputStream> {
 
@@ -44,16 +43,13 @@ public class FromJson implements Transformer<JsonNode, InputStream> {
     @Override
     public void prepare(Context context, Receiver<InputStream> out) {
         State state = new State(writer);
-        states.put(context, () -> state);
+        states.put(context, state);
         out.accept(context, state.pipedInputStream);
     }
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<InputStream> out) throws Exception {
-        State state = states.get(context);
-        state.lock.lock();
-
-        try {
+        states.act(context, state -> {
 
             if (!state.headerWritten) {
                 List<String> header = new ArrayList<>(in.size());
@@ -65,20 +61,16 @@ public class FromJson implements Transformer<JsonNode, InputStream> {
             List<String> row = new ArrayList<>(in.size());
             in.iterator().forEachRemaining(jsonNode -> row.add(jsonNode.textValue()));
             state.writer.write(row);
-
-        } finally {
-            state.lock.unlock();
-        }
+        });
     }
 
     @Override
     public void finish(Context context, Receiver<InputStream> out) throws Exception {
-        states.remove(context).findFirst().orElseThrow().writer.close();
+        states.remove(context).writer.close();
     }
 
     private static class State {
 
-        private final ReentrantLock lock = new ReentrantLock();
         private final SequenceWriter writer;
         private final PipedInputStream pipedInputStream;
         private boolean headerWritten;

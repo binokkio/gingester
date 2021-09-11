@@ -1,8 +1,8 @@
 package b.nana.technology.gingester.transformers.unpack;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -69,7 +69,7 @@ public class Pack implements Transformer<byte[], Object> {
         PipedInputStream pipedInputStream = new PipedInputStream();
         pipedOutputStream.connect(pipedInputStream);
         TarArchiveOutputStream tar = new TarArchiveOutputStream(compressor.wrap(pipedOutputStream));
-        contextMap.put(context, () -> tar);
+        contextMap.put(context, tar);
         if (link != null) {
             out.accept(context, pipedInputStream, link);
         } else {
@@ -79,20 +79,19 @@ public class Pack implements Transformer<byte[], Object> {
 
     @Override
     public void transform(Context context, byte[] in, Receiver<Object> out) throws Exception {
-        TarArchiveOutputStream tar = contextMap.get(context);
         TarArchiveEntry entry = new TarArchiveEntry(entryTemplate.render(context));
         entry.setSize(in.length);
-        synchronized (tar) {
+        contextMap.act(context, tar -> {
             tar.putArchiveEntry(entry);
             tar.write(in);
             tar.closeArchiveEntry();
-        }
+        });
         if (passthrough != null) out.accept(context, in, passthrough);
     }
 
     @Override
     public void finish(Context context, Receiver<Object> out) throws Exception {
-        contextMap.remove(context).findFirst().orElseThrow().close();
+        contextMap.remove(context).close();
     }
 
     public static class Parameters {

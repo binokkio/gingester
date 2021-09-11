@@ -61,8 +61,7 @@ public class Statistics implements Transformer<JsonNode, JsonNode> {
 
     @Override
     public void prepare(Context context, Receiver<JsonNode> out) {
-        NodeStatistics nodeStatistics = new NodeStatistics(null, null, "");
-        contextMap.put(context, () -> nodeStatistics);  // TODO different instances per thread, reduce in `finish`
+        contextMap.put(context, new NodeStatistics(null, null, ""));  // TODO use ContextMapReduce
     }
 
     @Override
@@ -73,7 +72,7 @@ public class Statistics implements Transformer<JsonNode, JsonNode> {
     @Override
     public void finish(Context context, Receiver<JsonNode> out) {
         ObjectNode result = objectMapper.createObjectNode();
-        add(result, contextMap.remove(context).findFirst().orElseThrow());
+        add(result, contextMap.remove(context));
         out.accept(context.stash("description", "statistics"), result);
     }
 

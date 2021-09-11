@@ -21,27 +21,27 @@ public class Statistics implements Transformer<String, JsonNode> {
 
     @Override
     public void prepare(Context context, Receiver<JsonNode> out) {
-        FrequencyWrapper frequencyWrapper = new FrequencyWrapper();
-        contextMap.put(context, () -> frequencyWrapper);  // TODO different instances per thread, reduce in `finish`
+        contextMap.put(context, new FrequencyWrapper());  // TODO use ContextMapReduce
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<JsonNode> out) {
-        FrequencyWrapper frequencyWrapper = contextMap.get(context);
-        Frequency frequency = frequencyWrapper.frequency;
-        if (!frequencyWrapper.limitReached) {
-            frequency.addValue(in);
-            if (frequency.getUniqueCount() == frequencyLimit) {
-                frequencyWrapper.limitReached = true;
+    public void transform(Context context, String in, Receiver<JsonNode> out) throws Exception {
+        contextMap.act(context, frequencyWrapper -> {
+            Frequency frequency = frequencyWrapper.frequency;
+            if (!frequencyWrapper.limitReached) {
+                frequency.addValue(in);
+                if (frequency.getUniqueCount() == frequencyLimit) {
+                    frequencyWrapper.limitReached = true;
+                }
+            } else if (frequency.getCount(in) > 0) {
+                frequency.addValue(in);
             }
-        } else if (frequency.getCount(in) > 0) {
-            frequency.addValue(in);
-        }
+        });
     }
 
     @Override
     public void finish(Context context, Receiver<JsonNode> out) {
-        FrequencyWrapper frequencyWrapper = contextMap.remove(context).findFirst().orElseThrow();
+        FrequencyWrapper frequencyWrapper = contextMap.remove(context);
         out.accept(
                 context.stash("description", "statistics"),
                 FrequencyNode.createFrequencyNode(
