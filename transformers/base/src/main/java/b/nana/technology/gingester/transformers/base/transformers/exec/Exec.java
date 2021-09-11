@@ -7,9 +7,15 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Exec implements Transformer<InputStream, InputStream> {
+
+//    private final ExecutorService errDrainer = Executors.newSingleThreadExecutor();
 
     private final Context.Template commandTemplate;
     private final Context.Template workDirTemplate;
@@ -30,10 +36,19 @@ public class Exec implements Transformer<InputStream, InputStream> {
         String command = commandTemplate.render(context);
 
         Runtime runtime = Runtime.getRuntime();
-        Process process = runtime.exec(command);
+        Process process = runtime.exec(command, null, new File(workDirTemplate.render(context)).getAbsoluteFile());
 
         out.accept(context.stash("description", command), process.getInputStream());
-        // TODO handle process.getErrorStream(), maybe emit both to different links?
+
+        // TODO emit stderr instead, to a transformer specified by a parameter
+//        InputStream err = process.getErrorStream();
+//        errDrainer.submit(() -> {
+//            try {
+//                System.err.println(new String(err.readAllBytes(), StandardCharsets.UTF_8));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        });
 
         in.transferTo(process.getOutputStream());
 
