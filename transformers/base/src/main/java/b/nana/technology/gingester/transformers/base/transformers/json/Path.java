@@ -11,8 +11,6 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 
-import java.util.List;
-
 public class Path implements Transformer<JsonNode, JsonNode> {
 
     private static final Configuration CONFIGURATION = Configuration.builder()

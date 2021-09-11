@@ -1,7 +1,10 @@
 package b.nana.technology.gingester.core.freemarker;
 
 import b.nana.technology.gingester.core.controller.Context;
-import freemarker.template.*;
+import freemarker.template.TemplateHashModel;
+import freemarker.template.TemplateModel;
+import freemarker.template.TemplateModelException;
+import freemarker.template.Version;
 
 public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
 

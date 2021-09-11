@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
-import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 

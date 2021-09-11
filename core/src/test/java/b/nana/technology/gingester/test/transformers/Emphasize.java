@@ -1,8 +1,8 @@
 package b.nana.technology.gingester.test.transformers;
 
-import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
 public class Emphasize implements Transformer<String, String> {
 

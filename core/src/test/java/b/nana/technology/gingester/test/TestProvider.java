@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.test;
 
-import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.provider.Provider;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.test.transformers.*;
 
 import java.util.Collection;
