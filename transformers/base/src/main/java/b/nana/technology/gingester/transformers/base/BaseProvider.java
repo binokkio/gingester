@@ -13,9 +13,11 @@ public class BaseProvider implements Provider {
         return List.of(
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.cron.Job.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.exec.Exec.class,
+                b.nana.technology.gingester.transformers.base.transformers.http.Get.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Drain.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Gunzip.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Split.class,
@@ -40,7 +42,11 @@ public class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.path.Open.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Search.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Write.class,
+                b.nana.technology.gingester.transformers.base.transformers.regex.Find.class,
+                b.nana.technology.gingester.transformers.base.transformers.regex.Group.class,
+                b.nana.technology.gingester.transformers.base.transformers.regex.Replace.class,
                 b.nana.technology.gingester.transformers.base.transformers.resource.Open.class,
+                b.nana.technology.gingester.transformers.base.transformers.std.In.class,
                 b.nana.technology.gingester.transformers.base.transformers.std.Out.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Append.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Create.class,
@@ -49,7 +55,9 @@ public class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.time.FromSeconds.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.FromString.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.Now.class,
-                b.nana.technology.gingester.transformers.base.transformers.time.ToString.class
+                b.nana.technology.gingester.transformers.base.transformers.time.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.Sample.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.Throttle.class
         );
     }
 }

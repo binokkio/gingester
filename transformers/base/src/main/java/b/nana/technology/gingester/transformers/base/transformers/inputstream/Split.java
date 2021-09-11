@@ -36,7 +36,7 @@ public class Split implements Transformer<InputStream, InputStream> {
 
     public static class Parameters {
 
-        public String delimiter;
+        public String delimiter = "\n";
 
         @JsonCreator
         public Parameters() {}
