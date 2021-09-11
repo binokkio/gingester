@@ -2,22 +2,35 @@ package b.nana.technology.gingester.core.main;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.Configuration;
+import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+
+import static java.util.Objects.requireNonNull;
 
 public final class Main {
 
     private Main() {}
 
     public static void main(String[] args) {
+        Configuration configuration = parseArgs(args);
+        Gingester gingester = new Gingester();
+        configuration.applyTo(gingester);
+        gingester.run();
+    }
+
+    static Configuration parseArgs(String[] args) {
 
         boolean break_ = false;
         boolean printConfig = false;
@@ -26,6 +39,7 @@ public final class Main {
         configuration.report = true;
 
         String syncFrom = "__seed__";
+        b.nana.technology.gingester.core.controller.Configuration previous = null;
 
         for (int i = 0; i < args.length; i++) {
 
@@ -77,6 +91,21 @@ public final class Main {
                     }
                     break;
 
+                case "-l":
+                case "--link":
+                    requireNonNull(previous, "Found -l/--links before first transformer");
+                    List<String> links = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                        links.add(args[++i]);
+                    }
+                    previous.links(links);
+                    break;
+
+                case "--":
+                    requireNonNull(previous, "Found -- before first transformer");
+                    previous.links(Collections.emptyList());
+                    break;
+
                 case "-sft":
                 case "--sync-from-transformer":
                     markSyncFrom = true;
@@ -105,9 +134,14 @@ public final class Main {
                         if (next.matches("\\d+")) {
                             controller.async(true);
                             controller.maxWorkers(Integer.parseInt(next));
-                            controller.transformer(args[++i]);
+                            next = args[++i];
+                        }
+                        String[] parts = next.split(":");
+                        if (parts.length == 1) {
+                            controller.transformer(parts[0]);
                         } else {
-                            controller.transformer(next);
+                            controller.id(parts[0]);
+                            controller.transformer(parts[1]);
                         }
                     }
 
@@ -120,10 +154,12 @@ public final class Main {
                     }
 
                     if (markSyncFrom) {
-                        syncFrom = controller.getTransformer();
+                        syncFrom = controller.getId() != null ? controller.getId() : controller.getTransformer();
                     } else if (syncTo) {
                         controller.syncs(List.of(syncFrom));
                     }
+
+                    previous = controller;
 
                     if (break_) break;
 
@@ -131,16 +167,30 @@ public final class Main {
 
                     break;
 
+                case "-h":
+                case "--help":
+                    try {
+                        System.out.println(new String(requireNonNull(
+                                Main.class.getResourceAsStream("/gingester/core/help.txt"),
+                                "/gingester/core/help.txt resource missing"
+                        ).readAllBytes()));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                    System.out.println("\nAvailable transformers:\n");
+                    TransformerFactory.getTransformers().forEach(name ->
+                            System.out.println("    " + name));
+                    System.exit(0);
+
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
             }
         }
 
         if (printConfig) {
             System.out.println(configuration.toJson());
-        } else {
-            Gingester gingester = new Gingester();
-            configuration.applyTo(gingester);
-            gingester.run();
+            System.exit(0);
         }
+
+        return configuration;
     }
 }

@@ -16,6 +16,6 @@ class TransformerFactoryTest {
                 IllegalArgumentException.class,
                 () -> TransformerFactory.instance(configuration));
 
-        assertEquals("Multiple transformers named Seed: core.transformers.Seed, test.transformers.Seed", e.getMessage());
+        assertEquals("Multiple transformers named Seed: Core.Transformers.Seed, Test.Transformers.Seed", e.getMessage());
     }
 }

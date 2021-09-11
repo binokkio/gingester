@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class TransformerFactory {
 
@@ -88,14 +89,22 @@ public final class TransformerFactory {
         return getUniqueName((Class<? extends Transformer<?, ?>>) transformer.getClass());
     }
 
+    // TODO should take some sort of minimum name parts from transformer annotation into account
     public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
         String[] parts = transformer.getCanonicalName().split("\\.");
         String name = parts[parts.length - 1];
         int pointer = parts.length - 2;
         while (getTransformersByName(name).size() > 1) {
-            name = parts[pointer--] + "." + name;
+            name = camelCase(parts[pointer--]) + "." + name;
         }
         return name;
+    }
+
+    // TODO should include descriptions
+    public static Stream<String> getTransformers() {
+        return TRANSFORMERS.stream()
+                .map(TransformerFactory::getUniqueName)
+                .sorted();
     }
 
     private static List<Class<? extends Transformer<?, ?>>> getTransformersByName(String name) {
@@ -110,5 +119,10 @@ public final class TransformerFactory {
                     return true;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // TODO should be delegated to providers
+    private static String camelCase(String name) {
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 }
