@@ -100,7 +100,7 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
         return Optional.ofNullable(parameters);
     }
 
-    public boolean getReport() {
-        return report != null && report;
+    public Optional<Boolean> getReport() {
+        return Optional.ofNullable(report);
     }
 }

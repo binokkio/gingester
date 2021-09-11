@@ -62,6 +62,7 @@ public final class Main {
 
                 case "-nr":
                 case "--no-report":
+                case "--no-reporting":
                     configuration.report = false;
                     break;
 
@@ -136,6 +137,10 @@ public final class Main {
                             next = args[++i];
                         }
                         String[] parts = next.split(":");
+                        if (parts[parts.length - 1].endsWith("!")) {
+                            transformer.report(true);
+                            parts[parts.length - 1] = parts[parts.length - 1].substring(0, parts[parts.length - 1].length() - 1);
+                        }
                         if (parts.length == 1) {
                             transformer.transformer(parts[0]);
                         } else {

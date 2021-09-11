@@ -30,7 +30,7 @@ public final class Gingester {
     private boolean report;
 
     public void report(Boolean report) {
-        this.report = report != null && report;
+        this.report = report == null || report;
     }
 
     public void add(String transformer) {
@@ -152,6 +152,16 @@ public final class Gingester {
                 }
             }
         });
+
+        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
+            configurations.values().forEach(c -> {
+                if (c.getLinks().stream()
+                        .map(link -> link.equals("__maybe_next__") ? resolveMaybeNext(c.getId()) : Optional.of(link))
+                        .noneMatch(Optional::isPresent)) {
+                    c.report(true);
+                }
+            });
+        }
 
         configurations.forEach((id, configuration) ->
                 controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));

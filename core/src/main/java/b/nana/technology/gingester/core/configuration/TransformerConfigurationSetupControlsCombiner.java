@@ -18,7 +18,7 @@ public final class TransformerConfigurationSetupControlsCombiner {
         configuration
                 .id(id)
                 .transformer((Transformer<I, O>) instance)
-                .report(transformer.getReport())
+                .report(transformer.getReport().orElse(false))
                 .links(choose(transformer::getLinks, setup::getLinks, Collections::emptyList))
                 .syncs(choose(transformer::getSyncs, setup::getSyncs, Collections::emptyList))
                 .excepts(choose(transformer::getExcepts, setup::getExcepts, Collections::emptyList));
