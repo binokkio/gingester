@@ -37,6 +37,7 @@ public final class Controller<I, O> {
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
+    public final List<Worker> done = new ArrayList<>();
     private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
@@ -116,17 +117,19 @@ public final class Controller<I, O> {
         return downstream;
     }
 
-    public void start() {
-
-        // queue transformer open runnable
-        queue.add(transformer::open);
-        // TODO queue.add(start remaining workers) and start only 1 worker, to prevent transform being called before open returns (still some problems with prepare?)
-
+    public void open() {
         for (int i = 0; i < maxWorkers; i++) {
             workers.add(new Worker(this, i));
         }
+        queue.add(transformer::open);
+        queue.add(gingester::signalOpen);
+        workers.get(0).start();
+    }
 
-        workers.forEach(Thread::start);
+    public void start() {
+        for (int i = 1; i < workers.size(); i++) {
+            workers.get(i).start();
+        }
     }
 
     public void accept(Batch<I> batch) {
@@ -162,12 +165,13 @@ public final class Controller<I, O> {
 
 
     //
+    // NOTE: some duplicate try-catch blocks in the following methods to keep the call stack smaller, makes for nicer profiling
 
     public void prepare(Context context) {
         try {
             transformer.prepare(context, receiver);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO pass `e` to `excepts`
+            handleException(e);
         }
     }
 
@@ -176,13 +180,21 @@ public final class Controller<I, O> {
         if (maxBatchSize == 1) {
             // no batch optimizations possible, not tracking batch duration
             for (Item<I> item : batch) {
-                _transform(item.getContext(), item.getValue());
+                try {
+                    transformer.transform(item.getContext(), item.getValue(), receiver);
+                } catch (Exception e) {
+                    handleException(e);
+                }
             }
         } else {
 
             long batchStarted = System.nanoTime();
             for (Item<I> item : batch) {
-                _transform(item.getContext(), item.getValue());
+                try {
+                    transformer.transform(item.getContext(), item.getValue(), receiver);
+                } catch (Exception e) {
+                    handleException(e);
+                }
             }
             long batchFinished = System.nanoTime();
             double batchDuration = batchFinished - batchStarted;
@@ -210,24 +222,24 @@ public final class Controller<I, O> {
     }
 
     public void transform(Context context, I input) {
-        _transform(context, input);
-        if (report) delt.count();
-    }
-
-    private void _transform(Context context, I input) {
         try {
             transformer.transform(context, input, receiver);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO pass `e` to `excepts`
+            handleException(e);
         }
+        if (report) delt.count();
     }
 
     public void finish(Context context) {
         try {
             transformer.finish(context, receiver);
         } catch (Exception e) {
-            e.printStackTrace();  // TODO pass `e` to `excepts`
+            handleException(e);
         }
+    }
+
+    private void handleException(Exception e) {
+        e.printStackTrace();  // TODO pass `e` to `excepts`
     }
 
 

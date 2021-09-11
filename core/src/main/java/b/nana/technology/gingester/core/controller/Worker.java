@@ -22,9 +22,16 @@ public final class Worker extends Thread {
 
         main();
 
-        // TODO temp fix for PipedInputStream detecting dead write ends too eagerly (imho)
-        controller.gingester.signalDone();
         synchronized (this) {
+            if (controller.done.size() == controller.workers.size() - 1) {
+                try {
+                    controller.transformer.close();
+                } catch (Exception e) {
+                    e.printStackTrace();  // TODO pass `e` to `controller.excepts`
+                }
+            }
+            controller.done.add(this);
+            controller.gingester.signalDone();
             try {
                 while (done) {
                     this.wait();

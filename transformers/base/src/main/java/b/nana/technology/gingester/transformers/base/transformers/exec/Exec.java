@@ -7,11 +7,15 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Exec implements Transformer<InputStream, InputStream> {
 
-//    private final ExecutorService errDrainer = Executors.newSingleThreadExecutor();
+    private final ExecutorService errDrainer = Executors.newCachedThreadPool();
 
     private final Context.Template commandTemplate;
     private final Context.Template workDirTemplate;
@@ -37,19 +41,24 @@ public class Exec implements Transformer<InputStream, InputStream> {
         out.accept(context.stash("description", command), process.getInputStream());
 
         // TODO emit stderr instead, to a transformer specified by a parameter
-//        InputStream err = process.getErrorStream();
-//        errDrainer.submit(() -> {
-//            try {
-//                System.err.println(new String(err.readAllBytes(), StandardCharsets.UTF_8));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        });
+        InputStream err = process.getErrorStream();
+        errDrainer.submit(() -> {
+            try {
+                System.err.println(new String(err.readAllBytes(), StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 
         in.transferTo(process.getOutputStream());
 
         int resultCode = process.waitFor();
         // TODO throw an exception on non-zero resultCode?
+    }
+
+    @Override
+    public void close() {
+        errDrainer.shutdown();
     }
 
     public static class Parameters {

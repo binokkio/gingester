@@ -26,6 +26,7 @@ public final class Gingester {
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
+    private final Set<String> open = new HashSet<>();
     private boolean report;
 
     public void report(Boolean report) {
@@ -181,6 +182,18 @@ public final class Gingester {
 
     private void start() {
 
+        controllers.values().forEach(Controller::open);
+
+        try {
+            synchronized (lock) {
+                while (controllers.size() > open.size()) {
+                    lock.wait();
+                }
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
+        }
+
         controllers.values().forEach(Controller::start);
 
         Reporter reporter = new Reporter(controllers.values());
@@ -194,7 +207,7 @@ public final class Gingester {
         try {
 
             synchronized (lock) {
-                while (controllers.values().stream().flatMap(c -> c.workers.stream()).anyMatch(w -> !w.done)) {
+                while (controllers.values().stream().anyMatch(c -> c.workers.size() != c.done.size())) {
                     lock.wait();
                 }
             }
@@ -248,6 +261,13 @@ public final class Gingester {
 
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
+        }
+
+        public void signalOpen() {
+            synchronized (lock) {
+                open.add(controllerId);
+                lock.notify();
+            }
         }
 
         public void signalDone() {
