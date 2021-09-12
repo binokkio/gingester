@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class Splitter {
+public final class Splitter {
 
     private final byte[] delimiter;
     private final PrefixInputStream source;

@@ -9,14 +9,14 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.6.9</version>
+        <version>0.7.0</version>
     </parent>
 
     <artifactId>executable</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
-        
+
         <dependency>
             <groupId>b.nana.technology.gingester</groupId>
             <artifactId>core</artifactId>
@@ -30,16 +30,6 @@
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>elasticsearch7</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>b.nana.technology.gingester.transformers</groupId>
-            <artifactId>freemarker</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>b.nana.technology.gingester.transformers</groupId>
-            <artifactId>jetty</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -107,7 +97,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>b.nana.technology.gingester.core.Main</mainClass>
+                                    <mainClass>b.nana.technology.gingester.core.main.Main</mainClass>
                                     <manifestEntries>
                                         <Multi-Release>true</Multi-Release><!-- gets rid of "WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance." -->
                                     </manifestEntries>

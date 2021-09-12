@@ -1,19 +1,11 @@
 package b.nana.technology.gingester.transformers.base.transformers.time;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.transformers.base.common.TimeBase;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
-import java.time.temporal.IsoFields;
 import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalField;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ToString extends TimeBase<TemporalAccessor, String> {
 
@@ -30,7 +22,7 @@ public class ToString extends TimeBase<TemporalAccessor, String> {
     }
 
     @Override
-    protected void transform(Context context, TemporalAccessor input) throws Exception {
-        emit(context, formatter.format(input));
+    public void transform(Context context, TemporalAccessor in, Receiver<String> out) throws Exception {
+        out.accept(context, formatter.format(in));
     }
 }

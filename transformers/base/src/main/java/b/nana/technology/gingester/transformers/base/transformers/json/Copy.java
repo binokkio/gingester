@@ -1,13 +1,14 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Copy extends Transformer<JsonNode, JsonNode> {
+public class Copy implements Transformer<JsonNode, JsonNode> {
 
     @Override
-    protected void transform(Context context, JsonNode input) {
-        emit(context, input.deepCopy());
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
+        out.accept(context, in.deepCopy());
     }
 }

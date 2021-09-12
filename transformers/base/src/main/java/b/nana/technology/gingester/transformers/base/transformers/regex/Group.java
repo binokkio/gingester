@@ -1,12 +1,13 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.regex.Matcher;
 
-public class Group extends Transformer<Matcher, String> {
+public class Group implements Transformer<Matcher, String> {
 
     private final int group;
 
@@ -15,13 +16,12 @@ public class Group extends Transformer<Matcher, String> {
     }
 
     public Group(Parameters parameters) {
-        super(parameters);
         group = parameters.group;
     }
 
     @Override
-    protected void transform(Context context, Matcher input) throws Exception {
-        emit(context, input.group(group));
+    public void transform(Context context, Matcher in, Receiver<String> out) throws Exception {
+        out.accept(context, in.group(group));
     }
 
     public static class Parameters {

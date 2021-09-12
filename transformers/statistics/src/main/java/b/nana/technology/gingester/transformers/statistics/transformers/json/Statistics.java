@@ -1,8 +1,9 @@
 package b.nana.technology.gingester.transformers.statistics.transformers.json;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.ContextMap;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.ContextMap;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.statistics.common.FrequencyNode;
 import com.dynatrace.dynahist.Histogram;
 import com.dynatrace.dynahist.bin.BinIterator;
@@ -27,7 +28,11 @@ import org.jfree.data.statistics.SimpleHistogramDataset;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
 
-public class Statistics extends Transformer<JsonNode, JsonNode> {
+/*
+ * TODO split this class in a `Json.Histograms` and `Json.Frequency` etc. classes.
+ */
+
+public class Statistics implements Transformer<JsonNode, JsonNode> {
 
     private static final NodeConfiguration DEFAULT_NODE_CONFIGURATION;
     static {
@@ -51,25 +56,24 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
     private final Map<String, NodeConfiguration> nodeConfigurations;
 
     public Statistics(Parameters parameters) {
-        super(parameters);
         nodeConfigurations = parameters;
     }
 
     @Override
-    protected void prepare(Context context) {
-        contextMap.put(context, new NodeStatistics(null, null, ""));
+    public void prepare(Context context, Receiver<JsonNode> out) {
+        contextMap.put(context, new NodeStatistics(null, null, ""));  // TODO use ContextMapReduce
     }
 
     @Override
-    protected void transform(Context context, JsonNode input) {
-        contextMap.require(context).accept(input);
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
+        contextMap.get(context).accept(in);
     }
 
     @Override
-    protected void finish(Context context) {
+    public void finish(Context context, Receiver<JsonNode> out) {
         ObjectNode result = objectMapper.createObjectNode();
-        add(result, contextMap.requireRemove(context));
-        emit(context.extend(this).description("statistics"), result);
+        add(result, contextMap.remove(context));
+        out.accept(context.stash("description", "statistics"), result);
     }
 
     private void add(ObjectNode objectNode, NodeStatistics nodeStatistics) {
@@ -140,7 +144,7 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
             return nodeConfiguration;
         }
 
-        private void accept(JsonNode jsonNode) {
+        private synchronized void accept(JsonNode jsonNode) {
 
             count++;
 
@@ -195,7 +199,9 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
 
         private void handleNumericalValue(double numericalValue) {
             numerical.addValue(numericalValue);
-            histogram.addValue(numericalValue);
+            if (!nodeConfiguration.histogramConfiguration.disabled) {
+                histogram.addValue(numericalValue);
+            }
         }
 
         public ObjectNode getJsonValue() {
@@ -239,6 +245,8 @@ public class Statistics extends Transformer<JsonNode, JsonNode> {
                 numericalNode.put("mean", numerical.getMean());
                 numericalNode.put("variance", numerical.getVariance());
                 numericalNode.put("standardDeviation", numerical.getStandardDeviation());
+
+                if (nodeConfiguration.histogramConfiguration.disabled) return;
 
                 // TODO maybe add getBinByRank(0..9) to numericalNode
 

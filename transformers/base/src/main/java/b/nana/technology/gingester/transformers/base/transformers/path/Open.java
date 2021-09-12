@@ -1,8 +1,9 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
-import b.nana.technology.gingester.transformers.base.transformers.inputstream.ToPath;
+import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -12,30 +13,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class Open extends Transformer<Path, InputStream> {
+public class Open implements Transformer<Path, InputStream> {
 
     @Override
-    protected void setup(Setup setup) {
-        setup.requireDownstreamSync();
+    public void setup(SetupControls controls) {
+        controls.requireOutgoingSync();
     }
 
     @Override
-    protected void transform(Context context, Path input) throws IOException, InterruptedException {
-        try (InputStream inputStream = Files.newInputStream(input)) {
-            Optional<Object> monitor = context.fetch("monitor");
+    public void transform(Context context, Path in, Receiver<InputStream> out) throws Exception {
+        try (InputStream inputStream = Files.newInputStream(in)) {
+            Optional<Object> monitor = context.fetch("monitor").findFirst();
             if (monitor.isPresent()) {
-                emit(context, new InputStreamWrapper(inputStream, (ToPath.Monitor) monitor.get()));
+                out.accept(context, new InputStreamWrapper(inputStream, (Write.Monitor) monitor.get()));
             } else {
-                emit(context, inputStream);
+                out.accept(context, inputStream);
             }
         }
     }
 
     private static final class InputStreamWrapper extends FilterInputStream {
 
-        private final ToPath.Monitor monitor;
+        private final Write.Monitor monitor;
 
-        protected InputStreamWrapper(InputStream inputStream, ToPath.Monitor monitor) {
+        protected InputStreamWrapper(InputStream inputStream, Write.Monitor monitor) {
             super(inputStream);
             this.monitor = monitor;
         }

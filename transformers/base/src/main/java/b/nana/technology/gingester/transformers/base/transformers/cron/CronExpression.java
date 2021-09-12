@@ -17,20 +17,11 @@ package b.nana.technology.gingester.transformers.base.transformers.cron;
  *
  * Note: rewritten to standard Java 8 DateTime by zemiak (c) 2016
  * Note: copied to b.nana.technology.gingester.transformers.base.transformers.cron by binokkio
- * Note: made package-private by binokkio
+ * Note: made package-private and final by binokkio
  */
-import java.time.DayOfWeek;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+
+import java.time.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -134,7 +125,7 @@ import java.util.regex.Pattern;
  * Day-of-week field &quot;FRI-MON&quot; is invalid,but &quot;FRI-SUN,MON&quot; is valid
  *
  */
-class CronExpression {
+final class CronExpression {
 
     enum CronFieldType {
         SECOND(0, 59, null) {

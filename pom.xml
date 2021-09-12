@@ -8,7 +8,7 @@
 
     <groupId>b.nana.technology.gingester</groupId>
     <artifactId>gingester</artifactId>
-    <version>0.6.9</version>
+    <version>0.7.0</version>
 
     <packaging>pom</packaging>
 
@@ -34,9 +34,14 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>net.jodah</groupId>
-                <artifactId>typetools</artifactId>
-                <version>0.6.3</version>
+                <groupId>com.github.jsurfer</groupId>
+                <artifactId>jsurfer-jackson</artifactId>
+                <version>1.6.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>2.3.31</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

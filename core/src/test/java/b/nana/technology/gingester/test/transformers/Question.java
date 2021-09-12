@@ -1,12 +1,13 @@
 package b.nana.technology.gingester.test.transformers;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
-public class Question extends Transformer<String, String> {
+public class Question implements Transformer<String, String> {
 
     @Override
-    protected void transform(Context context, String input) {
-        emit(context.extend(this), input + '?');
+    public void transform(Context context, String in, Receiver<String> out) {
+        out.accept(context, in + '?');
     }
 }

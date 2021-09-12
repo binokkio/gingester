@@ -1,19 +1,20 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.transformers.base.common.ToJsonBase;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.transformers.base.common.json.ToJsonTransformer;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
-public class ToJson extends ToJsonBase<InputStream> {
+public class ToJson extends ToJsonTransformer<InputStream> {
 
-    public ToJson(Parameters parameters) {
+    public ToJson(ToJsonTransformer.Parameters parameters) {
         super(parameters);
     }
 
     @Override
-    protected InputStream toInputStream(InputStream input) {
-        return input;
+    public void transform(Context context, InputStream in, Receiver<JsonNode> out) throws Exception {
+        out.accept(context, getObjectReader().readTree(in));
     }
 }

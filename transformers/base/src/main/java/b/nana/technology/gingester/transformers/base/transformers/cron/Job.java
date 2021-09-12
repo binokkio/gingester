@@ -1,37 +1,34 @@
 package b.nana.technology.gingester.transformers.base.transformers.cron;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Job extends Transformer<Void, Void> {
+public class Job implements Transformer<Object, Void> {
 
     private final String schedule;
     private final boolean skips;
-    private final AtomicBoolean triggered = new AtomicBoolean();
 
     public Job(Parameters parameters) {
-        super(parameters);
         schedule = parameters.schedule;
         skips = parameters.skips;
     }
 
     @Override
-    protected void setup(Setup setup) {
-        setup.assertNoUpstream();
-        setup.limitWorkers(1);
-        setup.limitBatchSize(1);
+    public void setup(SetupControls controls) {
+        controls.maxWorkers(1);
+        controls.maxBatchSize(1);
     }
 
     @Override
-    protected void transform(Context context, Void input) throws Exception {
+    public void transform(Context context, Object in, Receiver<Void> out) throws InterruptedException {
 
         CronExpression cronExpression = CronExpression.create(schedule);
         ZonedDateTime anchor = ZonedDateTime.now();
@@ -40,43 +37,25 @@ public class Job extends Transformer<Void, Void> {
 
             ZonedDateTime next = cronExpression.nextTimeAfter(anchor);
             Duration duration = Duration.between(Instant.now(), next.toInstant());
-            long durationSeconds = Math.round(duration.getSeconds() + duration.getNano() / 1_000_000_000f);
 
-            if (durationSeconds > 0) {
-
-                getThreader().schedule(
-                        this::trigger,
-                        durationSeconds,
-                        TimeUnit.SECONDS
-                );
-
-                // TODO it is no longer necessary to emit from the transform-calling thread
-                synchronized (triggered) {
-                    while (!triggered.get()) {
-                        triggered.wait();
-                        if (triggered.get()) {
-                            triggered.set(false);
-                            break;
-                        }
-                    }
-                }
+            if (!duration.isNegative()) {
+                Thread.sleep(duration.getSeconds() * 1000, duration.getNano() / 1000);
             }
 
-            emit(
-                    context.extend(this)
-                            .description(next.toString())
-                            .stash(Map.of(
-                                    "time", Map.of(
-                                            "year", next.getYear(),
-                                            "month", next.getMonthValue(),
-                                            "day", next.getDayOfMonth(),
-                                            "hour", next.getHour(),
-                                            "minute", next.getMinute(),
-                                            "second", next.getSecond(),
-                                            "milli", next.getNano() / 1_000_000,
-                                            "nano", next.getNano() % 1_000_000)
-                                    )
-                            ),
+            out.accept(
+                    context.stash(Map.of(
+                            "description", next.toString(),
+                            "time", Map.of(
+                                    "year", next.getYear(),
+                                    "month", next.getMonthValue(),
+                                    "day", next.getDayOfMonth(),
+                                    "hour", next.getHour(),
+                                    "minute", next.getMinute(),
+                                    "second", next.getSecond(),
+                                    "milli", next.getNano() / 1_000_000,
+                                    "nano", next.getNano() % 1_000_000
+                            )
+                    )),
                     null
             );
 
@@ -87,13 +66,6 @@ public class Job extends Transformer<Void, Void> {
             } else {
                 anchor = now;
             }
-        }
-    }
-
-    private void trigger() {
-        synchronized (triggered) {
-            triggered.set(true);
-            triggered.notify();
         }
     }
 
