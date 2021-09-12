@@ -10,7 +10,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Job implements Transformer<Object, Void> {
 
