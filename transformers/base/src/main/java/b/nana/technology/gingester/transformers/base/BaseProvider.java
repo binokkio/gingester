@@ -13,6 +13,7 @@ public class BaseProvider implements Provider {
         return List.of(
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.bytes.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.cron.Job.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
@@ -53,6 +54,8 @@ public class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.string.Append.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Create.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToBytes.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.ToInputStream.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.FromMillis.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.FromSeconds.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.FromString.class,
