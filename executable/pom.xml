@@ -29,6 +29,21 @@
         </dependency>
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>elasticsearch7</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>rabbitmq</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>redis</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>statistics</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

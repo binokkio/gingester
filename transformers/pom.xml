@@ -19,6 +19,9 @@
         <module>base</module>
         <module>statistics</module>
         <module>unpack</module>
+        <module>rabbitmq</module>
+        <module>elasticsearch7</module>
+        <module>redis</module>
     </modules>
 
 </project>

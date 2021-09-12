@@ -7,6 +7,10 @@ public final class SimpleCounter implements Counter {
     private final boolean enabled;
     private final AtomicLong value = new AtomicLong();
 
+    public SimpleCounter() {
+        this(true);
+    }
+
     public SimpleCounter(boolean enabled) {
         this.enabled = enabled;
     }
