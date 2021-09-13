@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.statistics.transformers.string;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -7,6 +8,8 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.statistics.common.FrequencyNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.math3.stat.Frequency;
+
+import java.util.Collections;
 
 public class Statistics implements Transformer<String, JsonNode> {
 
@@ -17,6 +20,11 @@ public class Statistics implements Transformer<String, JsonNode> {
     public Statistics(Parameters parameters) {
         frequencyLimit = parameters.frequencyLimit;
         frequencyHead = parameters.frequencyHead;
+    }
+
+    @Override
+    public void setup(SetupControls controls) {
+        controls.syncs(Collections.singletonList("__seed__"));
     }
 
     @Override

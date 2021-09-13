@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FromJson implements Transformer<JsonNode, InputStream> {
@@ -37,6 +38,7 @@ public class FromJson implements Transformer<JsonNode, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
+        controls.syncs(Collections.singletonList("__seed__"));
         controls.requireOutgoingAsync();
     }
 

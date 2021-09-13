@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.zip.GZIPOutputStream;
 
 @Names(1)
@@ -58,6 +59,7 @@ public class Pack implements Transformer<byte[], Object> {
 
     @Override
     public void setup(SetupControls controls) {
+        controls.syncs(Collections.singletonList("__seed__"));
         controls.requireOutgoingAsync();
         if (passthrough != null) {
             if (link == null) throw new IllegalStateException("Given `passthrough` but not `link`");
