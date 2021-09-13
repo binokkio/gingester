@@ -60,11 +60,8 @@ public final class TransformerFactory {
             }
         }
 
-        Constructor<? extends Transformer<I, O>> constructor = Arrays.stream(transformerClass.getConstructors())
-                .map(c -> (Constructor<? extends Transformer<I, O>>) c)
-                .filter(method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].getSimpleName().equals("Parameters"))
-                .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } )
-                .orElseThrow(() -> new IllegalStateException("Did not find a constructor accepting Parameters on " + transformerClass.getCanonicalName()));
+        Constructor<? extends Transformer<I, O>> constructor = getParameterRichConstructor(transformerClass)
+                .orElseThrow(() -> new IllegalStateException("Did not find a constructor accepting Parameters on " + getUniqueName(transformerClass)));
 
         Class<?> parameterClass = constructor.getParameterTypes()[0];
 
@@ -106,11 +103,30 @@ public final class TransformerFactory {
         return name;
     }
 
-    // TODO should include descriptions
-    public static Stream<String> getTransformers() {
+    public static <I, O> Stream<String> getTransformerHelps() {
         return TRANSFORMERS.stream()
-                .map(TransformerFactory::getUniqueName)
+                .map(transformer -> {
+                    StringBuilder help = new StringBuilder(getUniqueName(transformer));
+                    getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
+                        Class<?> parametersClass = constructor.getParameterTypes()[0];
+                        try {
+                            Object parameters = parametersClass.getConstructor().newInstance();
+                            help.append(' ');
+                            help.append(OBJECT_MAPPER.writeValueAsString(parameters));
+                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    return help.toString();
+                })
                 .sorted();
+    }
+
+    private static <I, O> Optional<? extends Constructor<? extends Transformer<I, O>>> getParameterRichConstructor(Class<? extends Transformer<I, O>> transformerClass) {
+        return Arrays.stream(transformerClass.getConstructors())
+                .map(c -> (Constructor<? extends Transformer<I, O>>) c)
+                .filter(method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].getSimpleName().equals("Parameters"))
+                .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } );
     }
 
     private static List<Class<? extends Transformer<?, ?>>> getTransformersByName(String name) {
