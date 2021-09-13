@@ -167,17 +167,7 @@ public final class Main {
 
                 case "-h":
                 case "--help":
-                    try {
-                        System.out.println(new String(requireNonNull(
-                                Main.class.getResourceAsStream("/gingester/core/help.txt"),
-                                "/gingester/core/help.txt resource missing"
-                        ).readAllBytes()));
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                    System.out.println("\nAvailable transformers:\n");
-                    TransformerFactory.getTransformers().forEach(name ->
-                            System.out.println("    " + name));
+                    printHelp();
                     System.exit(0);
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
@@ -190,5 +180,21 @@ public final class Main {
         }
 
         return configuration;
+    }
+
+    private static void printHelp() {
+
+        try {
+            System.out.println(new String(requireNonNull(
+                    Main.class.getResourceAsStream("/gingester/core/help.txt"),
+                    "/gingester/core/help.txt resource missing"
+            ).readAllBytes()));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        System.out.println("\nAvailable transformers:\n");
+        TransformerFactory.getTransformers().forEach(name ->
+                System.out.println("    " + name));
     }
 }

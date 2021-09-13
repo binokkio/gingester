@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -97,9 +98,10 @@ public final class TransformerFactory {
     public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
         String[] parts = transformer.getCanonicalName().split("\\.");
         String name = parts[parts.length - 1];
-        int pointer = parts.length - 2;
-        while (getTransformersByName(name).size() > 1) {
-            name = camelCase(parts[pointer--]) + "." + name;
+        int names = 1;
+        int minNames = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : 2;
+        while (names < minNames || getTransformersByName(name).size() > 1) {
+            name = camelCase(parts[parts.length - 1 - names++]) + "." + name;
         }
         return name;
     }

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.util;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -11,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+@Names(1)
 public class Throttle implements Transformer<Object, Object> {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

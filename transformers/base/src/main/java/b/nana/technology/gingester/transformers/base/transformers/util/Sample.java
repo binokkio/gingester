@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.util;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+@Names(1)
 public class Sample implements Transformer<Object, Object> {
 
     private final ContextMap<AtomicLong> contextMap = new ContextMap<>();

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.exec;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Names(1)
 public class Exec implements Transformer<InputStream, InputStream> {
 
     private final ExecutorService errDrainer = Executors.newCachedThreadPool();
