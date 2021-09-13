@@ -23,10 +23,14 @@ public final class Main {
     private Main() {}
 
     public static void main(String[] args) {
-        GingesterConfiguration configuration = parseArgs(args);
-        Gingester gingester = new Gingester();
-        configuration.applyTo(gingester);
-        gingester.run();
+        if (args.length > 0) {
+            GingesterConfiguration configuration = parseArgs(args);
+            Gingester gingester = new Gingester();
+            configuration.applyTo(gingester);
+            gingester.run();
+        } else {
+            printHelp();
+        }
     }
 
     static GingesterConfiguration parseArgs(String[] args) {
