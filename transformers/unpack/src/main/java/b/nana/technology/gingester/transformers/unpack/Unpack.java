@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.unpack;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -21,6 +22,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+@Names(1)
 public class Unpack implements Transformer<InputStream, InputStream> {
 
     private final Context.Template descriptionTemplate;
