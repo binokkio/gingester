@@ -3,11 +3,13 @@ package b.nana.technology.gingester.core.controller;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
-final class ControllerReceiver<O> implements Receiver<O> {
+import java.util.Map;
 
-    private final Controller<?, O> controller;
+final class ControllerReceiver<I, O> implements Receiver<O> {
 
-    ControllerReceiver(Controller<?, O> controller) {
+    private final Controller<I, O> controller;
+
+    ControllerReceiver(Controller<I, O> controller) {
         this.controller = controller;
     }
 
@@ -52,7 +54,10 @@ final class ControllerReceiver<O> implements Receiver<O> {
     }
 
     private Context maybeExtend(Context context) {
-        if (!controller.syncs.isEmpty() && context.controller != controller) {
+        if (context.controller != controller && (
+                !controller.syncs.isEmpty() ||
+                !controller.excepts.isEmpty()
+        )) {
             return context.extend().build(controller);
         } else {
             return context;
@@ -65,16 +70,16 @@ final class ControllerReceiver<O> implements Receiver<O> {
         }
     }
 
-    private void accept(Context context, O output, Controller<O, ?> target) {
+    private <T> void accept(Context context, T in, Controller<T, ?> target) {
         if (target.async) {
             Thread thread = Thread.currentThread();
             if (thread instanceof Worker) {
-                ((Worker) thread).accept(context, output, target);
+                ((Worker) thread).accept(context, in, target);
             } else {
-                target.accept(new Batch<>(context, output));
+                target.accept(new Batch<>(context, in));
             }
         } else {
-            target.transform(context, output);
+            target.transform(context, in);
         }
     }
 
@@ -83,6 +88,36 @@ final class ControllerReceiver<O> implements Receiver<O> {
             ((Worker) Thread.currentThread()).flush();
             for (Controller<O, ?> controller : controller.outgoing.values()) {
                 controller.finish(controller, context);
+            }
+        }
+    }
+
+    public void except(String method, Context context, Exception cause) {
+
+        context = context.stash(
+                "method", method
+        ).build(controller);
+
+        except(context, cause);
+    }
+
+    public void except(String method, Context context, I in, Exception cause) {
+
+        context = context.stash(Map.of(
+                "method", method,
+                "stash", in
+        )).build(controller);
+
+        except(context, cause);
+    }
+
+    private void except(Context context, Exception cause) {
+        for (Context c : context) {
+            if (!c.controller.excepts.isEmpty()) {
+                for (Controller<Exception, ?> except : c.controller.excepts) {
+                    accept(c, cause, except);
+                }
+                break;
             }
         }
     }

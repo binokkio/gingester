@@ -29,7 +29,7 @@ public final class Controller<I, O> {
     public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
-    private final Set<Controller<?, ?>> excepts = new HashSet<>();
+    final Set<Controller<Exception, ?>> excepts = new HashSet<>();
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();
@@ -38,7 +38,7 @@ public final class Controller<I, O> {
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
     public final List<Worker> done = new ArrayList<>();
-    private final ControllerReceiver<O> receiver = new ControllerReceiver<>(this);
+    private final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
     public final Counter delt;
@@ -75,7 +75,7 @@ public final class Controller<I, O> {
     public void initialize() {
         getLinks().forEach(linkId -> gingester.getController(linkId).ifPresent(controller -> outgoing.put(linkId, (Controller<O, ?>) controller)));
         getSyncs().forEach(syncId -> gingester.getController(syncId).ifPresent(sync -> sync.syncs.add(this)));
-        getExcepts().forEach(exceptId -> gingester.getController(exceptId).ifPresent(excepts::add));
+        getExcepts().forEach(exceptId -> gingester.getController(exceptId).map(c -> (Controller<Exception, ?>) c).ifPresent(excepts::add));
     }
 
     public void discover() {
@@ -171,7 +171,7 @@ public final class Controller<I, O> {
         try {
             transformer.prepare(context, receiver);
         } catch (Exception e) {
-            handleException(e);
+            receiver.except("prepare", context, e);
         }
     }
 
@@ -183,7 +183,7 @@ public final class Controller<I, O> {
                 try {
                     transformer.transform(item.getContext(), item.getValue(), receiver);
                 } catch (Exception e) {
-                    handleException(e);
+                    receiver.except("transform", item.getContext(), item.getValue(), e);
                 }
             }
         } else {
@@ -193,7 +193,7 @@ public final class Controller<I, O> {
                 try {
                     transformer.transform(item.getContext(), item.getValue(), receiver);
                 } catch (Exception e) {
-                    handleException(e);
+                    receiver.except("transform", item.getContext(), item.getValue(), e);
                 }
             }
             long batchFinished = System.nanoTime();
@@ -221,11 +221,11 @@ public final class Controller<I, O> {
         if (report) delt.count(batch.getSize());
     }
 
-    public void transform(Context context, I input) {
+    public void transform(Context context, I in) {
         try {
-            transformer.transform(context, input, receiver);
+            transformer.transform(context, in, receiver);
         } catch (Exception e) {
-            handleException(e);
+            receiver.except("transform", context, in, e);
         }
         if (report) delt.count();
     }
@@ -234,12 +234,8 @@ public final class Controller<I, O> {
         try {
             transformer.finish(context, receiver);
         } catch (Exception e) {
-            handleException(e);
+            receiver.except("finish", context, e);
         }
-    }
-
-    private void handleException(Exception e) {
-        e.printStackTrace();  // TODO pass `e` to `excepts`
     }
 
 
