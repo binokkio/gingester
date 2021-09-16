@@ -17,7 +17,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     public void accept(Context context, O output) {
         context = maybeExtend(context);
         prepare(context);
-        for (Controller<O, ?> controller : controller.outgoing.values()) {
+        for (Controller<O, ?> controller : controller.links.values()) {
             accept(context, output, controller);
         }
         finish(context);
@@ -27,7 +27,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     public void accept(Context.Builder contextBuilder, O output) {
         Context context = contextBuilder.build(controller);
         prepare(context);
-        for (Controller<O, ?> controller : controller.outgoing.values()) {
+        for (Controller<O, ?> controller : controller.links.values()) {
             accept(context, output, controller);
         }
         finish(context);
@@ -36,7 +36,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     @Override
     public void accept(Context context, O output, String targetId) {
         context = maybeExtend(context);
-        Controller<O, ?> target = controller.outgoing.get(targetId);
+        Controller<O, ?> target = controller.links.get(targetId);
         if (target == null) throw new IllegalStateException("Link not configured!");
         prepare(context);
         accept(context, output, target);
@@ -46,7 +46,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     @Override
     public void accept(Context.Builder contextBuilder, O output, String targetId) {
         Context context = contextBuilder.build(controller);
-        Controller<O, ?> target = controller.outgoing.get(targetId);
+        Controller<O, ?> target = controller.links.get(targetId);
         if (target == null) throw new IllegalStateException("Link not configured!");
         prepare(context);
         accept(context, output, target);
@@ -86,7 +86,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     private void finish(Context context) {
         if (!controller.syncs.isEmpty()) {
             ((Worker) Thread.currentThread()).flush();
-            for (Controller<O, ?> controller : controller.outgoing.values()) {
+            for (Controller<?, ?> controller : controller.outgoing.values()) {
                 controller.finish(controller, context);
             }
         }
@@ -112,13 +112,14 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void except(Context context, Exception cause) {
-        for (Context c : context) {
+        for (Context c : context) {  // TODO prevent infinite loops where an exception handler throws and then has to handle its own exception
             if (!c.controller.excepts.isEmpty()) {
-                for (Controller<Exception, ?> except : c.controller.excepts) {
+                for (Controller<Exception, ?> except : c.controller.excepts.values()) {
                     accept(c, cause, except);
                 }
-                break;
+                return;
             }
         }
+        cause.printStackTrace();
     }
 }

@@ -6,10 +6,10 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 @Names(1)
-public final class Seed implements Transformer<Void, Object> {
+public final class Seed implements Transformer<Object, Object> {
 
     @Override
-    public void transform(Context context, Void in, Receiver<Object> out) {
-        out.accept(context, null);
+    public void transform(Context context, Object in, Receiver<Object> out) {
+        out.accept(context, in);
     }
 }

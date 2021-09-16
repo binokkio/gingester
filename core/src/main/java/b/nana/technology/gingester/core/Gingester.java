@@ -117,6 +117,13 @@ public final class Gingester {
 
             ControllerConfiguration<?, ?> configuration = combine(id, transformer, transformerConfiguration, setupControls);
 
+            // resolve or remove __maybe_next__ links
+            List<String> links = new ArrayList<>(configuration.getLinks());
+            if (links.removeIf("__maybe_next__"::equals)) {
+                resolveMaybeNext(id).ifPresent(links::add);
+            }
+            configuration.links(links);
+
             this.setupControls.put(id, setupControls);
             this.configurations.put(id, configuration);
         });
@@ -127,9 +134,7 @@ public final class Gingester {
                     throw new IllegalStateException();  // TODO
                 }
 
-                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().stream()
-                        .map(link -> link.equals("__maybe_next__") ? resolveMaybeNext(id).orElse("__none__") : link)
-                        .map(configurations::get);
+                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().stream().map(configurations::get);
 
                 if (setupControls.getRequireOutgoingSync()) {
                     String incompatible = outgoingConfigurations
@@ -155,9 +160,7 @@ public final class Gingester {
 
         if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
             configurations.values().forEach(c -> {
-                if (c.getLinks().stream()
-                        .map(link -> link.equals("__maybe_next__") ? resolveMaybeNext(c.getId()) : Optional.of(link))
-                        .noneMatch(Optional::isPresent)) {
+                if (c.getLinks().isEmpty()) {
                     c.report(true);
                 }
             });
@@ -171,15 +174,11 @@ public final class Gingester {
 
         Set<String> noIncoming = new HashSet<>(controllers.keySet());
         controllers.values().stream()
-                .flatMap(controller -> Stream.of(
-                        controller.getLinks().stream().map(link -> link.equals("__maybe_next__") ? resolveMaybeNext(controller.id).orElse("__none__") : link),
-                        controller.getExcepts().stream().map(except -> except.equals("__maybe_next__") ? resolveMaybeNext(controller.id).orElse("__none__") : except)  ))
-                .reduce(Stream::concat)
-                .orElseThrow()
-                .forEach(noIncoming::remove);
+                .map(controller -> controller.outgoing.keySet())
+                .forEach(noIncoming::removeAll);
 
         controllers.put("__seed__", new Controller<>(
-                new ControllerConfiguration<Void, Object>()
+                new ControllerConfiguration<>()
                         .id("__seed__")
                         .transformer(new Seed())
                         .links(new ArrayList<>(noIncoming)),
@@ -209,9 +208,9 @@ public final class Gingester {
         Reporter reporter = new Reporter(controllers.values());
         if (report) reporter.start();
 
-        Controller<Void, Object> seedController = (Controller<Void, Object>) controllers.get("__seed__");
+        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
         Context seed = new Context.Builder().build(seedController);
-        seedController.accept(new Batch<>(seed, null));
+        seedController.accept(new Batch<>(seed, new Object()));
         seedController.finish(null, seed);
 
         try {

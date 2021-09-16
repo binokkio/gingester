@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class Generate implements Transformer<Void, String> {
+public class Generate implements Transformer<Object, String> {
 
     private final String string;
     private final int count;
@@ -16,7 +16,7 @@ public class Generate implements Transformer<Void, String> {
     }
 
     @Override
-    public void transform(Context context, Void in, Receiver<String> out) {
+    public void transform(Context context, Object in, Receiver<String> out) {
         for (int i = 0; i < count; i++) {
             out.accept(context, string);
         }

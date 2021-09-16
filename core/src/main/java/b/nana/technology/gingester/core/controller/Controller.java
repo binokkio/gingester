@@ -25,11 +25,12 @@ public final class Controller<I, O> {
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
-    public final Set<Controller<?, I>> incoming = new HashSet<>();
-    public final Map<String, Controller<O, ?>> outgoing = new HashMap<>();
+    final Map<String, Controller<O, ?>> links;
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
-    final Set<Controller<Exception, ?>> excepts = new HashSet<>();
+    final Map<String, Controller<Exception, ?>> excepts;
+    public final Set<Controller<?, I>> incoming = new HashSet<>();
+    public final Map<String, Controller<?, ?>> outgoing;
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();
@@ -58,24 +59,30 @@ public final class Controller<I, O> {
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
-    }
 
-    public List<String> getLinks() {
-        return configuration.getLinks();
-    }
+        links = configuration.getLinks().stream().collect(
+                LinkedHashMap::new,
+                (map, link) -> map.put(link, null),
+                Map::putAll
+        );
 
-    public List<String> getSyncs() {
-        return configuration.getSyncs();
-    }
+        excepts = configuration.getExcepts().stream().collect(
+                LinkedHashMap::new,
+                (map, link) -> map.put(link, null),
+                Map::putAll
+        );
 
-    public List<String> getExcepts() {
-        return configuration.getExcepts();
+        outgoing = new LinkedHashMap<>();
+        outgoing.putAll(links);
+        outgoing.putAll(excepts);
     }
 
     public void initialize() {
-        getLinks().forEach(linkId -> gingester.getController(linkId).ifPresent(controller -> outgoing.put(linkId, (Controller<O, ?>) controller)));
-        getSyncs().forEach(syncId -> gingester.getController(syncId).ifPresent(sync -> sync.syncs.add(this)));
-        getExcepts().forEach(exceptId -> gingester.getController(exceptId).map(c -> (Controller<Exception, ?>) c).ifPresent(excepts::add));
+        links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
+        excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
+        outgoing.putAll(links);
+        outgoing.putAll(excepts);
+        configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
     }
 
     public void discover() {
@@ -252,5 +259,8 @@ public final class Controller<I, O> {
         report = false;
         delt = null;
         acks = null;
+        links = Collections.emptyMap();  // TODO sort
+        excepts = Collections.emptyMap();  // TODO sort
+        outgoing = Collections.emptyMap();  // TODO sort
     }
 }

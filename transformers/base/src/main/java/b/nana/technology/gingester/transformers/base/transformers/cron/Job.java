@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-public class Job implements Transformer<Object, Void> {
+public class Job implements Transformer<Object, Object> {
 
     private final String schedule;
     private final boolean skips;
@@ -28,7 +28,7 @@ public class Job implements Transformer<Object, Void> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Void> out) throws InterruptedException {
+    public void transform(Context context, Object in, Receiver<Object> out) throws InterruptedException {
 
         CronExpression cronExpression = CronExpression.create(schedule);
         ZonedDateTime anchor = ZonedDateTime.now();
@@ -56,7 +56,7 @@ public class Job implements Transformer<Object, Void> {
                                     "nano", next.getNano() % 1_000_000
                             )
                     )),
-                    null
+                    new Object()  // TODO
             );
 
             ZonedDateTime now = ZonedDateTime.now();
