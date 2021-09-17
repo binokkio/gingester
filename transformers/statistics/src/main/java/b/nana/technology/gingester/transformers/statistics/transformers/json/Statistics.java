@@ -33,7 +33,7 @@ import java.util.*;
  * TODO split this class in a `Json.Histograms` and `Json.Frequency` etc. classes.
  */
 
-public class Statistics implements Transformer<JsonNode, JsonNode> {
+public final class Statistics implements Transformer<JsonNode, JsonNode> {
 
     private static final NodeConfiguration DEFAULT_NODE_CONFIGURATION;
     static {

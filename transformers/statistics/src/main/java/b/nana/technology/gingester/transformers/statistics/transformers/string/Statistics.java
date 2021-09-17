@@ -11,7 +11,7 @@ import org.apache.commons.math3.stat.Frequency;
 
 import java.util.Collections;
 
-public class Statistics implements Transformer<String, JsonNode> {
+public final class Statistics implements Transformer<String, JsonNode> {
 
     private final ContextMap<FrequencyWrapper> contextMap = new ContextMap<>();
     public final int frequencyLimit;

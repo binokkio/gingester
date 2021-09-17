@@ -8,7 +8,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
-public class Gunzip implements Transformer<InputStream, InputStream> {
+public final class Gunzip implements Transformer<InputStream, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {

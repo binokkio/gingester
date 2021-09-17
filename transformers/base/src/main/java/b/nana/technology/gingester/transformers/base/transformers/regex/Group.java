@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.regex.Matcher;
 
-public class Group implements Transformer<Matcher, String> {
+public final class Group implements Transformer<Matcher, String> {
 
     private final int group;
 

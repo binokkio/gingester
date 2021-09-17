@@ -12,7 +12,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.io.InputStream;
 import java.util.List;
 
-public class ToJson implements Transformer<InputStream, JsonNode> {
+public final class ToJson implements Transformer<InputStream, JsonNode> {
 
     private final CsvMapper csvMapper;
     private final CsvSchema csvSchema;

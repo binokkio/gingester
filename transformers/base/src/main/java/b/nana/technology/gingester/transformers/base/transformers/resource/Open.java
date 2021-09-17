@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.InputStream;
 
-public class Open implements Transformer<Object, InputStream> {
+public final class Open implements Transformer<Object, InputStream> {
 
     private final Context.Template pathTemplate;
 

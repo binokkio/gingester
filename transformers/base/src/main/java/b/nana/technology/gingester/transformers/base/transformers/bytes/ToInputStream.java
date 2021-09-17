@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-public class ToInputStream implements Transformer<byte[], InputStream> {
+public final class ToInputStream implements Transformer<byte[], InputStream> {
 
     @Override
     public void transform(Context context, byte[] in, Receiver<InputStream> out) throws Exception {

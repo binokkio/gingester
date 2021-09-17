@@ -7,7 +7,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
-public class ToString extends TimeBase<TemporalAccessor, String> {
+public final class ToString extends TimeBase<TemporalAccessor, String> {
 
     private final DateTimeFormatter formatter;
 

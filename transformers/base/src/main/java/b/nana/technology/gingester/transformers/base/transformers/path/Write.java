@@ -16,7 +16,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Write implements Transformer<InputStream, Path> {
+public final class Write implements Transformer<InputStream, Path> {
 
     private final Context.Template pathTemplate;
     private final boolean mkdirs;

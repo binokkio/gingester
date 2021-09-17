@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.zip.GZIPOutputStream;
 
 @Names(1)
-public class Pack implements Transformer<byte[], Object> {
+public final class Pack implements Transformer<byte[], Object> {
 
     private final ContextMap<TarArchiveOutputStream> contextMap = new ContextMap<>();
     private final Context.Template entryTemplate;

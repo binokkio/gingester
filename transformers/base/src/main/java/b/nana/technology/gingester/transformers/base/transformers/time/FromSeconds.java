@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 
-public class FromSeconds extends InstantBase<Long> {
+public final class FromSeconds extends InstantBase<Long> {
 
     public FromSeconds(Parameters parameters) {
         super(parameters);

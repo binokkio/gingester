@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.InputStream;
 
-public class ToJson extends ToJsonTransformer<InputStream> {
+public final class ToJson extends ToJsonTransformer<InputStream> {
 
     public ToJson(ToJsonTransformer.Parameters parameters) {
         super(parameters);

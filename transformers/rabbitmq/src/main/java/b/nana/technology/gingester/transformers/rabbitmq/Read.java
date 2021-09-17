@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.rabbitmq;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
-public class Read extends RabbitmqTransformer<Object, byte[]> {
+public final class Read extends RabbitmqTransformer<Object, byte[]> {
 
     public Read(RabbitmqTransformer.Parameters parameters) {
         super(parameters);

@@ -7,7 +7,7 @@ import b.nana.technology.gingester.transformers.base.common.string.CharsetTransf
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-public class ToInputStream extends CharsetTransformer<String, InputStream> {
+public final class ToInputStream extends CharsetTransformer<String, InputStream> {
 
     public ToInputStream(Parameters parameters) {
         super(parameters);

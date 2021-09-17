@@ -6,7 +6,7 @@ import redis.clients.jedis.Jedis;
 
 import java.nio.charset.StandardCharsets;
 
-public class Publish extends KeyTransformer<byte[], Void> {
+public final class Publish extends KeyTransformer<byte[], Void> {
 
     public Publish(Parameters parameters) {
         super(parameters);

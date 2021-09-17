@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.stream.Collectors;
 
-public class Out implements Transformer<Object, Object> {
+public final class Out implements Transformer<Object, Object> {
 
     private final boolean decorate;
 

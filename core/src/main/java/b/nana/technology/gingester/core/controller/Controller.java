@@ -207,7 +207,7 @@ public final class Controller<I, O> {
             double batchDuration = batchFinished - batchStarted;
 
             if ((batchDuration < 2_000_000 && batch.getSize() != maxBatchSize) ||
-                    (batchDuration > 4_000_000 && batch.getSize() != 1)) {
+                (batchDuration > 4_000_000 && batch.getSize() != 1)) {
 
                 double abrupt = 3_000_000 / batchDuration * batch.getSize();
                 double dampened = (abrupt + batch.getSize() * 9) / 10;
@@ -218,7 +218,7 @@ public final class Controller<I, O> {
 //                lastBatchReport = batchFinished;
 //                System.err.printf(
 //                        "%s processed batch of %,d items in %,.3f seconds%n",
-//                        transformer.name,
+//                        id,
 //                        batch.getSize(),
 //                        batchDuration / 1_000_000_000
 //                );

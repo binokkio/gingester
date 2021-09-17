@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class AsInteger implements Transformer<JsonNode, Integer> {
+public final class AsInteger implements Transformer<JsonNode, Integer> {
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<Integer> out) throws Exception {

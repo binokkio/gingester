@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.rabbitmq;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
-public class Write extends RabbitmqTransformer<byte[], byte[]> {
+public final class Write extends RabbitmqTransformer<byte[], byte[]> {
 
     private final String exchange;
     private final String routingKey;

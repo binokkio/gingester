@@ -13,7 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @Names(1)
-public class Throttle implements Transformer<Object, Object> {
+public final class Throttle implements Transformer<Object, Object> {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final Semaphore semaphore;

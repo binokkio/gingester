@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.temporal.TemporalAccessor;
 
-public class LastModified extends InstantBase<Path> {
+public final class LastModified extends InstantBase<Path> {
 
     public LastModified(InstantBase.Parameters parameters) {
         super(parameters);

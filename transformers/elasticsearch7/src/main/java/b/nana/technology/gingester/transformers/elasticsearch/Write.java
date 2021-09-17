@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class Write extends ElasticsearchTransformer<byte[], Void> implements BulkProcessor.Listener {
+public final class Write extends ElasticsearchTransformer<byte[], Void> implements BulkProcessor.Listener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Write.class);
 

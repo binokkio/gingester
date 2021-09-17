@@ -4,7 +4,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 
-public class ToString extends CharsetTransformer<byte[], String> {
+public final class ToString extends CharsetTransformer<byte[], String> {
 
     public ToString(Parameters parameters) {
         super(parameters);

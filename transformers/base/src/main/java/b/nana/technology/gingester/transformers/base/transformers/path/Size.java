@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class Size implements Transformer<Path, Long> {
+public final class Size implements Transformer<Path, Long> {
 
     @Override
     public void transform(Context context, Path in, Receiver<Long> out) throws Exception {

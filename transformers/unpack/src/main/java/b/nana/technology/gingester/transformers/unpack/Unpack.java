@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 @Names(1)
-public class Unpack implements Transformer<InputStream, InputStream> {
+public final class Unpack implements Transformer<InputStream, InputStream> {
 
     private final Context.Template descriptionTemplate;
 

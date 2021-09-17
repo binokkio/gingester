@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class Move implements Transformer<Path, Path> {
+public final class Move implements Transformer<Path, Path> {
 
     private final Context.Template pathTemplate;
     private final boolean mkdirs;

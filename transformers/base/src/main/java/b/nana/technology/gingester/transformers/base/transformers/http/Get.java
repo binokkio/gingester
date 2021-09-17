@@ -13,7 +13,7 @@ import java.net.http.HttpResponse;
 import java.util.Collections;
 import java.util.Map;
 
-public class Get implements Transformer<Object, byte[]> {
+public final class Get implements Transformer<Object, byte[]> {
 
     private final URI uri;
     private final HttpClient.Redirect followRedirects;

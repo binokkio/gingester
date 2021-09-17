@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.util.Collection;
 import java.util.List;
 
-public class BaseProvider implements Provider {
+public final class BaseProvider implements Provider {
 
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {

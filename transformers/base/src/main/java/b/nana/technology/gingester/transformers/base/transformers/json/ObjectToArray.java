@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class ObjectToArray implements Transformer<ObjectNode, ArrayNode> {
+public final class ObjectToArray implements Transformer<ObjectNode, ArrayNode> {
 
     @Override
     public void transform(Context context, ObjectNode in, Receiver<ArrayNode> out) throws Exception {

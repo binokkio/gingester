@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Find implements Transformer<String, Matcher> {
+public final class Find implements Transformer<String, Matcher> {
 
     private final Pattern pattern;
 

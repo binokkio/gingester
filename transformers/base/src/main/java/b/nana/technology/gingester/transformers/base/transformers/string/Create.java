@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class Create implements Transformer<Object, String> {
+public final class Create implements Transformer<Object, String> {
 
     private final int count;
     private final Context.Template template;

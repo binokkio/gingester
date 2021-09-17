@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 
-public class Now extends InstantBase<Object> {
+public final class Now extends InstantBase<Object> {
 
     public Now(Parameters parameters) {
         super(parameters);

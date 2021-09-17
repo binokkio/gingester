@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNode> {
+public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNode> {
 
     private final Path directory;
     private final Pattern filenameReplacePattern;

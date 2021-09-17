@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.regex.Pattern;
 
-public class Replace implements Transformer<String, String> {
+public final class Replace implements Transformer<String, String> {
 
     private final Pattern pattern;
     private final Context.Template replacementTemplate;

@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FromString extends TimeBase<String, TemporalAccessor> {
+public final class FromString extends TimeBase<String, TemporalAccessor> {
 
     private final DateTimeFormatter formatter;
 

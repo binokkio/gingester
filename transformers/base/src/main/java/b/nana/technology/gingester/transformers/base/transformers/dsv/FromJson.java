@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FromJson implements Transformer<JsonNode, InputStream> {
+public final class FromJson implements Transformer<JsonNode, InputStream> {
 
     private final ObjectWriter writer;
 

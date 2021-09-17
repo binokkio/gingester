@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-public class Job implements Transformer<Object, Object> {
+public final class Job implements Transformer<Object, Object> {
 
     private final String schedule;
     private final boolean skips;

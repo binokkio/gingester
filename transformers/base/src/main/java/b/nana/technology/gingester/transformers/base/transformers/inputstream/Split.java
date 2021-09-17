@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
-public class Split implements Transformer<InputStream, InputStream> {
+public final class Split implements Transformer<InputStream, InputStream> {
 
     private final byte[] delimiter;
 

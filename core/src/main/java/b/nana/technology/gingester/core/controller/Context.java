@@ -21,7 +21,7 @@ public final class Context implements Iterable<Context> {
 
 
     private final Context parent;
-    final Controller<?, ?> controller;
+    final Controller<?, ?> controller;  // TODO reduce visibility
     private final Map<String, Object> stash;
 
     private Context(Builder builder) {

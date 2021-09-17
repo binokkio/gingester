@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Names(1)
-public class Sample implements Transformer<Object, Object> {
+public final class Sample implements Transformer<Object, Object> {
 
     private final ContextMap<AtomicLong> contextMap = new ContextMap<>();
     private final long divider;

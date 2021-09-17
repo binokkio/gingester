@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class Append implements Transformer<String, String> {
+public final class Append implements Transformer<String, String> {
 
     private final String append;
 

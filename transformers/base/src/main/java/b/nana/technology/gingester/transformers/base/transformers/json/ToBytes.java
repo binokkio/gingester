@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.nio.charset.StandardCharsets;
 
-public class ToBytes implements Transformer<JsonNode, byte[]> {
+public final class ToBytes implements Transformer<JsonNode, byte[]> {
 
     private final boolean pretty;
 

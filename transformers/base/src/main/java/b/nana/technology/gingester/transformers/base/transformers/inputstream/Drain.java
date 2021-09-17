@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.io.InputStream;
 
-public class Drain implements Transformer<InputStream, InputStream> {
+public final class Drain implements Transformer<InputStream, InputStream> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {

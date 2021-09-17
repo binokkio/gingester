@@ -101,4 +101,47 @@ class PackTest {
         Files.delete(result);
         Files.delete(tempDir);
     }
+
+    @Test
+    void testPackTogetherImplicitly() throws IOException {
+
+        Path tempDir = Files.createTempDirectory("gingester-");
+
+        Gingester gingester = new Gingester();
+
+        gingester.configure(c -> c
+                .transformer("String.Create")
+                .jsonParameters("{template:'Hello, World!',count:1000}"));
+
+        gingester.add("String.ToBytes");
+
+        // not setting __seed__ as sync explicitly, relying on default Pack setup instead
+        gingester.configure(c -> c
+                .transformer("Pack")
+                .parameters("hello-${description}.txt"));
+
+        gingester.configure(c -> c
+                .transformer("Path.Write")
+                .parameters(tempDir.resolve("result.tar.gz").toString()));
+
+        gingester.run();
+
+        Path result = tempDir.resolve("result.tar.gz");
+        assertTrue(Files.exists(result));
+
+        TarArchiveInputStream tar = new TarArchiveInputStream(new GZIPInputStream(Files.newInputStream(result)));
+
+        for (int i = 0; i < 1000; i++) {
+
+            TarArchiveEntry entry = tar.getNextTarEntry();
+            assertNotNull(entry);
+            assertEquals("hello-" + i + ".txt", entry.getName());
+
+            String content = new String(tar.readAllBytes(), StandardCharsets.UTF_8);
+            assertEquals("Hello, World!", content);
+        }
+
+        Files.delete(result);
+        Files.delete(tempDir);
+    }
 }

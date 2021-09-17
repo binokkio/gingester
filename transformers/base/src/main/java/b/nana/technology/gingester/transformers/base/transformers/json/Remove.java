@@ -10,7 +10,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 
-public class Remove implements Transformer<JsonNode, JsonNode> {
+public final class Remove implements Transformer<JsonNode, JsonNode> {
 
     private static final Configuration CONFIGURATION = Configuration.builder()
             .jsonProvider(new JacksonJsonNodeJsonProvider())

@@ -12,7 +12,7 @@ import org.jsfr.json.path.JsonPath;
 import java.io.InputStream;
 import java.util.Iterator;
 
-public class Stream implements Transformer<InputStream, JsonNode> {
+public final class Stream implements Transformer<InputStream, JsonNode> {
 
     private final String descriptionPrefix;
     private final JsonPath jsonPath;

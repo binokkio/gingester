@@ -13,7 +13,7 @@ import java.util.Map;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
-public class Search implements Transformer<Object, Path> {
+public final class Search implements Transformer<Object, Path> {
 
     private final Path root;
     private final String[] globs;

@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class Open implements Transformer<Path, InputStream> {
+public final class Open implements Transformer<Path, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {

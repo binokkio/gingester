@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Names(1)
-public class Exec implements Transformer<InputStream, InputStream> {
+public final class Exec implements Transformer<InputStream, InputStream> {
 
     private final ExecutorService errDrainer = Executors.newCachedThreadPool();
 
