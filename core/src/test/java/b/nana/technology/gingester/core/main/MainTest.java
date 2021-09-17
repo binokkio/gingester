@@ -109,6 +109,15 @@ class MainTest {
         assertEquals("World!", parameters.asText());
     }
 
+    @Test
+    void testExceptionLinking() {
+        GingesterConfiguration configuration = Main.parseArgs(createArgs("-e Stash -t Throw -- -t Stash"));
+        assertEquals(2, configuration.transformers.size());
+        assertEquals("Throw", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals(Collections.singletonList("Stash"), configuration.transformers.get(0).getExcepts().orElseThrow());
+        assertEquals("Stash", configuration.transformers.get(1).getName().orElseThrow());
+    }
+
     private static String[] createArgs(String cli) {
         return cli.split(" ");
     }

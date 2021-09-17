@@ -7,6 +7,9 @@ General usage:
     -b/--break
         ignore all following transformers
 
+    -e/--excepts <link1> [<link2> [...]]
+        send exceptions for the following transformers to the transformers linked
+
     -f/--fetch [<name>]
         fetch value from stash
 

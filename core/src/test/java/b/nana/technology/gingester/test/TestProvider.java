@@ -16,7 +16,8 @@ public class TestProvider implements Provider {
                 Generate.class,
                 Question.class,
                 Seed.class,
-                Sync.class
+                Sync.class,
+                Throw.class
         );
     }
 }

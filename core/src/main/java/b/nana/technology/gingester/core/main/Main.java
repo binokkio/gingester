@@ -43,6 +43,7 @@ public final class Main {
 
         String syncFrom = "__seed__";
         TransformerConfiguration previous = null;
+        List<String> nextExcepts = null;
 
         for (int i = 0; i < args.length; i++) {
 
@@ -105,6 +106,14 @@ public final class Main {
                     previous.links(links);
                     break;
 
+                case "-e":
+                case "--excepts":
+                    nextExcepts = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                        nextExcepts.add(args[++i]);
+                    }
+                    break;
+
                 case "--":
                     requireNonNull(previous, "Found -- before first transformer");
                     previous.links(Collections.emptyList());
@@ -159,6 +168,11 @@ public final class Main {
                         syncFrom = transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given")));
                     } else if (syncTo) {
                         transformer.syncs(List.of(syncFrom));
+                    }
+
+                    if (nextExcepts != null) {
+                        transformer.excepts(nextExcepts);
+                        nextExcepts = null;
                     }
 
                     previous = transformer;
