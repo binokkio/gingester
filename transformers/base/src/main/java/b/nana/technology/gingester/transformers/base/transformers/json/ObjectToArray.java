@@ -17,5 +17,6 @@ public final class ObjectToArray implements Transformer<ObjectNode, ArrayNode> {
             item.put("key", entry.getKey());
             item.set("value", entry.getValue());
         });
+        out.accept(context, arrayNode);
     }
 }
