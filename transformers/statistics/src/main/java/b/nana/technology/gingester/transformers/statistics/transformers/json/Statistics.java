@@ -39,6 +39,7 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
     static {
         NodeConfiguration defaultNodeConfiguration = new NodeConfiguration();
         defaultNodeConfiguration.disabled = false;
+        defaultNodeConfiguration.arrays = "collapsed";
         defaultNodeConfiguration.frequencyConfiguration = new FrequencyConfiguration();
         defaultNodeConfiguration.frequencyConfiguration.disabled = false;
         defaultNodeConfiguration.frequencyConfiguration.frequencyLimit = 10000;
@@ -132,10 +133,8 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
             NodeConfiguration nodeConfiguration = new NodeConfiguration();
             if (given == null) given = nodeConfiguration;  // TODO hacky
 
-            nodeConfiguration.disabled =
-                    given.disabled != null ?
-                            given.disabled :
-                            parent.disabled;
+            nodeConfiguration.disabled = given.disabled != null ? given.disabled : parent.disabled;
+            nodeConfiguration.arrays = given.arrays != null ? given.arrays : parent.arrays;
 
             nodeConfiguration.frequencyConfiguration = given.frequencyConfiguration != null ? given.frequencyConfiguration : parent.frequencyConfiguration;
             nodeConfiguration.frequencyConfiguration.disabled = nodeConfiguration.frequencyConfiguration.disabled != null ? nodeConfiguration.frequencyConfiguration.disabled : parent.frequencyConfiguration.disabled;
@@ -157,14 +156,25 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
             if (jsonNode.isArray()) {
 
                 for (int i = 0; i < jsonNode.size(); i++) {
-                    NodeStatistics nodeStatistics;
-                    if (i >= arrayChildren.size()) {
-                        nodeStatistics = new NodeStatistics(root, this, pointer + '/' + i);
-                        arrayChildren.add(nodeStatistics);
+                    if (nodeConfiguration.arrays.equals("indexed")) {
+                        NodeStatistics nodeStatistics;
+                        if (i >= arrayChildren.size()) {
+                            nodeStatistics = new NodeStatistics(root, this, pointer + '[' + i + ']');
+                            arrayChildren.add(nodeStatistics);
+                        } else {
+                            nodeStatistics = arrayChildren.get(i);
+                        }
+                        nodeStatistics.accept(jsonNode.get(i));
+                    } else if (nodeConfiguration.arrays.equals("collapsed")) {
+                        NodeStatistics nodeStatistics = arrayChildren.get(0);
+                        if (nodeStatistics == null) {
+                            nodeStatistics = new NodeStatistics(root, this, pointer + "[*]");
+                            arrayChildren.add(nodeStatistics);
+                        }
+                        nodeStatistics.accept(jsonNode.get(i));
                     } else {
-                        nodeStatistics = arrayChildren.get(i);
+                        throw new IllegalStateException("No handling defined for \"arrays: " + nodeConfiguration.arrays + "\"");
                     }
-                    nodeStatistics.accept(jsonNode.get(i));
                 }
 
             } else if (jsonNode.isObject()) {
@@ -173,7 +183,7 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
                 while (fieldNames.hasNext()) {
                     String fieldName = fieldNames.next();
                     objectChildren
-                            .computeIfAbsent(fieldName, x -> new NodeStatistics(root, this, pointer + '/' + fieldName))  // TODO encode '/' and '~', see https://datatracker.ietf.org/doc/html/rfc6901#section-3
+                            .computeIfAbsent(fieldName, x -> new NodeStatistics(root, this, pointer.isEmpty() ? fieldName : pointer + '.' + fieldName))
                             .accept(jsonNode.get(fieldName));
                 }
 
@@ -347,6 +357,7 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
 
     public static class NodeConfiguration {
         public Boolean disabled;
+        public String arrays;
         public FrequencyConfiguration frequencyConfiguration;
         public HistogramConfiguration histogramConfiguration;
     }
