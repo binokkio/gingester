@@ -1,0 +1,28 @@
+<records>
+    <record>
+        <container>
+            <list>
+                <item>One</item>
+                <item>Two</item>
+                <item>Three</item>
+            </list>
+        </container>
+    </record>
+    <record>
+        <container>
+            <list>
+                <item>One</item>
+                <item>Two</item>
+                <item>Three</item>
+            </list>
+        </container>
+    </record>
+    <record>
+        <container>
+            <list>
+                <!-- this list only has one item, which results in a different structure when mapping to a JsonNode -->
+                <item>One</item>
+            </list>
+        </container>
+    </record>
+</records>
