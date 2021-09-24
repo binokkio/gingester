@@ -166,10 +166,12 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
                         }
                         nodeStatistics.accept(jsonNode.get(i));
                     } else if (nodeConfiguration.arrays.equals("collapsed")) {
-                        NodeStatistics nodeStatistics = arrayChildren.get(0);
-                        if (nodeStatistics == null) {
+                        NodeStatistics nodeStatistics;
+                        if (arrayChildren.isEmpty()) {
                             nodeStatistics = new NodeStatistics(root, this, pointer + "[*]");
                             arrayChildren.add(nodeStatistics);
+                        }  else {
+                            nodeStatistics = arrayChildren.get(0);
                         }
                         nodeStatistics.accept(jsonNode.get(i));
                     } else {

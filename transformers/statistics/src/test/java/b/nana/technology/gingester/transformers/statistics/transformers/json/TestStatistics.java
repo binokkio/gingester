@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TestStatistics {
 
@@ -89,10 +90,47 @@ class TestStatistics {
 
         gingester.configure(c -> c
                 .transformer("Json.Statistics")
-                .syncs(List.of("Resource.Open")));
+                .syncs(List.of("Resource.Open")));  // unnecessary but here to add some variations to the tests
 
         gingester.add(result::set);
         gingester.run();
+
+        assertNotNull(result.get().get("array[*]"));
+        assertNull(result.get().get("array[0]"));
+    }
+
+    @Test
+    void testJsonArraysIndexed() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.configure(c -> c
+                .transformer("Resource.Open")
+                .parameters("/basic.ndjson"));
+
+        gingester.configure(c -> c
+                .transformer("InputStream.Split")
+                .parameters("\n"));
+
+        gingester.add("InputStream.ToJson");
+
+        Statistics.NodeConfiguration arrayNodeConfiguration = new Statistics.NodeConfiguration();
+        arrayNodeConfiguration.arrays = "indexed";
+
+        gingester.configure(c -> c
+                .transformer("Json.Statistics")
+                .parameters(Map.of(
+                        "array", arrayNodeConfiguration
+                )));
+
+        gingester.add(result::set);
+        gingester.run();
+
+        assertNull(result.get().get("array[*]"));
+        assertNotNull(result.get().get("array[0]"));
+        assertNotNull(result.get().get("array[1]"));
     }
 
     @Test

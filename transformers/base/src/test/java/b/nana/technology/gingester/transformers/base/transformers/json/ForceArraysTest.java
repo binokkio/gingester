@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,7 +31,7 @@ class ForceArraysTest {
 
         gingester.configure(c -> c
                 .transformer("Json.ForceArrays")
-                .jsonParameters("[\"$.container.list.item\"]"));
+                .parameters(Collections.singletonList("$.container.list.item")));
 
         gingester.add(results::add);
 

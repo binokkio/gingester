@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.util.Optional;
@@ -17,6 +18,8 @@ import java.util.function.Consumer;
         getterVisibility = JsonAutoDetect.Visibility.NONE
 )
 public final class TransformerConfiguration extends BaseConfiguration<TransformerConfiguration> {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private String id;
     private String transformer;
@@ -64,7 +67,7 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
     }
 
     public TransformerConfiguration parameters(Object parameters) {
-        this.parameters = GingesterConfiguration.OBJECT_MAPPER.valueToTree(parameters);
+        this.parameters = OBJECT_MAPPER.valueToTree(parameters);
         return this;
     }
 
