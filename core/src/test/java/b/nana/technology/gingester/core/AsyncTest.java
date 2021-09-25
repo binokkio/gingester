@@ -16,17 +16,9 @@ class AsyncTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("Generate")
-                .parameters("Hello, World!"));
-
-        gingester.configure(c -> c
-                .transformer("Sync")
-                .syncs(List.of("Generate")));
-
-        gingester.configure(c -> c
-                .transformer(result::set)
-                .maxWorkers(1));
+        gingester.cli("-sft Generate \"Hello, World!\"");
+        gingester.cli("-stt Sync");
+        gingester.add(result::set);
 
         gingester.run();
 

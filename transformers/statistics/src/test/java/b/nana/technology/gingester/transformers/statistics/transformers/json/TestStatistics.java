@@ -4,8 +4,6 @@ import b.nana.technology.gingester.core.Gingester;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,15 +17,10 @@ class TestStatistics {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("Resource.Open")
-                .parameters("/basic.csv"));
-
-        gingester.add("Dsv.ToJson");
-
-        gingester.configure(c -> c
-                .transformer("Json.Statistics")
-                .syncs(List.of("Resource.Open")));
+        gingester.cli("" +
+                "-t Resource.Open /basic.csv " +
+                "-t Dsv.ToJson " +
+                "-t Json.Statistics");
 
         gingester.add(result::set);
         gingester.run();
@@ -78,19 +71,11 @@ class TestStatistics {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("Resource.Open")
-                .parameters("/basic.ndjson"));
-
-        gingester.configure(c -> c
-                .transformer("InputStream.Split")
-                .parameters("\n"));
-
-        gingester.add("InputStream.ToJson");
-
-        gingester.configure(c -> c
-                .transformer("Json.Statistics")
-                .syncs(List.of("Resource.Open")));  // unnecessary but here to add some variations to the tests
+        gingester.cli("" +
+                "-sft Resource.Open /basic.ndjson " +
+                "-t InputStream.Split " +
+                "-t InputStream.ToJson " +
+                "-stt Json.Statistics");  // -sft and -stt are unnecessary but here to add some variation to the tests
 
         gingester.add(result::set);
         gingester.run();
@@ -106,24 +91,11 @@ class TestStatistics {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("Resource.Open")
-                .parameters("/basic.ndjson"));
-
-        gingester.configure(c -> c
-                .transformer("InputStream.Split")
-                .parameters("\n"));
-
-        gingester.add("InputStream.ToJson");
-
-        Statistics.NodeConfiguration arrayNodeConfiguration = new Statistics.NodeConfiguration();
-        arrayNodeConfiguration.arrays = "indexed";
-
-        gingester.configure(c -> c
-                .transformer("Json.Statistics")
-                .parameters(Map.of(
-                        "array", arrayNodeConfiguration
-                )));
+        gingester.cli("" +
+                "-t Resource.Open /basic.ndjson " +
+                "-t InputStream.Split " +
+                "-t InputStream.ToJson " +
+                "-t Json.Statistics {array:{arrays:'indexed'}}");
 
         gingester.add(result::set);
         gingester.run();
@@ -140,19 +112,11 @@ class TestStatistics {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("Resource.Open")
-                .parameters("/nulls.ndjson"));
-
-        gingester.configure(c -> c
-                .transformer("InputStream.Split")
-                .parameters("\n"));
-
-        gingester.add("InputStream.ToJson");
-
-        gingester.configure(c -> c
-                .transformer("Json.Statistics")
-                .syncs(List.of("Resource.Open")));
+        gingester.cli("" +
+                "-t Resource.Open /nulls.ndjson " +
+                "-t InputStream.Split " +  // \"s are unnecessary but here to add some variation to the tests
+                "-t InputStream.ToJson " +
+                "-t Json.Statistics");
 
         gingester.add(result::set);
         gingester.run();

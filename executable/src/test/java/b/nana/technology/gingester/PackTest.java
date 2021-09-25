@@ -23,20 +23,11 @@ class PackTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("String.Create")
-                .jsonParameters("{template:'Hello, World!',count:1000}"));
-
-        gingester.add("String.ToBytes");
-
-        gingester.configure(c -> c
-                .transformer("Pack")
-                .syncs(Collections.singletonList("String.Create"))
-                .parameters("hello.txt"));
-
-        gingester.configure(c -> c
-                .transformer("Path.Write")
-                .parameters(tempDir.resolve("result-${description}.tar.gz").toString()));
+        gingester.cli(
+                "-sft String.Create \"{template:'Hello, World!',count:1000}\" " +
+                "-t String.ToBytes " +
+                "-stt Pack hello.txt " +
+                "-t Path.Write " + tempDir.resolve("result-${description}.tar.gz"));
 
         gingester.run();
 
@@ -66,20 +57,12 @@ class PackTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("String.Create")
-                .jsonParameters("{template:'Hello, World!',count:1000}"));
-
-        gingester.add("String.ToBytes");
-
-        gingester.configure(c -> c
-                .transformer("Pack")
-                .syncs(Collections.singletonList("__seed__"))
-                .parameters("hello-${description}.txt"));
-
-        gingester.configure(c -> c
-                .transformer("Path.Write")
-                .parameters(tempDir.resolve("result.tar.gz").toString()));
+        gingester.cli(
+                "-sft Stash " +
+                "-t String.Create \"{template:'Hello, World!',count:1000}\" " +
+                "-t String.ToBytes " +
+                "-stt Pack hello-${description}.txt " +
+                "-t Path.Write " + tempDir.resolve("result.tar.gz"));
 
         gingester.run();
 
@@ -109,20 +92,11 @@ class PackTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.configure(c -> c
-                .transformer("String.Create")
-                .jsonParameters("{template:'Hello, World!',count:1000}"));
-
-        gingester.add("String.ToBytes");
-
-        // not setting __seed__ as sync explicitly, relying on default Pack setup instead
-        gingester.configure(c -> c
-                .transformer("Pack")
-                .parameters("hello-${description}.txt"));
-
-        gingester.configure(c -> c
-                .transformer("Path.Write")
-                .parameters(tempDir.resolve("result.tar.gz").toString()));
+        gingester.cli("" +
+                "-t String.Create \"{template:'Hello, World!',count:1000}\" " +
+                "-t String.ToBytes " +
+                "-t Pack hello-${description}.txt " +
+                "-t Path.Write " + tempDir.resolve("result.tar.gz"));
 
         gingester.run();
 

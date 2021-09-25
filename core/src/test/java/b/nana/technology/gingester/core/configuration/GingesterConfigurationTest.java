@@ -54,9 +54,8 @@ class GingesterConfigurationTest {
                 .fromJson(getClass().getResourceAsStream("/hello-world-diamond.json"))
                 .applyTo(gingester);
 
-
         Queue<String> results = new ArrayDeque<>();
-        gingester.add("ResultsCollector", results::add);
+        gingester.add(results::add);
         gingester.run();
 
         assertEquals(2, results.size());

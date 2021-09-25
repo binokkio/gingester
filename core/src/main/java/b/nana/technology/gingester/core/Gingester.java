@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
+import b.nana.technology.gingester.core.cli.CliParser;
+import b.nana.technology.gingester.core.cli.Main;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
@@ -29,45 +31,29 @@ public final class Gingester {
     private final Set<String> open = new HashSet<>();
     private boolean report;
 
-    public void report(Boolean report) {
-        this.report = report == null || report;
+    public void report(boolean report) {
+        this.report = report;
     }
 
     public void add(String transformer) {
-        configure(c -> c.transformer(transformer));
-    }
-
-    public void add(Transformer<?, ?> transformer) {
-        configure(c -> c.transformer(transformer));
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.transformer(transformer);
+        add(configuration);
     }
 
     public <T> void add(Consumer<T> consumer) {
-        configure(c -> c.transformer(consumer));
-    }
-
-    public void add(String id, Transformer<?, ?> transformer) {
-        configure(c -> {
-            c.id(id);
-            c.transformer(transformer);
-        });
-    }
-
-    public <T> void add(String id, Consumer<T> consumer) {
-        configure(c -> {
-            c.id(id);
-            c.transformer(consumer);
-        });
-    }
-
-    public void configure(Configurator configurator) {
         TransformerConfiguration configuration = new TransformerConfiguration();
-        configurator.configure(configuration);
+        configuration.transformer(consumer);
         add(configuration);
     }
 
     public void add(TransformerConfiguration configuration) {
         String id = getId(configuration);
         transformerConfigurations.put(id, configuration);
+    }
+
+    public void cli(String cli) {
+        Main.parseArgs(CliParser.parse(cli)).applyTo(this);
     }
 
     private String getId(TransformerConfiguration configuration) {
@@ -90,9 +76,13 @@ public final class Gingester {
     }
 
     public void run() {
+        run(Collections.emptyMap());
+    }
+
+    public void run(Map<String, Object> seedStash) {
         setup();
         seed();
-        start();
+        start(seedStash);
     }
 
     private void setup() {
@@ -189,7 +179,7 @@ public final class Gingester {
         controllers.values().forEach(Controller::discover);
     }
 
-    private void start() {
+    private void start(Map<String, Object> seedStash) {
 
         controllers.values().forEach(Controller::open);
 
@@ -209,7 +199,9 @@ public final class Gingester {
         if (report) reporter.start();
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
-        Context seed = new Context.Builder().build(seedController);
+        Context seed = new Context.Builder()
+                .stash(seedStash)
+                .build(seedController);
         seedController.accept(new Batch<>(seed, new Object()));
         seedController.finish(null, seed);
 

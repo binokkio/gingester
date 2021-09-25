@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,15 +22,10 @@ class JsonArrayToFilesTest {
 
         Gingester gingester = new Gingester();
 
-        Stash.Parameters stashParameters = new Stash.Parameters();
-        stashParameters.name = "tempDir";
-        stashParameters.value = tempDir;
-        gingester.add(new Stash(stashParameters));
-
         GingesterConfiguration
                 .fromJson(getClass().getResourceAsStream("/configurations/json-array-to-files.gin.json"))
                 .applyTo(gingester)
-                .run();
+                .run(Map.of("tempDir", tempDir));
 
         Path message123 = tempDir.resolve("message-123.txt");
         assertTrue(Files.exists(message123));

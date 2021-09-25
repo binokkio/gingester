@@ -57,7 +57,7 @@ public final class GingesterConfiguration {
     }
 
     public Gingester applyTo(Gingester gingester) {
-        gingester.report(report);
+        if (report != null) gingester.report(report);
         transformers.forEach(gingester::add);
         return gingester;
     }

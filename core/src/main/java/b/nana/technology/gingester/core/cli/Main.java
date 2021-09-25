@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.main;
+package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
@@ -25,6 +25,7 @@ public final class Main {
     public static void main(String[] args) {
         if (args.length > 0) {
             GingesterConfiguration configuration = parseArgs(args);
+            if (configuration.report == null) configuration.report = true;
             Gingester gingester = new Gingester();
             configuration.applyTo(gingester);
             gingester.run();
@@ -33,13 +34,12 @@ public final class Main {
         }
     }
 
-    static GingesterConfiguration parseArgs(String[] args) {
+    public static GingesterConfiguration parseArgs(String[] args) {
 
         boolean break_ = false;
         boolean printConfig = false;
 
         GingesterConfiguration configuration = new GingesterConfiguration();
-        configuration.report = true;
 
         String syncFrom = "__seed__";
         TransformerConfiguration previous = null;

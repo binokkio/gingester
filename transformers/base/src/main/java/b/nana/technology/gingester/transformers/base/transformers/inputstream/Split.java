@@ -46,5 +46,4 @@ public final class Split implements Transformer<InputStream, InputStream> {
             this.delimiter = delimiter;
         }
     }
-
 }

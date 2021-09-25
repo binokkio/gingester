@@ -16,6 +16,10 @@
     {
       "transformer": "Question",
       "links": "ResultsCollector"
+    },
+    {
+      "id": "ResultsCollector",
+      "transformer": "Stash"
     }
   ]
 }
