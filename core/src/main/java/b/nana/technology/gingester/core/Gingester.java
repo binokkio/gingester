@@ -36,9 +36,7 @@ public final class Gingester {
     }
 
     public void add(String transformer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.transformer(transformer);
-        add(configuration);
+        add(new TransformerConfiguration(transformer));
     }
 
     public <T> void add(Consumer<T> consumer) {
@@ -276,9 +274,5 @@ public final class Gingester {
                 lock.notify();
             }
         }
-    }
-
-    public interface Configurator {
-        void configure(TransformerConfiguration configuration);
     }
 }
