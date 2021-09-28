@@ -31,52 +31,83 @@ public final class Gingester {
     private final Set<String> open = new HashSet<>();
     private boolean report;
 
+    /**
+     * Configure reporting.
+     *
+     * @param report true to enable, false to disable
+     */
     public void report(boolean report) {
         this.report = report;
     }
 
+    /**
+     * Add transformer by name.
+     *
+     * @param transformer the name of the transformer to add
+     */
     public void add(String transformer) {
         add(new TransformerConfiguration(transformer));
     }
 
+    /**
+     * Add consumer.
+     *
+     * @param consumer the consumer
+     * @param <T> the consumer type
+     */
     public <T> void add(Consumer<T> consumer) {
         TransformerConfiguration configuration = new TransformerConfiguration();
         configuration.transformer(consumer);
         add(configuration);
     }
 
+    /**
+     * Add transformer by configuration.
+     *
+     * @param configuration the transformer configuration
+     */
     public void add(TransformerConfiguration configuration) {
         String id = getId(configuration);
         transformerConfigurations.put(id, configuration);
     }
 
+    /**
+     * Apply given command line syntax instructions.
+     *
+     * @param cli the command line syntax to interpret
+     */
     public void cli(String cli) {
         Main.parseArgs(CliParser.parse(cli)).applyTo(this);
     }
 
-    private String getId(TransformerConfiguration configuration) {
-        return configuration.getId()
-                .filter(id -> {
-                    if (transformerConfigurations.containsKey(id)) {
-                        throw new IllegalArgumentException("Transformer id " + id + " already in use");
-                    }
-                    return true;
-                })
-                .orElseGet(() -> {
-                    String name = configuration.getName().orElseThrow();
-                    String id = name;
-                    int i = 1;
-                    while (transformerConfigurations.containsKey(id)) {
-                        id = name + '_' + i++;
-                    }
-                    return id;
-                });
-    }
-
+    /**
+     * Run the configured transformations.
+     * <p>
+     * This will run through the following steps:
+     * <ul>
+     * <li>call {@link Transformer#setup(SetupControls)} on all transformers
+     * <li>consolidate the transformer setup controls with the transformer configurations
+     * <li>create a seed transformer with id __seed__ and link it to all transformers with no incoming links
+     * <li>start a single worker thread for each transformer
+     * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
+     * <li>start the remaining worker threads as configured
+     * <li>give the seed controller a single input, which it will pass through to its links
+     * <li>start a reporting thread if configured
+     * <li>block until all transformers are done
+     * <li>call {@link Transformer#close()} on all transformers from one of their worker threads and wait for all to close
+     * </ul>
+     */
     public void run() {
         run(Collections.emptyMap());
     }
 
+    /**
+     * Run the configured transformations with the given seed stash.
+     * <p>
+     * See the {@link #run()} documentation for details.
+     *
+     * @param seedStash the seed stash
+     */
     public void run(Map<String, Object> seedStash) {
         setup();
         seed();
@@ -226,6 +257,25 @@ public final class Gingester {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
         }
+    }
+
+    private String getId(TransformerConfiguration configuration) {
+        return configuration.getId()
+                .filter(id -> {
+                    if (transformerConfigurations.containsKey(id)) {
+                        throw new IllegalArgumentException("Transformer id " + id + " already in use");
+                    }
+                    return true;
+                })
+                .orElseGet(() -> {
+                    String name = configuration.getName().orElseThrow();
+                    String id = name;
+                    int i = 1;
+                    while (transformerConfigurations.containsKey(id)) {
+                        id = name + '_' + i++;
+                    }
+                    return id;
+                });
     }
 
     private Optional<String> resolveMaybeNext(String from) {
