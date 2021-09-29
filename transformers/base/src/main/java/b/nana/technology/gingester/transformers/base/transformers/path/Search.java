@@ -112,7 +112,7 @@ public final class Search implements Transformer<Object, Path> {
     public static class Parameters {
 
         public String root = "";
-        public String[] globs = new String[] { "**/*" };
+        public String[] globs = new String[] { "**" };
         public boolean findDirs;
 
         @JsonCreator
