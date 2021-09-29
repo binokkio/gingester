@@ -50,6 +50,17 @@ public final class Gingester {
     }
 
     /**
+     * Add transformer.
+     *
+     * @param transformer the consumer
+     */
+    public void add(Transformer<?, ?> transformer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.transformer(transformer);
+        add(configuration);
+    }
+
+    /**
      * Add consumer.
      *
      * @param consumer the consumer

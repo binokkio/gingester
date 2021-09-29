@@ -14,6 +14,14 @@ public final class Context implements Iterable<Context> {
 
     private static final int INDENT = 2;
 
+    /**
+     * Create a new Context.Template.
+     *
+     * See {@link Template} for details.
+     *
+     * @param template the template string
+     * @return the compiled template
+     */
     public static Template newTemplate(String template) {
         FreemarkerTemplateWrapper wrapper = FreemarkerTemplateFactory.createTemplate(template, FreemarkerContextWrapper::new);
         return wrapper::render;
@@ -21,7 +29,7 @@ public final class Context implements Iterable<Context> {
 
 
     private final Context parent;
-    final Controller<?, ?> controller;  // TODO reduce visibility
+    final Controller<?, ?> controller;
     private final Map<String, Object> stash;
 
     private Context(Builder builder) {
@@ -34,6 +42,30 @@ public final class Context implements Iterable<Context> {
         return parent == null;
     }
 
+    /**
+     * Fetch object(s) from stash.
+     * <p>
+     * Iterates through the transformers that contributed to this context, from last to first. Checks the stash each
+     * transformer provided for an object that matches the given name.
+     * <p>
+     * The name is used to step through the layers of the stash. If a transformer stashed the following:
+     * <pre>
+     * context.stash(Map.of(
+     *     "foo", Map.of(
+     *         "bar": 123
+     *    )
+     * ))
+     * </pre>
+     * <p>
+     * Then {@code context.fetch("foo", "bar").findFirst().orElseThrow()} would return 123.
+     * <p>
+     * Fetch will step through instances of Map, List, and JsonNode.
+     * <p>
+     * To steer fetch towards a specific transformer, the transformer id should be given as the first name.
+     *
+     * @param name the stash name, e.g. {@code fetch("Path.Search", "description")};
+     * @return stream of stashes matching the given name
+     */
     public Stream<Object> fetch(String... name) {
         return Stream.concat(
                         stream().map(c -> c.stash).filter(Objects::nonNull),
@@ -63,6 +95,12 @@ public final class Context implements Iterable<Context> {
                 .filter(Objects::nonNull);
     }
 
+    /**
+     * Fetch object(s) from stash, reversed.
+     *
+     * @param name the stash name, e.g. {@code fetch("Path.Search", "description")};
+     * @return the same as {@link #fetch(String...)}, but reversed.
+     */
     public Stream<Object> fetchReverse(String... name) {
         List<Object> results = fetch(name).collect(Collectors.toCollection(ArrayList::new));
         Collections.reverse(results);
@@ -181,6 +219,12 @@ public final class Context implements Iterable<Context> {
         }
     }
 
+    /**
+     * Context template.
+     * <p>
+     * Render strings using the Apache FreeMarker template engine and the Gingester Context as its data model. Template
+     * variables are resolved as if they were interpreted by {@link Context#fetch(String...)}.
+     */
     public interface Template {
         String render(Context context);
     }
