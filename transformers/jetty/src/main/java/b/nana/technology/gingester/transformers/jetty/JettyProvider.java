@@ -7,7 +7,7 @@ import b.nana.technology.gingester.transformers.jetty.http.*;
 import java.util.Collection;
 import java.util.List;
 
-public class JettyProvider implements Provider {
+public final class JettyProvider implements Provider {
 
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {

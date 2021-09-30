@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Server implements Transformer<Object, InputStream> {
+public final class Server implements Transformer<Object, InputStream> {
 
     private final int port;
     private final SslContextFactory.Server sslContextFactory;

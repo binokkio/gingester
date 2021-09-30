@@ -172,14 +172,32 @@ public final class Context implements Iterable<Context> {
         }
     }
 
+    /**
+     * Create a new builder with this context as parent.
+     *
+     * @return the context builder
+     */
     public Builder extend() {
         return new Builder(this);
     }
 
+    /**
+     * Create a new builder with this context as parent and the given key-value as stash.
+     *
+     * @param key the key to stash
+     * @param value the value to stash
+     * @return the context builder
+     */
     public Builder stash(String key, Object value) {
-        return new Builder(this).stash(Map.of(key, value));
+        return new Builder(this).stash(key, value);
     }
 
+    /**
+     * Create a new builder with this context as parent and the given stash.
+     *
+     * @param stash the stash
+     * @return the context builder
+     */
     public Builder stash(Map<String, Object> stash) {
         return new Builder(this).stash(stash);
     }
@@ -198,17 +216,36 @@ public final class Context implements Iterable<Context> {
             this.parent = parent;
         }
 
+        /**
+         * Replace the current stash, if any, with the given key-value.
+         *
+         * @param key the key to stash
+         * @param value the value to stash
+         * @return this builder
+         */
         public Builder stash(String key, Object value) {
             this.stash = Map.of(key, value);
             return this;
         }
 
+        /**
+         * Replace the current stash, if any, with the given stash.
+         *
+         * @param stash the stash
+         * @return this builder
+         */
         public Builder stash(Map<String, Object> stash) {
             this.stash = stash;
             return this;
         }
 
+        /**
+         * Build context without controller, only for seeding/testing!
+         *
+         * @return the context
+         */
         public Context build() {
+            if (parent != null) throw new IllegalStateException("build() called on child context builder");
             this.controller = new Controller<>();
             return new Context(this);
         }

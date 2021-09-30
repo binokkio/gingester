@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 // TODO this is a very quick and dirty implementation only tested to work with a specific use case
 
-public class Keycloak implements Transformer<Object, Object> {
+public final class Keycloak implements Transformer<Object, Object> {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();

@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Split implements Transformer<InputStream, InputStream> {
+public final class Split implements Transformer<InputStream, InputStream> {
 
     private static final Pattern BOUNDARY_PATTERN = Pattern.compile("(?:^|;| )boundary=([^; ]*)");
     private static final byte[] CR_LF = new byte[] { '\r', '\n' };

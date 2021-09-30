@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Responder implements Transformer<Object, Void> {
+public final class Responder implements Transformer<Object, Void> {
 
     private final ContextMap<AtomicBoolean> states = new ContextMap<>();
 
