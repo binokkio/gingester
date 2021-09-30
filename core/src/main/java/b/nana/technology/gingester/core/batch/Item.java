@@ -7,7 +7,7 @@ public final class Item<T> {
     private final Context context;
     private final T value;
 
-    Item(Context context, T value) {
+    public Item(Context context, T value) {
         this.context = context;
         this.value = value;
     }
