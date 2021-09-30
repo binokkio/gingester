@@ -245,7 +245,6 @@ public final class Context implements Iterable<Context> {
          * @return the context
          */
         public Context build() {
-            if (parent != null) throw new IllegalStateException("build() called on child context builder");
             this.controller = new Controller<>();
             return new Context(this);
         }
