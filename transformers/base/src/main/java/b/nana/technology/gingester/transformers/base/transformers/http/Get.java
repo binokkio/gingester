@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -13,7 +14,7 @@ import java.net.http.HttpResponse;
 import java.util.Collections;
 import java.util.Map;
 
-public final class Get implements Transformer<Object, byte[]> {
+public final class Get implements Transformer<Object, InputStream> {
 
     private final URI uri;
     private final HttpClient.Redirect followRedirects;
@@ -21,7 +22,7 @@ public final class Get implements Transformer<Object, byte[]> {
 
     public Get(Parameters parameters) {
         uri = URI.create(parameters.uri);
-        followRedirects = HttpClient.Redirect.valueOf(parameters.followRedirects);
+        followRedirects = parameters.followRedirects;
         headers = parameters.headers;
     }
 
@@ -31,11 +32,11 @@ public final class Get implements Transformer<Object, byte[]> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<byte[]> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
         HttpClient client = HttpClient.newBuilder().followRedirects(followRedirects).build();
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri);
         headers.forEach(requestBuilder::header);
-        HttpResponse<byte[]> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
+        HttpResponse<InputStream> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
         Context.Builder contextBuilder = context.stash("description", uri.toString());
         out.accept(contextBuilder, response.body());
     }
@@ -43,7 +44,7 @@ public final class Get implements Transformer<Object, byte[]> {
     public static class Parameters {
 
         public String uri;
-        public String followRedirects = HttpClient.Redirect.NORMAL.name();
+        public HttpClient.Redirect followRedirects = HttpClient.Redirect.NORMAL;
         public Map<String, String> headers = Collections.emptyMap();
 
         @JsonCreator
