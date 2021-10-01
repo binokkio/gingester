@@ -29,8 +29,17 @@ public final class Gingester {
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Set<String> open = new HashSet<>();
+    private final Set<String> excepts = new LinkedHashSet<>();
     private boolean report;
-    private Set<String> excepts = new LinkedHashSet<>();
+
+    /**
+     * Add the given list of transformer ids as root exception handlers.
+     *
+     * @param excepts list of transformer ids
+     */
+    public void excepts(List<String> excepts) {
+        this.excepts.addAll(excepts);
+    }
 
     /**
      * Configure reporting.
@@ -39,10 +48,6 @@ public final class Gingester {
      */
     public void report(boolean report) {
         this.report = report;
-    }
-
-    public void excepts(List<String> excepts) {
-        this.excepts.addAll(excepts);
     }
 
     /**

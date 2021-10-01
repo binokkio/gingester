@@ -96,7 +96,7 @@ public final class Main {
                     break;
 
                 case "-l":
-                case "--link":
+                case "--links":
                     requireNonNull(previous, "Found -l/--links before first transformer");
                     List<String> links = new ArrayList<>();
                     while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
