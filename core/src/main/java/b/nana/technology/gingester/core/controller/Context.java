@@ -31,15 +31,21 @@ public final class Context implements Iterable<Context> {
     private final Context parent;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
+    private final boolean exception;
 
     private Context(Builder builder) {
         parent = builder.parent;
         controller = builder.controller;
         stash = builder.stash;
+        exception = builder.exception;
     }
 
     public boolean isSeed() {
         return parent == null;
+    }
+
+    public boolean isException() {
+        return exception;
     }
 
     /**
@@ -207,6 +213,7 @@ public final class Context implements Iterable<Context> {
         private final Context parent;
         private Controller<?, ?> controller;
         private Map<String, Object> stash;
+        private boolean exception;
 
         public Builder() {
             parent = null;
@@ -236,6 +243,11 @@ public final class Context implements Iterable<Context> {
          */
         public Builder stash(Map<String, Object> stash) {
             this.stash = stash;
+            return this;
+        }
+
+        Builder exception() {
+            exception = true;
             return this;
         }
 

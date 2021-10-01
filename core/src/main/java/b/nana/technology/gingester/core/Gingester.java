@@ -30,6 +30,7 @@ public final class Gingester {
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Set<String> open = new HashSet<>();
     private boolean report;
+    private Set<String> excepts = new LinkedHashSet<>();
 
     /**
      * Configure reporting.
@@ -38,6 +39,10 @@ public final class Gingester {
      */
     public void report(boolean report) {
         this.report = report;
+    }
+
+    public void excepts(List<String> excepts) {
+        this.excepts.addAll(excepts);
     }
 
     /**
@@ -68,6 +73,20 @@ public final class Gingester {
      */
     public <T> void add(Consumer<T> consumer) {
         TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.transformer(consumer);
+        add(configuration);
+    }
+
+    /**
+     * Add consumer.
+     *
+     * @param id the id for the given consumer
+     * @param consumer the consumer
+     * @param <T> the consumer type
+     */
+    public <T> void add(String id, Consumer<T> consumer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.id(id);
         configuration.transformer(consumer);
         add(configuration);
     }
@@ -203,6 +222,7 @@ public final class Gingester {
     private void seed() {
 
         Set<String> noIncoming = new HashSet<>(controllers.keySet());
+        noIncoming.removeAll(excepts);
         controllers.values().stream()
                 .map(controller -> controller.outgoing.keySet())
                 .forEach(noIncoming::removeAll);
@@ -211,7 +231,8 @@ public final class Gingester {
                 new ControllerConfiguration<>()
                         .id("__seed__")
                         .transformer(new Seed())
-                        .links(new ArrayList<>(noIncoming)),
+                        .links(new ArrayList<>(noIncoming))
+                        .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")
         ));
 

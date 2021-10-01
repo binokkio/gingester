@@ -23,7 +23,7 @@ public final class GingesterConfiguration {
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
-            .setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     public static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader();
     public static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writer(new Printer());
@@ -34,10 +34,12 @@ public final class GingesterConfiguration {
     }
 
     public Boolean report;
+    public List<String> excepts = new ArrayList<>();
     public List<TransformerConfiguration> transformers = new ArrayList<>();
 
     public void append(GingesterConfiguration append) {
         if (append.report != null) report = append.report;
+        excepts.addAll(append.excepts);
         transformers.addAll(append.transformers);
     }
 
@@ -58,6 +60,7 @@ public final class GingesterConfiguration {
 
     public Gingester applyTo(Gingester gingester) {
         if (report != null) gingester.report(report);
+        gingester.excepts(excepts);
         transformers.forEach(gingester::add);
         return gingester;
     }

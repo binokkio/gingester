@@ -114,7 +114,7 @@ class MainTest {
         GingesterConfiguration configuration = Main.parseArgs(CliParser.parse("-e Stash -t Throw -- -t Stash"));
         assertEquals(2, configuration.transformers.size());
         assertEquals("Throw", configuration.transformers.get(0).getName().orElseThrow());
-        assertEquals(Collections.singletonList("Stash"), configuration.transformers.get(0).getExcepts().orElseThrow());
         assertEquals("Stash", configuration.transformers.get(1).getName().orElseThrow());
+        assertEquals(Collections.singletonList("Stash"), configuration.excepts);
     }
 }

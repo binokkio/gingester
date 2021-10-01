@@ -43,7 +43,6 @@ public final class Main {
 
         String syncFrom = "__seed__";
         TransformerConfiguration previous = null;
-        List<String> nextExcepts = null;
 
         for (int i = 0; i < args.length; i++) {
 
@@ -108,10 +107,12 @@ public final class Main {
 
                 case "-e":
                 case "--excepts":
-                    nextExcepts = new ArrayList<>();
+                    List<String> excepts = new ArrayList<>();
                     while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                        nextExcepts.add(args[++i]);
+                        excepts.add(args[++i]);
                     }
+                    if (previous != null) previous.excepts(excepts);
+                    else configuration.excepts = excepts;
                     break;
 
                 case "--":
@@ -168,11 +169,6 @@ public final class Main {
                         syncFrom = transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given")));
                     } else if (syncTo) {
                         transformer.syncs(List.of(syncFrom));
-                    }
-
-                    if (nextExcepts != null) {
-                        transformer.excepts(nextExcepts);
-                        nextExcepts = null;
                     }
 
                     previous = transformer;

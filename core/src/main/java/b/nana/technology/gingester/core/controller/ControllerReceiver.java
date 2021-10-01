@@ -93,29 +93,23 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     public void except(String method, Context context, Exception cause) {
-
-        context = context.stash(
-                "method", method
-        ).build(controller);
-
-        except(context, cause);
+        except(context, cause, Map.of("method", method));
     }
 
     public void except(String method, Context context, I in, Exception cause) {
-
-        context = context.stash(Map.of(
+        except(context, cause, Map.of(
+                "transformer", controller.id,
                 "method", method,
                 "stash", in
-        )).build(controller);
-
-        except(context, cause);
+        ));
     }
 
-    private void except(Context context, Exception cause) {
-        for (Context c : context) {  // TODO prevent infinite loops where an exception handler throws and then has to handle its own exception
+    private void except(Context context, Exception cause, Map<String, Object> stash) {
+        for (Context c : context) {
+            if (c.isException()) break;  // don't bubble past previous exceptions to prevent exception handling loops
             if (!c.controller.excepts.isEmpty()) {
                 for (Controller<Exception, ?> except : c.controller.excepts.values()) {
-                    accept(c, cause, except);
+                    accept(context.stash(stash).exception().build(controller), cause, except);
                 }
                 return;
             }
