@@ -2,7 +2,7 @@ package b.nana.technology.gingester.core.provider;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Fetch;
-import b.nana.technology.gingester.core.transformers.Seed;
+import b.nana.technology.gingester.core.transformers.Monkey;
 import b.nana.technology.gingester.core.transformers.Stash;
 import b.nana.technology.gingester.core.transformers.Swap;
 
@@ -15,7 +15,7 @@ public final class CoreProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 Fetch.class,
-                Seed.class,
+                Monkey.class,
                 Stash.class,
                 Swap.class
         );
