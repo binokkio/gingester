@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.transformer;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,7 +22,8 @@ public final class TransformerFactory {
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
 
     private TransformerFactory() {}
 
