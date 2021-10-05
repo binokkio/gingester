@@ -1,10 +1,12 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -20,6 +22,11 @@ public final class Route implements Transformer<Object, Object> {
         routes = parameters.routes.entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(Pattern.compile(e.getKey()), e.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
+    }
+
+    @Override
+    public void setup(SetupControls controls) {
+        controls.links(new ArrayList<>(routes.values()));
     }
 
     @Override
