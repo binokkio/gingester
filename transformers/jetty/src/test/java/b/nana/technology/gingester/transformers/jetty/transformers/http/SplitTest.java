@@ -16,17 +16,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class TestSplit {
+class SplitTest {
 
     @Test
     void testFileOnly() throws Exception {
 
         Context context = new Context.Builder()
-                .stash(Map.of(
-                        "headers", Map.of(
-                                "Content-Type", "multipart/form-data; boundary=---------------------------17192798713081016645112320327"
-                        )
-                )).build();
+                .stash(Map.of("http", Map.of("request", Map.of("headers", Map.of(
+                        "Content-Type", "multipart/form-data; boundary=---------------------------17192798713081016645112320327"
+                ))))).build();
 
         AtomicReference<Item<byte[]>> result = new AtomicReference<>();
 
@@ -51,11 +49,9 @@ class TestSplit {
     void testFileWithMetaData() throws Exception {
 
         Context context = new Context.Builder()
-                .stash(Map.of(
-                        "headers", Map.of(
-                                "Content-Type", "multipart/form-data; boundary=---------------------------403540100931368458281198214153"
-                        )
-                )).build();
+                .stash(Map.of("http", Map.of("request", Map.of("headers", Map.of(
+                        "Content-Type", "multipart/form-data; boundary=---------------------------403540100931368458281198214153"
+                ))))).build();
 
         List<Item<byte[]>> results = new ArrayList<>();
 

@@ -13,7 +13,7 @@ public final class JettyProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 Keycloak.class,
-                Responder.class,
+                Respond.class,
                 Server.class,
                 Split.class
         );

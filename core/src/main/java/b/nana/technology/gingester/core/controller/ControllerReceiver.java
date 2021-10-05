@@ -85,7 +85,9 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void finish(Context context) {
         if (!controller.syncs.isEmpty()) {
-            ((Worker) Thread.currentThread()).flush();
+            if (Thread.currentThread() instanceof Worker) {
+                ((Worker) Thread.currentThread()).flush();
+            }
             for (Controller<?, ?> controller : controller.outgoing.values()) {
                 controller.finish(controller, context);
             }
@@ -93,13 +95,18 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     public void except(String method, Context context, Exception cause) {
-        except(context, cause, Map.of("method", method));
+        except(context, cause, Map.of(
+                "transformer", controller.id,
+                "method", method,
+                "exception", cause
+        ));
     }
 
     public void except(String method, Context context, I in, Exception cause) {
         except(context, cause, Map.of(
                 "transformer", controller.id,
                 "method", method,
+                "exception", cause,
                 "stash", in
         ));
     }

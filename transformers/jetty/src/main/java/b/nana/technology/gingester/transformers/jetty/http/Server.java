@@ -72,34 +72,33 @@ public final class Server implements Transformer<Object, InputStream> {
             public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
                 jettyRequest.setHandled(true);
-                jettyRequest.setContentType("application/octet-stream");
+                jettyRequest.setContentType("application/octet-stream");  // prevent special handling of request body
 
-                Context.Builder contextBuilder = context.stash(
-                        "description", jettyRequest.getMethod() + " " + target
-                );
+                Map<String, Object> httpStash = new HashMap<>();
 
-                Map<String, Object> stash = new HashMap<>();
-
-                stash.put("request", Map.of(
+                httpStash.put("request", Map.of(
                         "method", jettyRequest.getMethod(),
                         "path", target
                 ));
 
-                stash.put("response", response);
+                Map<String, Object> httpRequestStash = new HashMap<>();
+                httpStash.put("request", httpRequestStash);
+                httpRequestStash.put("method", jettyRequest.getMethod());
+                httpRequestStash.put("path", target);
 
                 if (stashHeaders) {
                     Map<String, String> headers = new HashMap<>();
                     jettyRequest.getHeaderNames().asIterator().forEachRemaining(
                             headerName -> headers.put(headerName, jettyRequest.getHeader(headerName)));
-                    stash.put("headers", headers);
+                    httpRequestStash.put("headers", headers);
                 }
 
                 if (stashQuery) {
                     Map<String, String> query = new HashMap<>();
-                    jettyRequest.getParameterMap();  // triggers query parameter initialization, TODO check proper solution
+                    jettyRequest.getParameterMap();  // trigger query parameter initialization, TODO check proper solution
                     jettyRequest.getQueryParameters().forEach(
                             (queryParameterName, value) -> query.put(queryParameterName, value.get(value.size() - 1)));
-                    stash.put("query", query);
+                    httpRequestStash.put("query", query);
                 }
 
                 if (stashCookies) {
@@ -110,10 +109,17 @@ public final class Server implements Transformer<Object, InputStream> {
                             cookieMap.put(cookie.getName(), cookie);
                         }
                     }
-                    stash.put("cookies", cookieMap);
+                    httpRequestStash.put("cookies", cookieMap);
                 }
 
-                contextBuilder.stash(stash);
+                httpStash.put("response", Map.of(
+                        "servlet", response
+                ));
+
+                Context.Builder contextBuilder = context.stash(Map.of(
+                        "description", jettyRequest.getMethod() + " " + target,
+                        "http", httpStash
+                ));
 
                 out.accept(contextBuilder, request.getInputStream());
             }

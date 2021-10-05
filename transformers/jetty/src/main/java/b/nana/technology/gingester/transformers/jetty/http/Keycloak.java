@@ -47,9 +47,9 @@ public final class Keycloak implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        HttpServletResponse response = (HttpServletResponse) context.fetch("response").findFirst().orElseThrow();
+        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst().orElseThrow();
 
-        Cookie cookie = (Cookie) context.fetch("cookies", cookieName)
+        Cookie cookie = (Cookie) context.fetch("http", "request", "cookies", cookieName)
                 .findFirst()
                 .orElseGet(() -> new Cookie(cookieName, UUID.randomUUID().toString()));
 
@@ -58,7 +58,7 @@ public final class Keycloak implements Transformer<Object, Object> {
 
         UUID sessionId = UUID.fromString(cookie.getValue());
 
-        Optional<Object> optionalCode = context.fetch("query", "code").findFirst();
+        Optional<Object> optionalCode = context.fetch("http", "request", "query", "code").findFirst();
         if (optionalCode.isPresent()) {
 
             String tokenRequestBody = String.format(
@@ -90,7 +90,7 @@ public final class Keycloak implements Transformer<Object, Object> {
     }
 
     private String getRedirectUrl(Context context) {
-        return redirectUrl + context.fetch("request", "path").findFirst().orElseThrow();
+        return redirectUrl + context.fetch("http", "request", "path").findFirst().orElseThrow();
     }
 
     private static String stripTrailingSlash(String input) {
