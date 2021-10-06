@@ -15,6 +15,7 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Seed;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -93,6 +94,20 @@ public final class Gingester {
         TransformerConfiguration configuration = new TransformerConfiguration();
         configuration.id(id);
         configuration.transformer(consumer);
+        add(configuration);
+    }
+
+    /**
+     * Add bi-consumer.
+     *
+     * @param id the id for the given consumer
+     * @param biConsumer the bi-consumer
+     * @param <T> the bi-consumer type
+     */
+    public <T> void add(String id, BiConsumer<Context, T> biConsumer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.id(id);
+        configuration.transformer(biConsumer);
         add(configuration);
     }
 

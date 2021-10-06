@@ -28,7 +28,7 @@ public final class Context implements Iterable<Context> {
     }
 
 
-    private final Context parent;
+    final Context parent;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
     private final boolean exception;

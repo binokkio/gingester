@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @JsonAutoDetect(
@@ -61,6 +63,15 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
         transformer = "Consumer";
         instance = ((Transformer<T, T>) (context, in, out) -> {
             consumer.accept(in);
+            out.accept(context, in);
+        });
+        return this;
+    }
+
+    public <T> TransformerConfiguration transformer(BiConsumer<Context, T> consumer) {
+        transformer = "Consumer";
+        instance = ((Transformer<T, T>) (context, in, out) -> {
+            consumer.accept(context, in);
             out.accept(context, in);
         });
         return this;
