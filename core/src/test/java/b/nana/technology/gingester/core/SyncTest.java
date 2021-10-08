@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class AsyncTest {
+class SyncTest {
 
     @Test
     void test() {
@@ -23,5 +23,12 @@ class AsyncTest {
         gingester.run();
 
         assertEquals("Message from Sync finish()", result.get());
+    }
+
+    @Test
+    void testInterleavingSyncs() {
+
+        // TODO
+
     }
 }

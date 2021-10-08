@@ -99,11 +99,16 @@ public final class Controller<I, O> {
                 downstream.add(controller);
                 if (downstream.contains(this)) {
                     downstream.retainAll(incoming);
-                    if (!downstream.isEmpty()) {
+                    if (downstream.isEmpty()) {
                         syncedThrough.put(controller, downstream);
                     }
                 }
             }
+        }
+
+        // special handling of the seed controller
+        if (incoming.isEmpty()) {
+            syncedThrough.put(this, Set.of(this));
         }
     }
 

@@ -17,20 +17,12 @@ final class FinishTracker {
 
     boolean indicate(Controller<?, ?> indicator) {
         indicated.add(indicator);
-        return isReadyForQueue();
+        return indicated.size() == tracker.syncedThrough.get(context.controller).size();
     }
 
     boolean acknowledge(Thread thread) {
         acknowledged.add(thread);
         return acknowledged.size() == tracker.workers.size();
-    }
-
-    private boolean isReadyForQueue() {
-        if (context.isSeed() && context.controller == tracker) {
-            return true;
-        } else {
-            return indicated.size() == tracker.syncedThrough.get(context.controller).size();
-        }
     }
 
     boolean isFullyIndicated() {
