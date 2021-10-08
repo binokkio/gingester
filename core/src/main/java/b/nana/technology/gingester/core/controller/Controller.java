@@ -99,7 +99,7 @@ public final class Controller<I, O> {
                 downstream.add(controller);
                 if (downstream.contains(this)) {
                     downstream.retainAll(incoming);
-                    if (downstream.isEmpty()) {
+                    if (!downstream.isEmpty()) {
                         syncedThrough.put(controller, downstream);
                     }
                 }
