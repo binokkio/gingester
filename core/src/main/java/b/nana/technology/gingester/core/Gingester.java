@@ -256,13 +256,9 @@ public final class Gingester {
                 new ControllerInterface("__seed__")
         ));
 
-//        System.err.println("Gingester initialize");
         controllers.values().forEach(Controller::initialize);
-//        System.err.println("\nGingester discover incoming");
         controllers.values().forEach(Controller::discoverIncoming);
-//        System.err.println("\nGingester discover 2");
-        controllers.values().forEach(Controller::discover2);
-//        System.err.println("\nGingester discover 2 done\n");
+        controllers.values().forEach(Controller::discoverSyncedThrough);
     }
 
     private void start(Map<String, Object> seedStash) {
@@ -363,6 +359,11 @@ public final class Gingester {
                 if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
                 return Optional.of(controller);
             }
+        }
+
+        public boolean isExceptionHandler() {
+            return excepts.contains(controllerId) ||
+                    configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
         }
 
         public Collection<Controller<?, ?>> getControllers() {

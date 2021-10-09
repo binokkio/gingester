@@ -31,6 +31,7 @@ public final class Controller<I, O> {
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
+    private final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();
@@ -59,6 +60,7 @@ public final class Controller<I, O> {
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
+        isExceptionHandler = gingester.isExceptionHandler();
 
         links = configuration.getLinks().stream().collect(
                 LinkedHashMap::new,
@@ -73,10 +75,6 @@ public final class Controller<I, O> {
         );
     }
 
-    private boolean isExceptionHandler() {
-        return gingester.getControllers().stream().anyMatch(c -> c.excepts.containsKey(id));
-    }
-
     public void initialize() {
         links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
         excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
@@ -87,35 +85,32 @@ public final class Controller<I, O> {
         for (Controller<?, ?> controller : gingester.getControllers()) {
             if (controller.links.containsValue(this)) {
                 incoming.add(controller);
+                controller.indicates.add(this);
             }
             if (controller.excepts.containsValue(this)) {
-                incoming.addAll(elbbub(controller));
+                Set<Controller<?, ?>> elbbub = elbbub(controller);
+                incoming.addAll(elbbub);
+                elbbub.forEach(c -> c.indicates.add(this));
             }
         }
     }
 
-    public void discover2() {
-
-        gingester.getControllers().stream()
-                .filter(c -> c.incoming.contains(this))
-                .forEach(indicates::add);
-
-        for (Controller<?, ?> controller : gingester.getControllers()) {
-            if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
-                Set<Controller<?, ?>> downstream = controller.getDownstream();
-                if (downstream.contains(this)) {
-                    downstream.add(controller);
-                    downstream.retainAll(incoming);
-                    if (!downstream.isEmpty()) {
-                        syncedThrough.put(controller, downstream);
+    public void discoverSyncedThrough() {
+        if (incoming.isEmpty()) {  // special handling of the seed controller
+            syncedThrough.put(this, Collections.singleton(this));
+        } else {
+            for (Controller<?, ?> controller : gingester.getControllers()) {
+                if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
+                    Set<Controller<?, ?>> downstream = controller.getDownstream();
+                    if (downstream.contains(this)) {
+                        downstream.add(controller);
+                        downstream.retainAll(incoming);
+                        if (!downstream.isEmpty()) {
+                            syncedThrough.put(controller, downstream);
+                        }
                     }
                 }
             }
-        }
-
-        // special handling of the seed controller
-        if (incoming.isEmpty()) {
-            syncedThrough.put(this, Set.of(this));
         }
     }
 
@@ -124,25 +119,14 @@ public final class Controller<I, O> {
         Set<Controller<?, ?>> downstream = new HashSet<>();
         Set<Controller<?, ?>> found = new HashSet<>();
         found.addAll(links.values());
-        found.addAll(excepts.values());
+        found.addAll(bubbles());
 
         while (!found.isEmpty()) {
-//            System.out.println("Found: " + found.stream().map(c -> c.id).collect(Collectors.joining(", ")));
-//            try {
-//                Thread.sleep(100);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
             downstream.addAll(found);
             Set<Controller<?, ?>> next = new HashSet<>();
             for (Controller<?, ?> controller : found) {
                 next.addAll(controller.links.values());
                 next.addAll(controller.excepts.values());
-                if (controller.excepts.isEmpty()) {
-                    Set<Controller<?, ?>> bubbles = bubbles(controller);
-//                    System.err.println(controller.id + " bubbles to " + bubbles.stream().map(c -> c.id).collect(Collectors.joining(", ")));
-                    next.addAll(bubbles);
-                }
             }
             found = next;
         }
@@ -150,27 +134,21 @@ public final class Controller<I, O> {
         return downstream;
     }
 
-    /**
-     * Collect all possible exception handlers for given controller.
-     *
-     * @param from the controller to start bubbling from
-     * @return all possible exception handlers for the given controller
-     */
-    private Set<Controller<?, ?>> bubbles(Controller<?, ?> from) {
-        if (from.isExceptionHandler()) return Collections.emptySet();
+    private Set<Controller<?, ?>> bubbles() {
         Set<Controller<?, ?>> result = new HashSet<>();
-        bubbles(from, result);
+        bubbles(this, result);
         return result;
     }
 
     private void bubbles(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
         if (!pointer.excepts.isEmpty()) {
             result.addAll(pointer.excepts.values());
-        } else {
-            gingester.getControllers().stream()
-                    .filter(c -> c.links.containsValue(pointer))
-                    .filter(c -> !c.isExceptionHandler())
-                    .forEach(c -> bubbles(c, result));
+        } else if (!pointer.isExceptionHandler) {
+            for (Controller<?, ?> controller : incoming) {
+                if (controller.links.containsValue(pointer)) {
+                    bubbles(controller, result);
+                }
+            }
         }
     }
 
@@ -185,7 +163,7 @@ public final class Controller<I, O> {
             collector.add(pointer);
         } else {
             for (Controller<?, ?> link : pointer.links.values()) {
-                if (link.isExceptionHandler()) {
+                if (link.isExceptionHandler) {
                     collector.add(pointer);
                 } else {
                     elbbub(link, collector);
@@ -329,7 +307,8 @@ public final class Controller<I, O> {
         report = false;
         delt = null;
         acks = null;
-        links = Collections.emptyMap();  // TODO sort
-        excepts = Collections.emptyMap();  // TODO sort
+        links = Collections.emptyMap();
+        excepts = Collections.emptyMap();
+        isExceptionHandler = false;
     }
 }
