@@ -2,7 +2,6 @@ package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
-import b.nana.technology.gingester.core.transformers.Stash;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

@@ -2,7 +2,6 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.receiver.BiReceiver;
 import b.nana.technology.gingester.core.transformers.Monkey;
 import org.junit.jupiter.api.Test;
 
