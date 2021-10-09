@@ -10,25 +10,97 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class SyncTest {
 
     @Test
-    void test() {
+    void testSyncPrepare() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
         Gingester gingester = new Gingester();
 
-        gingester.cli("-sft Generate \"Hello, World!\"");
-        gingester.cli("-stt Sync");
+        gingester.cli("" +
+                "-sft Generate \"Hello, World!\" " +
+                "-stt SyncPrepare");
+
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from Sync finish()", result.get());
+        assertEquals("Message from SyncPrepare prepare()", result.get());
     }
 
     @Test
-    void testInterleavingSyncs() {
+    void testSyncFinish() {
 
-        // TODO
+        AtomicReference<String> result = new AtomicReference<>();
 
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-sft Generate \"Hello, World!\" " +
+                "-stt SyncFinish");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from SyncFinish finish()", result.get());
+    }
+
+//    @Test
+    void testPrepareOrder() {
+
+        AtomicReference<Integer> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-sft Generate \"Hello, World!\" " +
+                "-stt SyncPrepare " +
+                "-stt SyncCounter");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals(1, result.get());
+    }
+
+    @Test
+    void testSyncThroughExceptionHandler() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-e ExceptionHandler " +
+                "-sft Generate \"Hello, World!\" " +
+                "-t Monkey 1 " +
+                "-stt ExceptionHandler:SyncFinish");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from SyncFinish finish()", result.get());
+    }
+
+    @Test
+    void testSyncThroughExceptionHandler2() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-e ExceptionHandler " +
+                "-sft Generate \"Hello, World!\" " +
+                "-t Monkey 1 -- " +
+                "-stt ExceptionHandler:SyncFinish");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from SyncFinish finish()", result.get());
     }
 }

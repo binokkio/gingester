@@ -95,7 +95,7 @@ public final class Worker extends Thread {
                             controller.finish(context);
                             flush();
                         }
-                        controller.outgoing.values().forEach(controller -> controller.finish(this.controller, context));
+                        controller.indicates.forEach(controller -> controller.finish(this.controller, context));
                         if (context.isSeed()) done = true;
                     });
                     controller.queueNotEmpty.signal();

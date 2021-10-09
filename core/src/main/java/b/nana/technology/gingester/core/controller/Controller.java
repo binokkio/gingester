@@ -25,12 +25,12 @@ public final class Controller<I, O> {
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
-    final Map<String, Controller<O, ?>> links;
+    public final Map<String, Controller<O, ?>> links;
+    public final Map<String, Controller<Exception, ?>> excepts;
+    final Set<Controller<?, ?>> indicates = new HashSet<>();
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
-    final Map<String, Controller<Exception, ?>> excepts;
-    public final Set<Controller<?, I>> incoming = new HashSet<>();
-    public final Map<String, Controller<?, ?>> outgoing;
+    public final Set<Controller<?, ?>> incoming = new HashSet<>();
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();
@@ -71,33 +71,40 @@ public final class Controller<I, O> {
                 (map, link) -> map.put(link, null),
                 Map::putAll
         );
+    }
 
-        outgoing = new LinkedHashMap<>();
-        outgoing.putAll(links);
-        outgoing.putAll(excepts);
+    private boolean isExceptionHandler() {
+        return gingester.getControllers().stream().anyMatch(c -> c.excepts.containsKey(id));
     }
 
     public void initialize() {
         links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
         excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
-        outgoing.putAll(links);
-        outgoing.putAll(excepts);
         configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
     }
 
-    public void discover() {
-
+    public void discoverIncoming() {
         for (Controller<?, ?> controller : gingester.getControllers()) {
-            if (controller.outgoing.containsValue(this)) {
-                incoming.add((Controller<?, I>) controller);
+            if (controller.links.containsValue(this)) {
+                incoming.add(controller);
+            }
+            if (controller.excepts.containsValue(this)) {
+                incoming.addAll(elbbub(controller));
             }
         }
+    }
+
+    public void discover2() {
+
+        gingester.getControllers().stream()
+                .filter(c -> c.incoming.contains(this))
+                .forEach(indicates::add);
 
         for (Controller<?, ?> controller : gingester.getControllers()) {
             if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
                 Set<Controller<?, ?>> downstream = controller.getDownstream();
-                downstream.add(controller);
                 if (downstream.contains(this)) {
+                    downstream.add(controller);
                     downstream.retainAll(incoming);
                     if (!downstream.isEmpty()) {
                         syncedThrough.put(controller, downstream);
@@ -115,18 +122,76 @@ public final class Controller<I, O> {
     private Set<Controller<?, ?>> getDownstream() {
 
         Set<Controller<?, ?>> downstream = new HashSet<>();
-        Set<Controller<?, ?>> found = new HashSet<>(outgoing.values());
+        Set<Controller<?, ?>> found = new HashSet<>();
+        found.addAll(links.values());
+        found.addAll(excepts.values());
 
         while (!found.isEmpty()) {
+//            System.out.println("Found: " + found.stream().map(c -> c.id).collect(Collectors.joining(", ")));
+//            try {
+//                Thread.sleep(100);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             downstream.addAll(found);
             Set<Controller<?, ?>> next = new HashSet<>();
             for (Controller<?, ?> controller : found) {
-                next.addAll(controller.outgoing.values());
+                next.addAll(controller.links.values());
+                next.addAll(controller.excepts.values());
+                if (controller.excepts.isEmpty()) {
+                    Set<Controller<?, ?>> bubbles = bubbles(controller);
+//                    System.err.println(controller.id + " bubbles to " + bubbles.stream().map(c -> c.id).collect(Collectors.joining(", ")));
+                    next.addAll(bubbles);
+                }
             }
             found = next;
         }
 
         return downstream;
+    }
+
+    /**
+     * Collect all possible exception handlers for given controller.
+     *
+     * @param from the controller to start bubbling from
+     * @return all possible exception handlers for the given controller
+     */
+    private Set<Controller<?, ?>> bubbles(Controller<?, ?> from) {
+        if (from.isExceptionHandler()) return Collections.emptySet();
+        Set<Controller<?, ?>> result = new HashSet<>();
+        bubbles(from, result);
+        return result;
+    }
+
+    private void bubbles(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
+        if (!pointer.excepts.isEmpty()) {
+            result.addAll(pointer.excepts.values());
+        } else {
+            gingester.getControllers().stream()
+                    .filter(c -> c.links.containsValue(pointer))
+                    .filter(c -> !c.isExceptionHandler())
+                    .forEach(c -> bubbles(c, result));
+        }
+    }
+
+    private Set<Controller<?, ?>> elbbub(Controller<?, ?> from) {
+        Set<Controller<?, ?>> result = new HashSet<>();
+        elbbub(from, result);
+        return result;
+    }
+
+    private void elbbub(Controller<?, ?> pointer, Set<Controller<?, ?>> collector) {
+        if (pointer.links.isEmpty()) {
+            collector.add(pointer);
+        } else {
+            for (Controller<?, ?> link : pointer.links.values()) {
+                if (link.isExceptionHandler()) {
+                    collector.add(pointer);
+                } else {
+                    elbbub(link, collector);
+                }
+            }
+        }
     }
 
     public void open() {
@@ -266,6 +331,5 @@ public final class Controller<I, O> {
         acks = null;
         links = Collections.emptyMap();  // TODO sort
         excepts = Collections.emptyMap();  // TODO sort
-        outgoing = Collections.emptyMap();  // TODO sort
     }
 }

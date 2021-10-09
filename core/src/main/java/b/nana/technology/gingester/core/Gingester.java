@@ -244,8 +244,8 @@ public final class Gingester {
         Set<String> noIncoming = new HashSet<>(controllers.keySet());
         noIncoming.removeAll(excepts);
         controllers.values().stream()
-                .map(controller -> controller.outgoing.keySet())
-                .forEach(noIncoming::removeAll);
+                .flatMap(controller -> Stream.concat(controller.links.keySet().stream(), controller.excepts.keySet().stream()))
+                .forEach(noIncoming::remove);
 
         controllers.put("__seed__", new Controller<>(
                 new ControllerConfiguration<>()
@@ -256,8 +256,13 @@ public final class Gingester {
                 new ControllerInterface("__seed__")
         ));
 
+//        System.err.println("Gingester initialize");
         controllers.values().forEach(Controller::initialize);
-        controllers.values().forEach(Controller::discover);
+//        System.err.println("\nGingester discover incoming");
+        controllers.values().forEach(Controller::discoverIncoming);
+//        System.err.println("\nGingester discover 2");
+        controllers.values().forEach(Controller::discover2);
+//        System.err.println("\nGingester discover 2 done\n");
     }
 
     private void start(Map<String, Object> seedStash) {

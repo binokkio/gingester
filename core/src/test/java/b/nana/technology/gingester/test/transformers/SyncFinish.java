@@ -4,15 +4,15 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-public class Sync implements Transformer<String, String> {
+public class SyncFinish implements Transformer<Object, String> {
 
     @Override
-    public void transform(Context context, String in, Receiver<String> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<String> out) {
         // ignore input, emit in finish()
     }
 
     @Override
     public void finish(Context context, Receiver<String> out) {
-        out.accept(context, "Message from Sync finish()");
+        out.accept(context, "Message from SyncFinish finish()");
     }
 }
