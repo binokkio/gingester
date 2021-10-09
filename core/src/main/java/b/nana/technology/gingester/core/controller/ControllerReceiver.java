@@ -88,7 +88,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
             if (Thread.currentThread() instanceof Worker) {
                 ((Worker) Thread.currentThread()).flush();
             }
-            for (Controller<?, ?> controller : controller.outgoing.values()) {
+            for (Controller<?, ?> controller : controller.indicates) {
                 controller.finish(controller, context);
             }
         }

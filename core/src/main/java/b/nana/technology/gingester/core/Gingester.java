@@ -244,8 +244,8 @@ public final class Gingester {
         Set<String> noIncoming = new HashSet<>(controllers.keySet());
         noIncoming.removeAll(excepts);
         controllers.values().stream()
-                .map(controller -> controller.outgoing.keySet())
-                .forEach(noIncoming::removeAll);
+                .flatMap(controller -> Stream.concat(controller.links.keySet().stream(), controller.excepts.keySet().stream()))
+                .forEach(noIncoming::remove);
 
         controllers.put("__seed__", new Controller<>(
                 new ControllerConfiguration<>()
@@ -257,7 +257,8 @@ public final class Gingester {
         ));
 
         controllers.values().forEach(Controller::initialize);
-        controllers.values().forEach(Controller::discover);
+        controllers.values().forEach(Controller::discoverIncoming);
+        controllers.values().forEach(Controller::discoverSyncedThrough);
     }
 
     private void start(Map<String, Object> seedStash) {
@@ -358,6 +359,11 @@ public final class Gingester {
                 if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
                 return Optional.of(controller);
             }
+        }
+
+        public boolean isExceptionHandler() {
+            return excepts.contains(controllerId) ||
+                    configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
         }
 
         public Collection<Controller<?, ?>> getControllers() {
