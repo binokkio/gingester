@@ -31,7 +31,7 @@ public final class Controller<I, O> {
     final Set<Controller<?, ?>> syncs = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
-    private final boolean isExceptionHandler;
+    final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();

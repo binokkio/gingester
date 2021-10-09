@@ -99,7 +99,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 "transformer", controller.id,
                 "method", method,
                 "exception", cause
-        )).exception().build(controller), cause);
+        )).build(controller), cause);
     }
 
     public void except(String method, Context context, I in, Exception cause) {
@@ -108,19 +108,20 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 "method", method,
                 "exception", cause,
                 "stash", in
-        )).exception().build(controller), cause);
+        )).build(controller), cause);
     }
 
     private void except(Context context, Exception cause) {
-        Context pointer = context;
-        do {
-            if (!pointer.controller.excepts.isEmpty()) {
-                for (Controller<Exception, ?> except : pointer.controller.excepts.values()) {
+        for (Context c : context) {
+            if (!c.controller.excepts.isEmpty()) {
+                for (Controller<Exception, ?> except : c.controller.excepts.values()) {
                     accept(context, cause, except);
                 }
                 return;
+            } else if (c.controller.isExceptionHandler) {
+                break;
             }
-        } while ((pointer = pointer.parent) != null && !pointer.isException());
+        }
         cause.printStackTrace();
     }
 }
