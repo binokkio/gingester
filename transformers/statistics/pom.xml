@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.6.9</version>
+        <version>0.7.15</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -57,6 +57,10 @@
             <artifactId>base</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
         </dependency>
 
     </dependencies>

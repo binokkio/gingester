@@ -1,0 +1,26 @@
+{
+  "report": false,
+  "transformers": [
+    {
+      "transformer": "Resource.Open",
+      "parameters": "/b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json"
+    },
+    {
+      "transformer": "Json.Stream",
+      "parameters": "$.array.*"
+    },
+    "Stash",
+    "Json.ToBytes",
+    "Bytes.ToInputStream",
+    {
+      "transformer": "Json.Stream",
+      "parameters": "$.message"
+    },
+    "Json.ToBytes",
+    "Bytes.ToInputStream",
+    {
+      "transformer": "Path.Write",
+      "parameters": "${tempDir}/message-${stash.id}.txt"
+    }
+  ]
+}

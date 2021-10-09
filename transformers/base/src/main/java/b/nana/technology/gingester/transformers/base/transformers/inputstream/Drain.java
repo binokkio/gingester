@@ -1,16 +1,16 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Passthrough;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
-import java.io.IOException;
 import java.io.InputStream;
 
-public class Drain extends Passthrough<InputStream> {
+public final class Drain implements Transformer<InputStream, InputStream> {
 
     @Override
-    protected void transform(Context context, InputStream input) throws IOException {
-        input.skip(Long.MAX_VALUE);
-        emit(context, input);
+    public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
+        in.skip(Long.MAX_VALUE);
+        out.accept(context, in);
     }
 }

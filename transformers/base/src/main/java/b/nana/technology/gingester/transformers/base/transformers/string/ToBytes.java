@@ -1,13 +1,17 @@
 package b.nana.technology.gingester.transformers.base.transformers.string;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 
-import java.nio.charset.StandardCharsets;
+public final class ToBytes extends CharsetTransformer<String, byte[]> {
 
-public class ToBytes extends Transformer<String, byte[]> {
+    public ToBytes(Parameters parameters) {
+        super(parameters);
+    }
+
     @Override
-    protected void transform(Context context, String input) throws Exception {
-        emit(context, input.getBytes(StandardCharsets.UTF_8));
+    public void transform(Context context, String in, Receiver<byte[]> out) throws Exception {
+        out.accept(context, in.getBytes(getCharset()));
     }
 }

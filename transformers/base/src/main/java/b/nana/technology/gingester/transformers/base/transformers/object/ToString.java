@@ -1,12 +1,13 @@
 package b.nana.technology.gingester.transformers.base.transformers.object;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
-public class ToString extends Transformer<Object, String> {
+public final class ToString implements Transformer<Object, String> {
 
     @Override
-    protected void transform(Context context, Object input) throws Exception {
-        emit(context, input.toString());
+    public void transform(Context context, Object in, Receiver<String> out) throws Exception {
+        out.accept(context, in.toString());
     }
 }

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 
-public class PrefixInputStream extends InputStream {
+public final class PrefixInputStream extends InputStream {
 
     private final InputStream source;
     private final ArrayDeque<Slice> prefixes = new ArrayDeque<>();

@@ -1,39 +1,45 @@
 package b.nana.technology.gingester.transformers.base.transformers.resource;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.io.InputStream;
 
-public class Open extends Transformer<Object, InputStream> {
+public final class Open implements Transformer<Object, InputStream> {
 
-    private final Context.StringFormat resourceFormat;
+    private final Context.Template pathTemplate;
 
     public Open(Parameters parameters) {
-        super(parameters);
-        resourceFormat = new Context.StringFormat(parameters.resourceFormat);
+        pathTemplate = Context.newTemplate(parameters.path);
     }
 
     @Override
-    protected void transform(Context context, Object input) throws Exception {
-        String resourceString = resourceFormat.format(context);
-        emit(
-                context.extend(this).description(resourceString),
-                getClass().getResourceAsStream(resourceFormat.format(context))
-        );
+    public void setup(SetupControls controls) {
+        controls.requireOutgoingSync();
+    }
+
+    @Override
+    public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
+        String resourcePath = pathTemplate.render(context);
+        InputStream inputStream = getClass().getResourceAsStream(resourcePath);
+        if (inputStream == null) throw new NullPointerException("getResourceAsStream(\"" + resourcePath + "\") returned null");
+        out.accept(context.stash("description", resourcePath), inputStream);
+        inputStream.close();
     }
 
     public static class Parameters {
 
-        public String resourceFormat;
+        public String path;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String resourceFormat) {
-            this.resourceFormat = resourceFormat;
+        public Parameters(String path) {
+            this.path = path;
         }
     }
 }

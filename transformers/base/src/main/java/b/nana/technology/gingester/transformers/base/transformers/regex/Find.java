@@ -1,13 +1,14 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Find extends Transformer<String, Matcher> {
+public final class Find implements Transformer<String, Matcher> {
 
     private final Pattern pattern;
 
@@ -16,15 +17,14 @@ public class Find extends Transformer<String, Matcher> {
     }
 
     public Find(Parameters parameters) {
-        super(parameters);
         this.pattern = Pattern.compile(parameters.pattern);
     }
 
     @Override
-    protected void transform(Context context, String input) throws Exception {
-        Matcher matcher = pattern.matcher(input);
+    public void transform(Context context, String in, Receiver<Matcher> out) throws Exception {
+        Matcher matcher = pattern.matcher(in);
         if (!matcher.find()) throw new IllegalStateException("Pattern not found");
-        emit(context, matcher);
+        out.accept(context, matcher);
     }
 
     public static class Parameters {

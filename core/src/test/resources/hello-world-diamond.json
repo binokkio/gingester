@@ -11,8 +11,15 @@
     },
     {
       "transformer": "Emphasize",
-      "links": []
+      "links": "ResultsCollector"
     },
-    "Question"
+    {
+      "transformer": "Question",
+      "links": "ResultsCollector"
+    },
+    {
+      "id": "ResultsCollector",
+      "transformer": "Stash"
+    }
   ]
 }

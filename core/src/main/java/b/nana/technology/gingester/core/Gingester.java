@@ -1,267 +1,386 @@
 package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.link.Link;
+import b.nana.technology.gingester.core.batch.Batch;
+import b.nana.technology.gingester.core.cli.CliParser;
+import b.nana.technology.gingester.core.cli.Main;
+import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
+import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.Controller;
+import b.nana.technology.gingester.core.controller.Worker;
+import b.nana.technology.gingester.core.reporting.Reporter;
+import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import b.nana.technology.gingester.core.transformers.Seed;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static b.nana.technology.gingester.core.configuration.TransformerConfigurationSetupControlsCombiner.combine;
 
 public final class Gingester {
 
-    enum State {
-        SETUP,
-        RUNNING,
-        DONE
+    private final Object lock = new Object();
+    private final LinkedHashMap<String, TransformerConfiguration> transformerConfigurations = new LinkedHashMap<>();
+    private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
+    private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
+    private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
+    private final Set<String> open = new HashSet<>();
+    private final Set<String> excepts = new LinkedHashSet<>();
+    private boolean report;
+
+    /**
+     * Add the given list of transformer ids as root exception handlers.
+     *
+     * @param excepts list of transformer ids
+     */
+    public void excepts(List<String> excepts) {
+        this.excepts.addAll(excepts);
     }
 
-    private final Set<Transformer<?, ?>> transformers;
-    final boolean report;
-
-    private final Map<Transformer<?, ?>, Worker> leaders = new HashMap<>();
-    private final Set<TransformJob> seeders = new HashSet<>();
-    private final BlockingQueue<Runnable> signals = new LinkedBlockingQueue<>();
-    final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    State state = State.SETUP;
-    private int unopened;
-    private int unclosed;
-
-    Gingester(b.nana.technology.gingester.core.Builder builder) {
-        transformers = builder.transformers;
-        report = builder.report;
+    /**
+     * Configure reporting.
+     *
+     * @param report true to enable, false to disable
+     */
+    public void report(boolean report) {
+        this.report = report;
     }
 
-    Set<Transformer<?, ?>> getTransformers() {
-        return transformers;
+    /**
+     * Add transformer by name.
+     *
+     * @param transformer the name of the transformer to add
+     */
+    public void add(String transformer) {
+        add(new TransformerConfiguration(transformer));
     }
 
-    public Configuration toConfiguration() {
-        return Configuration.fromGingester(this);
+    /**
+     * Add transformer.
+     *
+     * @param transformer the consumer
+     */
+    public void add(Transformer<?, ?> transformer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.transformer(transformer);
+        add(configuration);
     }
 
+    /**
+     * Add consumer.
+     *
+     * @param consumer the consumer
+     * @param <T> the consumer type
+     */
+    public <T> void add(Consumer<T> consumer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.transformer(consumer);
+        add(configuration);
+    }
+
+    /**
+     * Add consumer.
+     *
+     * @param id the id for the given consumer
+     * @param consumer the consumer
+     * @param <T> the consumer type
+     */
+    public <T> void add(String id, Consumer<T> consumer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.id(id);
+        configuration.transformer(consumer);
+        add(configuration);
+    }
+
+    /**
+     * Add bi-consumer.
+     *
+     * @param id the id for the given consumer
+     * @param biConsumer the bi-consumer
+     * @param <T> the bi-consumer type
+     */
+    public <T> void add(String id, BiConsumer<Context, T> biConsumer) {
+        TransformerConfiguration configuration = new TransformerConfiguration();
+        configuration.id(id);
+        configuration.transformer(biConsumer);
+        add(configuration);
+    }
+
+    /**
+     * Add transformer by configuration.
+     *
+     * @param configuration the transformer configuration
+     */
+    public void add(TransformerConfiguration configuration) {
+        String id = getId(configuration);
+        transformerConfigurations.put(id, configuration);
+    }
+
+    /**
+     * Apply given command line syntax instructions.
+     *
+     * @param cli the command line syntax to interpret
+     */
+    public void cli(String cli) {
+        Main.parseArgs(CliParser.parse(cli)).applyTo(this);
+    }
+
+    /**
+     * Run the configured transformations.
+     * <p>
+     * This will run through the following steps:
+     * <ul>
+     * <li>call {@link Transformer#setup(SetupControls)} on all transformers
+     * <li>consolidate the transformer setup controls with the transformer configurations
+     * <li>create a seed transformer with id __seed__ and link it to all transformers with no incoming links
+     * <li>start a single worker thread for each transformer
+     * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
+     * <li>start the remaining worker threads as configured
+     * <li>give the seed controller a single input, which it will pass through to its links
+     * <li>start a reporting thread if configured
+     * <li>block until all transformers are done
+     * <li>call {@link Transformer#close()} on all transformers from one of their worker threads and wait for all to close
+     * </ul>
+     */
     public void run() {
-
-        if (state != State.SETUP) {
-            throw new IllegalStateException();  // TODO
-        }
-
-        transformers.forEach(transformer -> transformer.setup(this));
-
-        // enable statistics on the transformers that have no outputs
-        transformers.stream()
-                .filter(transformer -> transformer.report || transformer.outgoing.isEmpty())
-                .forEach(Transformer::enableStatistics);
-
-        unopened = unclosed = transformers.size();
-        transformers.forEach(this::open);
-        state = State.RUNNING;
-
-        if (report) scheduler.scheduleAtFixedRate(this::report, 2, 2, TimeUnit.SECONDS);
-
-        while (true) {
-            try {
-                signals.take().run();
-                if (state == State.DONE) break;
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);  // TODO
-            }
-        }
-
-        scheduler.shutdown();
-
-        if (report) report();
-
-        for (Runnable signal : signals) {
-            signal.run();
-        }
+        run(Collections.emptyMap());
     }
 
-    private void report() {
-        signal(() -> {
-            for (Transformer<?, ?> transformer : transformers) {
-                transformer.getStatistics().ifPresent(statistics -> {
-                    statistics.sample();
-                    System.err.println(transformer.id + ": " + statistics);
-                });
+    /**
+     * Run the configured transformations with the given seed stash.
+     * <p>
+     * See the {@link #run()} documentation for details.
+     *
+     * @param seedStash the seed stash
+     */
+    public void run(Map<String, Object> seedStash) {
+        setup();
+        seed();
+        start(seedStash);
+    }
+
+    private void setup() {
+
+        if (transformerConfigurations.isEmpty()) {
+            throw new IllegalStateException("No transformers configured");
+        }
+
+        transformerConfigurations.forEach((id, transformerConfiguration) -> {
+
+            Transformer<?, ?> transformer = transformerConfiguration.getInstance()
+                    .orElseGet(() -> {
+                        String name = transformerConfiguration.getName()
+                                .orElseThrow(() -> new IllegalStateException("Neither a transformer name nor instance was given"));
+                        return transformerConfiguration.getParameters()
+                                .map(parameters -> TransformerFactory.instance(name, parameters))
+                                .orElseGet(() -> TransformerFactory.instance(name));
+                    });
+
+            SetupControls setupControls = new SetupControls();
+            transformer.setup(setupControls);
+
+            ControllerConfiguration<?, ?> configuration = combine(id, transformer, transformerConfiguration, setupControls);
+
+            // resolve or remove __maybe_next__ links
+            List<String> links = new ArrayList<>(configuration.getLinks());
+            if (links.removeIf("__maybe_next__"::equals)) {
+                resolveMaybeNext(id).ifPresent(links::add);
             }
+            configuration.links(links);
+
+            this.setupControls.put(id, setupControls);
+            this.configurations.put(id, configuration);
         });
-    }
 
-    void signalOpen() {
-        signal(() -> {
-            if (--unopened == 0) {
-                transformers.stream()
-                        .filter(transformer -> !transformer.queue.isEmpty())
-                        .map(this::startTransforming)
-                        .forEach(seeders::addAll);
-            }
-        });
-    }
+        setupControls.forEach((id, setupControls) -> {
+            if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
+                if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
+                    throw new IllegalStateException();  // TODO
+                }
 
-    void signalNewBatch(Transformer<?, ?> transformer) {
-        signal(() -> {
-            if (transformer.transformJobs.isEmpty()) {
-                startTransforming(transformer);
-            } else {
-                for (TransformJob worker : transformer.transformJobs) {
-                    if (worker.starving) {
-                        synchronized (worker.lock) {
-                            worker.lock.notify();
-                            break;
-                        }
+                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().stream().map(configurations::get);
+
+                if (setupControls.getRequireOutgoingSync()) {
+                    String incompatible = outgoingConfigurations
+                            .filter(o -> o.getMaxWorkers().isPresent())
+                            .filter(o -> o.getMaxWorkers().get() > 0)
+                            .map(ControllerConfiguration::getId)
+                            .collect(Collectors.joining(", "));
+                    if (!incompatible.isEmpty()) {
+                        throw new IllegalStateException(id + " requires outgoing links to be sync, but " + incompatible + " are async (maxWorkers > 0)");
+                    }
+                } else if (setupControls.getRequireOutgoingAsync()) {
+                    String incompatible = outgoingConfigurations
+                            .peek(o -> { if (o.getMaxWorkers().isEmpty()) o.maxWorkers(1); })
+                            .filter(o -> o.getMaxWorkers().get() == 0)
+                            .map(ControllerConfiguration::getId)
+                            .collect(Collectors.joining(", "));
+                    if (!incompatible.isEmpty()) {
+                        throw new IllegalStateException(id + " requires outgoing links to be async, but " + incompatible + " are sync (maxWorkers == 0)");
                     }
                 }
             }
         });
-    }
 
-    void signalStarving(TransformJob transformJob) {
-        signal(() -> interruptIfStarving(transformJob));
-    }
-
-    void signalDone(TransformJob transformJob) {
-        signal(() -> {
-            Transformer<?, ?> transformer = transformJob.transformer;
-            transformer.transformJobs.remove(transformJob);
-            if (transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
-                transformer.setIsClosing();
-                leaders.get(transformer).add(transformer::close, () -> signalClosed(transformer));
-            }
-        });
-    }
-
-    void signalClosed(Transformer<?, ?> transformer) {
-        signal(() -> {
-            transformer.setIsClosed();
-            leaders.remove(transformer).interrupt();
-            if (--unclosed == 0) {
-                state = State.DONE;
-            } else {
-                maybeClose();
-                transformers.stream()
-                        .filter(Gingester::isTransformerStarving)
-                        .flatMap(t -> t.transformJobs.stream())
-                        .forEach(Gingester::interruptIfStarving);
-            }
-        });
-    }
-
-    void signalShutdown() {
-        signal(() -> seeders.forEach(transformJob -> transformJob.getWorker().interrupt()));
-    }
-
-    private void signal(Runnable runnable) {
-        boolean result = signals.offer(runnable);
-        if (!result) throw new IllegalStateException("Too many signals");
-    }
-
-    private void open(Transformer<?, ?> transformer) {
-        Worker leader = new Worker(transformer.id + "_Leader", transformer::open, this::signalOpen);
-        leaders.put(transformer, leader);
-        leader.start();
-    }
-
-    private List<TransformJob> startTransforming(Transformer<?, ?> transformer) {
-        List<TransformJob> jobs = new ArrayList<>();
-        jobs.add(startTransformJob(leaders.get(transformer), transformer));
-        for (int i = 1; i < transformer.maxWorkers; i++) {
-            Worker worker = new Worker(transformer.id + "_Worker-" + i);
-            worker.start();
-            jobs.add(startTransformJob(worker, transformer));
+        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
+            configurations.values().forEach(c -> {
+                if (c.getLinks().isEmpty()) {
+                    c.report(true);
+                }
+            });
         }
-        return jobs;
+
+        configurations.forEach((id, configuration) ->
+                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
     }
 
-    private TransformJob startTransformJob(Worker worker, Transformer<?, ?> transformer) {
-        TransformJob transformJob = new TransformJob(worker, this, transformer);
-        worker.add(transformJob, () -> signalDone(transformJob));
-        transformer.transformJobs.add(transformJob);
-        return transformJob;
+    private void seed() {
+
+        Set<String> noIncoming = new HashSet<>(controllers.keySet());
+        noIncoming.removeAll(excepts);
+        controllers.values().stream()
+                .flatMap(controller -> Stream.concat(controller.links.keySet().stream(), controller.excepts.keySet().stream()))
+                .forEach(noIncoming::remove);
+
+        controllers.put("__seed__", new Controller<>(
+                new ControllerConfiguration<>()
+                        .id("__seed__")
+                        .transformer(new Seed())
+                        .links(new ArrayList<>(noIncoming))
+                        .excepts(new ArrayList<>(excepts)),
+                new ControllerInterface("__seed__")
+        ));
+
+        controllers.values().forEach(Controller::initialize);
+        controllers.values().forEach(Controller::discoverIncoming);
+        controllers.values().forEach(Controller::discoverSyncedThrough);
     }
 
-    private void maybeClose() {
-        boolean done = true;
-        for (Transformer<?, ?> transformer : transformers) {
-            if (!transformer.isClosed()) {
-                done = false;
-                if (transformer.isOpen() && transformer.isEmpty() && transformer.getUpstream().stream().allMatch(Transformer::isClosed)) {
-                    transformer.setIsClosing();
-                    leaders.get(transformer).add(transformer::close, () -> signalClosed(transformer));
+    private void start(Map<String, Object> seedStash) {
+
+        controllers.values().forEach(Controller::open);
+
+        try {
+            synchronized (lock) {
+                while (controllers.size() > open.size()) {
+                    lock.wait();
                 }
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
         }
-        if (done) state = State.DONE;
+
+        controllers.values().forEach(Controller::start);
+
+        Reporter reporter = new Reporter(controllers.values());
+        if (report) reporter.start();
+
+        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
+        Context seed = new Context.Builder()
+                .stash(seedStash)
+                .build(seedController);
+        seedController.accept(new Batch<>(seed, new Object()));
+        seedController.finish(null, seed);
+
+        try {
+
+            synchronized (lock) {
+                while (controllers.values().stream().anyMatch(c -> c.workers.size() != c.done.size())) {
+                    lock.wait();
+                }
+            }
+
+            for (Controller<?, ?> controller : controllers.values()) {
+                for (Worker worker : controller.workers) {
+                    worker.interrupt();
+                    worker.join();
+                }
+            }
+
+            if (report) {
+                reporter.interrupt();
+                reporter.join();
+            }
+
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
+        }
     }
 
-    private static boolean isTransformerStarving(Transformer<?, ?> transformer) {
-        return transformer.getUpstream().stream().allMatch(Transformer::isClosed);
+    private String getId(TransformerConfiguration configuration) {
+        return configuration.getId()
+                .filter(id -> {
+                    if (transformerConfigurations.containsKey(id)) {
+                        throw new IllegalArgumentException("Transformer id " + id + " already in use");
+                    }
+                    return true;
+                })
+                .orElseGet(() -> {
+                    String name = configuration.getName().orElseThrow();
+                    String id = name;
+                    int i = 1;
+                    while (transformerConfigurations.containsKey(id)) {
+                        id = name + '_' + i++;
+                    }
+                    return id;
+                });
     }
 
-    private static void interruptIfStarving(TransformJob transformJob) {
-        synchronized (transformJob.lock) {
-            if (transformJob.starving) {
-                transformJob.getWorker().interrupt();
+    private Optional<String> resolveMaybeNext(String from) {
+        boolean next = false;
+        for (String id : transformerConfigurations.keySet()) {
+            if (next) {
+                return Optional.of(id);
+            } else if (id.equals(from)) {
+                next = true;
             }
         }
+        return Optional.empty();
     }
 
+    public class ControllerInterface {
 
+        private final String controllerId;
 
-    // builder
+        private ControllerInterface(String controllerId) {
+            this.controllerId = controllerId;
+        }
 
-    public static Builder newBuilder() {
-        return new b.nana.technology.gingester.core.Builder();
-    }
+        public Optional<Controller<?, ?>> getController(String id) {
+            if (id.equals("__maybe_next__")) {
+                return resolveMaybeNext(controllerId).map(controllers::get);
+            } else {
+                Controller<?, ?> controller = controllers.get(id);
+                if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
+                return Optional.of(controller);
+            }
+        }
 
-    public interface Builder {
+        public boolean isExceptionHandler() {
+            return excepts.contains(controllerId) ||
+                    configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
+        }
 
-        Builder report(boolean report);
+        public Collection<Controller<?, ?>> getControllers() {
+            return controllers.values();
+        }
 
-        /**
-         * Add the given transformer to the to-be-built Gingester.
-         *
-         * It is not necessary to call this if the transformer was/is also an argument to
-         * any of the other methods in this builder.
-         */
-        void add(Transformer<?, ?> transformer);
+        public void signalOpen() {
+            synchronized (lock) {
+                open.add(controllerId);
+                lock.notify();
+            }
+        }
 
-        /**
-         * Allow the given transformer to be referenced by the given id.
-         *
-         * The id must not have been given to any other transformer.
-         * A transformer may only be given 1 id.
-         */
-        void id(String id, Transformer<?, ?> transformer);
-
-        Transformer<?, ?> getTransformer(String id);
-        <T extends Transformer<?, ?>> T getTransformer(String id, Class<T> transformerClass);
-        <T> void seed(Transformer<T, ?> transformer, T seed);
-        <T> void seed(Transformer<T, ?> transformer, Context.Builder context, T seed);
-        Link link(String fromName, String toName);
-        <T> Link link(Transformer<?, T> from, Transformer<? super T, ?> to);
-        <T> Link link(Transformer<?, T> from, Consumer<? super T> consumer);
-        <T> Link link(Transformer<?, T> from, BiConsumer<Context, ? super T> consumer);
-        Link except(String fromName, String toName);
-        Link except(Transformer<?, ?> from, Transformer<Throwable, ?> to);
-
-        /**
-         * Synchronize the routes from `from` to `to`.
-         *
-         * This will ensure `to` receives all results from `from` in order
-         * and `to` will get a call to `finish(Context)` after it received all
-         * emits for a context created by `to`.
-         */
-        void sync(String fromName, String toName);
-
-        /**
-         * Synchronize the routes from `from` to `to`.
-         *
-         * This will ensure `to` receives all results from `from` in order
-         * and `to` will get a call to `finish(Context)` after it received all
-         * emits for a context created by `to`.
-         */
-        void sync(Transformer<?, ?> from, Transformer<?, ?> to);
-
-        Gingester build();
+        public void signalDone() {
+            synchronized (lock) {
+                lock.notify();
+            }
+        }
     }
 }

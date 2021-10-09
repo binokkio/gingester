@@ -1,37 +1,37 @@
 package b.nana.technology.gingester.transformers.base.transformers.std;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
-public class Out extends Transformer<Object, Void> {
+import java.util.stream.Collectors;
+
+public final class Out implements Transformer<Object, Object> {
 
     private final boolean decorate;
 
-    public Out() {
-        this(new Parameters());
-    }
-
     public Out(Parameters parameters) {
-        super(parameters);
         decorate = parameters.decorate;
     }
 
     @Override
-    protected void transform(Context context, Object input) throws JsonProcessingException {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         if (decorate) {
-            String description = context.getDescription();
+            String description = context.fetchReverse("description")
+                    .map(Object::toString)
+                    .collect(Collectors.joining(" :: "));
             String prettyStash = context.prettyStash();
             System.out.print(
                     "---- " + description + " ----\n" +
                     (prettyStash.isEmpty() ? "" : prettyStash + '\n') +
-                    input + '\n' +
+                    in + '\n' +
                     "-".repeat(description.length() + 10) + "\n\n"
             );
         } else {
-            System.out.println(input);
+            System.out.println(in);
         }
+        out.accept(context, in);
     }
 
     public static class Parameters {

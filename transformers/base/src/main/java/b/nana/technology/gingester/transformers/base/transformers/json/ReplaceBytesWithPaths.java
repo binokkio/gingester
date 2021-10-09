@@ -1,7 +1,8 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BinaryNode;
@@ -9,14 +10,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.*;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class ReplaceBytesWithPaths extends Transformer<JsonNode, JsonNode> {
+public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNode> {
 
     private final Path directory;
     private final Pattern filenameReplacePattern;
@@ -25,7 +25,6 @@ public class ReplaceBytesWithPaths extends Transformer<JsonNode, JsonNode> {
     private final Path pathRelativeTo;
 
     public ReplaceBytesWithPaths(Parameters parameters) {
-        super(parameters);
 
         directory = Paths.get(parameters.directory);
         filenameReplacePattern = Pattern.compile(parameters.filenameReplacePattern);
@@ -45,9 +44,9 @@ public class ReplaceBytesWithPaths extends Transformer<JsonNode, JsonNode> {
     }
 
     @Override
-    protected void transform(Context context, JsonNode input) throws Exception {
-        transform(input, "", new HashSet<>());
-        emit(context, input);
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
+        transform(in, "", new HashSet<>());
+        out.accept(context, in);
     }
 
     private void transform(JsonNode jsonNode, String jsonPointer, Set<Path> usedPaths) throws IOException {
@@ -92,7 +91,7 @@ public class ReplaceBytesWithPaths extends Transformer<JsonNode, JsonNode> {
 
     public static class Parameters {
         public String directory = "";
-        public String filenameReplacePattern = "[\\\\/|\"'.,:;#*?!<>{}\\s\\p{Cc}]";
+        public String filenameReplacePattern = "[\\\\/|\"'.,:;#*?!<>\\[\\]{}\\s\\p{Cc}]";
         public String extension = "";
         public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };
         public String pathRelativeTo;

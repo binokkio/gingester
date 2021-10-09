@@ -1,15 +1,15 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
-import java.io.IOException;
 import java.io.InputStream;
 
-public class ToBytes extends Transformer<InputStream, byte[]> {
+public final class ToBytes implements Transformer<InputStream, byte[]> {
 
     @Override
-    protected void transform(Context context, InputStream input) throws IOException {
-        emit(context, input.readAllBytes());
+    public void transform(Context context, InputStream in, Receiver<byte[]> out) throws Exception {
+        out.accept(context, in.readAllBytes());
     }
 }

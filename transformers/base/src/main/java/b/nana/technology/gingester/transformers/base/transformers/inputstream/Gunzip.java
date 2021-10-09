@@ -1,20 +1,22 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
-public class Gunzip extends Transformer<InputStream, InputStream> {
+public final class Gunzip implements Transformer<InputStream, InputStream> {
 
     @Override
-    protected void setup(Setup setup) {
-        setup.requireDownstreamSync();
+    public void setup(SetupControls controls) {
+        controls.requireOutgoingSync();
     }
 
     @Override
-    protected void transform(Context context, InputStream input) throws Exception {
-        emit(context, new GZIPInputStream(input));
+    public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
+        out.accept(context, new GZIPInputStream(in));
     }
 }

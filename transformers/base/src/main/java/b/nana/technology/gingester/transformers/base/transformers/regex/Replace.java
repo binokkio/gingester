@@ -1,24 +1,25 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
-import b.nana.technology.gingester.core.Context;
-import b.nana.technology.gingester.core.Transformer;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.regex.Pattern;
 
-public class Replace extends Transformer<String, String> {
+public final class Replace implements Transformer<String, String> {
 
     private final Pattern pattern;
-    private final String replacement;
+    private final Context.Template replacementTemplate;
 
     public Replace(Parameters parameters) {
         pattern = Pattern.compile(parameters.pattern);
-        replacement = parameters.replacement;
+        replacementTemplate = Context.newTemplate(parameters.replacement);
     }
 
     @Override
-    protected void transform(Context context, String input) throws Exception {
-        emit(context, pattern.matcher(input).replaceAll(replacement));
+    public void transform(Context context, String in, Receiver<String> out) throws Exception {
+        out.accept(context, pattern.matcher(in).replaceAll(replacementTemplate.render(context)));
     }
 
     public static class Parameters {

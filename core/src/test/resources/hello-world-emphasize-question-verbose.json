@@ -9,20 +9,14 @@
         "count": 1
       },
       "links": [
-        {
-          "to": "AddEmphasis",
-          "async": false
-        }
+        "AddEmphasis"
       ]
     },
     {
       "id": "AddEmphasis",
       "transformer": "Emphasize",
       "links": [
-        {
-          "to": "AddQuestion",
-          "async": false
-        }
+        "AddQuestion"
       ]
     },
     {

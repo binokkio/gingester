@@ -1,0 +1,54 @@
+Gingester - generic ingest framework
+
+General usage:
+
+<> mark placeholders, [] mark optionals
+
+    -b/--break
+        ignore all following transformers
+
+    -e/--excepts <link1> [<link2> [...]]
+        send exceptions from the previous transformer (if any) and uncaught downstream exceptions to the given links
+
+    -f/--fetch [<name>]
+        fetch value from stash
+
+    -fc/--file-config/--from-config <path/to/file>
+        append json config from file
+
+    -h/--help
+        print this help and exit
+
+    -l/--links <link1> [<link2> [...]]
+        link the previous transformer to the given links,
+        it will not automatically link to the next transformer
+
+    -nr/--no-report/--no-reporting
+        don't print throughput message to stderr, overrules transformer toggle ([!])
+
+    -pc/--print-config
+        print the configuration resulting from this cli interaction instead of executing it
+
+    -rc/--resource-config </path/to/resource>
+        append json config from resource
+
+    -s/--stash [<name>]
+        stash value
+
+    -sft/--sync-from-transformer [<workers>] [<id>:]<name>[!] [<parameters>]
+        equals -t but marks the transformer to be synced with when -stt is used later
+
+    -stt/--sync-to-transformer [<workers>] [<id>:]<name>[!] [<parameters>]
+        equals -t but syncs the transformer with the most recent use of -sft or if no -sft was given the ingest-seed
+
+    -t/--transformer [<workers>] [<id>:]<name>[!] [<parameters>]
+        add transformer to the pipeline
+        provide [<workers>] to enable async execution for the transformer by the provided number of workers
+        provide [<id>] to be able to refer to this transformer by the provided id
+        provide [!] to enable throughput reporting for the transformer
+
+    -w/--swap [<name>]
+        swap value in stash
+
+    --
+        mark previous transformer as terminal, it will not automatically link to the next transformer
