@@ -42,4 +42,13 @@ public final class ContextMapReduce<T> {
         if (ts.isEmpty()) ts.add(supplier.get());
         return ts.stream();
     }
+
+    public boolean has(Context context) {
+        for (Context c : context) {
+            if (suppliers.containsKey(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
