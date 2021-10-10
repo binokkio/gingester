@@ -28,9 +28,10 @@ public final class Controller<I, O> {
     public final Map<String, Controller<O, ?>> links;
     public final Map<String, Controller<Exception, ?>> excepts;
     final Set<Controller<?, ?>> indicates = new HashSet<>();
-    final Set<Controller<?, ?>> syncs = new HashSet<>();
+    final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
+    private final Set<Controller<?, ?>> downstream = new HashSet<>();
     final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
@@ -95,31 +96,11 @@ public final class Controller<I, O> {
         }
     }
 
-    public void discoverSyncedThrough() {
-        if (incoming.isEmpty()) {  // special handling of the seed controller
-            syncedThrough.put(this, Collections.singleton(this));
-        } else {
-            for (Controller<?, ?> controller : gingester.getControllers()) {
-                if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
-                    Set<Controller<?, ?>> downstream = controller.getDownstream();
-                    if (downstream.contains(this)) {
-                        downstream.add(controller);
-                        downstream.retainAll(incoming);
-                        if (!downstream.isEmpty()) {
-                            syncedThrough.put(controller, downstream);
-                        }
-                    }
-                }
-            }
-        }
-    }
+    public void discoverDownstream() {
 
-    private Set<Controller<?, ?>> getDownstream() {
-
-        Set<Controller<?, ?>> downstream = new HashSet<>();
         Set<Controller<?, ?>> found = new HashSet<>();
         found.addAll(links.values());
-        found.addAll(bubbles());
+        found.addAll(bubble());
 
         while (!found.isEmpty()) {
             downstream.addAll(found);
@@ -130,23 +111,51 @@ public final class Controller<I, O> {
             }
             found = next;
         }
-
-        return downstream;
     }
 
-    private Set<Controller<?, ?>> bubbles() {
+    private Set<Controller<?, ?>> bubble() {
         Set<Controller<?, ?>> result = new HashSet<>();
-        bubbles(this, result);
+        bubble(this, result);
         return result;
     }
 
-    private void bubbles(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
+    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
         if (!pointer.excepts.isEmpty()) {
             result.addAll(pointer.excepts.values());
         } else if (!pointer.isExceptionHandler) {
             for (Controller<?, ?> controller : incoming) {
                 if (controller.links.containsValue(pointer)) {
-                    bubbles(controller, result);
+                    bubble(controller, result);
+                }
+            }
+        }
+    }
+
+    public void discoverSyncs() {
+
+        syncs.sort((a, b) -> {
+            if (a.downstream.contains(b)) {
+                return 1;
+            } else if (b.downstream.contains(a)) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+
+        if (incoming.isEmpty()) {  // special handling of the seed controller
+            syncedThrough.put(this, Collections.singleton(this));
+        } else {
+            for (Controller<?, ?> controller : gingester.getControllers()) {
+                if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
+                    if (controller.downstream.contains(this)) {
+                        Set<Controller<?, ?>> downstreamCopy = new HashSet<>(controller.downstream);
+                        downstreamCopy.add(controller);
+                        downstreamCopy.retainAll(incoming);
+                        if (!downstreamCopy.isEmpty()) {
+                            syncedThrough.put(controller, downstreamCopy);
+                        }
+                    }
                 }
             }
         }

@@ -258,7 +258,8 @@ public final class Gingester {
 
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discoverIncoming);
-        controllers.values().forEach(Controller::discoverSyncedThrough);
+        controllers.values().forEach(Controller::discoverDownstream);
+        controllers.values().forEach(Controller::discoverSyncs);
     }
 
     private void start(Map<String, Object> seedStash) {

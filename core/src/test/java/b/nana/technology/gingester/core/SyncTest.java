@@ -44,7 +44,7 @@ class SyncTest {
         assertEquals("Message from SyncFinish finish()", result.get());
     }
 
-//    @Test
+    @Test
     void testPrepareOrder() {
 
         AtomicReference<Integer> result = new AtomicReference<>();
