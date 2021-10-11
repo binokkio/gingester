@@ -8,26 +8,29 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
 public final class Search implements Transformer<Object, Path> {
 
-    private final Path root;
-    private final String[] globs;
+    private final FileSystem fileSystem = FileSystems.getDefault();
+
+    private final Context.Template rootTemplate;
+    private final List<Context.Template> globTemplates;
     private final boolean findDirs;
-    private final int maxDepth;
 
     public Search(Parameters parameters) {
-        root = Paths.get(parameters.root).toAbsolutePath();
-        globs = parameters.globs;
+        rootTemplate = Context.newTemplate(parameters.root);
+        globTemplates = Arrays.stream(parameters.globs).map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
-        maxDepth = calculateMaxDepth(globs);
     }
 
-    private static int calculateMaxDepth(String[] globs) {
+    private static int calculateMaxDepth(List<String> globs) {
         int maxDepth = 0;
         for (String glob : globs) {
             if (glob.contains("**")) {
@@ -41,27 +44,25 @@ public final class Search implements Transformer<Object, Path> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
-        Files.walkFileTree(root, new Visitor(context, out));
+        Path root = Path.of(rootTemplate.render(context));
+        List<String> globs = globTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
+        Files.walkFileTree(root, new Visitor(root, globs, context, out));
     }
 
     private class Visitor implements FileVisitor<Path> {
 
+        private final Path root;
+        private final List<PathMatcher> pathMatchers;
+        private final int maxDepth;
         private final Context context;
-        private final PathMatcher[] pathMatchers;
         private final Receiver<Path> out;
 
-        public Visitor(Context context, Receiver<Path> out) {
+        public Visitor(Path root, List<String> globs, Context context, Receiver<Path> out) {
+            this.root = root;
+            this.pathMatchers = globs.stream().map(s -> "glob:" + s).map(fileSystem::getPathMatcher).collect(Collectors.toList());
+            this.maxDepth = calculateMaxDepth(globs);
             this.context = context;
             this.out = out;
-            this.pathMatchers = createPathMatchers();
-        }
-
-        private PathMatcher[] createPathMatchers() {
-            PathMatcher[] pathMatchers = new PathMatcher[globs.length];
-            for (int i = 0; i < globs.length; i++) {
-                pathMatchers[i] = FileSystems.getDefault().getPathMatcher("glob:" + globs[i]);
-            }
-            return pathMatchers;
         }
 
         @Override
@@ -75,8 +76,7 @@ public final class Search implements Transformer<Object, Path> {
         public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes basicFileAttributes) {
             Path relative = root.relativize(path);
             if (findDirs) handle(path, relative);
-            return relative.getNameCount() > maxDepth ? SKIP_SUBTREE : CONTINUE;
-            // TODO this can be done better
+            return relative.getNameCount() > maxDepth ? SKIP_SUBTREE : CONTINUE;  // TODO this can be done better
         }
 
         @Override

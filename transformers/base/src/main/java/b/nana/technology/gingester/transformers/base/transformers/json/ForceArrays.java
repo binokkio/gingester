@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import static b.nana.technology.gingester.transformers.base.common.json.PathToPointer.jsonPathToPointer;
 
-public class ForceArrays implements Transformer<JsonNode, JsonNode> {
+public final class ForceArrays implements Transformer<JsonNode, JsonNode> {
 
     private static final Configuration CONFIGURATION = Configuration.builder()
             .jsonProvider(new JacksonJsonNodeJsonProvider())
