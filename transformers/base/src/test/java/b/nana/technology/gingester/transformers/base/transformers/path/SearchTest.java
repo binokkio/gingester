@@ -24,7 +24,7 @@ class SearchTest {
 
         Search.Parameters parameters = new Search.Parameters();
         parameters.root = tempDir.toString();
-        parameters.globs = new String[] { "*" };
+        parameters.globs = Collections.singletonList("*");
 
         new Search(parameters).transform(new Context.Builder().build(), null, (UniReceiver<Path>) result::add);
 
@@ -53,12 +53,12 @@ class SearchTest {
 
         Search.Parameters parameters = new Search.Parameters();
         parameters.root = tempDir.toString();
-        parameters.globs = new String[] { "a.txt", "c.txt" };
+        parameters.globs = Arrays.asList("a.txt", "c.txt");
 
         new Search(parameters).transform(new Context.Builder().build(), null, (UniReceiver<Path>) result::add);
 
         assertEquals(2, result.size());
-;       assertEquals(Set.of(a, c), result);
+        assertEquals(Set.of(a, c), result);
 
         Files.delete(a);
         Files.delete(b);

@@ -9,10 +9,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 @Names(1)
 public final class Fetch implements Transformer<Object, Object> {
 
+    public static String[] parseStashName(String name) {
+        return name.split("/");  // TODO support escape sequence
+    }
+
     private final String[] name;
 
     public Fetch(Parameters parameters) {
-        name = parameters.name.split("/");  // TODO support escape sequence
+        name = parseStashName(parameters.stash);
     }
 
     @Override
@@ -25,14 +29,14 @@ public final class Fetch implements Transformer<Object, Object> {
 
     public static class Parameters {
 
-        public String name = "stash";
+        public String stash = "stash";
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String name) {
-            this.name = name;
+        public Parameters(String stash) {
+            this.stash = stash;
         }
     }
 }

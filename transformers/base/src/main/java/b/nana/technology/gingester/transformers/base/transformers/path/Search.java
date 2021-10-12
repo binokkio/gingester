@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,7 +26,7 @@ public final class Search implements Transformer<Object, Path> {
 
     public Search(Parameters parameters) {
         rootTemplate = Context.newTemplate(parameters.root);
-        globTemplates = Arrays.stream(parameters.globs).map(Context::newTemplate).collect(Collectors.toList());
+        globTemplates = parameters.globs.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
     }
 
@@ -112,7 +112,7 @@ public final class Search implements Transformer<Object, Path> {
     public static class Parameters {
 
         public String root = "";
-        public String[] globs = new String[] { "**" };
+        public List<String> globs = Collections.singletonList("**");
         public boolean findDirs;
 
         @JsonCreator
@@ -120,7 +120,7 @@ public final class Search implements Transformer<Object, Path> {
 
         @JsonCreator
         public Parameters(String glob) {
-            this.globs = new String[] { glob };
+            this.globs = Collections.singletonList("**");
         }
     }
 }
