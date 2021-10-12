@@ -11,23 +11,24 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class Set implements Transformer<JsonNode, JsonNode> {
 
     private final String key;
-    private final String value;
+    private final String fetch;
 
     public Set(Parameters parameters) {
         key = parameters.key;
-        value = parameters.value;
+        fetch = parameters.fetch;
     }
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
-        ((ObjectNode) in).set(key, JsonNodeFactory.instance.pojoNode(context.fetch(value).findFirst().orElseThrow()));
+        Object value = context.fetch(fetch).findFirst().orElseThrow();
+        ((ObjectNode) in).set(key, value instanceof JsonNode ? (JsonNode) value : JsonNodeFactory.instance.pojoNode(value));
         out.accept(context, in);
     }
 
     public static class Parameters {
 
         public String key;
-        public String value = "stash";
+        public String fetch = "stash";
 
         @JsonCreator
         public Parameters() {}
