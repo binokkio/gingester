@@ -120,7 +120,7 @@ public final class Search implements Transformer<Object, Path> {
 
         @JsonCreator
         public Parameters(String glob) {
-            this.globs = Collections.singletonList("**");
+            this.globs = Collections.singletonList(glob);
         }
     }
 }
