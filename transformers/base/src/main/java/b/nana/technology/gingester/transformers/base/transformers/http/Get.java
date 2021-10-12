@@ -37,7 +37,10 @@ public final class Get implements Transformer<Object, InputStream> {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri);
         headers.forEach(requestBuilder::header);
         HttpResponse<InputStream> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
-        Context.Builder contextBuilder = context.stash("description", uri.toString());
+        Context.Builder contextBuilder = context.stash(Map.of(
+                "description", uri.toString(),
+                "headers", response.headers().map()
+        ));
         out.accept(contextBuilder, response.body());
     }
 
