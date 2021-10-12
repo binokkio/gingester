@@ -44,7 +44,7 @@ public final class Search implements Transformer<Object, Path> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
-        Path root = Path.of(rootTemplate.render(context));
+        Path root = Path.of(rootTemplate.render(context)).toAbsolutePath();
         List<String> globs = globTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
         Files.walkFileTree(root, new Visitor(root, globs, context, out));
     }
@@ -98,7 +98,7 @@ public final class Search implements Transformer<Object, Path> {
                                     "path", Map.of(
                                             "tail", path.getFileName(),
                                             "relative", relative,
-                                            "full", path
+                                            "absolute", path
                                     )
                             )),
                             path
