@@ -6,14 +6,15 @@ import redis.clients.jedis.Jedis;
 
 import java.nio.charset.StandardCharsets;
 
-public final class Set extends KeyTransformer<byte[], Void> {
+public final class Set extends KeyTransformer<byte[], byte[]> {
 
     public Set(KeyTransformer.Parameters parameters) {
         super(parameters);
     }
 
     @Override
-    protected void transform(Context context, byte[] in, Receiver<Void> out, Jedis jedis) {
-        jedis.set(getKeyFormat().render(context).getBytes(StandardCharsets.UTF_8), in);
+    protected void transform(Context context, byte[] in, Receiver<byte[]> out, Jedis jedis) {
+        jedis.set(getKeyTemplate().render(context).getBytes(StandardCharsets.UTF_8), in);
+        out.accept(context, in);
     }
 }

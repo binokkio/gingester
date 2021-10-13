@@ -6,14 +6,15 @@ import redis.clients.jedis.Jedis;
 
 import java.nio.charset.StandardCharsets;
 
-public final class Publish extends KeyTransformer<byte[], Void> {
+public final class Publish extends KeyTransformer<byte[], byte[]> {
 
     public Publish(Parameters parameters) {
         super(parameters);
     }
 
     @Override
-    protected void transform(Context context, byte[] in, Receiver<Void> out, Jedis jedis) {
-        jedis.publish(getKeyFormat().render(context).getBytes(StandardCharsets.UTF_8), in);
+    protected void transform(Context context, byte[] in, Receiver<byte[]> out, Jedis jedis) {
+        jedis.publish(getKeyTemplate().render(context).getBytes(StandardCharsets.UTF_8), in);
+        out.accept(context, in);
     }
 }
