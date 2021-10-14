@@ -13,7 +13,8 @@ public final class RedisProvider implements Provider {
         return List.of(
                 LPush.class,
                 Publish.class,
-                Set.class
+                Set.class,
+                Subscribe.class
         );
     }
 }
