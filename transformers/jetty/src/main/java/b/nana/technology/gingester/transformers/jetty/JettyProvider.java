@@ -2,10 +2,7 @@ package b.nana.technology.gingester.transformers.jetty;
 
 import b.nana.technology.gingester.core.provider.Provider;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.jetty.http.Keycloak;
-import b.nana.technology.gingester.transformers.jetty.http.Respond;
-import b.nana.technology.gingester.transformers.jetty.http.Server;
-import b.nana.technology.gingester.transformers.jetty.http.Split;
+import b.nana.technology.gingester.transformers.jetty.http.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,6 +15,8 @@ public final class JettyProvider implements Provider {
                 Keycloak.class,
                 Respond.class,
                 Server.class,
+                SetHeaders.class,
+                SetStatus.class,
                 Split.class
         );
     }
