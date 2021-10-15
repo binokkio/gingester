@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.servlet.http.HttpServletResponse;
 
-public class SetStatus implements Transformer<Object, Object> {
+public final class SetStatus implements Transformer<Object, Object> {
 
     private final int status;
 

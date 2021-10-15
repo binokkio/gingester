@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SetHeaders implements Transformer<Object, Object> {
+public final class SetHeaders implements Transformer<Object, Object> {
 
     private final Map<String, String> headers;
 
