@@ -24,6 +24,8 @@ public final class SetHeaders implements Transformer<Object, Object> {
                 () -> new IllegalStateException("Context did not contain HttpServletResponse"));
 
         headers.forEach(response::setHeader);
+
+        out.accept(context, in);
     }
 
     public static class Parameters extends HashMap<String, String> {

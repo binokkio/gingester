@@ -21,6 +21,8 @@ public final class SetStatus implements Transformer<Object, Object> {
                 () -> new IllegalStateException("Context did not contain HttpServletResponse"));
 
         response.setStatus(status);
+
+        out.accept(context, in);
     }
 
     public static class Parameters {
