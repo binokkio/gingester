@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -59,9 +61,13 @@ public final class Server implements Transformer<Object, InputStream> {
 
         org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server();
 
+        HttpConfiguration httpConfiguration = new HttpConfiguration();
+        httpConfiguration.setSendDateHeader(false);
+        httpConfiguration.setSendServerVersion(false);
+
         ServerConnector connector = sslContextFactory != null ?
-                new ServerConnector(server, sslContextFactory) :
-                new ServerConnector(server);
+                new ServerConnector(server, sslContextFactory, new HttpConnectionFactory(httpConfiguration)) :
+                new ServerConnector(server, new HttpConnectionFactory(httpConfiguration));
 
         connector.setPort(port);
         server.addConnector(connector);

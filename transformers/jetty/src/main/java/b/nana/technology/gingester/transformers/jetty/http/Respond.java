@@ -24,7 +24,7 @@ public final class Respond implements Transformer<InputStream, Void> {
     public void transform(Context context, InputStream in, Receiver<Void> out) throws Exception {
         states.act(context, state -> {
             if (state.responded) throw new IllegalStateException("Already responded");
-            state.responded = true;
+            state.responded = true;  // TODO maybe allow multiple inputstreams to form the response instead
             in.transferTo(state.response.getOutputStream());
         });
     }
