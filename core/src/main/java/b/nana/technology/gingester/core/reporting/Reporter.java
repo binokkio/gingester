@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.reporting;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class Reporter extends Thread {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Reporter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final int intervalMillis;
     private final Map<Controller<?, ?>, Sampler> targets;

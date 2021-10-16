@@ -1,11 +1,17 @@
 package b.nana.technology.gingester.core.controller;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 final class ControllerReceiver<I, O> implements Receiver<O> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final Controller<I, O> controller;
 
@@ -112,6 +118,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void except(Context context, Exception cause) {
+
         for (Context c : context) {
             if (!c.controller.excepts.isEmpty()) {
                 for (Controller<Exception, ?> except : c.controller.excepts.values()) {
@@ -122,6 +129,14 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 break;
             }
         }
-        cause.printStackTrace();
+
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn(String.format(
+                    "Uncaught exception during %s::%s for %s",
+                    context.fetch("transformer").findFirst().orElseThrow(),
+                    context.fetch("method").findFirst().orElseThrow(),
+                    context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
+            ), cause);
+        }
     }
 }
