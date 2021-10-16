@@ -33,7 +33,7 @@ public final class GingesterConfiguration {
         return OBJECT_MAPPER.readValue(inputStream, GingesterConfiguration.class);
     }
 
-    public Boolean report;
+    public Integer report;
     public List<String> excepts = new ArrayList<>();
     public List<TransformerConfiguration> transformers = new ArrayList<>();
 
