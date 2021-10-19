@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -12,7 +13,7 @@ public abstract class JdbcTransformer implements Transformer<Object, Object> {
 
     private final String url;
     private final Properties properties;
-    private final String open;
+    private final List<String> open;
 
     private Connection connection;
 
@@ -28,8 +29,8 @@ public abstract class JdbcTransformer implements Transformer<Object, Object> {
 
         connection = DriverManager.getConnection(url, properties);
 
-        if (open != null) {
-            connection.prepareStatement(open).execute();
+        for (String sql : open) {
+            connection.prepareStatement(sql).execute();
         }
     }
 
@@ -40,6 +41,6 @@ public abstract class JdbcTransformer implements Transformer<Object, Object> {
     public static class Parameters {
         public String url;
         public Map<String, Object> properties = Collections.emptyMap();
-        public String open;
+        public List<String> open = Collections.emptyList();
     }
 }
