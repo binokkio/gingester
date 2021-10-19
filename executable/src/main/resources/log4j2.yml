@@ -1,0 +1,14 @@
+Configuration:
+
+  Appenders:
+    Console:
+      name: Console
+      target: SYSTEM_ERR
+      PatternLayout:
+        Pattern: "%-5level %date - %msg%n"
+
+  Loggers:
+    Root:
+      level: info
+      AppenderRef:
+        ref: Console
