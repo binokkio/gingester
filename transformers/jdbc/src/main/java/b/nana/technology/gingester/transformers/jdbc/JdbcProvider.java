@@ -11,7 +11,7 @@ public final class JdbcProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
-                Statement.class
+                Dml.class
         );
     }
 }

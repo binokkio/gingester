@@ -3,26 +3,33 @@ package b.nana.technology.gingester.transformers.jdbc;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
-public final class Statement extends JdbcTransformer {
+import java.util.List;
 
-    private final String statement;
+public final class Dml extends JdbcTransformer {
 
-    public Statement(Parameters parameters) {
+    private final List<Statement> dml;
+
+    private List<PreparedStatement> preparedStatements;
+
+    public Dml(Parameters parameters) {
         super(parameters);
-        statement = parameters.statement;
+        dml = parameters.dml;
     }
 
     @Override
     public void open() throws Exception {
         super.open();
+        preparedStatements = prepare(dml);
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
+        for (PreparedStatement preparedStatement : preparedStatements) {
 
+        }
     }
 
     public static class Parameters extends JdbcTransformer.Parameters {
-        public String statement;
+        public List<Statement> dml;
     }
 }
