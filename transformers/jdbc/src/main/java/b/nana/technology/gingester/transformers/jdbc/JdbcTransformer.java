@@ -1,13 +1,18 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformers.Fetch;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
-public abstract class JdbcTransformer implements Transformer<Object, Object> {
+public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
 
     private final String url;
     private final Properties properties;
@@ -24,62 +29,60 @@ public abstract class JdbcTransformer implements Transformer<Object, Object> {
 
     @Override
     public void open() throws Exception {
-
         connection = DriverManager.getConnection(url, properties);
-
-        for (String statement : ddl) {
-            connection.prepareStatement(statement).execute();
+        connection.setAutoCommit(false);
+        try {
+            for (String statement : ddl) {
+                connection.createStatement().execute(statement);
+            }
+            connection.commit();
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        connection.close();
     }
 
     protected Connection getConnection() {
         return connection;
     }
 
-    protected List<PreparedStatement> prepare(List<Statement> statements) throws SQLException {
-        List<PreparedStatement> preparedStatements = new ArrayList<>();
-        for (Statement statement : statements) {
-            PreparedStatement pswa = new PreparedStatement();
-            pswa.statement = getConnection().prepareStatement(statement.statement);
-            pswa.arguments = new ArrayList<>();
-            ParameterMetaData parameterMetaData = pswa.statement.getParameterMetaData();
-            for (int i = 0; i < statement.arguments.size(); i++) {
-                TypedArgument typedArgument = new TypedArgument();
-                typedArgument.argument = Fetch.parseStashName(statement.arguments.get(i));
-                typedArgument.type = parameterMetaData.getParameterTypeName(i + 1);
-                pswa.arguments.add(typedArgument);
-            }
-            preparedStatements.add(pswa);
-        }
-        return preparedStatements;
-    }
-
     public static class Parameters {
+
         public String url;
         public Map<String, Object> properties = Collections.emptyMap();
         public List<String> ddl = Collections.emptyList();
-    }
 
-    public static class Statement {
-        public String statement;
-        public List<String> arguments = Collections.emptyList();
+        public static class Statement {
 
-        @JsonCreator
-        public Statement() {}
+            public String sql;
+            public List<Parameter> parameters = Collections.emptyList();
 
-        @JsonCreator
-        public Statement(String statement) {
-            this.statement = statement;
+            @JsonCreator
+            public Statement() {}
+
+            @JsonCreator
+            public Statement(String sql) {
+                this.sql = sql;
+            }
+
+            public static class Parameter {
+
+                public String stash;
+                public JsonNode instructions;  // can be used to communicate e.g. date formats
+
+                @JsonCreator
+                public Parameter() {}
+
+                @JsonCreator
+                public Parameter(String stash) {
+                    this.stash = stash;
+                }
+            }
         }
-    }
-
-    protected static class PreparedStatement {
-        java.sql.PreparedStatement statement;
-        List<TypedArgument> arguments;
-    }
-
-    protected static class TypedArgument {
-        String[] argument;
-        String type;
     }
 }

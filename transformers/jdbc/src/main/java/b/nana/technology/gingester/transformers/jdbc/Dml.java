@@ -2,14 +2,17 @@ package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.transformers.jdbc.statement.DmlStatement;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
-public final class Dml extends JdbcTransformer {
+public final class Dml extends JdbcTransformer<Object, Object> {
 
-    private final List<Statement> dml;
+    private final List<JdbcTransformer.Parameters.Statement> dml;
 
-    private List<PreparedStatement> preparedStatements;
+    private List<DmlStatement> dmlStatements;
 
     public Dml(Parameters parameters) {
         super(parameters);
@@ -19,17 +22,29 @@ public final class Dml extends JdbcTransformer {
     @Override
     public void open() throws Exception {
         super.open();
-        preparedStatements = prepare(dml);
-    }
-
-    @Override
-    public void transform(Context context, Object in, Receiver<Object> out) {
-        for (PreparedStatement preparedStatement : preparedStatements) {
-
+        dmlStatements = new ArrayList<>();
+        for (JdbcTransformer.Parameters.Statement statement : dml) {
+            dmlStatements.add(new DmlStatement(getConnection(), statement));
         }
     }
 
+    @Override
+    public void transform(Context context, Object in, Receiver<Object> out) throws SQLException {
+
+        try {
+            for (DmlStatement dmlStatement : dmlStatements) {
+                dmlStatement.execute(context);
+            }
+            getConnection().commit();
+        } catch (SQLException e) {
+            getConnection().rollback();
+            throw e;
+        }
+
+        out.accept(context, in);
+    }
+
     public static class Parameters extends JdbcTransformer.Parameters {
-        public List<Statement> dml;
+        public List<JdbcTransformer.Parameters.Statement> dml;
     }
 }
