@@ -15,7 +15,7 @@
         "url": "jdbc:sqlite:test.sqlite3",
         "ddl": "CREATE TABLE test (a INTEGER, b TEXT, c BOOLEAN)",
         "dml": {
-          "sql": "INSERT INTO test VALUES (?, ?, ?)",
+          "statement": "INSERT INTO test VALUES (?, ?, ?)",
           "parameters": [
             "stash/a",
             "stash/b",

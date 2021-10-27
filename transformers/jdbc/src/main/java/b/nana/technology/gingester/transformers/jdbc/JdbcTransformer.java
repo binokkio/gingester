@@ -59,15 +59,15 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
 
         public static class Statement {
 
-            public String sql;
+            public String statement;
             public List<Parameter> parameters = Collections.emptyList();
 
             @JsonCreator
             public Statement() {}
 
             @JsonCreator
-            public Statement(String sql) {
-                this.sql = sql;
+            public Statement(String statement) {
+                this.statement = statement;
             }
 
             public static class Parameter {
