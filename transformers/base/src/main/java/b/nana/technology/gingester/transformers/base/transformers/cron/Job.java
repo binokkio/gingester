@@ -35,7 +35,7 @@ public final class Job implements Transformer<Object, ZonedDateTime> {
     @Override
     public void transform(Context context, Object in, Receiver<ZonedDateTime> out) throws InterruptedException {
 
-        ZonedDateTime anchor = Instant.now().atZone(zoneId);
+        ZonedDateTime anchor = now();
 
         while (true) {
 
@@ -70,7 +70,7 @@ public final class Job implements Transformer<Object, ZonedDateTime> {
                     next
             );
 
-            ZonedDateTime now = ZonedDateTime.now();
+            ZonedDateTime now = now();
 
             if (now.isBefore(next) || !skips) {
                 anchor = next;
@@ -78,6 +78,10 @@ public final class Job implements Transformer<Object, ZonedDateTime> {
                 anchor = now;
             }
         }
+    }
+
+    private ZonedDateTime now() {
+        return Instant.now().atZone(zoneId);
     }
 
     public static class Parameters {
