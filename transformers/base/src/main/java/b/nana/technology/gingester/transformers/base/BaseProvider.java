@@ -18,6 +18,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.exec.Exec.class,
+                b.nana.technology.gingester.transformers.base.transformers.filter.Latch.class,
                 b.nana.technology.gingester.transformers.base.transformers.http.Get.class,
                 b.nana.technology.gingester.transformers.base.transformers.index.Index.class,
                 b.nana.technology.gingester.transformers.base.transformers.index.Lookup.class,
@@ -28,6 +29,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Split.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToJson.class,
+                b.nana.technology.gingester.transformers.base.transformers.json.AsBigDecimal.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsBoolean.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsDouble.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsFloat.class,
@@ -70,6 +72,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.time.FromString.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.Now.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.Cycle.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Sample.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Throttle.class,
                 b.nana.technology.gingester.transformers.base.transformers.xml.ToJson.class
