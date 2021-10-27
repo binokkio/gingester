@@ -1,5 +1,5 @@
 {
-  "report": false,
+  "report": 0,
   "transformers": [
     {
       "transformer": "Generate",

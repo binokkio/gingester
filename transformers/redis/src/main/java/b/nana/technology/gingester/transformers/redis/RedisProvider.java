@@ -11,8 +11,10 @@ public final class RedisProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                LPush.class,
                 Publish.class,
-                Set.class
+                Set.class,
+                Subscribe.class
         );
     }
 }

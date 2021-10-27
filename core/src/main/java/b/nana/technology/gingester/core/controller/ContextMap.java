@@ -33,6 +33,15 @@ public final class ContextMap<T> {
         return value;
     }
 
+    public boolean has(Context context) {
+        for (Context c : context) {
+            if (values.containsKey(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public interface Action<T> {
         void perform(T value) throws Exception;
     }

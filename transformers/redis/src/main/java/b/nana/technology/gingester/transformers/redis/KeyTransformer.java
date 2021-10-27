@@ -5,27 +5,27 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 public abstract class KeyTransformer<I, O> extends RedisTransformer<I, O> {
 
-    private final Context.Template keyFormat;
+    private final Context.Template keyTemplate;
 
     public KeyTransformer(Parameters parameters) {
         super(parameters);
-        keyFormat = Context.newTemplate(parameters.keyFormat);
+        keyTemplate = Context.newTemplate(parameters.key);
     }
 
-    protected final Context.Template getKeyFormat() {
-        return keyFormat;
+    protected final Context.Template getKeyTemplate() {
+        return keyTemplate;
     }
 
     public static class Parameters extends RedisTransformer.Parameters {
 
-        public String keyFormat;
+        public String key;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String keyFormat) {
-            this.keyFormat = keyFormat;
+        public Parameters(String key) {
+            this.key = key;
         }
     }
 }

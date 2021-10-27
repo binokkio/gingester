@@ -1,0 +1,28 @@
+{
+  "transformers": [
+    {
+      "transformer": "Json.Create",
+      "parameters": {
+        "a": 123,
+        "b": "Hello, World!",
+        "c": true
+      }
+    },
+    "Stash",
+    {
+      "transformer": "Jdbc.Dml",
+      "parameters": {
+        "url": "jdbc:sqlite:test.sqlite3",
+        "ddl": "CREATE TABLE test (a INTEGER, b TEXT, c BOOLEAN)",
+        "dml": {
+          "sql": "INSERT INTO test VALUES (?, ?, ?)",
+          "parameters": [
+            "stash/a",
+            "stash/b",
+            "stash/c"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -23,22 +23,9 @@ public final class Respond implements Transformer<InputStream, Void> {
     @Override
     public void transform(Context context, InputStream in, Receiver<Void> out) throws Exception {
         states.act(context, state -> {
-
             if (state.responded) throw new IllegalStateException("Already responded");
-            state.responded = true;
-
-            HttpServletResponse response = state.response;
-
-            context.fetch("exception").findAny().ifPresentOrElse(
-                    exception -> {
-                        response.setStatus(409);
-                        response.addHeader("Content-Type", "text/plain; charset=UTF-8");
-                    },
-                    () -> context.fetch("mimeType").findFirst().ifPresent(mimeType ->
-                            response.addHeader("Content-Type", (String) mimeType))
-            );
-
-            in.transferTo(response.getOutputStream());
+            state.responded = true;  // TODO maybe allow multiple inputstreams to form the response instead
+            in.transferTo(state.response.getOutputStream());
         });
     }
 

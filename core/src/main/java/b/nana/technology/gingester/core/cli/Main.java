@@ -25,7 +25,7 @@ public final class Main {
     public static void main(String[] args) {
         if (args.length > 0) {
             GingesterConfiguration configuration = parseArgs(args);
-            if (configuration.report == null) configuration.report = true;
+            if (configuration.report == null) configuration.report = 2;
             Gingester gingester = new Gingester();
             configuration.applyTo(gingester);
             gingester.run();
@@ -62,10 +62,9 @@ public final class Main {
                     printConfig = true;
                     break;
 
-                case "-nr":
-                case "--no-report":
-                case "--no-reporting":
-                    configuration.report = false;
+                case "-r":
+                case "--report":
+                    configuration.report = Integer.parseInt(args[++i]);
                     break;
 
                 case "-fc":

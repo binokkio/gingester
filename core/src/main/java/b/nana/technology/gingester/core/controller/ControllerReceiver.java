@@ -1,11 +1,17 @@
 package b.nana.technology.gingester.core.controller;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 final class ControllerReceiver<I, O> implements Receiver<O> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final Controller<I, O> controller;
 
@@ -99,7 +105,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 "transformer", controller.id,
                 "method", method,
                 "exception", cause
-        )).exception().build(controller), cause);
+        )).build(controller), cause);
     }
 
     public void except(String method, Context context, I in, Exception cause) {
@@ -108,19 +114,29 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 "method", method,
                 "exception", cause,
                 "stash", in
-        )).exception().build(controller), cause);
+        )).build(controller), cause);
     }
 
     private void except(Context context, Exception cause) {
-        Context pointer = context;
-        do {
-            if (!pointer.controller.excepts.isEmpty()) {
-                for (Controller<Exception, ?> except : pointer.controller.excepts.values()) {
+
+        for (Context c : context) {
+            if (!c.controller.excepts.isEmpty()) {
+                for (Controller<Exception, ?> except : c.controller.excepts.values()) {
                     accept(context, cause, except);
                 }
                 return;
+            } else if (c.controller.isExceptionHandler) {
+                break;
             }
-        } while ((pointer = pointer.parent) != null && !pointer.isException());
-        cause.printStackTrace();
+        }
+
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn(String.format(
+                    "Uncaught exception during %s::%s for %s",
+                    context.fetch("transformer").findFirst().orElseThrow(),
+                    context.fetch("method").findFirst().orElseThrow(),
+                    context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
+            ), cause);
+        }
     }
 }

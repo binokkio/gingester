@@ -1,10 +1,8 @@
 package b.nana.technology.gingester.core.provider;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformers.Fetch;
-import b.nana.technology.gingester.core.transformers.Monkey;
-import b.nana.technology.gingester.core.transformers.Stash;
-import b.nana.technology.gingester.core.transformers.Swap;
+import b.nana.technology.gingester.core.transformers.Void;
+import b.nana.technology.gingester.core.transformers.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +15,8 @@ public final class CoreProvider implements Provider {
                 Fetch.class,
                 Monkey.class,
                 Stash.class,
-                Swap.class
+                Swap.class,
+                Void.class
         );
     }
 }

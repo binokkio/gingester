@@ -31,7 +31,7 @@ public final class Gingester {
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Set<String> open = new HashSet<>();
     private final Set<String> excepts = new LinkedHashSet<>();
-    private boolean report;
+    private int reportingIntervalSeconds;
 
     /**
      * Add the given list of transformer ids as root exception handlers.
@@ -45,10 +45,10 @@ public final class Gingester {
     /**
      * Configure reporting.
      *
-     * @param report true to enable, false to disable
+     * @param reportingIntervalSeconds the interval in seconds at which to report, or 0 to disable reporting
      */
-    public void report(boolean report) {
-        this.report = report;
+    public void report(int reportingIntervalSeconds) {
+        this.reportingIntervalSeconds = reportingIntervalSeconds;
     }
 
     /**
@@ -258,7 +258,8 @@ public final class Gingester {
 
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discoverIncoming);
-        controllers.values().forEach(Controller::discoverSyncedThrough);
+        controllers.values().forEach(Controller::discoverDownstream);
+        controllers.values().forEach(Controller::discoverSyncs);
     }
 
     private void start(Map<String, Object> seedStash) {
@@ -277,8 +278,8 @@ public final class Gingester {
 
         controllers.values().forEach(Controller::start);
 
-        Reporter reporter = new Reporter(controllers.values());
-        if (report) reporter.start();
+        Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
+        if (reportingIntervalSeconds > 0) reporter.start();
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
         Context seed = new Context.Builder()
@@ -302,7 +303,7 @@ public final class Gingester {
                 }
             }
 
-            if (report) {
+            if (reportingIntervalSeconds > 0) {
                 reporter.interrupt();
                 reporter.join();
             }
