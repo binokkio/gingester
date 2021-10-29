@@ -12,10 +12,6 @@ public final class Find implements Transformer<String, Matcher> {
 
     private final Pattern pattern;
 
-    public Find() {
-        this(new Parameters());
-    }
-
     public Find(Parameters parameters) {
         this.pattern = Pattern.compile(parameters.pattern);
     }
