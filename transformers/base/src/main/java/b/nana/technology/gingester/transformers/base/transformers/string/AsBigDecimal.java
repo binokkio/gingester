@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.math.BigDecimal;
 
-public class AsBigDecimal implements Transformer<String, BigDecimal> {
+public final class AsBigDecimal implements Transformer<String, BigDecimal> {
 
     @Override
     public void transform(Context context, String in, Receiver<BigDecimal> out) throws Exception {

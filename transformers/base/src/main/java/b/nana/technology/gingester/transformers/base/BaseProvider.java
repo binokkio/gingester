@@ -11,6 +11,7 @@ public final class BaseProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                b.nana.technology.gingester.transformers.base.transformers.bigdecimal.Multiply.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToJson.class,
