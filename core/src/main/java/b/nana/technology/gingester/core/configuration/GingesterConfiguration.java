@@ -22,6 +22,7 @@ public final class GingesterConfiguration {
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
