@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class Cycle implements Transformer<Object, Object> {
 
     private final List<Object> strings;
-    private AtomicInteger counter = new AtomicInteger();
+    private final AtomicInteger counter = new AtomicInteger();
 
     public Cycle(Parameters parameters) {
         strings = parameters;
