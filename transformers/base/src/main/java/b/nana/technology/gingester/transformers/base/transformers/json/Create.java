@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Create implements Transformer<Object, JsonNode> {
+public final class Create implements Transformer<Object, JsonNode> {
 
     private final int count;
     private final JsonNode payload;
