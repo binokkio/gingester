@@ -17,7 +17,7 @@ import java.util.Objects;
 
 public final class GingesterConfiguration {
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)

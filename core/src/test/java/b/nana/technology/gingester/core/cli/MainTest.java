@@ -117,4 +117,12 @@ class MainTest {
         assertEquals("Stash", configuration.transformers.get(1).getName().orElseThrow());
         assertEquals(Collections.singletonList("Stash"), configuration.excepts);
     }
+
+    @Test
+    void testFixForPartialParameterParsing() {
+        GingesterConfiguration configuration = Main.parseArgs(CliParser.parse("-t Cron.Job '0 1 2 3 4 5'"));
+        assertEquals(1, configuration.transformers.size());
+        assertEquals("Cron.Job", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals("0 1 2 3 4 5", configuration.transformers.get(0).getParameters().orElseThrow().textValue());
+    }
 }

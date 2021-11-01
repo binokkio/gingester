@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.filter;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
+import b.nana.technology.gingester.transformers.base.transformers.util.Latch;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
