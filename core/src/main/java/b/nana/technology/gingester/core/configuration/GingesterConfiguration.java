@@ -17,11 +17,12 @@ import java.util.Objects;
 
 public final class GingesterConfiguration {
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 

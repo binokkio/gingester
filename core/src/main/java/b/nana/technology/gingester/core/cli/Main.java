@@ -67,9 +67,18 @@ public final class Main {
                     configuration.report = Integer.parseInt(args[++i]);
                     break;
 
-                case "-fc":
-                case "--from-config":
-                case "--file-config":
+                case "-cc":
+                case "--cli-config":
+                    try {
+                        GingesterConfiguration append = parseArgs(CliParser.parse(Files.readString(Paths.get(args[++i]))));
+                        configuration.append(append);
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException(e);  // TODO
+                    }
+                    break;
+
+                case "-jc":
+                case "--json-config":
                     try {
                         GingesterConfiguration append = GingesterConfiguration.fromJson(Files.newInputStream(Paths.get(args[++i])));
                         configuration.append(append);

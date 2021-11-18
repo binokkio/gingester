@@ -15,7 +15,7 @@ public abstract class Statement {
     private final List<Parameter> parameters;
 
     public Statement(Connection connection, JdbcTransformer.Parameters.Statement statement) throws SQLException {
-        preparedStatement = connection.prepareStatement(statement.sql);
+        preparedStatement = connection.prepareStatement(statement.statement);
         this.parameters = new ArrayList<>();
         for (int i = 0; i < statement.parameters.size(); i++) {
             this.parameters.add(new Parameter(preparedStatement, i + 1, statement.parameters.get(i)));

@@ -8,17 +8,22 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public final class Job implements Transformer<Object, Object> {
+public final class Job implements Transformer<Object, ZonedDateTime> {
 
-    private final String schedule;
+    private final List<CronExpression> schedules;
     private final boolean skips;
+    private final ZoneId zoneId;
 
     public Job(Parameters parameters) {
-        schedule = parameters.schedule;
+        schedules = parameters.schedules.stream().map(CronExpression::create).collect(Collectors.toList());
         skips = parameters.skips;
+        zoneId = parameters.zone == null ? ZoneId.systemDefault() : ZoneId.of(parameters.zone);
     }
 
     @Override
@@ -28,14 +33,20 @@ public final class Job implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws InterruptedException {
+    public void transform(Context context, Object in, Receiver<ZonedDateTime> out) throws InterruptedException {
 
-        CronExpression cronExpression = CronExpression.create(schedule);
-        ZonedDateTime anchor = ZonedDateTime.now();
+        ZonedDateTime anchor = now();
 
         while (true) {
 
-            ZonedDateTime next = cronExpression.nextTimeAfter(anchor);
+            ZonedDateTime next = null;
+            for (CronExpression schedule : schedules) {
+                ZonedDateTime option = schedule.nextTimeAfter(anchor);
+                if (next == null || option.isBefore(next)) {
+                    next = option;
+                }
+            }
+
             Duration duration = Duration.between(Instant.now(), next.toInstant());
 
             if (!duration.isNegative()) {
@@ -56,10 +67,10 @@ public final class Job implements Transformer<Object, Object> {
                                     "nano", next.getNano() % 1_000_000
                             )
                     )),
-                    new Object()  // TODO
+                    next
             );
 
-            ZonedDateTime now = ZonedDateTime.now();
+            ZonedDateTime now = now();
 
             if (now.isBefore(next) || !skips) {
                 anchor = next;
@@ -69,17 +80,22 @@ public final class Job implements Transformer<Object, Object> {
         }
     }
 
+    private ZonedDateTime now() {
+        return Instant.now().atZone(zoneId);
+    }
+
     public static class Parameters {
 
-        public String schedule;
+        public List<String> schedules;
         public boolean skips = true;
+        public String zone;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String schedule) {
-            this.schedule = schedule;
+        public Parameters(List<String> schedules) {
+            this.schedules = schedules;
         }
     }
 }

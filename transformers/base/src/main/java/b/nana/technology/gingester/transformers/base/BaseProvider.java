@@ -11,6 +11,7 @@ public final class BaseProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                b.nana.technology.gingester.transformers.base.transformers.bigdecimal.Multiply.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToJson.class,
@@ -18,6 +19,12 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.exec.Exec.class,
+                b.nana.technology.gingester.transformers.base.transformers.html.FromString.class,
+                b.nana.technology.gingester.transformers.base.transformers.html.ElementsContainingText.class,
+                b.nana.technology.gingester.transformers.base.transformers.html.ElementsContainingOwnText.class,
+                b.nana.technology.gingester.transformers.base.transformers.html.NextElementSibling.class,
+                b.nana.technology.gingester.transformers.base.transformers.html.Select.class,
+                b.nana.technology.gingester.transformers.base.transformers.html.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.http.Get.class,
                 b.nana.technology.gingester.transformers.base.transformers.index.Index.class,
                 b.nana.technology.gingester.transformers.base.transformers.index.Lookup.class,
@@ -28,6 +35,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Split.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToJson.class,
+                b.nana.technology.gingester.transformers.base.transformers.json.AsBigDecimal.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsBoolean.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsDouble.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsFloat.class,
@@ -44,7 +52,6 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.json.Stream.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Wrap.class,
-                b.nana.technology.gingester.transformers.base.transformers.object.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.LastModified.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Link.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Move.class,
@@ -60,6 +67,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.std.In.class,
                 b.nana.technology.gingester.transformers.base.transformers.std.Out.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Append.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.AsBigDecimal.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Create.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToInputStream.class,
@@ -70,8 +78,13 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.time.FromString.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.Now.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.Cycle.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.Latch.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.OnFinish.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.OnPrepare.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Sample.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Throttle.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.xml.ToJson.class
         );
     }

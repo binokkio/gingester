@@ -5,7 +5,7 @@ Configuration:
       name: Console
       target: SYSTEM_ERR
       PatternLayout:
-        Pattern: "%-5level %date - %msg%n"
+        Pattern: "%.-3level %date - %msg%n"
 
   Loggers:
     Root:

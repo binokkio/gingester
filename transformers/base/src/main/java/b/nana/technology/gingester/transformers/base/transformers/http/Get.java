@@ -16,12 +16,12 @@ import java.util.Map;
 
 public final class Get implements Transformer<Object, InputStream> {
 
-    private final URI uri;
+    private final Context.Template uriTemplate;
     private final HttpClient.Redirect followRedirects;
     private final Map<String, String> headers;
 
     public Get(Parameters parameters) {
-        uri = URI.create(parameters.uri);
+        uriTemplate = Context.newTemplate(parameters.uri);
         followRedirects = parameters.followRedirects;
         headers = parameters.headers;
     }
@@ -34,6 +34,7 @@ public final class Get implements Transformer<Object, InputStream> {
     @Override
     public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
         HttpClient client = HttpClient.newBuilder().followRedirects(followRedirects).build();
+        URI uri = URI.create(uriTemplate.render(context));
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri);
         headers.forEach(requestBuilder::header);
         HttpResponse<InputStream> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());

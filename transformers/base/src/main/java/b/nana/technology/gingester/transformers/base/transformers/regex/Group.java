@@ -11,10 +11,6 @@ public final class Group implements Transformer<Matcher, String> {
 
     private final int group;
 
-    public Group() {
-        this(new Parameters());
-    }
-
     public Group(Parameters parameters) {
         group = parameters.group;
     }

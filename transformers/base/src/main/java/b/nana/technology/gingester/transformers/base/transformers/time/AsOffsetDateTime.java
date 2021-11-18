@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAccessor;
 
-public class AsOffsetDateTime implements Transformer<TemporalAccessor, OffsetDateTime> {
+public final class AsOffsetDateTime implements Transformer<TemporalAccessor, OffsetDateTime> {
 
     @Override
     public void transform(Context context, TemporalAccessor in, Receiver<OffsetDateTime> out) throws Exception {

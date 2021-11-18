@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class Set implements Transformer<JsonNode, JsonNode> {
+public final class Set implements Transformer<JsonNode, JsonNode> {
 
     private final String key;
     private final String fetch;

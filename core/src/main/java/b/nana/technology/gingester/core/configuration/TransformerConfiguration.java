@@ -21,8 +21,6 @@ import java.util.function.Consumer;
 )
 public final class TransformerConfiguration extends BaseConfiguration<TransformerConfiguration> {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private String id;
     private String transformer;
     private JsonNode parameters;
@@ -78,7 +76,7 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
     }
 
     public TransformerConfiguration parameters(Object parameters) {
-        this.parameters = OBJECT_MAPPER.valueToTree(parameters);
+        this.parameters = GingesterConfiguration.OBJECT_MAPPER.valueToTree(parameters);
         return this;
     }
 
