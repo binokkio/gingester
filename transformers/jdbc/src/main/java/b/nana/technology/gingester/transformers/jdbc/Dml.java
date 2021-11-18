@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.transformers.jdbc.statement.DmlStatement;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -62,8 +63,17 @@ public final class Dml extends JdbcTransformer<Object, Object> {
     }
 
     public static class Parameters extends JdbcTransformer.Parameters {
+
         public List<JdbcTransformer.Parameters.Statement> dml;
         public CommitMode commitMode = CommitMode.PER_TRANSFORM;
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(List<JdbcTransformer.Parameters.Statement> dml) {
+            this.dml = dml;
+        }
     }
 
     public enum CommitMode {

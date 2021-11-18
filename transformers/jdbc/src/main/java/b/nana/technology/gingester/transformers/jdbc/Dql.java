@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.jdbc;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.transformers.jdbc.statement.DqlStatement;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -41,6 +42,15 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>> {
     }
 
     public static class Parameters extends JdbcTransformer.Parameters {
+
         public Statement dql;
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(String dql) {
+            this.dql = new Statement(dql);
+        }
     }
 }
