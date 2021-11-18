@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 @Names(1)
-public class OnPrepare implements Transformer<Object, Void> {
+public final class OnPrepare implements Transformer<Object, Void> {
 
     @Override
     public void prepare(Context context, Receiver<Void> out) throws Exception {
