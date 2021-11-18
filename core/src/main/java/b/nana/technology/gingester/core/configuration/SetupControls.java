@@ -3,9 +3,13 @@ package b.nana.technology.gingester.core.configuration;
 import b.nana.technology.gingester.core.reporting.Counter;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Phaser;
 
 public final class SetupControls extends BaseConfiguration<SetupControls> {
+
+    private final Map<String, Phaser> phasers;
 
     private boolean requireOutgoingSync;
     private boolean requireOutgoingAsync;
@@ -13,7 +17,8 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
 
 
-    public SetupControls() {
+    public SetupControls(Map<String, Phaser> phasers) {
+        this.phasers = phasers;
         links(Collections.singletonList("__maybe_next__"));
     }
 
@@ -46,5 +51,9 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
     public Optional<Counter> getAcksCounter() {
         return Optional.ofNullable(acksCounter);
+    }
+
+    public Phaser getPhaser(String name) {
+        return phasers.computeIfAbsent(name, x -> new Phaser());
     }
 }

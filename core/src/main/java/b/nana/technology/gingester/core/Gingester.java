@@ -15,6 +15,7 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Seed;
 
 import java.util.*;
+import java.util.concurrent.Phaser;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -170,6 +171,8 @@ public final class Gingester {
             throw new IllegalStateException("No transformers configured");
         }
 
+        Map<String, Phaser> phasers = new HashMap<>();
+
         transformerConfigurations.forEach((id, transformerConfiguration) -> {
 
             Transformer<?, ?> transformer = transformerConfiguration.getInstance()
@@ -181,7 +184,7 @@ public final class Gingester {
                                 .orElseGet(() -> TransformerFactory.instance(name));
                     });
 
-            SetupControls setupControls = new SetupControls();
+            SetupControls setupControls = new SetupControls(phasers);
             transformer.setup(setupControls);
 
             ControllerConfiguration<?, ?> configuration = combine(id, transformer, transformerConfiguration, setupControls);

@@ -24,6 +24,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>> {
     @Override
     public void open() throws Exception {
         super.open();
+        getDdlExecuted().awaitAdvance(0);
         dqlStatement = new DqlStatement(getConnection(), dql);
     }
 

@@ -26,6 +26,7 @@ public final class Dml extends JdbcTransformer<Object, Object> {
 
     @Override
     public void setup(SetupControls controls) {
+        super.setup(controls);
         if (commitMode == CommitMode.PER_FINISH) {
             controls.syncs(Collections.singletonList("__seed__"));
         }
@@ -34,6 +35,7 @@ public final class Dml extends JdbcTransformer<Object, Object> {
     @Override
     public void open() throws Exception {
         super.open();
+        getDdlExecuted().awaitAdvance(0);
         dmlStatements = new ArrayList<>();
         for (JdbcTransformer.Parameters.Statement statement : dml) {
             dmlStatements.add(new DmlStatement(getConnection(), statement));

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Phaser;
 
 public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
 
@@ -19,12 +21,19 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
     private final List<String> ddl;
 
     private Connection connection;
+    private Phaser ddlExecuted;
 
     public JdbcTransformer(Parameters parameters) {
         url = parameters.url;
         properties = new Properties();
         properties.putAll(parameters.properties);
         ddl = parameters.ddl;
+    }
+
+    @Override
+    public void setup(SetupControls controls) {
+        ddlExecuted = controls.getPhaser("ddl_executed");
+        ddlExecuted.register();
     }
 
     @Override
@@ -40,6 +49,7 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
             connection.rollback();
             throw e;
         }
+        ddlExecuted.arrive();
     }
 
     @Override
@@ -49,6 +59,10 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
 
     protected Connection getConnection() {
         return connection;
+    }
+
+    protected Phaser getDdlExecuted() {
+        return ddlExecuted;
     }
 
     public static class Parameters {
