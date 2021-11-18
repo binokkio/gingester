@@ -29,11 +29,13 @@ public final class Create implements Transformer<Object, JsonNode> {
         public JsonNode payload;
 
         @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
         public Parameters(JsonNode payload) {
-            this.payload = payload;
+            if (payload.size() == 2 && payload.has("count") && payload.has("payload")) {
+                this.count = payload.get("count").asInt();
+                this.payload = payload.get("payload");
+            } else {
+                this.payload = payload;
+            }
         }
     }
 }
