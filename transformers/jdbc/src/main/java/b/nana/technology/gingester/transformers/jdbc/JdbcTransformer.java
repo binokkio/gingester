@@ -53,7 +53,7 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
 
     public static class Parameters {
 
-        public String url;
+        public String url = "jdbc:sqlite:file::memory:?cache=shared";
         public Map<String, Object> properties = Collections.emptyMap();
         public List<String> ddl = Collections.emptyList();
 
