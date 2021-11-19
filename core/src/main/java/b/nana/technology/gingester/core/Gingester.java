@@ -356,13 +356,9 @@ public final class Gingester {
         }
 
         public Optional<Controller<?, ?>> getController(String id) {
-            if (id.equals("__maybe_next__")) {
-                return resolveMaybeNext(controllerId).map(controllers::get);
-            } else {
-                Controller<?, ?> controller = controllers.get(id);
-                if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
-                return Optional.of(controller);
-            }
+            Controller<?, ?> controller = controllers.get(id);
+            if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
+            return Optional.of(controller);
         }
 
         public boolean isExceptionHandler() {
