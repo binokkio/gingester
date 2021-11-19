@@ -113,24 +113,6 @@ public final class Controller<I, O> {
         }
     }
 
-    private Set<Controller<?, ?>> bubble() {
-        Set<Controller<?, ?>> result = new HashSet<>();
-        bubble(this, result);
-        return result;
-    }
-
-    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
-        if (!pointer.excepts.isEmpty()) {
-            result.addAll(pointer.excepts.values());
-        } else if (!pointer.isExceptionHandler) {
-            for (Controller<?, ?> controller : incoming) {
-                if (controller.links.containsValue(pointer)) {
-                    bubble(controller, result);
-                }
-            }
-        }
-    }
-
     public void discoverSyncs() {
 
         syncs.sort((a, b) -> {
@@ -156,6 +138,24 @@ public final class Controller<I, O> {
                             syncedThrough.put(controller, downstreamCopy);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private Set<Controller<?, ?>> bubble() {
+        Set<Controller<?, ?>> result = new HashSet<>();
+        bubble(this, result);
+        return result;
+    }
+
+    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
+        if (!pointer.excepts.isEmpty()) {
+            result.addAll(pointer.excepts.values());
+        } else if (!pointer.isExceptionHandler) {
+            for (Controller<?, ?> controller : incoming) {
+                if (controller.links.containsValue(pointer)) {
+                    bubble(controller, result);
                 }
             }
         }
