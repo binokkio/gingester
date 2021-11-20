@@ -9,6 +9,7 @@ import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -18,6 +19,7 @@ public final class Controller<I, O> {
     final Gingester.ControllerInterface gingester;
     public final String id;
     public final Transformer<I, O> transformer;
+    final Phaser phaser;
 
     final boolean async;
     private final int maxQueueSize;
@@ -40,7 +42,6 @@ public final class Controller<I, O> {
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
-    public final List<Worker> done = new ArrayList<>();
     private final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
@@ -54,6 +55,7 @@ public final class Controller<I, O> {
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
+        phaser = new Phaser(gingester.getPhaser());
         async = configuration.getMaxWorkers().orElse(0) > 0;
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
@@ -181,18 +183,16 @@ public final class Controller<I, O> {
         }
     }
 
-    public void open() {
-        for (int i = 0; i < maxWorkers; i++) {
-            workers.add(new Worker(this, i));
-        }
-        queue.add(transformer::open);
-        queue.add(gingester::signalOpen);
-        workers.get(0).start();
-    }
 
-    public void start() {
-        for (int i = 1; i < workers.size(); i++) {
-            workers.get(i).start();
+
+    public void open() {
+
+        phaser.bulkRegister(maxWorkers);
+
+        for (int i = 0; i < maxWorkers; i++) {
+            Worker worker = new Worker(this, i);
+            workers.add(worker);
+            worker.start();
         }
     }
 
@@ -309,6 +309,7 @@ public final class Controller<I, O> {
         gingester = null;
         id = "__unknown__";
         transformer = null;
+        phaser = null;
         async = false;
         maxQueueSize = 0;
         maxWorkers = 0;

@@ -25,13 +25,13 @@ import static b.nana.technology.gingester.core.configuration.TransformerConfigur
 
 public final class Gingester {
 
-    private final Object lock = new Object();
     private final LinkedHashMap<String, TransformerConfiguration> transformerConfigurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
-    private final Set<String> open = new HashSet<>();
     private final Set<String> excepts = new LinkedHashSet<>();
+    private final Phaser phaser = new Phaser();
+
     private int reportingIntervalSeconds;
 
     /**
@@ -268,18 +268,7 @@ public final class Gingester {
     private void start(Map<String, Object> seedStash) {
 
         controllers.values().forEach(Controller::open);
-
-        try {
-            synchronized (lock) {
-                while (controllers.size() > open.size()) {
-                    lock.wait();
-                }
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
-        }
-
-        controllers.values().forEach(Controller::start);
+        phaser.awaitAdvance(0);
 
         Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
         if (reportingIntervalSeconds > 0) reporter.start();
@@ -293,15 +282,8 @@ public final class Gingester {
 
         try {
 
-            synchronized (lock) {
-                while (controllers.values().stream().anyMatch(c -> c.workers.size() != c.done.size())) {
-                    lock.wait();
-                }
-            }
-
             for (Controller<?, ?> controller : controllers.values()) {
                 for (Worker worker : controller.workers) {
-                    worker.interrupt();
                     worker.join();
                 }
             }
@@ -355,6 +337,10 @@ public final class Gingester {
             this.controllerId = controllerId;
         }
 
+        public Phaser getPhaser() {
+            return phaser;
+        }
+
         public Optional<Controller<?, ?>> getController(String id) {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
@@ -368,19 +354,6 @@ public final class Gingester {
 
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
-        }
-
-        public void signalOpen() {
-            synchronized (lock) {
-                open.add(controllerId);
-                lock.notify();
-            }
-        }
-
-        public void signalDone() {
-            synchronized (lock) {
-                lock.notify();
-            }
         }
     }
 }
