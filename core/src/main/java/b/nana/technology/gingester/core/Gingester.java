@@ -29,18 +29,18 @@ public final class Gingester {
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
-    private final Set<String> excepts = new LinkedHashSet<>();
     private final Phaser phaser = new Phaser();
 
+    private Set<String> excepts;
     private int reportingIntervalSeconds;
 
     /**
-     * Add the given list of transformer ids as root exception handlers.
+     * Sets the given list of transformer ids as root exception handlers.
      *
      * @param excepts list of transformer ids
      */
     public void excepts(List<String> excepts) {
-        this.excepts.addAll(excepts);
+        this.excepts = new HashSet<>(excepts);
     }
 
     /**
