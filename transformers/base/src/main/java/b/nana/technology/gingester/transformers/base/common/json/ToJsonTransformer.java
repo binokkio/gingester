@@ -12,13 +12,18 @@ import java.util.List;
 
 public abstract class ToJsonTransformer<I> implements Transformer<I, JsonNode> {
 
+    private final ObjectMapper objectMapper;
     private final ObjectReader objectReader;
 
     public ToJsonTransformer(Parameters parameters) {
-        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper();
         objectMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
         parameters.features.forEach(feature -> objectMapper.enable(feature.mappedFeature()));
         objectReader = objectMapper.reader();
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 
     public ObjectReader getObjectReader() {

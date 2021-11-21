@@ -33,9 +33,10 @@ class JdbcTransformerTest {
         reader.add(result::set);
         reader.run();
 
-        assertEquals(123, result.get().get("a"));
-        assertEquals("Hello, World!", result.get().get("b"));
-        assertEquals(true, result.get().get("c"));
+        Map<String, Object> container = (Map<String, Object>) result.get().get("test");
+        assertEquals(123, container.get("a"));
+        assertEquals("Hello, World!", container.get("b"));
+        assertEquals(true, container.get("c"));
 
         Files.delete(tempFile);
     }
