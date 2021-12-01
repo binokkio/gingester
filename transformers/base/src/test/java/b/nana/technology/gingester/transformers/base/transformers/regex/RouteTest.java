@@ -19,33 +19,32 @@ class RouteTest {
         routes.put(".*", "catch-all");
 
         Route.Parameters parameters = new Route.Parameters();
-        parameters.key = "${foo}";
         parameters.routes = routes;
 
-        Context context = new Context.Builder().stash("foo", "hello").build();
+        Context context = new Context.Builder().build();
 
         AtomicReference<String> result = new AtomicReference<>();
 
         Route route = new Route(parameters);
-        route.transform(context, "irrelevant", new Receiver<>() {
+        route.transform(context, "hello", new Receiver<>() {
 
             @Override
-            public void accept(Context context, Object output) {
+            public void accept(Context context, String output) {
                 throw new IllegalStateException("Should not be called");
             }
 
             @Override
-            public void accept(Context.Builder contextBuilder, Object output) {
+            public void accept(Context.Builder contextBuilder, String output) {
                 throw new IllegalStateException("Should not be called");
             }
 
             @Override
-            public void accept(Context context, Object output, String targetId) {
+            public void accept(Context context, String output, String targetId) {
                 result.set(targetId);
             }
 
             @Override
-            public void accept(Context.Builder contextBuilder, Object output, String targetId) {
+            public void accept(Context.Builder contextBuilder, String output, String targetId) {
                 throw new IllegalStateException("Should not be called");
             }
         });
