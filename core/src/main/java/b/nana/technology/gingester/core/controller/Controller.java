@@ -9,6 +9,7 @@ import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -18,11 +19,12 @@ public final class Controller<I, O> {
     final Gingester.ControllerInterface gingester;
     public final String id;
     public final Transformer<I, O> transformer;
+    final Phaser phaser;
 
     final boolean async;
+    private final int maxBatchSize;
     private final int maxQueueSize;
     private final int maxWorkers;
-    private final int maxBatchSize;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links;
@@ -40,7 +42,6 @@ public final class Controller<I, O> {
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
-    public final List<Worker> done = new ArrayList<>();
     private final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
@@ -74,6 +75,9 @@ public final class Controller<I, O> {
                 (map, link) -> map.put(link, null),
                 Map::putAll
         );
+
+        phaser = gingester.getPhaser();
+        phaser.bulkRegister(maxWorkers);
     }
 
     public void initialize() {
@@ -113,24 +117,6 @@ public final class Controller<I, O> {
         }
     }
 
-    private Set<Controller<?, ?>> bubble() {
-        Set<Controller<?, ?>> result = new HashSet<>();
-        bubble(this, result);
-        return result;
-    }
-
-    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
-        if (!pointer.excepts.isEmpty()) {
-            result.addAll(pointer.excepts.values());
-        } else if (!pointer.isExceptionHandler) {
-            for (Controller<?, ?> controller : incoming) {
-                if (controller.links.containsValue(pointer)) {
-                    bubble(controller, result);
-                }
-            }
-        }
-    }
-
     public void discoverSyncs() {
 
         syncs.sort((a, b) -> {
@@ -161,6 +147,24 @@ public final class Controller<I, O> {
         }
     }
 
+    private Set<Controller<?, ?>> bubble() {
+        Set<Controller<?, ?>> result = new HashSet<>();
+        bubble(this, result);
+        return result;
+    }
+
+    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
+        if (!pointer.excepts.isEmpty()) {
+            result.addAll(pointer.excepts.values());
+        } else if (!pointer.isExceptionHandler) {
+            for (Controller<?, ?> controller : incoming) {
+                if (controller.links.containsValue(pointer)) {
+                    bubble(controller, result);
+                }
+            }
+        }
+    }
+
     private Set<Controller<?, ?>> elbbub(Controller<?, ?> from) {
         Set<Controller<?, ?>> result = new HashSet<>();
         elbbub(from, result);
@@ -181,18 +185,13 @@ public final class Controller<I, O> {
         }
     }
 
+
+
     public void open() {
         for (int i = 0; i < maxWorkers; i++) {
-            workers.add(new Worker(this, i));
-        }
-        queue.add(transformer::open);
-        queue.add(gingester::signalOpen);
-        workers.get(0).start();
-    }
-
-    public void start() {
-        for (int i = 1; i < workers.size(); i++) {
-            workers.get(i).start();
+            Worker worker = new Worker(this, i);
+            workers.add(worker);
+            worker.start();
         }
     }
 
@@ -309,6 +308,7 @@ public final class Controller<I, O> {
         gingester = null;
         id = "__unknown__";
         transformer = null;
+        phaser = null;
         async = false;
         maxQueueSize = 0;
         maxWorkers = 0;

@@ -9,50 +9,39 @@ import java.util.Map;
 public final class Worker extends Thread {
 
     private final Controller<?, ?> controller;
+    private final int id;
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
     public boolean done;
 
     Worker(Controller<?, ?> controller, int id) {
         this.controller = controller;
+        this.id = id;
         setName(controller.id + "_" + id);
     }
 
     @Override
     public void run() {
 
-        main();
-
-        synchronized (this) {
-            if (controller.done.size() == controller.workers.size() - 1) {
-                try {
-                    controller.transformer.close();
-                } catch (Exception e) {
-                    e.printStackTrace();  // TODO pass `e` to `controller.excepts`
-                }
-            }
-            controller.done.add(this);
-            controller.gingester.signalDone();
+        if (id == 0) {
             try {
-                while (done) {
-                    this.wait();
-                }
-            } catch (InterruptedException e) {
-                // ignore
+                controller.transformer.open();
+            } catch (Exception e) {
+                e.printStackTrace();  // TODO
             }
         }
-    }
 
-    public void main() {
-        while (true) {
+        controller.phaser.arriveAndAwaitAdvance();
+
+        main: while (true) {
             Job job;
             controller.lock.lock();
             try {
                 handleFinishingContexts();
-                if (done) return;
+                if (done) break;
                 while (controller.queue.isEmpty()) {
                     controller.queueNotEmpty.await();
                     handleFinishingContexts();
-                    if (done) return;
+                    if (done) break main;
                 }
                 job = controller.queue.removeFirst();
                 controller.queueNotFull.signal();
@@ -68,6 +57,18 @@ public final class Worker extends Thread {
             perform(job);
             flush();
         }
+
+        controller.phaser.arriveAndAwaitAdvance();
+
+        if (id == 0) {
+            try {
+                controller.transformer.close();
+            } catch (Exception e) {
+                e.printStackTrace();  // TODO
+            }
+        }
+
+        controller.phaser.arriveAndAwaitAdvance();
     }
 
     private void perform(Job job) {

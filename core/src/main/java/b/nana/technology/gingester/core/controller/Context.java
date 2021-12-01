@@ -80,7 +80,7 @@ public final class Context implements Iterable<Context> {
                             if (jsonNode.isObject()) {
                                 result = jsonNode.get(n);
                             } else if (jsonNode.isArray()) {
-                                ((JsonNode) result).get(Integer.parseInt(n));
+                                result = jsonNode.get(Integer.parseInt(n));
                             } else {
                                 result = null;
                             }
