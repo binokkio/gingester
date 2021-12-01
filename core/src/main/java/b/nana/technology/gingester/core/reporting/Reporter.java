@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Reporter extends Thread {
+public final class Reporter extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
