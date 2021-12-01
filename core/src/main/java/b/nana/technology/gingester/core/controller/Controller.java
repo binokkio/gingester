@@ -22,9 +22,9 @@ public final class Controller<I, O> {
     final Phaser phaser;
 
     final boolean async;
+    private final int maxBatchSize;
     private final int maxQueueSize;
     private final int maxWorkers;
-    private final int maxBatchSize;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links;
@@ -55,7 +55,6 @@ public final class Controller<I, O> {
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
-        phaser = new Phaser(gingester.getPhaser());
         async = configuration.getMaxWorkers().orElse(0) > 0;
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
@@ -76,6 +75,9 @@ public final class Controller<I, O> {
                 (map, link) -> map.put(link, null),
                 Map::putAll
         );
+
+        phaser = gingester.getPhaser();
+        phaser.bulkRegister(maxWorkers);
     }
 
     public void initialize() {
@@ -186,9 +188,6 @@ public final class Controller<I, O> {
 
 
     public void open() {
-
-        phaser.bulkRegister(maxWorkers);
-
         for (int i = 0; i < maxWorkers; i++) {
             Worker worker = new Worker(this, i);
             workers.add(worker);
