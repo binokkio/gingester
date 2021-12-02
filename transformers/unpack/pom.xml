@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.8.1</version>
+        <version>0.8.2</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -26,6 +26,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.junrar</groupId>
+            <artifactId>junrar</artifactId>
+            <version>7.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class UnpackTest {
 
     @Test
-    void testUnpack() throws IOException {
+    void testUnpackTestTarGz() throws Exception {
 
         Context context = new Context.Builder()
                 .stash(Map.of("description", "/tmp/test.tar.gz"))
@@ -43,5 +43,32 @@ class UnpackTest {
         assertEquals("/tmp/test.tar.gz :: test.tar :: c -> Hello, World!", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: dir/d.bz2 :: d -> Hello, World", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: test.zip :: a -> Hello, World!", results.remove());
+    }
+
+    @Test
+    void testUnpackTestRar() throws Exception {
+
+        Context context = new Context.Builder()
+                .stash(Map.of("description", "/tmp/test.rar"))
+                .build();
+
+        Queue<String> results = new ArrayDeque<>();
+
+        Unpack unpack = new Unpack(new Unpack.Parameters());
+        unpack.transform(
+                context,
+                getClass().getResourceAsStream("/test.rar"),
+                (BiReceiver<InputStream>) (c, o) -> {
+                    try {
+                        results.add(c.fetchReverse("description").map(s ->
+                                (String) s).collect(Collectors.joining(" :: ")) + " -> " + new String(o.readAllBytes()).trim());
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+        );
+
+        assertEquals(1, results.size());
+        assertEquals("/tmp/test.rar :: nested.tgz :: hello-world.txt -> Hello, World!", results.remove());
     }
 }

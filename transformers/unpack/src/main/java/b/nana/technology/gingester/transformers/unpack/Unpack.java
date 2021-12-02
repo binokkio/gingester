@@ -6,6 +6,8 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.github.junrar.Archive;
+import com.github.junrar.rarfile.FileHeader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -13,7 +15,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -37,11 +38,11 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
     }
 
     @Override
-    public void transform(Context context, InputStream in, Receiver<InputStream> out) throws IOException {
+    public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
         unpack(context, in, out, new ArrayDeque<>(Collections.singleton(descriptionTemplate.render(context))));
     }
 
-    private void unpack(Context context, InputStream in, Receiver<InputStream> out, Deque<String> descriptions) throws IOException {
+    private void unpack(Context context, InputStream in, Receiver<InputStream> out, Deque<String> descriptions) throws Exception {
 
         String tailLowerCase = descriptions.getLast().toLowerCase(Locale.ENGLISH);
 
@@ -67,6 +68,16 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
                     unpack(context, tarArchiveInputStream, out, copy);
                 }
             }
+        } else if (tailLowerCase.endsWith(".tgz")) {
+            TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(in));
+            TarArchiveEntry tarArchiveEntry;
+            while ((tarArchiveEntry = tarArchiveInputStream.getNextTarEntry()) != null) {
+                if (tarArchiveEntry.isFile()) {
+                    Deque<String> copy = new ArrayDeque<>(descriptions);
+                    copy.add(tarArchiveEntry.getName());
+                    unpack(context, tarArchiveInputStream, out, copy);
+                }
+            }
         } else if (tailLowerCase.endsWith(".zip")) {
             ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(in);
             ZipArchiveEntry zipArchiveEntry;
@@ -75,6 +86,15 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
                     Deque<String> copy = new ArrayDeque<>(descriptions);
                     copy.add(zipArchiveEntry.getName());
                     unpack(context, zipArchiveInputStream, out, copy);
+                }
+            }
+        } else if (tailLowerCase.endsWith(".rar")) {
+            Archive rarArchive = new Archive(in);
+            for (FileHeader rarArchiveEntry : rarArchive) {
+                if (!rarArchiveEntry.isDirectory()) {
+                    Deque<String> copy = new ArrayDeque<>(descriptions);
+                    copy.add(rarArchiveEntry.getFileName());
+                    unpack(context, rarArchive.getInputStream(rarArchiveEntry), out, copy);
                 }
             }
         } else {

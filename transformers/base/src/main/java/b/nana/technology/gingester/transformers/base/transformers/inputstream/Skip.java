@@ -5,33 +5,32 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-public final class Drain implements Transformer<InputStream, InputStream> {
+public final class Skip implements Transformer<InputStream, InputStream> {
 
-    private final byte[] buffer;
+    private final long skip;
 
-    public Drain(Parameters parameters) {
-        buffer = new byte[parameters.bufferSize];
+    public Skip(Parameters parameters) {
+        skip = parameters.skip;
     }
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
-        while (in.read(buffer) != -1);
+        in.skip(skip);
         out.accept(context, in);
     }
 
     public static class Parameters {
 
-        public int bufferSize = 65536;
+        public long skip = Long.MAX_VALUE;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(int bufferSize) {
-            this.bufferSize = bufferSize;
+        public Parameters(int skip) {
+            this.skip = skip;
         }
     }
 }
