@@ -32,6 +32,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Drain.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Gunzip.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Prepend.class,
+                b.nana.technology.gingester.transformers.base.transformers.inputstream.Skip.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Split.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToJson.class,
