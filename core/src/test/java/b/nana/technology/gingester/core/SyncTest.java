@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class SyncTest {
 
     @Test
-    void testSyncPrepare() {
+    void testOnPrepare() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
@@ -17,17 +17,18 @@ class SyncTest {
 
         gingester.cli("" +
                 "-sft Generate \"Hello, World!\" " +
-                "-stt SyncPrepare");
+                "-stt OnPrepare " +
+                "-t Generate 'Message from OnPrepare'");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncPrepare prepare()", result.get());
+        assertEquals("Message from OnPrepare", result.get());
     }
 
     @Test
-    void testSyncFinish() {
+    void testOnFinish() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
@@ -35,13 +36,14 @@ class SyncTest {
 
         gingester.cli("" +
                 "-sft Generate \"Hello, World!\" " +
-                "-stt SyncFinish");
+                "-stt OnFinish " +
+                "-t Generate 'Message from OnFinish'");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
     }
 
     @Test
@@ -53,7 +55,7 @@ class SyncTest {
 
         gingester.cli("" +
                 "-sft Generate \"Hello, World!\" " +
-                "-stt SyncPrepare " +
+                "-stt OnPrepare " +
                 "-stt SyncCounter");
 
         gingester.add(result::set);
@@ -74,13 +76,14 @@ class SyncTest {
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
                 "-t Monkey 1 " +
-                "-stt ExceptionHandler:SyncFinish");
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish'");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
     }
 
     @Test
@@ -94,13 +97,14 @@ class SyncTest {
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
                 "-t Monkey 1 -- " +
-                "-stt ExceptionHandler:SyncFinish");
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish'");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
     }
 
     @Test
@@ -117,14 +121,15 @@ class SyncTest {
                 "-s " +
                 "-t Monkey 1 " +
                 "-s " +
-                "-stt ExceptionHandler:SyncFinish " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
                 "-s");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
     }
 
     @Test
@@ -141,14 +146,15 @@ class SyncTest {
                 "-s " +
                 "-t Monkey 1 -- " +
                 "-s " +
-                "-stt ExceptionHandler:SyncFinish " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
                 "-s");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
     }
 
     @Test
@@ -165,14 +171,15 @@ class SyncTest {
                 "-s " +
                 "-t Monkey 1 " +
                 "-s -- " +
-                "-stt ExceptionHandler:SyncFinish " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
                 "-s");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
     }
 
     @Test
@@ -189,13 +196,39 @@ class SyncTest {
                 "-s " +
                 "-t Monkey 1 -- " +
                 "-s -- " +
-                "-stt ExceptionHandler:SyncFinish " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
                 "-s");
 
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("Message from SyncFinish finish()", result.get());
+        assertEquals("Message from OnFinish", result.get());
+    }
+
+    @Test
+    void testSyncThroughExceptionHandlerVariation7() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-s " +
+                "-e ExceptionHandler " +
+                "-t Generate \"Hello, World!\" " +
+                "-sf Generate " +
+                "-t Monkey 1 -- " +
+                "-s -- " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
+                "-s");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from OnFinish", result.get());
     }
 }

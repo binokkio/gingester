@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.util;
+package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
@@ -9,7 +9,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.util.Collections;
 
 @Names(1)
-public final class OnFinish implements Transformer<Object, Void> {
+public final class OnPrepare implements Transformer<Object, Void> {
 
     @Override
     public void setup(SetupControls controls) {
@@ -17,12 +17,12 @@ public final class OnFinish implements Transformer<Object, Void> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Void> out) throws Exception {
-
+    public void prepare(Context context, Receiver<Void> out) throws Exception {
+        out.accept(context, null);
     }
 
     @Override
-    public void finish(Context context, Receiver<Void> out) throws Exception {
-        out.accept(context, null);
+    public void transform(Context context, Object in, Receiver<Void> out) throws Exception {
+
     }
 }
