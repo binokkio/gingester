@@ -16,8 +16,6 @@ public class TestProvider implements Provider {
                 Generate.class,
                 Question.class,
                 SyncCounter.class,
-                SyncPrepare.class,
-                SyncFinish.class,
                 b.nana.technology.gingester.test.transformers.a.NameCollision.class,
                 b.nana.technology.gingester.test.transformers.b.NameCollision.class
         );

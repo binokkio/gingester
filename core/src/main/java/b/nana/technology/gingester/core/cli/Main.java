@@ -41,7 +41,7 @@ public final class Main {
 
         GingesterConfiguration configuration = new GingesterConfiguration();
 
-        String syncFrom = "__seed__";
+        List<String> syncFrom = List.of("__seed__");
         TransformerConfiguration previous = null;
 
         for (int i = 0; i < args.length; i++) {
@@ -128,6 +128,14 @@ public final class Main {
                     previous.links(Collections.emptyList());
                     break;
 
+                case "-sf":
+                case "--sync-from":
+                    syncFrom = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                        syncFrom.add(args[++i]);
+                    }
+                    break;
+
                 case "-sft":
                 case "--sync-from-transformer":
                     markSyncFrom = true;
@@ -174,9 +182,9 @@ public final class Main {
                     }
 
                     if (markSyncFrom) {
-                        syncFrom = transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given")));
+                        syncFrom = List.of(transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given"))));
                     } else if (syncTo) {
-                        transformer.syncs(List.of(syncFrom));
+                        transformer.syncs(syncFrom);
                     }
 
                     previous = transformer;

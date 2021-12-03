@@ -14,6 +14,8 @@ public final class CoreProvider implements Provider {
         return List.of(
                 Fetch.class,
                 Monkey.class,
+                OnFinish.class,
+                OnPrepare.class,
                 Stash.class,
                 Swap.class,
                 Void.class
