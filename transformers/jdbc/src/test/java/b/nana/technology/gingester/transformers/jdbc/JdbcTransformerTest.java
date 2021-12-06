@@ -55,7 +55,6 @@ class JdbcTransformerTest {
                 "   ddl:'CREATE TABLE test (a INTEGER, b BOOLEAN, c TEXT)'," +
                 "   dml:{statement:'INSERT INTO test VALUES (?, ?, ?)',parameters:['in/a','in/b','in/c']}" +
                 "}\" " +
-                "-t OnFinish " +
                 "-t Jdbc.Dql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
         gingester.add(result::set);
