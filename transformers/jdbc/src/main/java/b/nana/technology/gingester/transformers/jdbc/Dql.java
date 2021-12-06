@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class Dql extends JdbcTransformer<Object, Map<String, Object>> {
+public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?>>> {
 
     private final JdbcTransformer.Parameters.Statement dql;
 
@@ -27,30 +27,45 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>> {
     @Override
     public void open() throws Exception {
         super.open();
+
         getDdlExecuted().awaitAdvance(0);
+
         dqlStatement = new DqlStatement(getConnection(), dql);
         resultSetMetaData = dqlStatement.getPreparedStatement().getMetaData();
+
         resultStructure = new HashMap<>();
         for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-            Map<Integer, String> resultTable = resultStructure.computeIfAbsent(resultSetMetaData.getTableName(i), x -> new HashMap<>());
-            resultTable.put(i, resultSetMetaData.getColumnName(i));
+
+            String tableName = resultSetMetaData.getTableName(i);
+            String columnName = resultSetMetaData.getColumnName(i);
+
+            if (columnName.indexOf('.') > 0) {
+                String[] parts = columnName.split("\\.", 2);
+                tableName = parts[0];
+                columnName = parts[1];
+            } else if (tableName.isEmpty()) {
+                tableName = "__calculated__";
+            }
+
+            String collision = resultStructure
+                    .computeIfAbsent(tableName, x -> new HashMap<>())
+                    .put(i, columnName);
+
+            if (collision != null) {
+                throw new IllegalArgumentException("Multiple columns map to " + tableName + "." + columnName);
+            }
         }
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Map<String, Object>> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Map<String, Map<String, ?>>> out) throws Exception {
         try (ResultSet resultSet = dqlStatement.execute(context)) {
             while (resultSet.next()) {
-                Map<String, Object> result = new HashMap<>();
+                Map<String, Map<String, ?>> result = new HashMap<>();
                 resultStructure.forEach((tableName, columns) -> {
-                    Map<String, Object> container;
-                    if (tableName.isEmpty()) {
-                        container = result;
-                    } else {
-                        container = new HashMap<>();
-                        result.put(tableName, container);
-                    }
-                    columns.forEach((index, name) -> container.put(name, getColumnValue(resultSet, index)));
+                    Map<String, Object> table = new HashMap<>();
+                    result.put(tableName, table);
+                    columns.forEach((index, name) -> table.put(name, getColumnValue(resultSet, index)));
                 });
                 out.accept(context, result);
             }
