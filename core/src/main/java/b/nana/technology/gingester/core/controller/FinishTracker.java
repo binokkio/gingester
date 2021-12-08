@@ -1,31 +1,14 @@
 package b.nana.technology.gingester.core.controller;
 
-import java.util.HashSet;
-import java.util.Set;
+public interface FinishTracker {
 
-final class FinishTracker {
-
-    private final Controller<?, ?> tracker;
-    private final Context context;
-    private final Set<Controller<?, ?>> indicated = new HashSet<>();
-    private final Set<Thread> acknowledged = new HashSet<>();
-
-    FinishTracker(Controller<?, ?> tracker, Context context) {
-        this.tracker = tracker;
-        this.context = context;
+    static FinishTracker newInstance(Controller<?, ?> controller, Context context) {
+        return controller.workers.size() >= 32 ?
+                new SetFinishTracker(controller, context) :
+                new IntFinishTracker(controller, context);
     }
 
-    boolean indicate(Controller<?, ?> indicator) {
-        indicated.add(indicator);
-        return indicated.size() == tracker.syncedThrough.get(context.controller).size();
-    }
-
-    boolean acknowledge(Thread thread) {
-        acknowledged.add(thread);
-        return acknowledged.size() == tracker.workers.size();
-    }
-
-    boolean isFullyIndicated() {
-        return indicated.contains(tracker);
-    }
+    boolean indicate(Controller<?, ?> indicator);
+    boolean acknowledge(Worker worker);
+    boolean isFullyIndicated();
 }

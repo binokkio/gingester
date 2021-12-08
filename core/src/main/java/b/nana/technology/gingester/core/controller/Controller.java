@@ -224,7 +224,8 @@ public final class Controller<I, O> {
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
         try {
-            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> new FinishTracker(this, context));
+            // TODO this needs backpressure when called from the ControllerReceiver
+            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
             if (finishTracker.indicate(from)) {
 //                while (queue.size() >= maxQueueSize) queueNotFull.await();  // TODO deadlocks PackTest.testPackIndividually(), look into
                 queue.add((Worker.SyncJob) () -> {
