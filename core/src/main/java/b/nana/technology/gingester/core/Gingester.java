@@ -258,16 +258,16 @@ public final class Gingester {
                         .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")
         ));
+    }
+
+    private void start(Map<String, Object> seedStash) {
 
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
-    }
-
-    private void start(Map<String, Object> seedStash) {
-
         controllers.values().forEach(Controller::open);
+
         phaser.awaitAdvance(0);
 
         Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());

@@ -36,18 +36,18 @@ public final class Worker extends Thread {
             Job job;
             controller.lock.lock();
             try {
-                handleFinishingContexts();
-                if (done) break;
-                while (controller.queue.isEmpty()) {
-                    controller.queueNotEmpty.await();
+                while (true) {
                     handleFinishingContexts();
                     if (done) break main;
-                }
-                job = controller.queue.removeFirst();
-                controller.queueNotFull.signal();
-                if (job instanceof SyncJob) {
-                    perform(job);
-                    continue;  // TODO the unlock re-lock happening here is a bit unfortunate
+                    while (controller.queue.isEmpty()) {
+                        controller.queueNotEmpty.await();
+                        handleFinishingContexts();
+                        if (done) break main;
+                    }
+                    job = controller.queue.removeFirst();
+                    controller.queueNotFull.signal();
+                    if (job instanceof SyncJob) perform(job);
+                    else break;
                 }
             } catch (InterruptedException e) {
                 break;
@@ -96,7 +96,7 @@ public final class Worker extends Thread {
                             controller.finish(context);
                             flush();
                         }
-                        controller.indicates.forEach(controller -> controller.finish(this.controller, context));
+                        controller.indicates.forEach(target -> target.finish(controller, context));
                         if (context.isSeed()) done = true;
                     });
                     controller.queueNotEmpty.signal();
