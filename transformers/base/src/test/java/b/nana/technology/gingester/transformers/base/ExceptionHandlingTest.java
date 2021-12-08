@@ -15,7 +15,7 @@ class ExceptionHandlingTest {
         AtomicReference<Exception> result = new AtomicReference<>();
 
         Gingester gingester = new Gingester();
-        gingester.cli("-e Catch -t String.Create hello -t Time.FromMillis");
+        gingester.cli("-e Catch -t String.Create hello -t Time.FromMillis -- ");
         gingester.add("Catch", result::set);
         gingester.run();
 

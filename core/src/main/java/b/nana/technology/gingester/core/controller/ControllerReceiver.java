@@ -23,8 +23,8 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     public void accept(Context context, O output) {
         context = maybeExtend(context);
         prepare(context);
-        for (Controller<O, ?> controller : controller.links.values()) {
-            accept(context, output, controller);
+        for (Controller<O, ?> target : controller.links.values()) {
+            accept(context, output, target);
         }
         finish(context);
     }
@@ -33,8 +33,8 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     public void accept(Context.Builder contextBuilder, O output) {
         Context context = contextBuilder.build(controller);
         prepare(context);
-        for (Controller<O, ?> controller : controller.links.values()) {
-            accept(context, output, controller);
+        for (Controller<O, ?> target : controller.links.values()) {
+            accept(context, output, target);
         }
         finish(context);
     }
@@ -71,8 +71,8 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void prepare(Context context) {
-        for (Controller<?, ?> sync : controller.syncs) {
-            sync.prepare(context);
+        for (Controller<?, ?> target : controller.syncs) {
+            target.prepare(context);
         }
     }
 
@@ -94,8 +94,8 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
             if (Thread.currentThread() instanceof Worker) {
                 ((Worker) Thread.currentThread()).flush();
             }
-            for (Controller<?, ?> controller : controller.indicates) {
-                controller.finish(controller, context);
+            for (Controller<?, ?> target : controller.indicates) {
+                target.finish(controller, context);
             }
         }
     }
@@ -121,11 +121,11 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
         for (Context c : context) {
             if (!c.controller.excepts.isEmpty()) {
-                for (Controller<Exception, ?> except : c.controller.excepts.values()) {
-                    accept(context, cause, except);
+                for (Controller<Exception, ?> target : c.controller.excepts.values()) {
+                    accept(context, cause, target);
                 }
                 return;
-            } else if (c.controller.isExceptionHandler) {
+            } else if (c.controller.isExceptionHandler) {  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
                 break;
             }
         }

@@ -10,6 +10,10 @@ import java.io.InputStream;
 
 public final class Respond implements Transformer<InputStream, Void> {
 
+    // TODO instead of keeping responded state in a ContextMap here, it should be part of the http/response stash
+    // TODO because having it here means all routes must lead to the same Http.Response instance which requires
+    // TODO circular routes when combined with ExceptionHandling
+
     private final ContextMap<State> states = new ContextMap<>();
 
     @Override

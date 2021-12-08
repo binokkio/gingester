@@ -50,7 +50,7 @@ class ExceptionHandlingTest {
 
         gingester.cli("" +
                 "-e ExceptionHandler " +
-                "-t Monkey 1 " +
+                "-t Monkey 1 -- " +
                 "-t ExceptionHandler:Monkey 1 " +
                 "-e ResultHandler");
 

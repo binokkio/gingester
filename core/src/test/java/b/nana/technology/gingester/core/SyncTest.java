@@ -75,7 +75,7 @@ class SyncTest {
         gingester.cli("" +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
-                "-t Monkey 1 " +
+                "-t Monkey 1 -- " +
                 "-stt ExceptionHandler:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
@@ -88,77 +88,6 @@ class SyncTest {
 
     @Test
     void testSyncThroughExceptionHandlerVariation2() {
-
-        AtomicReference<String> result = new AtomicReference<>();
-
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
-                "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
-                "-t Monkey 1 -- " +
-                "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish'");
-
-        gingester.add(result::set);
-
-        gingester.run();
-
-        assertEquals("Message from OnFinish", result.get());
-    }
-
-    @Test
-    void testSyncThroughExceptionHandlerVariation3() {
-
-        AtomicReference<String> result = new AtomicReference<>();
-
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
-                "-s " +
-                "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
-                "-s " +
-                "-t Monkey 1 " +
-                "-s " +
-                "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
-                "-s");
-
-        gingester.add(result::set);
-
-        gingester.run();
-
-        assertEquals("Message from OnFinish", result.get());
-    }
-
-    @Test
-    void testSyncThroughExceptionHandlerVariation4() {
-
-        AtomicReference<String> result = new AtomicReference<>();
-
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
-                "-s " +
-                "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
-                "-s " +
-                "-t Monkey 1 -- " +
-                "-s " +
-                "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
-                "-s");
-
-        gingester.add(result::set);
-
-        gingester.run();
-
-        assertEquals("Message from OnFinish", result.get());
-    }
-
-    @Test
-    void testSyncThroughExceptionHandlerVariation5() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
@@ -183,7 +112,57 @@ class SyncTest {
     }
 
     @Test
-    void testSyncThroughExceptionHandlerVariation6() {
+    void testSyncThroughExceptionHandlerVariation3() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-s " +
+                "-e ExceptionHandler " +
+                "-sft Generate \"Hello, World!\" " +
+                "-s " +
+                "-t Monkey 1 -- " +
+                "-s " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
+                "-s");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from OnFinish", result.get());
+    }
+
+    @Test
+    void testSyncThroughExceptionHandlerVariation4() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-s " +
+                "-e ExceptionHandler " +
+                "-sft Generate \"Hello, World!\" " +
+                "-s " +
+                "-t Monkey 1 " +
+                "-s -- " +
+                "-stt ExceptionHandler:OnFinish " +
+                "-t Generate 'Message from OnFinish' " +
+                "-s");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from OnFinish", result.get());
+    }
+
+    @Test
+    void testSyncThroughExceptionHandlerVariation5() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
@@ -224,6 +203,51 @@ class SyncTest {
                 "-stt ExceptionHandler:OnFinish " +
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from OnFinish", result.get());
+    }
+
+    @Test
+    void testDiamondSyncFinish() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-sft Generate \"Hello, World!\" " +
+                "-l A B " +
+                "-t A:Stash -l C " +
+                "-t B:Stash -l C " +
+                "-stt C:OnFinish " +
+                "-t Generate 'Message from OnFinish'");
+
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("Message from OnFinish", result.get());
+    }
+
+    @Test
+    void testSyncThroughExceptionHandler() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-e C " +
+                "-sft Generate \"Hello, World!\" " +
+                "-l A B " +
+                "-t A:Stash -- " +
+                "-t B:Stash -- " +
+                "-stt C:OnFinish " +
+                "-t Generate 'Message from OnFinish'");
 
         gingester.add(result::set);
 

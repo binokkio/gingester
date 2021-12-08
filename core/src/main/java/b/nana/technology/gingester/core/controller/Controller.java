@@ -106,7 +106,7 @@ public final class Controller<I, O> {
         found.addAll(links.values());
         found.addAll(bubble());
 
-        while (!found.isEmpty()) {
+        for (int i = 1; !found.isEmpty() && i < gingester.getControllers().size(); i++) {
             downstream.addAll(found);
             Set<Controller<?, ?>> next = new HashSet<>();
             for (Controller<?, ?> controller : found) {
@@ -114,6 +114,10 @@ public final class Controller<I, O> {
                 next.addAll(controller.excepts.values());
             }
             found = next;
+        }
+
+        if (!found.isEmpty()) {
+            throw new IllegalStateException("Circular route detected");  // TODO add route to exception message
         }
     }
 
@@ -147,24 +151,33 @@ public final class Controller<I, O> {
         }
     }
 
+    /**
+     * @return the exception handlers for `this` controller
+     */
     private Set<Controller<?, ?>> bubble() {
         Set<Controller<?, ?>> result = new HashSet<>();
-        bubble(this, result);
+        bubble(this, result, new LinkedHashSet<>());
         return result;
     }
 
-    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
+    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result, Set<Controller<?, ?>> seen) {
+        if (seen.contains(pointer)) throw new IllegalStateException("Circular route detected");  // TODO add route to exception message
+        seen.add(pointer);
         if (!pointer.excepts.isEmpty()) {
             result.addAll(pointer.excepts.values());
         } else if (!pointer.isExceptionHandler) {
-            for (Controller<?, ?> controller : incoming) {
+            for (Controller<?, ?> controller : pointer.incoming) {
                 if (controller.links.containsValue(pointer)) {
-                    bubble(controller, result);
+                    bubble(controller, result, new LinkedHashSet<>(seen));
                 }
             }
         }
     }
 
+    /**
+     * @param from the elbbub starting point
+     * @return the controllers whose exceptions could bubble to `from`
+     */
     private Set<Controller<?, ?>> elbbub(Controller<?, ?> from) {
         Set<Controller<?, ?>> result = new HashSet<>();
         elbbub(from, result);
@@ -176,7 +189,7 @@ public final class Controller<I, O> {
             collector.add(pointer);
         } else {
             for (Controller<?, ?> link : pointer.links.values()) {
-                if (link.isExceptionHandler) {
+                if (!link.excepts.isEmpty() || link.isExceptionHandler) {
                     collector.add(pointer);
                 } else {
                     elbbub(link, collector);
