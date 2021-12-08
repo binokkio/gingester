@@ -9,7 +9,7 @@ import java.util.Map;
 public final class Worker extends Thread {
 
     private final Controller<?, ?> controller;
-    private final int id;
+    final int id;
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
     public boolean done;
 
