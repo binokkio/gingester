@@ -10,12 +10,14 @@ public final class Worker extends Thread {
 
     private final Controller<?, ?> controller;
     final int id;
+    final int mask;
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
     public boolean done;
 
     Worker(Controller<?, ?> controller, int id) {
         this.controller = controller;
         this.id = id;
+        this.mask = 1 << id;
         setName(controller.id + "_" + id);
     }
 

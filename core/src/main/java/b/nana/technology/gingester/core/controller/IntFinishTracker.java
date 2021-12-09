@@ -2,17 +2,14 @@ package b.nana.technology.gingester.core.controller;
 
 final class IntFinishTracker implements FinishTracker {
 
-    private final Controller<?, ?> tracker;
-    private final Context context;
     private final int indicatedTarget;
+    private final int acknowledgedTarget;
     private int indicated;
     private int acknowledged;
 
     IntFinishTracker(Controller<?, ?> tracker, Context context) {
-        this.tracker = tracker;
-        this.context = context;
-        this.indicatedTarget = tracker.syncedThrough.get(context.controller).size();
-        this.acknowledged = ~0 >>> (32 - tracker.workers.size());
+        indicatedTarget = tracker.syncedThrough.get(context.controller).size();
+        acknowledgedTarget = ~0 >>> (32 - tracker.workers.size());
     }
 
     @Override
@@ -22,8 +19,8 @@ final class IntFinishTracker implements FinishTracker {
 
     @Override
     public boolean acknowledge(Worker worker) {
-        acknowledged ^= 1 << worker.id;
-        return acknowledged == 0;
+        acknowledged ^= worker.mask;
+        return acknowledged == acknowledgedTarget;
     }
 
     @Override
