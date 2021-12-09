@@ -254,7 +254,7 @@ public final class Gingester {
                 new ControllerConfiguration<>()
                         .id("__seed__")
                         .transformer(new Seed())
-                        .links(new ArrayList<>(noIncoming))
+                        .links(new ArrayList<>(noIncoming.isEmpty() ? controllers.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
                         .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")
         ));
@@ -263,6 +263,9 @@ public final class Gingester {
     private void start(Map<String, Object> seedStash) {
 
         controllers.values().forEach(Controller::initialize);
+
+        detectCircularRoutes(controllers.get("__seed__"), new ArrayDeque<>());
+
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
@@ -298,23 +301,43 @@ public final class Gingester {
         }
     }
 
+    private void detectCircularRoutes(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
+        if (route.contains(pointer)) {
+            Iterator<Controller<?, ?>> iterator = route.iterator();
+            while (!iterator.next().equals(pointer)) iterator.remove();
+            throw new IllegalStateException("Circular route detected: " + route.stream().map(c -> c.id).collect(Collectors.joining(" -> ")) + " -> " + pointer.id);
+        } else {
+            route.add(pointer);
+            pointer.links.values().forEach(next -> detectCircularRoutes(next, new ArrayDeque<>(route)));
+            Iterator<Controller<?, ?>> iterator = route.descendingIterator();
+            while (iterator.hasNext()) {
+                Controller<?, ?> controller = iterator.next();
+                if (controller.isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
+                if (!controller.excepts.isEmpty()) {
+                    for (Controller<Exception, ?> exceptionHandler : controller.excepts.values()) {
+                        detectCircularRoutes(exceptionHandler, new ArrayDeque<>(route));
+                    }
+                }
+            }
+        }
+    }
+
     private String getId(TransformerConfiguration configuration) {
-        return configuration.getId()
-                .filter(id -> {
-                    if (transformerConfigurations.containsKey(id)) {
-                        throw new IllegalArgumentException("Transformer id " + id + " already in use");
-                    }
-                    return true;
-                })
-                .orElseGet(() -> {
-                    String name = configuration.getName().orElseThrow();
-                    String id = name;
-                    int i = 1;
-                    while (transformerConfigurations.containsKey(id)) {
-                        id = name + '_' + i++;
-                    }
-                    return id;
-                });
+        if (configuration.getId().isPresent()) {
+            String id = configuration.getId().get();
+            if (transformerConfigurations.containsKey(id)) {
+                throw new IllegalArgumentException("Transformer id " + id + " already in use");
+            }
+            return id;
+        } else {
+            String name = configuration.getName().orElseThrow();
+            String id = name;
+            int i = 1;
+            while (transformerConfigurations.containsKey(id)) {
+                id = name + '_' + i++;
+            }
+            return id;
+        }
     }
 
     private Optional<String> resolveMaybeNext(String from) {
@@ -341,6 +364,10 @@ public final class Gingester {
             return phaser;
         }
 
+        public Collection<Controller<?, ?>> getControllers() {
+            return controllers.values();
+        }
+
         public Optional<Controller<?, ?>> getController(String id) {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
@@ -350,10 +377,6 @@ public final class Gingester {
         public boolean isExceptionHandler() {
             return excepts.contains(controllerId) ||
                     configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
-        }
-
-        public Collection<Controller<?, ?>> getControllers() {
-            return controllers.values();
         }
     }
 }

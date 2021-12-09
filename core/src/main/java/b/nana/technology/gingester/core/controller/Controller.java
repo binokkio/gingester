@@ -34,7 +34,7 @@ public final class Controller<I, O> {
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
-    final boolean isExceptionHandler;
+    public final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();
@@ -106,7 +106,7 @@ public final class Controller<I, O> {
         found.addAll(links.values());
         found.addAll(bubble());
 
-        for (int i = 1; !found.isEmpty() && i < gingester.getControllers().size(); i++) {
+        while (!found.isEmpty()) {
             downstream.addAll(found);
             Set<Controller<?, ?>> next = new HashSet<>();
             for (Controller<?, ?> controller : found) {
@@ -114,10 +114,6 @@ public final class Controller<I, O> {
                 next.addAll(controller.excepts.values());
             }
             found = next;
-        }
-
-        if (!found.isEmpty()) {
-            throw new IllegalStateException("Circular route detected");  // TODO add route to exception message
         }
     }
 
@@ -156,19 +152,17 @@ public final class Controller<I, O> {
      */
     private Set<Controller<?, ?>> bubble() {
         Set<Controller<?, ?>> result = new HashSet<>();
-        bubble(this, result, new LinkedHashSet<>());
+        bubble(this, result);
         return result;
     }
 
-    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result, Set<Controller<?, ?>> seen) {
-        if (seen.contains(pointer)) throw new IllegalStateException("Circular route detected");  // TODO add route to exception message
-        seen.add(pointer);
+    private void bubble(Controller<?, ?> pointer, Set<Controller<?, ?>> result) {
         if (!pointer.excepts.isEmpty()) {
             result.addAll(pointer.excepts.values());
         } else if (!pointer.isExceptionHandler) {
             for (Controller<?, ?> controller : pointer.incoming) {
                 if (controller.links.containsValue(pointer)) {
-                    bubble(controller, result, new LinkedHashSet<>(seen));
+                    bubble(controller, result);
                 }
             }
         }
