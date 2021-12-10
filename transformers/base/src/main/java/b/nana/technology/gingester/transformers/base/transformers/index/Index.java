@@ -19,11 +19,15 @@ public final class Index implements Transformer<Object, Map<Object, Object>> {
     private final String[] fetch;
     private final String stash;
     private final boolean throwOnEmptyFetch;
+    private final boolean throwOnCollision;
+    private final boolean preserveInsertOrder;
 
     public Index(Parameters parameters) {
         fetch = Fetch.parseStashName(parameters.fetch);
         stash = parameters.stash;
         throwOnEmptyFetch = parameters.throwOnEmptyFetch;
+        throwOnCollision = parameters.throwOnCollision;
+        preserveInsertOrder = parameters.preserveInsertOrder;
     }
 
     @Override
@@ -33,14 +37,19 @@ public final class Index implements Transformer<Object, Map<Object, Object>> {
 
     @Override
     public void prepare(Context context, Receiver<Map<Object, Object>> out) {
-        indices.put(context, new HashMap<>());
+        indices.put(context, preserveInsertOrder ? new LinkedHashMap<>() : new HashMap<>());
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Map<Object, Object>> out) throws Exception {
         Optional<Object> value = context.fetch(fetch).findFirst();
         if (value.isPresent()) {
-            indices.act(context, map -> map.put(in, value.get()));
+            indices.act(context, map -> {
+                Object collision = map.put(in, value.get());
+                if (collision != null && throwOnCollision) {
+                    throw new IllegalStateException("Key already present in index: " + in);
+                }
+            });
         } else if (throwOnEmptyFetch) {
             throw new NoSuchElementException(String.join("/", fetch));
         }
@@ -57,6 +66,8 @@ public final class Index implements Transformer<Object, Map<Object, Object>> {
         public String fetch = "stash";
         public String stash = "index";
         public boolean throwOnEmptyFetch = false;
+        public boolean throwOnCollision = false;
+        public boolean preserveInsertOrder = false;
 
         @JsonCreator
         public Parameters() {}
