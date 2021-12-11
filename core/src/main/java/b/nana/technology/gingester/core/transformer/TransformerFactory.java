@@ -17,6 +17,9 @@ import java.util.stream.Stream;
 
 public final class TransformerFactory {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+
     private static final Set<Class<? extends Transformer<?, ?>>> TRANSFORMERS = ServiceLoader.load(Provider.class)
             .stream()
             .map(ServiceLoader.Provider::get)
@@ -24,8 +27,10 @@ public final class TransformerFactory {
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    private static final Set<Class<? extends Transformer<?, ?>>> PURE_TRANSFORMERS = TRANSFORMERS
+            .stream()
+            .filter(c -> c.getAnnotation(Pure.class) != null)
+            .collect(Collectors.toSet());
 
     private TransformerFactory() {}
 
@@ -56,7 +61,7 @@ public final class TransformerFactory {
         return instance(transformerClass, jsonParameters);
     }
 
-    private static <I, O> Transformer<I, O> instance(Class<? extends Transformer<I, O>> transformerClass, JsonNode jsonParameters) {
+    public static <I, O> Transformer<I, O> instance(Class<? extends Transformer<I, O>> transformerClass, JsonNode jsonParameters) {
 
         if (jsonParameters == null) {
             try {
@@ -95,13 +100,39 @@ public final class TransformerFactory {
         }
     }
 
-    public static <I, O> Optional<Transformer<I, O>> getPureTransformer(Class<I> from, Class<O> to) {
-        return TRANSFORMERS.stream()
-                .filter(c -> c.getAnnotation(Pure.class) != null)
-                .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].equals(from))
-                .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[1].equals(to))
-                .map(c -> instance((Class<Transformer<I, O>>) c, null))
-                .findFirst();
+    public static <I, O> Optional<ArrayDeque<Class<? extends Transformer<?, ?>>>> getBridge(Class<I> from, Class<O> to) {
+
+        List<ArrayDeque<Class<? extends Transformer<?, ?>>>> options = PURE_TRANSFORMERS.stream()
+                .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].isAssignableFrom(from))
+                .map(c -> new ArrayDeque<Class<? extends Transformer<?, ?>>>(Collections.singleton(c)))
+                .collect(Collectors.toList());
+
+        while (!options.isEmpty()) {
+
+            Optional<ArrayDeque<Class<? extends Transformer<?, ?>>>> bridge = options.stream()
+                    .filter(b -> to.isAssignableFrom(TypeResolver.resolveRawArguments(Transformer.class, b.getLast())[1]))
+                    .findFirst();
+
+            if (bridge.isPresent()) {
+                return bridge;
+            } else {
+                options = options.stream()
+                        .flatMap(b -> {
+                            Class<?> tailType = TypeResolver.resolveRawArguments(Transformer.class, b.getLast())[1];
+                            return PURE_TRANSFORMERS.stream()
+                                    .filter(c -> !b.contains(c))
+                                    .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].isAssignableFrom(tailType))
+                                    .map(c -> {
+                                        ArrayDeque<Class<? extends Transformer<?, ?>>> next = new ArrayDeque<>(b);
+                                        next.add(c);
+                                        return next;
+                                    });
+                        })
+                        .collect(Collectors.toList());
+            }
+        }
+
+        throw new IllegalStateException("No bridge found");
     }
 
     public static String getUniqueName(Transformer<?, ?> transformer) {

@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
@@ -11,6 +12,7 @@ import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -81,20 +83,34 @@ public final class Controller<I, O> {
         phaser.bulkRegister(maxWorkers);
     }
 
+    public void initialize() {
+        links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
+        excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
+        configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
+    }
+
     public Class<I> getInputType() {
         Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
         return (Class<I>) types[0];
     }
 
     public Class<O> getOutputType() {
-        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
-        return (Class<O>) types[1];
-    }
-
-    public void initialize() {
-        links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
-        excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
-        configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
+        if (transformer.getClass().getAnnotation(Passthrough.class) == null) {
+            Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
+            return (Class<O>) types[1];
+        } else {
+            List<Class<?>> actualInputTypes = new ArrayList<>();
+            gingester.getControllers().stream()
+                    .filter(c -> c.links.containsKey(id))
+                    .map(Controller::getOutputType)
+                    .forEach(actualInputTypes::add);
+            if (isExceptionHandler) actualInputTypes.add(Exception.class);
+            AtomicReference<Class<?>> pointer = new AtomicReference<>(actualInputTypes.get(0));
+            while (actualInputTypes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
+                pointer.set(pointer.get().getSuperclass());
+            }
+            return (Class<O>) pointer.get();
+        }
     }
 
     public void discoverIncoming() {
@@ -214,7 +230,6 @@ public final class Controller<I, O> {
     }
 
     public void accept(Batch<I> batch) {
-        System.out.println(id + " accept");
         lock.lock();
         try {
             while (queue.size() >= maxQueueSize) queueNotFull.await();
@@ -259,7 +274,6 @@ public final class Controller<I, O> {
     }
 
     public void transform(Batch<I> batch) {
-        System.out.println(id + " transform");
 
         if (maxBatchSize == 1) {
             // no batch optimizations possible, not tracking batch duration
@@ -306,7 +320,6 @@ public final class Controller<I, O> {
     }
 
     public void transform(Context context, I in) {
-        System.out.println(id + " transform");
         try {
             transformer.transform(context, in, receiver);
         } catch (Exception e) {

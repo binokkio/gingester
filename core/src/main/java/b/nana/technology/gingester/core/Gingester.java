@@ -162,7 +162,7 @@ public final class Gingester {
      */
     public void run(Map<String, Object> seedStash) {
         setup();
-        seed();
+        initialize();
         start(seedStash);
     }
 
@@ -243,7 +243,7 @@ public final class Gingester {
                 controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
     }
 
-    private void seed() {
+    private void initialize() {
 
         Set<String> noIncoming = new HashSet<>(controllers.keySet());
         noIncoming.removeAll(excepts);
@@ -259,19 +259,19 @@ public final class Gingester {
                         .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")
         ));
-    }
-
-    private void start(Map<String, Object> seedStash) {
 
         controllers.values().forEach(Controller::initialize);
 
-        detectCircularRoutes(controllers.get("__seed__"), new ArrayDeque<>());
+        finishRoutes(controllers.get("__seed__"), new ArrayDeque<>());
 
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
-        controllers.values().forEach(Controller::open);
+    }
 
+    private void start(Map<String, Object> seedStash) {
+
+        controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
 
         Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
@@ -302,55 +302,56 @@ public final class Gingester {
         }
     }
 
-    private void detectCircularRoutes(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
+    private void finishRoutes(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
         if (route.contains(pointer)) {
             Iterator<Controller<?, ?>> iterator = route.iterator();
             while (!iterator.next().equals(pointer)) iterator.remove();
             throw new IllegalStateException("Circular route detected: " + route.stream().map(c -> c.id).collect(Collectors.joining(" -> ")) + " -> " + pointer.id);
         } else {
-            if (!route.isEmpty()) {
-                Controller<?, ?> upstream = route.getLast();  // TODO go past @Passthrough controllers
-                Class<?> output = upstream.getOutputType();
-                Class<?> input = pointer.getInputType();
-                if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
-                    if (!input.isAssignableFrom(output)) {
-                        bridge(upstream, pointer);
-                    }
-                }
-            }
+            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
             route.add(pointer);
-            pointer.links.values().forEach(next -> detectCircularRoutes(next, new ArrayDeque<>(route)));
+            pointer.links.values().forEach(next -> finishRoutes(next, new ArrayDeque<>(route)));
             Iterator<Controller<?, ?>> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 Controller<?, ?> controller = iterator.next();
                 if (controller.isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
                 if (!controller.excepts.isEmpty()) {
                     for (Controller<Exception, ?> exceptionHandler : controller.excepts.values()) {
-                        detectCircularRoutes(exceptionHandler, new ArrayDeque<>(route));
+                        finishRoutes(exceptionHandler, new ArrayDeque<>(route));
                     }
                 }
             }
         }
     }
 
-    private <I, O> void bridge(Controller<?, I> upstream, Controller<O, ?> downstream) {
+    private <I, O> void maybeBridge(Controller<?, I> upstream, Controller<O, ?> downstream) {
 
         Class<I> output = upstream.getOutputType();
         Class<O> input = downstream.getInputType();
 
-        Transformer<I, O> transformer = TransformerFactory.getPureTransformer(output, input).orElseThrow();
+        if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
+            if (!input.isAssignableFrom(output)) {
 
-        String id = Double.toString(Math.random());  // TODO
+                Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
+                        .orElseThrow(() -> new IllegalStateException("Can't bridge between " + output + " and " + input));  // TODO
 
-        ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
-                .id(id)
-                .transformer(transformer)
-                .links(Collections.singletonList(downstream.id));
+                for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
-        Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
-        controller.initialize();
-        controllers.put(id, controller);
-        upstream.links.replace(downstream.id, controller);
+                    String id = Double.toString(Math.random());  // TODO
+
+                    ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
+                            .id(id)
+                            .transformer(TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null))
+                            .links(Collections.singletonList(downstream.id));
+
+                    Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
+                    controller.initialize();
+                    controllers.put(id, controller);
+                    upstream.links.replace(downstream.id, controller);
+                    upstream = (Controller<?, I>) controller;
+                }
+            }
+        }
     }
 
     private String getId(TransformerConfiguration configuration) {
