@@ -160,8 +160,11 @@ public final class Main {
                         else transformer.transformer("Stash");
                     } else {
                         String next = args[++i];
-                        if (next.matches("\\d+")) {
-                            transformer.maxWorkers(Integer.parseInt(next));
+                        if (next.matches("[\\d.]+")) {
+                            String[] parts = next.split("\\.");
+                            if (parts.length > 0 && !parts[0].isEmpty()) transformer.maxWorkers(Integer.parseInt(parts[0]));
+                            if (parts.length > 1 && !parts[1].isEmpty()) transformer.maxQueueSize(Integer.parseInt(parts[1]));
+                            if (parts.length > 2 && !parts[2].isEmpty()) transformer.maxBatchSize(Integer.parseInt(parts[2]));
                             next = args[++i];
                         }
                         String[] parts = next.split(":");

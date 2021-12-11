@@ -11,9 +11,9 @@ public final class ControllerConfiguration<I, O> {
 
     private String id;
     private Transformer<I, O> transformer;
+    private Integer maxWorkers;
     private Integer maxBatchSize;
     private Integer maxQueueSize;
-    private Integer maxWorkers;
     private List<String> links = Collections.emptyList();
     private List<String> syncs = Collections.emptyList();
     private List<String> excepts = Collections.emptyList();
@@ -32,8 +32,8 @@ public final class ControllerConfiguration<I, O> {
         return this;
     }
 
-    public ControllerConfiguration<I, O> maxBatchSize(int maxBatchSize) {
-        this.maxBatchSize = maxBatchSize;
+    public ControllerConfiguration<I, O> maxWorkers(int maxWorkers) {
+        this.maxWorkers = maxWorkers;
         return this;
     }
 
@@ -42,8 +42,8 @@ public final class ControllerConfiguration<I, O> {
         return this;
     }
 
-    public ControllerConfiguration<I, O> maxWorkers(int maxWorkers) {
-        this.maxWorkers = maxWorkers;
+    public ControllerConfiguration<I, O> maxBatchSize(int maxBatchSize) {
+        this.maxBatchSize = maxBatchSize;
         return this;
     }
 
@@ -82,16 +82,16 @@ public final class ControllerConfiguration<I, O> {
         return transformer;
     }
 
-    public Optional<Integer> getMaxBatchSize() {
-        return Optional.ofNullable(maxBatchSize);
+    public Optional<Integer> getMaxWorkers() {
+        return Optional.ofNullable(maxWorkers);
     }
 
     public Optional<Integer> getMaxQueueSize() {
         return Optional.ofNullable(maxQueueSize);
     }
 
-    public Optional<Integer> getMaxWorkers() {
-        return Optional.ofNullable(maxWorkers);
+    public Optional<Integer> getMaxBatchSize() {
+        return Optional.ofNullable(maxBatchSize);
     }
 
     public List<String> getLinks() {

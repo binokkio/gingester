@@ -25,9 +25,9 @@ public final class Controller<I, O> {
     final Phaser phaser;
 
     final boolean async;
-    private final int maxBatchSize;
-    private final int maxQueueSize;
     private final int maxWorkers;
+    private final int maxQueueSize;
+    private final int maxBatchSize;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links;
@@ -59,9 +59,9 @@ public final class Controller<I, O> {
         id = configuration.getId();
         transformer = configuration.getTransformer();
         async = configuration.getMaxWorkers().orElse(0) > 0;
-        maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
-        maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxWorkers = configuration.getMaxWorkers().orElse(1);
+        maxQueueSize = configuration.getMaxQueueSize().orElse(100);
+        maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
@@ -345,8 +345,8 @@ public final class Controller<I, O> {
         transformer = null;
         phaser = null;
         async = false;
-        maxQueueSize = 0;
         maxWorkers = 0;
+        maxQueueSize = 0;
         maxBatchSize = 0;
         report = false;
         delt = null;
