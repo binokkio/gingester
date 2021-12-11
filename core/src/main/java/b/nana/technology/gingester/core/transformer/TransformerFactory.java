@@ -132,7 +132,7 @@ public final class TransformerFactory {
             }
         }
 
-        throw new IllegalStateException("No bridge found");
+        return Optional.empty();
     }
 
     public static String getUniqueName(Transformer<?, ?> transformer) {

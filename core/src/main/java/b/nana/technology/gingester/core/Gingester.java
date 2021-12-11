@@ -266,7 +266,7 @@ public final class Gingester {
 
         controllers.values().forEach(Controller::initialize);
 
-        finishRoutes(controllers.get("__seed__"), new ArrayDeque<>());
+        explore(controllers.get("__seed__"), new ArrayDeque<>());
 
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
@@ -306,7 +306,7 @@ public final class Gingester {
         }
     }
 
-    private void finishRoutes(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
+    private void explore(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
         if (route.contains(pointer)) {
             Iterator<Controller<?, ?>> iterator = route.iterator();
             while (!iterator.next().equals(pointer)) iterator.remove();
@@ -314,14 +314,14 @@ public final class Gingester {
         } else {
             if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
             route.add(pointer);
-            pointer.links.values().forEach(next -> finishRoutes(next, new ArrayDeque<>(route)));
+            pointer.links.values().forEach(next -> explore(next, new ArrayDeque<>(route)));
             Iterator<Controller<?, ?>> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 Controller<?, ?> controller = iterator.next();
                 if (controller.isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
                 if (!controller.excepts.isEmpty()) {
                     for (Controller<Exception, ?> exceptionHandler : controller.excepts.values()) {
-                        finishRoutes(exceptionHandler, new ArrayDeque<>(route));
+                        explore(exceptionHandler, new ArrayDeque<>(route));
                     }
                 }
             }
@@ -337,12 +337,13 @@ public final class Gingester {
             if (!input.isAssignableFrom(output)) {
 
                 Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
-                        .orElseThrow(() -> new IllegalStateException("Can't bridge between " + output + " and " + input));  // TODO
+                        .orElseThrow(() -> new IllegalStateException("Transformations from " + upstream.id + " to " + downstream.id + " must be specified"));  // TODO
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("Bridging from " + upstream.id + " to " + downstream.id + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
                 }
 
+                Controller<?, I> pointer = upstream;
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
@@ -356,8 +357,8 @@ public final class Gingester {
                     Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
                     controller.initialize();
                     controllers.put(id, controller);
-                    upstream.links.replace(downstream.id, controller);
-                    upstream = (Controller<?, I>) controller;
+                    pointer.links.replace(downstream.id, controller);
+                    pointer = (Controller<?, I>) controller;
                 }
             }
         }

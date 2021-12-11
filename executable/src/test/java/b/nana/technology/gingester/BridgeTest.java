@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BridgeTest {
 
@@ -94,5 +95,17 @@ class BridgeTest {
         gingester.run();
 
         assertEquals("{\"hello\":1,\"world\":2}!!!", result.get());
+    }
+
+    @Test
+    void testNoBridgingSolutionFoundThrows() {
+
+        Gingester gingester = new Gingester();
+        gingester.cli("" +
+                "-t Time.Now " +
+                "-t Path.Size");
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, gingester::run);
+        assertEquals("Transformations from Time.Now to Path.Size must be specified", e.getMessage());
     }
 }
