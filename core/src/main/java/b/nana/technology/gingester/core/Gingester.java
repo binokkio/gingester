@@ -13,6 +13,9 @@ import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Seed;
+import net.jodah.typetools.TypeResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
@@ -24,6 +27,8 @@ import java.util.stream.Stream;
 import static b.nana.technology.gingester.core.configuration.TransformerConfigurationSetupControlsCombiner.combine;
 
 public final class Gingester {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final LinkedHashMap<String, TransformerConfiguration> transformerConfigurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
@@ -161,7 +166,7 @@ public final class Gingester {
      */
     public void run(Map<String, Object> seedStash) {
         setup();
-        seed();
+        initialize();
         start(seedStash);
     }
 
@@ -242,7 +247,7 @@ public final class Gingester {
                 controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
     }
 
-    private void seed() {
+    private void initialize() {
 
         Set<String> noIncoming = new HashSet<>(controllers.keySet());
         noIncoming.removeAll(excepts);
@@ -258,19 +263,19 @@ public final class Gingester {
                         .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")
         ));
-    }
-
-    private void start(Map<String, Object> seedStash) {
 
         controllers.values().forEach(Controller::initialize);
 
-        detectCircularRoutes(controllers.get("__seed__"), new ArrayDeque<>());
+        explore(controllers.get("__seed__"), new ArrayDeque<>());
 
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
-        controllers.values().forEach(Controller::open);
+    }
 
+    private void start(Map<String, Object> seedStash) {
+
+        controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
 
         Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
@@ -301,22 +306,59 @@ public final class Gingester {
         }
     }
 
-    private void detectCircularRoutes(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
+    private void explore(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
         if (route.contains(pointer)) {
             Iterator<Controller<?, ?>> iterator = route.iterator();
             while (!iterator.next().equals(pointer)) iterator.remove();
             throw new IllegalStateException("Circular route detected: " + route.stream().map(c -> c.id).collect(Collectors.joining(" -> ")) + " -> " + pointer.id);
         } else {
+            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
             route.add(pointer);
-            pointer.links.values().forEach(next -> detectCircularRoutes(next, new ArrayDeque<>(route)));
+            pointer.links.values().forEach(next -> explore(next, new ArrayDeque<>(route)));
             Iterator<Controller<?, ?>> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 Controller<?, ?> controller = iterator.next();
                 if (controller.isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
                 if (!controller.excepts.isEmpty()) {
                     for (Controller<Exception, ?> exceptionHandler : controller.excepts.values()) {
-                        detectCircularRoutes(exceptionHandler, new ArrayDeque<>(route));
+                        explore(exceptionHandler, new ArrayDeque<>(route));
                     }
+                }
+            }
+        }
+    }
+
+    private <I, O> void maybeBridge(Controller<?, I> upstream, Controller<O, ?> downstream) {
+
+        Class<I> output = upstream.getOutputType();
+        Class<O> input = downstream.getInputType();
+
+        if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
+            if (!input.isAssignableFrom(output)) {
+
+                Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
+                        .orElseThrow(() -> new IllegalStateException("Transformations from " + upstream.id + " to " + downstream.id + " must be specified"));  // TODO
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Bridging from " + upstream.id + " to " + downstream.id + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
+                }
+
+                Controller<?, I> pointer = upstream;
+                for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
+
+                    Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
+                    String id = getId(new TransformerConfiguration().transformer(transformer));
+
+                    ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
+                            .id(id)
+                            .transformer(transformer)
+                            .links(Collections.singletonList(downstream.id));
+
+                    Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
+                    controller.initialize();
+                    controllers.put(id, controller);
+                    pointer.links.replace(downstream.id, controller);
+                    pointer = (Controller<?, I>) controller;
                 }
             }
         }
