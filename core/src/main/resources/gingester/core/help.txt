@@ -7,8 +7,11 @@ General usage:
     -b/--break
         ignore all following transformers
 
-    -cc/--cli-config <path/to/file>
+    -cf/--cli-file <path/to/file>
         append cli config from file
+
+    -cr/--cli-resource <path/to/resource>
+        append cli config from resource
 
     -e/--excepts <link1> [<link2> [...]]
         send exceptions from the previous transformer (if any) and uncaught downstream exceptions to the given links
@@ -19,8 +22,11 @@ General usage:
     -h/--help
         print this help and exit
 
-    -jc/--json-config <path/to/file>
+    -jf/--json-file <path/to/file>
         append json config from file
+
+    -jr/--json-resource <path/to/resource>
+        append json config from resource
 
     -l/--links <link1> [<link2> [...]]
         link the previous transformer to the given links,
