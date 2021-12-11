@@ -7,6 +7,7 @@ import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
@@ -78,6 +79,16 @@ public final class Controller<I, O> {
 
         phaser = gingester.getPhaser();
         phaser.bulkRegister(maxWorkers);
+    }
+
+    public Class<?> getInputType() {
+        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
+        return types[0];
+    }
+
+    public Class<?> getOutputType() {
+        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
+        return types[1];
     }
 
     public void initialize() {
@@ -203,6 +214,7 @@ public final class Controller<I, O> {
     }
 
     public void accept(Batch<I> batch) {
+        System.out.println(id + " accept");
         lock.lock();
         try {
             while (queue.size() >= maxQueueSize) queueNotFull.await();
@@ -247,6 +259,7 @@ public final class Controller<I, O> {
     }
 
     public void transform(Batch<I> batch) {
+        System.out.println(id + " transform");
 
         if (maxBatchSize == 1) {
             // no batch optimizations possible, not tracking batch duration
@@ -293,6 +306,7 @@ public final class Controller<I, O> {
     }
 
     public void transform(Context context, I in) {
+        System.out.println(id + " transform");
         try {
             transformer.transform(context, in, receiver);
         } catch (Exception e) {

@@ -13,6 +13,7 @@ import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Seed;
+import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
@@ -307,6 +308,19 @@ public final class Gingester {
             while (!iterator.next().equals(pointer)) iterator.remove();
             throw new IllegalStateException("Circular route detected: " + route.stream().map(c -> c.id).collect(Collectors.joining(" -> ")) + " -> " + pointer.id);
         } else {
+            if (!route.isEmpty()) {
+                Controller<?, ?> upstream = route.getLast();  // TODO go past @Passthrough controllers
+                Class<?> output = upstream.getOutputType();
+                Class<?> input = pointer.getInputType();
+                if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
+                    if (!input.isAssignableFrom(output)) {
+                        System.out.println(output + " -> " + input);
+                        TransformerFactory.getPureTransformer(output, input).ifPresent(transformer ->
+                                insertPureTransformer(transformer, upstream, pointer));
+
+                    }
+                }
+            }
             route.add(pointer);
             pointer.links.values().forEach(next -> detectCircularRoutes(next, new ArrayDeque<>(route)));
             Iterator<Controller<?, ?>> iterator = route.descendingIterator();
@@ -320,6 +334,23 @@ public final class Gingester {
                 }
             }
         }
+    }
+
+    private <I, O> void insertPureTransformer(Transformer<?, ?> transformer, Controller<?, ?> upstream, Controller<?, ?> downstream) {
+
+        ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>();
+        String id = Double.toString(Math.random());
+
+        configuration
+                .id(id)
+                .transformer((Transformer<I, O>) transformer)
+                .report(false)
+                .links(Collections.singletonList(downstream.id));
+
+        Controller controller = new Controller(configuration, new ControllerInterface(id));
+        controller.initialize();
+        controllers.put(id, controller);
+        upstream.links.replace(downstream.id, controller);
     }
 
     private String getId(TransformerConfiguration configuration) {

@@ -1,11 +1,13 @@
 package b.nana.technology.gingester.core.transformer;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.jodah.typetools.TypeResolver;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,6 +53,10 @@ public final class TransformerFactory {
         }
 
         Class<? extends Transformer<I, O>> transformerClass = (Class<? extends Transformer<I, O>>) transformerClasses.get(0);
+        return instance(transformerClass, jsonParameters);
+    }
+
+    private static <I, O> Transformer<I, O> instance(Class<? extends Transformer<I, O>> transformerClass, JsonNode jsonParameters) {
 
         if (jsonParameters == null) {
             try {
@@ -87,6 +93,15 @@ public final class TransformerFactory {
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
             throw new IllegalStateException("Calling parameter-rich constructor on " + parameterClass.getCanonicalName() + " failed", e);
         }
+    }
+
+    public static <I, O> Optional<Transformer<I, O>> getPureTransformer(Class<I> from, Class<O> to) {
+        return TRANSFORMERS.stream()
+                .filter(c -> c.getAnnotation(Pure.class) != null)
+                .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].equals(from))
+                .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[1].equals(to))
+                .map(c -> instance((Class<Transformer<I, O>>) c, null))
+                .findFirst();
     }
 
     public static String getUniqueName(Transformer<?, ?> transformer) {
