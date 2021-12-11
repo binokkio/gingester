@@ -60,20 +60,39 @@ class BridgeTest {
     }
 
     @Test
-    void testLongBridges() {
+    void testLongBridge() {
 
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
                 "-t Json.Create '{hello:1,world:2}' " +
                 "-t InputStream.Append '!!!' " +
-                "-t String.Append '!!!'");
+                "-t InputStream.ToString");
 
         AtomicReference<String> result = new AtomicReference<>();
         gingester.add(result::set);
 
         gingester.run();
 
-        assertEquals("{\"hello\":1,\"world\":2}!!!!!!", result.get());
+        assertEquals("{\"hello\":1,\"world\":2}!!!", result.get());
+    }
+
+    @Test
+    void testLongBridgeWithPassthroughs() {
+
+        Gingester gingester = new Gingester();
+
+        gingester.cli("" +
+                "-t Json.Create '{hello:1,world:2}' " +
+                "-s -t Throttle " +
+                "-t InputStream.Append '!!!' " +
+                "-t InputStream.ToString");
+
+        AtomicReference<String> result = new AtomicReference<>();
+        gingester.add(result::set);
+
+        gingester.run();
+
+        assertEquals("{\"hello\":1,\"world\":2}!!!", result.get());
     }
 }

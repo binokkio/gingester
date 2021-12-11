@@ -14,6 +14,8 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Seed;
 import net.jodah.typetools.TypeResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
@@ -25,6 +27,8 @@ import java.util.stream.Stream;
 import static b.nana.technology.gingester.core.configuration.TransformerConfigurationSetupControlsCombiner.combine;
 
 public final class Gingester {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final LinkedHashMap<String, TransformerConfiguration> transformerConfigurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
@@ -334,6 +338,10 @@ public final class Gingester {
 
                 Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
                         .orElseThrow(() -> new IllegalStateException("Can't bridge between " + output + " and " + input));  // TODO
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Bridging from " + upstream.id + " to " + downstream.id + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
+                }
 
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
