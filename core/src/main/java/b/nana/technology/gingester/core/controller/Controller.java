@@ -81,14 +81,14 @@ public final class Controller<I, O> {
         phaser.bulkRegister(maxWorkers);
     }
 
-    public Class<?> getInputType() {
+    public Class<I> getInputType() {
         Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
-        return types[0];
+        return (Class<I>) types[0];
     }
 
-    public Class<?> getOutputType() {
+    public Class<O> getOutputType() {
         Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
-        return types[1];
+        return (Class<O>) types[1];
     }
 
     public void initialize() {

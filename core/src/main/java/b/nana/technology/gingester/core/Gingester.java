@@ -314,10 +314,7 @@ public final class Gingester {
                 Class<?> input = pointer.getInputType();
                 if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
                     if (!input.isAssignableFrom(output)) {
-                        System.out.println(output + " -> " + input);
-                        TransformerFactory.getPureTransformer(output, input).ifPresent(transformer ->
-                                insertPureTransformer(transformer, upstream, pointer));
-
+                        bridge(upstream, pointer);
                     }
                 }
             }
@@ -336,18 +333,21 @@ public final class Gingester {
         }
     }
 
-    private <I, O> void insertPureTransformer(Transformer<?, ?> transformer, Controller<?, ?> upstream, Controller<?, ?> downstream) {
+    private <I, O> void bridge(Controller<?, I> upstream, Controller<O, ?> downstream) {
 
-        ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>();
-        String id = Double.toString(Math.random());
+        Class<I> output = upstream.getOutputType();
+        Class<O> input = downstream.getInputType();
 
-        configuration
+        Transformer<I, O> transformer = TransformerFactory.getPureTransformer(output, input).orElseThrow();
+
+        String id = Double.toString(Math.random());  // TODO
+
+        ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
                 .id(id)
-                .transformer((Transformer<I, O>) transformer)
-                .report(false)
+                .transformer(transformer)
                 .links(Collections.singletonList(downstream.id));
 
-        Controller controller = new Controller(configuration, new ControllerInterface(id));
+        Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
         controller.initialize();
         controllers.put(id, controller);
         upstream.links.replace(downstream.id, controller);
