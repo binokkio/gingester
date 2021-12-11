@@ -345,11 +345,12 @@ public final class Gingester {
 
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
-                    String id = Double.toString(Math.random());  // TODO
+                    Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
+                    String id = getId(new TransformerConfiguration().transformer(transformer));
 
                     ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
                             .id(id)
-                            .transformer(TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null))
+                            .transformer(transformer)
                             .links(Collections.singletonList(downstream.id));
 
                     Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
