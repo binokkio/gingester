@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class ToJsonTest {
 
@@ -90,5 +92,22 @@ class ToJsonTest {
         assertEquals("2\"two\"", results.remove().get("b").asText());
         assertEquals("3,three", results.remove().get("b").asText());
         assertEquals("\"four\"", results.remove().get("b").asText());
+    }
+
+    @Test
+    void testWithExtras() throws Exception {
+
+        Queue<JsonNode> results = new ArrayDeque<>();
+
+        ToJson toJson = new ToJson(new ToJson.Parameters());
+        toJson.transform(
+                new Context.Builder().build(),
+                getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/dsv/with-extras.csv"),
+                (UniReceiver<JsonNode>) results::add
+        );
+
+        assertFalse(results.remove().has("__extras__"));
+        assertEquals("[\"5\"]", results.remove().get("__extras__").toString());
+        assertEquals("[\"6\",\"7\"]", results.remove().get("__extras__").toString());
     }
 }
