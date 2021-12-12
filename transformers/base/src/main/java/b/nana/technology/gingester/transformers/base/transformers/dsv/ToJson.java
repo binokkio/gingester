@@ -24,7 +24,19 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
 
         CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
         csvSchemaBuilder.setColumnSeparator(parameters.delimiter);
-        csvSchemaBuilder.setQuoteChar(parameters.quote);
+
+        if (parameters.quote != null) {
+            csvSchemaBuilder.setQuoteChar(parameters.quote);
+        } else {
+            csvSchemaBuilder.disableQuoteChar();
+        }
+
+        if (parameters.escape != null) {
+            csvSchemaBuilder.setEscapeChar(parameters.escape);
+        } else {
+            csvSchemaBuilder.disableEscapeChar();
+        }
+
         if (parameters.columnNames != null) {
             csvSchema = csvSchemaBuilder.addColumns(parameters.columnNames, CsvSchema.ColumnType.STRING).build();
         } else {
@@ -53,7 +65,8 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
 
     public static class Parameters {
         public char delimiter = ',';
-        public char quote = '"';
+        public Character quote = '"';
+        public Character escape;
         public List<String> columnNames;
     }
 }
