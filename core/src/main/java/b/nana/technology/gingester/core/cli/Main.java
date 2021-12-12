@@ -55,8 +55,8 @@ public final class Main {
                     break_ = true;
                     break;
 
-                case "-pc":
-                case "--print-config":
+                case "-pj":
+                case "--print-json":
                     printConfig = true;
                     break;
 
