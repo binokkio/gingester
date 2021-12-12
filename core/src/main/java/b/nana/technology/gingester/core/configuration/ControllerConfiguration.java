@@ -12,8 +12,8 @@ public final class ControllerConfiguration<I, O> {
     private String id;
     private Transformer<I, O> transformer;
     private Integer maxWorkers;
-    private Integer maxBatchSize;
     private Integer maxQueueSize;
+    private Integer maxBatchSize;
     private List<String> links = Collections.emptyList();
     private List<String> syncs = Collections.emptyList();
     private List<String> excepts = Collections.emptyList();
