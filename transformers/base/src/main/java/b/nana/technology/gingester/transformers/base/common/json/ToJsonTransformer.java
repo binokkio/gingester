@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.base.common.json;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,15 @@ public abstract class ToJsonTransformer<I> implements Transformer<I, JsonNode> {
     }
 
     public static class Parameters {
+
         public List<JsonReadFeature> features = Collections.emptyList();
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(List<JsonReadFeature> features) {
+            this.features = features;
+        }
     }
 }

@@ -65,15 +65,15 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
         MappingIterator<MultiMap> iterator = objectReader.readValues(in);
         while (iterator.hasNext()) {
             MultiMap multiMap = iterator.next();
-            ObjectNode objectNode = objectMapper.valueToTree(multiMap);
-            if (extras != null && objectNode.path(extras).isValueNode()) {
+            ObjectNode result = objectMapper.valueToTree(multiMap);
+            if (extras != null && result.path(extras).isValueNode()) {
                 ArrayNode arrayNode = objectMapper.createArrayNode();
-                arrayNode.add(objectNode.get(extras));
-                objectNode.set(extras, arrayNode);
+                arrayNode.add(result.get(extras));
+                result.set(extras, arrayNode);
             }
             out.accept(
                     context.stash("description", counter++),
-                    objectNode
+                    result
             );
         }
     }
