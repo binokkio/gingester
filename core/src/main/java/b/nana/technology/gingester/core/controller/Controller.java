@@ -1,15 +1,18 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,9 +25,9 @@ public final class Controller<I, O> {
     final Phaser phaser;
 
     final boolean async;
-    private final int maxBatchSize;
-    private final int maxQueueSize;
     private final int maxWorkers;
+    private final int maxQueueSize;
+    private final int maxBatchSize;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links;
@@ -56,9 +59,9 @@ public final class Controller<I, O> {
         id = configuration.getId();
         transformer = configuration.getTransformer();
         async = configuration.getMaxWorkers().orElse(0) > 0;
-        maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
-        maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxWorkers = configuration.getMaxWorkers().orElse(1);
+        maxQueueSize = configuration.getMaxQueueSize().orElse(100);
+        maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
@@ -84,6 +87,30 @@ public final class Controller<I, O> {
         links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
         excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
         configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
+    }
+
+    public Class<I> getInputType() {
+        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
+        return (Class<I>) types[0];
+    }
+
+    public Class<O> getOutputType() {
+        if (transformer.getClass().getAnnotation(Passthrough.class) == null) {
+            Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
+            return (Class<O>) types[1];
+        } else {
+            List<Class<?>> actualInputTypes = new ArrayList<>();
+            gingester.getControllers().stream()
+                    .filter(c -> c.links.containsKey(id))
+                    .map(Controller::getOutputType)
+                    .forEach(actualInputTypes::add);
+            if (isExceptionHandler) actualInputTypes.add(Exception.class);
+            AtomicReference<Class<?>> pointer = new AtomicReference<>(actualInputTypes.get(0));
+            while (actualInputTypes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
+                pointer.set(pointer.get().getSuperclass());
+            }
+            return (Class<O>) pointer.get();
+        }
     }
 
     public void discoverIncoming() {
@@ -248,8 +275,7 @@ public final class Controller<I, O> {
 
     public void transform(Batch<I> batch) {
 
-        if (maxBatchSize == 1) {
-            // no batch optimizations possible, not tracking batch duration
+        if (maxBatchSize == 1 || batch.getSize() != batchSize) {
             for (Item<I> item : batch) {
                 try {
                     transformer.transform(item.getContext(), item.getValue(), receiver);
@@ -318,8 +344,8 @@ public final class Controller<I, O> {
         transformer = null;
         phaser = null;
         async = false;
-        maxQueueSize = 0;
         maxWorkers = 0;
+        maxQueueSize = 0;
         maxBatchSize = 0;
         report = false;
         delt = null;

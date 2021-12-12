@@ -47,7 +47,8 @@ public final class Keycloak implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst().orElseThrow();
+        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst()
+                .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
 
         Cookie cookie = (Cookie) context.fetch("http", "request", "cookies", cookieName)
                 .findFirst()

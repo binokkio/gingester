@@ -11,39 +11,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Names(1)
 @Passthrough
-public final class Monkey implements Transformer<Object, Object> {
+public final class Repeat implements Transformer<Object, Object> {
 
-    private final int interval;
-    private final AtomicInteger counter = new AtomicInteger();
+    private final int times;
 
-    public Monkey(Parameters parameters) {
-        interval = parameters.interval;
+    public Repeat(Parameters parameters) {
+        times = parameters.times;
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-
-        if (counter.incrementAndGet() % interval == 0) {
-            throw new Bananas();
+    public void transform(Context context, Object in, Receiver<Object> out) throws InterruptedException {
+        for (int i = 0; i < times; i++) {
+            if (Thread.interrupted()) throw new InterruptedException();
+            out.accept(context.stash("description", i), in);
         }
-
-        out.accept(context, in);
     }
 
     public static class Parameters {
 
-        public int interval = 2;
+        public int times = 2;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(int interval) {
-            this.interval = interval;
+        public Parameters(int times) {
+            this.times = times;
         }
-    }
-
-    public static class Bananas extends RuntimeException {
-
     }
 }

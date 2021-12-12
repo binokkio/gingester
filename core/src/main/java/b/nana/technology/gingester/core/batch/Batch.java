@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.batch;
 import b.nana.technology.gingester.core.controller.Context;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -47,5 +48,4 @@ public final class Batch<T> implements Iterable<Item<T>> {
     public Stream<Item<T>> stream() {
         return values.stream();
     }
-
 }

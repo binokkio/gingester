@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Server implements Transformer<Object, InputStream> {
 
@@ -119,7 +120,8 @@ public final class Server implements Transformer<Object, InputStream> {
                 }
 
                 httpStash.put("response", Map.of(
-                        "servlet", response
+                        "servlet", response,
+                        "handled", new AtomicBoolean()
                 ));
 
                 Context.Builder contextBuilder = context.stash(Map.of(

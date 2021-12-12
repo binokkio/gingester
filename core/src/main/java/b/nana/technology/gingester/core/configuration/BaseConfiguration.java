@@ -5,17 +5,17 @@ import java.util.Optional;
 
 public abstract class BaseConfiguration<T extends BaseConfiguration<T>> {
 
-    private Integer maxBatchSize;
-    private Integer maxQueueSize;
     private Integer maxWorkers;
+    private Integer maxQueueSize;
+    private Integer maxBatchSize;
     private List<String> links;
     private List<String> syncs;
     private List<String> excepts;
 
 
 
-    public T maxBatchSize(Integer maxBatchSize) {
-        this.maxBatchSize = maxBatchSize;
+    public T maxWorkers(Integer maxWorkers) {
+        this.maxWorkers = maxWorkers;
         return (T) this;
     }
 
@@ -24,8 +24,8 @@ public abstract class BaseConfiguration<T extends BaseConfiguration<T>> {
         return (T) this;
     }
 
-    public T maxWorkers(Integer maxWorkers) {
-        this.maxWorkers = maxWorkers;
+    public T maxBatchSize(Integer maxBatchSize) {
+        this.maxBatchSize = maxBatchSize;
         return (T) this;
     }
 
@@ -46,16 +46,16 @@ public abstract class BaseConfiguration<T extends BaseConfiguration<T>> {
 
 
 
-    public Optional<Integer> getMaxBatchSize() {
-        return Optional.ofNullable(maxBatchSize);
+    public Optional<Integer> getMaxWorkers() {
+        return Optional.ofNullable(maxWorkers);
     }
 
     public Optional<Integer> getMaxQueueSize() {
         return Optional.ofNullable(maxQueueSize);
     }
 
-    public Optional<Integer> getMaxWorkers() {
-        return Optional.ofNullable(maxWorkers);
+    public Optional<Integer> getMaxBatchSize() {
+        return Optional.ofNullable(maxBatchSize);
     }
 
     public Optional<List<String>> getLinks() {

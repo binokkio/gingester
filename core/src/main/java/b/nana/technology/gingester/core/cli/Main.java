@@ -8,12 +8,10 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -57,8 +55,8 @@ public final class Main {
                     break_ = true;
                     break;
 
-                case "-pc":
-                case "--print-config":
+                case "-pj":
+                case "--print-json":
                     printConfig = true;
                     break;
 
@@ -67,18 +65,33 @@ public final class Main {
                     configuration.report = Integer.parseInt(args[++i]);
                     break;
 
-                case "-cc":
-                case "--cli-config":
+                case "-cf":
+                case "--cli-file":
                     try {
-                        GingesterConfiguration append = parseArgs(CliParser.parse(Files.readString(Paths.get(args[++i]))));
-                        configuration.append(append);
+                        args = splice(args, CliParser.parse(Files.readString(Paths.get(args[++i]))), i + 1);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
                     break;
 
-                case "-jc":
-                case "--json-config":
+                case "-cr":
+                case "--cli-resource":
+                    try {
+                        String resource = args[++i];
+                        InputStream resourceStream = Stream.of(resource, "/" + resource, "/gingester/" + resource)
+                                .flatMap(s -> Stream.of(s, s + ".gcli"))
+                                .map(Main.class::getResourceAsStream)
+                                .filter(Objects::nonNull)
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
+                        args = splice(args, CliParser.parse(new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8)), i + 1);
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException(e);  // TODO
+                    }
+                    break;
+
+                case "-jf":
+                case "--json-file":
                     try {
                         GingesterConfiguration append = GingesterConfiguration.fromJson(Files.newInputStream(Paths.get(args[++i])));
                         configuration.append(append);
@@ -87,8 +100,8 @@ public final class Main {
                     }
                     break;
 
-                case "-rc":
-                case "--resource-config":
+                case "-jr":
+                case "--json-resource":
                     try {
                         String resource = args[++i];
                         InputStream resourceStream = Stream.of(resource, "/gingester/rc/" + resource, "/gingester/rc/" + resource + ".json")
@@ -160,8 +173,11 @@ public final class Main {
                         else transformer.transformer("Stash");
                     } else {
                         String next = args[++i];
-                        if (next.matches("\\d+")) {
-                            transformer.maxWorkers(Integer.parseInt(next));
+                        if (next.matches("[\\d.]+")) {
+                            String[] parts = next.split("\\.");
+                            if (parts.length > 0 && !parts[0].isEmpty()) transformer.maxWorkers(Integer.parseInt(parts[0]));
+                            if (parts.length > 1 && !parts[1].isEmpty()) transformer.maxQueueSize(Integer.parseInt(parts[1]));
+                            if (parts.length > 2 && !parts[2].isEmpty()) transformer.maxBatchSize(Integer.parseInt(parts[2]));
                             next = args[++i];
                         }
                         String[] parts = next.split(":");
@@ -226,5 +242,13 @@ public final class Main {
         System.out.println("\nAvailable transformers:\n");
         TransformerFactory.getTransformerHelps().forEach(help ->
                 System.out.println("    " + help));
+    }
+
+    private static String[] splice(String[] target, String[] items, int index) {
+        String[] result = new String[target.length + items.length];
+        System.arraycopy(target, 0, result, 0, index);
+        System.arraycopy(items, 0, result, index, items.length);
+        System.arraycopy(target, index, result, index + items.length, target.length - index);
+        return result;
     }
 }

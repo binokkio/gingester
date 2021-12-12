@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.index;
 
 import b.nana.technology.gingester.core.Gingester;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -18,10 +17,10 @@ class IndexTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t A:String.Create '{count:3,template:\"Hello, World\"}' " +
+                "-t A:String.Create '\"Hello, World\"' -t Repeat 3 " +
                 "-t B:String.Create 'Hello, World ${description}!' " +
                 "-s " +
-                "-t String.Create ${A.description} " +
+                "-t String.Create ${Repeat.description} " +
                 "-t Index '{preserveInsertOrder:true}' " +
                 "-t Index.Stream " +
                 "-s part1 " +

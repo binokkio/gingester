@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +48,9 @@ public final class GingesterConfiguration {
     public String toJson() {
         try {
             JsonNode tree = OBJECT_MAPPER.valueToTree(this);
-            ArrayNode transformers = (ArrayNode) tree.get("transformers");
+            ArrayNode transformers = tree.get("transformers").isArray() ?
+                    (ArrayNode) tree.get("transformers") :
+                    JsonNodeFactory.instance.arrayNode().add(tree.get("transformers"));
             for (int i = 0; i < transformers.size(); i++) {
                 if (transformers.get(i).size() == 1) {
                     transformers.set(i, transformers.get(i).get("transformer"));

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
+import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.transformers.base.common.json.ToJsonTransformer;
@@ -7,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.InputStream;
 
+@Pure
 public final class ToJson extends ToJsonTransformer<InputStream> {
 
     public ToJson(ToJsonTransformer.Parameters parameters) {
