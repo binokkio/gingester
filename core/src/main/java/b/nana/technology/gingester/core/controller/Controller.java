@@ -275,8 +275,7 @@ public final class Controller<I, O> {
 
     public void transform(Batch<I> batch) {
 
-        if (maxBatchSize == 1) {
-            // no batch optimizations possible, not tracking batch duration
+        if (maxBatchSize == 1 || batch.getSize() != batchSize) {
             for (Item<I> item : batch) {
                 try {
                     transformer.transform(item.getContext(), item.getValue(), receiver);
