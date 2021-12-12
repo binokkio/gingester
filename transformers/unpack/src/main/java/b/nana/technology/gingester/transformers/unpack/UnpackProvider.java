@@ -11,6 +11,7 @@ public final class UnpackProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                Compress.class,
                 Pack.class,
                 Unpack.class
         );

@@ -348,6 +348,7 @@ public final class Gingester {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
                     String id = getId(new TransformerConfiguration().transformer(transformer));
+                    transformerConfigurations.put(id, null);  // TODO adding id to prevent id collisions for bridge transformers
 
                     ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
                             .id(id)
