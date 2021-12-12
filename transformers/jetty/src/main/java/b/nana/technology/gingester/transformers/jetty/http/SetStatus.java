@@ -17,8 +17,8 @@ public final class SetStatus implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
-        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst().orElseThrow(
-                () -> new IllegalStateException("Context did not contain HttpServletResponse"));
+        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst()
+                .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
 
         response.setStatus(status);
 
