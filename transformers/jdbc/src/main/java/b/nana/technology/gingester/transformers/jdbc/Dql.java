@@ -60,14 +60,14 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
     @Override
     public void transform(Context context, Object in, Receiver<Map<String, Map<String, ?>>> out) throws Exception {
         try (ResultSet resultSet = dqlStatement.execute(context)) {
-            while (resultSet.next()) {
+            for (long i = 0; resultSet.next(); i++) {
                 Map<String, Map<String, ?>> result = new HashMap<>();
                 resultStructure.forEach((tableName, columns) -> {
                     Map<String, Object> table = new HashMap<>();
                     result.put(tableName, table);
                     columns.forEach((index, name) -> table.put(name, getColumnValue(resultSet, index)));
                 });
-                out.accept(context, result);
+                out.accept(context.stash("description", dql.statement + " :: " + i), result);
             }
         }
     }
