@@ -18,14 +18,11 @@ class CreateTest {
 
         Create.Parameters parameters = new Create.Parameters();
         parameters.template = "Hello, World!";
-        parameters.count = 3;
 
         Create create = new Create(parameters);
         create.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
 
-        assertEquals(3, result.size());
-        assertEquals("Hello, World!", result.remove());
-        assertEquals("Hello, World!", result.remove());
+        assertEquals(1, result.size());
         assertEquals("Hello, World!", result.remove());
     }
 
@@ -36,14 +33,11 @@ class CreateTest {
 
         Create.Parameters parameters = new Create.Parameters();
         parameters.template = "Hello, ${target}!";
-        parameters.count = 3;
 
         Create create = new Create(parameters);
         create.transform(new Context.Builder().stash("target", "World").build(), null, (UniReceiver<String>) result::add);
 
-        assertEquals(3, result.size());
-        assertEquals("Hello, World!", result.remove());
-        assertEquals("Hello, World!", result.remove());
+        assertEquals(1, result.size());
         assertEquals("Hello, World!", result.remove());
     }
 }

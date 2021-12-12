@@ -8,24 +8,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public final class Create implements Transformer<Object, JsonNode> {
 
-    private final int count;
     private final JsonNode payload;
 
     public Create(Parameters parameters) {
-        count = parameters.count;
         payload = parameters.payload;
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<JsonNode> out) throws Exception {
-        for (int i = 0; i < count; i++) {
-            out.accept(context.stash("description", count), payload);
-        }
+        out.accept(context, payload);
     }
 
     public static class Parameters {
 
-        public int count = 1;
         public JsonNode payload;
 
         @JsonCreator
@@ -33,12 +28,7 @@ public final class Create implements Transformer<Object, JsonNode> {
 
         @JsonCreator
         public Parameters(JsonNode payload) {
-            if (payload.size() == 2 && payload.has("count") && payload.has("payload")) {
-                this.count = payload.get("count").asInt();
-                this.payload = payload.get("payload");
-            } else {
-                this.payload = payload;
-            }
+            this.payload = payload;
         }
     }
 }

@@ -16,11 +16,9 @@ import java.util.stream.Stream;
 
 public final class Create implements Transformer<Object, String> {
 
-    private final int count;
     private final Context.Template template;
 
     public Create(Parameters parameters) {
-        count = parameters.count;
         template = Context.newTemplate(getTemplateString(parameters.template, parameters.interpretation));
     }
 
@@ -48,19 +46,11 @@ public final class Create implements Transformer<Object, String> {
 
     @Override
     public void transform(Context context, Object in, Receiver<String> out) throws InterruptedException {
-        for (int i = 0; i < count; i++) {
-            if (Thread.interrupted()) throw new InterruptedException();
-            out.accept(
-                    context.stash("description", i),
-                    template.render(context)
-            );
-        }
+        out.accept(context, template.render(context));
     }
-
 
     public static class Parameters {
 
-        public int count = 1;
         public String template;
         public TemplateParameterInterpretation interpretation = TemplateParameterInterpretation.AUTO;
 

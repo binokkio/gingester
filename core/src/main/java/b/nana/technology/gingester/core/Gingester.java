@@ -355,8 +355,9 @@ public final class Gingester {
                             .transformer(transformer)
                             .links(Collections.singletonList(downstream.id));
 
-                    if (setupControls.get(pointer.id).getRequireOutgoingAsync()) {
-                        configuration.maxWorkers(1);  // TODO downstream could now be async unnecessarily
+                    // TODO this is a quick fix, downstream could now be async unnecessarily
+                    if (setupControls.get(pointer.id) != null && setupControls.get(pointer.id).getRequireOutgoingAsync()) {
+                        configuration.maxWorkers(1);
                     }
 
                     Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));

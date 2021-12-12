@@ -22,8 +22,9 @@ class PackTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.cli(
-                "-sft String.Create \"{template:'Hello, World!',count:1000}\" " +
+        gingester.cli("" +
+                "-t String.Create 'Hello, World!' " +
+                "-sft Repeat 1000 " +
                 "-t String.ToBytes " +
                 "-stt Pack hello.txt " +
                 "-t Path.Write " + tempDir.resolve("result-${description}.tar.gz"));
@@ -56,9 +57,9 @@ class PackTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.cli(
-                "-sft Stash " +
-                "-t String.Create \"{template:'Hello, World!',count:1000}\" " +
+        gingester.cli("" +
+                "-sft String.Create 'Hello, World!' " +
+                "-t Repeat 1000 " +
                 "-t String.ToBytes " +
                 "-stt Pack hello-${description}.txt " +
                 "-t Path.Write " + tempDir.resolve("result.tar.gz"));
@@ -92,7 +93,8 @@ class PackTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t String.Create \"{template:'Hello, World!',count:1000}\" " +
+                "-t String.Create 'Hello, World!' " +
+                "-t Repeat 1000 " +
                 "-t String.ToBytes " +
                 "-t Pack hello-${description}.txt " +
                 "-t Path.Write " + tempDir.resolve("result.tar.gz"));
