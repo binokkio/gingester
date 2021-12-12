@@ -12,28 +12,20 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.Arrays;
+import java.io.*;
 import java.util.Collections;
 import java.util.zip.GZIPOutputStream;
 
 @Names(1)
-public final class Pack implements Transformer<byte[], Object> {
+public final class Pack implements Transformer<byte[], InputStream> {
 
     private final ContextMap<TarArchiveOutputStream> contextMap = new ContextMap<>();
     private final Context.Template entryTemplate;
     private final Compressor compressor;
-    private final String link;
-    private final String passthrough;
 
     public Pack(Parameters parameters) {
         entryTemplate = Context.newTemplate(parameters.entry);
         compressor = getCompressor(parameters.compression);
-        link = parameters.link;
-        passthrough = parameters.passthrough;
     }
 
     private Compressor getCompressor(String compression) {
@@ -61,28 +53,20 @@ public final class Pack implements Transformer<byte[], Object> {
     public void setup(SetupControls controls) {
         controls.syncs(Collections.singletonList("__seed__"));
         controls.requireOutgoingAsync();
-        if (passthrough != null) {
-            if (link == null) throw new IllegalStateException("Given `passthrough` but not `link`");
-            controls.links(Arrays.asList(link, passthrough));
-        }
     }
 
     @Override
-    public void prepare(Context context, Receiver<Object> out) throws Exception {
+    public void prepare(Context context, Receiver<InputStream> out) throws Exception {
         PipedOutputStream pipedOutputStream = new PipedOutputStream();
         PipedInputStream pipedInputStream = new PipedInputStream();
         pipedOutputStream.connect(pipedInputStream);
         TarArchiveOutputStream tar = new TarArchiveOutputStream(compressor.wrap(pipedOutputStream));
         contextMap.put(context, tar);
-        if (link != null) {
-            out.accept(context, pipedInputStream, link);
-        } else {
-            out.accept(context, pipedInputStream);
-        }
+        out.accept(context, pipedInputStream);
     }
 
     @Override
-    public void transform(Context context, byte[] in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, byte[] in, Receiver<InputStream> out) throws Exception {
         TarArchiveEntry entry = new TarArchiveEntry(entryTemplate.render(context));
         entry.setSize(in.length);
         contextMap.act(context, tar -> {
@@ -90,11 +74,10 @@ public final class Pack implements Transformer<byte[], Object> {
             tar.write(in);
             tar.closeArchiveEntry();
         });
-        if (passthrough != null) out.accept(context, in, passthrough);
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<InputStream> out) throws Exception {
         contextMap.remove(context).close();
     }
 
@@ -102,8 +85,6 @@ public final class Pack implements Transformer<byte[], Object> {
 
         public String entry;
         public String compression = "gz";
-        public String link;
-        public String passthrough;
 
         @JsonCreator
         public Parameters() {}
