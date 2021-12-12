@@ -32,14 +32,11 @@ General usage:
         link the previous transformer to the given links,
         it will not automatically link to the next transformer
 
-    -pc/--print-config
-        print the configuration resulting from this cli interaction instead of executing it
+    -pj/--print-json
+        print the json configuration resulting from this cli interaction instead of executing it
 
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
-
-    -rc/--resource-config </path/to/resource>
-        append json config from resource
 
     -s/--stash [<name>]
         stash value
@@ -53,9 +50,11 @@ General usage:
     -stt/--sync-to-transformer [<workers>] [<id>:]<name>[!] [<parameters>]
         equal to -t but syncs the transformer with those marked by -sf/-sft or the ingest-seed if there are no marks
 
-    -t/--transformer [<workers>] [<id>:]<name>[!] [<parameters>]
+    -t/--transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         add transformer to the pipeline
         provide [<workers>] to enable async execution for the transformer by the provided number of workers
+        provide [<queueSize>] to set the queue size for this transformer
+        provide [<maxBatchSize>] to limit the maximum batch size for this transformer
         provide [<id>] to be able to refer to this transformer by the provided id
         provide [!] to enable throughput reporting for the transformer
 
