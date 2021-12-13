@@ -19,7 +19,7 @@ final class IntFinishTracker implements FinishTracker {
 
     @Override
     public boolean acknowledge(Worker worker) {
-        acknowledged ^= worker.mask;
+        acknowledged |= worker.mask;
         return acknowledged == acknowledgedTarget;
     }
 

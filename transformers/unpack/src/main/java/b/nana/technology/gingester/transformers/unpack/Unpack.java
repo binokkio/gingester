@@ -15,6 +15,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 
+import java.io.FilterInputStream;
 import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -98,7 +99,10 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
                 }
             }
         } else {
-            out.accept(context.stash("description", descriptions.stream().skip(1).collect(Collectors.joining(" :: "))), in);
+            out.accept(
+                    context.stash("description", descriptions.stream().skip(1).collect(Collectors.joining(" :: "))),
+                    new NoCloseInputStream(in)
+            );
         }
     }
 
@@ -116,6 +120,18 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
         @JsonCreator
         public Parameters(String description) {
             this.description = description;
+        }
+    }
+
+    private static class NoCloseInputStream extends FilterInputStream {
+
+        protected NoCloseInputStream(InputStream in) {
+            super(in);
+        }
+
+        @Override
+        public void close() {
+            // ignore
         }
     }
 }
