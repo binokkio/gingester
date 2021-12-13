@@ -57,13 +57,23 @@ public class Internpret extends ToJsonTransformer<JsonNode> {
 
     // TODO this method is probably worth optimizing
     private JsonNode interpret(String string) {
-        if (string.isEmpty()) {
-            return JsonNodeFactory.instance.nullNode();
+        switch (string) {
+
+            case "":
+            case "null":
+                return JsonNodeFactory.instance.nullNode();
+
+            case "true": return JsonNodeFactory.instance.booleanNode(true);
+            case "false": return JsonNodeFactory.instance.booleanNode(false);
         }
-        try {
-            return getObjectReader().readTree(string);
-        } catch (JsonProcessingException e) {
-            return null;
+        char firstChar = string.charAt(0);
+        if (firstChar == '{' || firstChar == '[' || firstChar == '-' || Character.isDigit(firstChar)) {
+            try {
+                return getObjectReader().readTree(string);
+            } catch (JsonProcessingException e) {
+                return null;
+            }
         }
+        return null;
     }
 }
