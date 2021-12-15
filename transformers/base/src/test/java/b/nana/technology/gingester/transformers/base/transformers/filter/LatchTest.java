@@ -15,25 +15,23 @@ class LatchTest {
     @Test
     void test() throws Exception {
 
-        Latch latch = new Latch(new Latch.Parameters("foo"));
 
         Context seed = new Context.Builder().build();
+
+        Latch latch = new Latch();
         latch.prepare(seed, null);
 
-        Context contextA = seed.stash("foo", "a").build();
-        Context contextB = seed.stash("foo", "b").build();
-
         AtomicReference<Object> one = new AtomicReference<>();
-        latch.transform(contextA, "Hello, World 1!", (UniReceiver<Object>) one::set);
+        latch.transform(seed, "Hello, World!", (UniReceiver<Object>) one::set);
 
         AtomicReference<Object> two = new AtomicReference<>();
-        latch.transform(contextA, "Hello, World 2!", (UniReceiver<Object>) two::set);
+        latch.transform(seed, "Hello, World!", (UniReceiver<Object>) two::set);
 
         AtomicReference<Object> three = new AtomicReference<>();
-        latch.transform(contextB, "Hello, World 3!", (UniReceiver<Object>) three::set);
+        latch.transform(seed, "Hello, different World!", (UniReceiver<Object>) three::set);
 
-        assertEquals("Hello, World 1!", one.get());
+        assertEquals("Hello, World!", one.get());
         assertNull(two.get());
-        assertEquals("Hello, World 3!", three.get());
+        assertEquals("Hello, different World!", three.get());
     }
 }
