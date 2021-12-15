@@ -33,6 +33,17 @@ public final class TransformerFactory {
             .filter(c -> c.getAnnotation(Pure.class) != null)
             .collect(Collectors.toSet());
 
+    private static final Map<String, String> CASE_HINTS = ServiceLoader.load(Provider.class)
+            .stream()
+            .map(ServiceLoader.Provider::get)
+            .map(Provider::getCaseHints)
+            .flatMap(map -> map.entrySet().stream())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                    (a, b) -> {
+                        if (!a.equals(b)) throw new IllegalStateException("Conflicting case hints: " + a + " and " + b);
+                        return a;
+                    }));
+
     private TransformerFactory() {}
 
     public static <I, O> Transformer<I, O> instance(String name) {
@@ -42,7 +53,7 @@ public final class TransformerFactory {
     public static <I, O> Transformer<I, O> instance(String name, JsonNode jsonParameters) {
 
         List<Class<? extends Transformer<?, ?>>> transformerClasses =
-                getTransformersByName(name.toLowerCase(Locale.ENGLISH)).collect(Collectors.toList());
+                getTransformersByName(name).collect(Collectors.toList());
 
         if (transformerClasses.isEmpty()) {
             throw new IllegalArgumentException("No transformer named " + name);
@@ -147,7 +158,7 @@ public final class TransformerFactory {
     }
 
     private static Stream<Class<? extends Transformer<?, ?>>> getTransformersByName(String query) {
-        return TRANSFORMERS.stream().filter(c -> getNames(c).collect(Collectors.toList()).stream().anyMatch(name -> name.toLowerCase(Locale.ENGLISH).endsWith(query)));
+        return TRANSFORMERS.stream().filter(c -> getNames(c).anyMatch(name -> name.endsWith(query)));
     }
 
     private static Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
@@ -188,8 +199,7 @@ public final class TransformerFactory {
                 .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } );
     }
 
-    // TODO should be delegated to providers
     private static String camelCase(String name) {
-        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        return CASE_HINTS.getOrDefault(name, Character.toUpperCase(name.charAt(0)) + name.substring(1));
     }
 }

@@ -23,11 +23,11 @@ class PackTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t String.Create 'Hello, World!' " +
+                "-t StringCreate 'Hello, World!' " +
                 "-sft Repeat 1000 " +
-                "-t String.ToBytes " +
+                "-t StringToBytes " +
                 "-stt Pack hello.txt " +
-                "-t Path.Write " + tempDir.resolve("result-${description}.tar.gz"));
+                "-t PathWrite " + tempDir.resolve("result-${description}.tar.gz"));
 
         gingester.run();
 
@@ -58,11 +58,11 @@ class PackTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-sft String.Create 'Hello, World!' " +
+                "-sft StringCreate 'Hello, World!' " +
                 "-t Repeat 1000 " +
-                "-t String.ToBytes " +
+                "-t StringToBytes " +
                 "-stt Pack hello-${description}.txt " +
-                "-t Path.Write " + tempDir.resolve("result.tar.gz"));
+                "-t PathWrite " + tempDir.resolve("result.tar.gz"));
 
         gingester.run();
 
@@ -93,11 +93,11 @@ class PackTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t String.Create 'Hello, World!' " +
+                "-t StringCreate 'Hello, World!' " +
                 "-t Repeat 1000 " +
-                "-t String.ToBytes " +
+                "-t StringToBytes " +
                 "-t Pack hello-${description}.txt " +
-                "-t Path.Write " + tempDir.resolve("result.tar.gz"));
+                "-t PathWrite " + tempDir.resolve("result.tar.gz"));
 
         gingester.run();
 

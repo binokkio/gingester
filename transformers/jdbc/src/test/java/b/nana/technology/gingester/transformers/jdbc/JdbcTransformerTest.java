@@ -29,7 +29,7 @@ class JdbcTransformerTest {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
         Gingester reader = new Gingester();
-        reader.cli("-t Jdbc.Dql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
+        reader.cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
         reader.add(result::set);
         reader.run();
 
@@ -49,13 +49,13 @@ class JdbcTransformerTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Json.Create \"{a:123,b:true,c:'Hello, World!'}\" " +
+                "-t JsonCreate \"{a:123,b:true,c:'Hello, World!'}\" " +
                 "-s in " +
-                "-t Jdbc.Dml \"{" +
+                "-t JdbcDml \"{" +
                 "   ddl:'CREATE TABLE test (a INTEGER, b BOOLEAN, c TEXT)'," +
                 "   dml:{statement:'INSERT INTO test VALUES (?, ?, ?)',parameters:['in.a','in.b','in.c']}" +
                 "}\" " +
-                "-t Jdbc.Dql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
+                "-t JdbcDql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
         gingester.add(result::set);
 

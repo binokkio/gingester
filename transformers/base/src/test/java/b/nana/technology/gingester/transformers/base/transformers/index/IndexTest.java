@@ -17,17 +17,17 @@ class IndexTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t A:String.Create '\"Hello, World\"' -t Repeat 3 " +
-                "-t B:String.Create 'Hello, World ${description}!' " +
+                "-t A:StringCreate '\"Hello, World\"' -t Repeat 3 " +
+                "-t B:StringCreate 'Hello, World ${description}!' " +
                 "-s " +
-                "-t String.Create ${Repeat.description} " +
+                "-t StringCreate ${Repeat.description} " +
                 "-t Index '{preserveInsertOrder:true}' " +
-                "-t Index.Stream " +
+                "-t IndexStream " +
                 "-s part1 " +
-                "-t String.Create '\"0\"' " +
+                "-t StringCreate '\"0\"' " +
                 "-t Lookup " +
                 "-s part2 " +
-                "-t String.Create '${part1} - ${part2}'");
+                "-t StringCreate '${part1} - ${part2}'");
 
         gingester.add(results::add);
 

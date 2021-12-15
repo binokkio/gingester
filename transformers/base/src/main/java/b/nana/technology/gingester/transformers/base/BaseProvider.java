@@ -5,8 +5,17 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public final class BaseProvider implements Provider {
+
+    @Override
+    public Map<String, String> getCaseHints() {
+        return Map.of(
+                "bigdecimal", "BigDecimal",
+                "inputstream", "InputStream"
+        );
+    }
 
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {

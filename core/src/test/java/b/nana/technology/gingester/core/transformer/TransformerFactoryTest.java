@@ -14,6 +14,6 @@ class TransformerFactoryTest {
                 IllegalArgumentException.class,
                 () -> TransformerFactory.instance("NameCollision"));
 
-        assertEquals("Multiple transformers named NameCollision: A.NameCollision, B.NameCollision", e.getMessage());
+        assertEquals("Multiple transformers named NameCollision: ANameCollision, BNameCollision", e.getMessage());
     }
 }

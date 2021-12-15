@@ -18,9 +18,9 @@ class TestStatistics {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Resource.Open /basic.csv " +
-                "-t Dsv.ToJson " +
-                "-t Json.Statistics");
+                "-t ResourceOpen /basic.csv " +
+                "-t DsvToJson " +
+                "-t JsonStatistics");
 
         gingester.add(result::set);
         gingester.run();
@@ -72,10 +72,10 @@ class TestStatistics {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-sft Resource.Open /basic.ndjson " +
-                "-t InputStream.Split " +
-                "-t InputStream.ToJson " +
-                "-stt Json.Statistics");  // -sft and -stt are unnecessary but here to add some variation to the tests
+                "-sft ResourceOpen /basic.ndjson " +
+                "-t InputStreamSplit " +
+                "-t InputStreamToJson " +
+                "-stt JsonStatistics");  // -sft and -stt are unnecessary but here to add some variation to the tests
 
         gingester.add(result::set);
         gingester.run();
@@ -92,10 +92,10 @@ class TestStatistics {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Resource.Open /basic.ndjson " +
-                "-t InputStream.Split " +
-                "-t InputStream.ToJson " +
-                "-t Json.Statistics {array:{arrays:'indexed'}}");
+                "-t ResourceOpen /basic.ndjson " +
+                "-t InputStreamSplit " +
+                "-t InputStreamToJson " +
+                "-t JsonStatistics {array:{arrays:'indexed'}}");
 
         gingester.add(result::set);
         gingester.run();
@@ -113,10 +113,10 @@ class TestStatistics {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Resource.Open /nulls.ndjson " +
-                "-t InputStream.Split " +  // \"s are unnecessary but here to add some variation to the tests
-                "-t InputStream.ToJson " +
-                "-t Json.Statistics");
+                "-t ResourceOpen /nulls.ndjson " +
+                "-t InputStreamSplit " +  // \"s are unnecessary but here to add some variation to the tests
+                "-t InputStreamToJson " +
+                "-t JsonStatistics");
 
         gingester.add(result::set);
         gingester.run();
