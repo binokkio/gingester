@@ -7,8 +7,6 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 @Names(1)
 @Passthrough
 public final class Repeat implements Transformer<Object, Object> {
