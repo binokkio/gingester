@@ -13,6 +13,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public final class TransformerFactory {
@@ -41,7 +42,7 @@ public final class TransformerFactory {
     public static <I, O> Transformer<I, O> instance(String name, JsonNode jsonParameters) {
 
         List<Class<? extends Transformer<?, ?>>> transformerClasses =
-                getTransformersByName(name.toLowerCase(Locale.ENGLISH));
+                getTransformersByName(name.toLowerCase(Locale.ENGLISH)).collect(Collectors.toList());
 
         if (transformerClasses.isEmpty()) {
             throw new IllegalArgumentException("No transformer named " + name);
@@ -139,16 +140,26 @@ public final class TransformerFactory {
         return getUniqueName((Class<? extends Transformer<?, ?>>) transformer.getClass());
     }
 
-    // TODO should take some sort of minimum name parts from transformer annotation into account
     public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
+        return getNames(transformer)
+                .filter(name -> getTransformersByName(name).skip(1).findFirst().isEmpty())
+                .findFirst().orElseThrow(() -> new IllegalStateException("No unique name for " + transformer.getCanonicalName()));
+    }
+
+    private static Stream<Class<? extends Transformer<?, ?>>> getTransformersByName(String query) {
+        return TRANSFORMERS.stream().filter(c -> getNames(c).collect(Collectors.toList()).stream().anyMatch(name -> name.toLowerCase(Locale.ENGLISH).endsWith(query)));
+    }
+
+    private static Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
+        int[] nameFormat = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : new int[] { 2, 1 };
+        if (nameFormat.length == 0) throw new IllegalArgumentException("Empty @Name on " + transformer.getCanonicalName());
         String[] parts = transformer.getCanonicalName().split("\\.");
-        String name = parts[parts.length - 1];
-        int names = 1;
-        int minNames = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : 2;
-        while (names < minNames || getTransformersByName(name).size() > 1) {
-            name = camelCase(parts[parts.length - 1 - names++]) + "." + name;
-        }
-        return name;
+        String name = Arrays.stream(nameFormat).mapToObj(i -> camelCase(parts[parts.length - i])).collect(Collectors.joining());
+        StringBuilder builder = new StringBuilder(name);
+        return Stream.concat(Stream.of(name), IntStream.of(Arrays.stream(nameFormat).max().orElseThrow() + 1, parts.length - 1)
+                .mapToObj(i -> parts[parts.length - i])
+                .filter(s -> !s.equalsIgnoreCase("transformers"))
+                .map(s -> builder.insert(0, camelCase(s)).toString()));
     }
 
     public static <I, O> Stream<String> getTransformerHelps() {
@@ -175,20 +186,6 @@ public final class TransformerFactory {
                 .map(c -> (Constructor<? extends Transformer<I, O>>) c)
                 .filter(method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].getSimpleName().equals("Parameters"))
                 .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } );
-    }
-
-    private static List<Class<? extends Transformer<?, ?>>> getTransformersByName(String name) {
-        String[] queryParts = name.toLowerCase(Locale.ENGLISH).split("\\.");
-        return TRANSFORMERS.stream()
-                .filter(c -> {
-                    String[] nameParts = c.getCanonicalName().toLowerCase(Locale.ENGLISH).split("\\.");
-                    if (queryParts.length > nameParts.length) return false;
-                    for (int i = 1; i <= queryParts.length; i++) {
-                        if (!queryParts[queryParts.length - i].equals(nameParts[nameParts.length - i])) return false;
-                    }
-                    return true;
-                })
-                .collect(Collectors.toList());
     }
 
     // TODO should be delegated to providers
