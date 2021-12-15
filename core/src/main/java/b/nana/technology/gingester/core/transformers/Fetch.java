@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public final class Fetch implements Transformer<Object, Object> {
 
     public static String[] parseStashName(String name) {
-        return name.split("/");  // TODO support escape sequence
+        return name.split("\\.");  // TODO support escape sequence
     }
 
     private final String[] name;

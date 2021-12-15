@@ -39,7 +39,7 @@ class FetchTest {
                 )
                 .build();
 
-        Fetch fetch = new Fetch(new Fetch.Parameters("hello/world"));
+        Fetch fetch = new Fetch(new Fetch.Parameters("hello.world"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);
 
         assertEquals("Hello, World!", result.get());

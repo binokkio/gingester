@@ -17,9 +17,9 @@
         "dml": {
           "statement": "INSERT INTO test VALUES (?, ?, ?)",
           "parameters": [
-            "stash/a",
-            "stash/b",
-            "stash/c"
+            "stash.a",
+            "stash.b",
+            "stash.c"
           ]
         }
       }

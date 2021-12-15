@@ -53,7 +53,7 @@ class JdbcTransformerTest {
                 "-s in " +
                 "-t Jdbc.Dml \"{" +
                 "   ddl:'CREATE TABLE test (a INTEGER, b BOOLEAN, c TEXT)'," +
-                "   dml:{statement:'INSERT INTO test VALUES (?, ?, ?)',parameters:['in/a','in/b','in/c']}" +
+                "   dml:{statement:'INSERT INTO test VALUES (?, ?, ?)',parameters:['in.a','in.b','in.c']}" +
                 "}\" " +
                 "-t Jdbc.Dql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
