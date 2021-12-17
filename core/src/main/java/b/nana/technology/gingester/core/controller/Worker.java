@@ -93,6 +93,7 @@ public final class Worker extends Thread {
             if (finishTracker.isFullyIndicated()) {
                 if (finishTracker.acknowledge(this)) {
                     iterator.remove();
+                    if (controller.isLeave) context.controller.receiver.onFinishSignalReachedLeave(context);
                     controller.queue.add(() -> {  // not checking max queue size, worker is adding to their own queue
                         if (context.controller.syncs.contains(controller)) {
                             controller.finish(context);

@@ -9,7 +9,9 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.util.Collections;
 
 @Names(1)
-public final class OnFinish implements Transformer<Object, Void> {
+public final class OnFinish implements Transformer<Object, Object> {
+
+    private static final String FINISH_SIGNAL = "finish signal";
 
     @Override
     public void setup(SetupControls controls) {
@@ -17,12 +19,12 @@ public final class OnFinish implements Transformer<Object, Void> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Void> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
     }
 
     @Override
-    public void finish(Context context, Receiver<Void> out) throws Exception {
-        out.accept(context, null);
+    public void finish(Context context, Receiver<Object> out) throws Exception {
+        out.accept(context, FINISH_SIGNAL);
     }
 }

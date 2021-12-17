@@ -29,7 +29,7 @@ public final class Controller<I, O> {
 
     final boolean async;
     private final int maxWorkers;
-    private final int maxQueueSize;
+    final int maxQueueSize;
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
@@ -40,6 +40,8 @@ public final class Controller<I, O> {
     final Set<Controller<?, ?>> indicates = new HashSet<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
+    int downstreamLeaves;
+    final boolean isLeave;
     public final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
@@ -48,7 +50,7 @@ public final class Controller<I, O> {
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
-    private final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
+    final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
     public final Counter delt;
@@ -68,6 +70,7 @@ public final class Controller<I, O> {
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
+        isLeave = configuration.getLinks().isEmpty() && configuration.getExcepts().isEmpty();
         isExceptionHandler = gingester.isExceptionHandler();
 
         links = configuration.getLinks().stream().collect(
@@ -164,6 +167,8 @@ public final class Controller<I, O> {
             }
             found = next;
         }
+
+        downstreamLeaves = (int) downstream.stream().filter(c -> c.isLeave).count();
     }
 
     public void discoverSyncs() {
@@ -187,9 +192,7 @@ public final class Controller<I, O> {
                         Set<Controller<?, ?>> downstreamCopy = new HashSet<>(controller.downstream);
                         downstreamCopy.add(controller);
                         downstreamCopy.retainAll(incoming);
-                        if (!downstreamCopy.isEmpty()) {
-                            syncedThrough.put(controller, downstreamCopy);
-                        }
+                        syncedThrough.put(controller, downstreamCopy);
                     }
                 }
             }
@@ -267,10 +270,9 @@ public final class Controller<I, O> {
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
         try {
-            // TODO this needs backpressure when called from the ControllerReceiver
             FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
             if (finishTracker.indicate(from)) {
-//                while (queue.size() >= maxQueueSize) queueNotFull.await();  // TODO deadlocks PackTest.testPackIndividually(), look into
+                // not checking if the queue is full, finish signals have their own backpressure system
                 queue.add((Worker.SyncJob) () -> {
                     finishTracker.indicate(this);
                     queueNotEmpty.signalAll();
@@ -384,6 +386,7 @@ public final class Controller<I, O> {
         acks = null;
         links = Collections.emptyMap();
         excepts = Collections.emptyMap();
+        isLeave = false;
         isExceptionHandler = false;
     }
 }
