@@ -24,8 +24,10 @@ public final class Remove implements Transformer<JsonNode, JsonNode> {
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
-        DocumentContext documentContext = JsonPath.parse(in, CONFIGURATION).delete(jsonPath);
-        out.accept(context, documentContext.json());
+        DocumentContext documentContext = JsonPath.parse(in, CONFIGURATION);
+        JsonNode result = documentContext.read(jsonPath);
+        documentContext.delete(jsonPath);
+        out.accept(context, result);
     }
 
     public static class Parameters {

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,49 +10,52 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RemoveTest {
 
     @Test
-    void testRemove() {
+    void testJsonRemoveOutputsRemovedJsonNode() {
+
+        Gingester gingester = new Gingester();
+        gingester.cli("" +
+                "-t JsonCreate \"{hello:'world a',bye:'world b'}\" " +
+                "-t JsonRemove $.bye");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
+        gingester.add(result::set);
+        gingester.run();
 
-        ObjectNode in = JsonNodeFactory.instance.objectNode();
-        in.put("hello", "world");
-        in.put("bye", "world");
+        assertEquals("world b", result.get().textValue());
+    }
 
-        new Remove(new Remove.Parameters("$.bye")).transform(
-                new Context.Builder().build(),
-                in,
-                (UniReceiver<JsonNode>) result::set
-        );
+    @Test
+    void testRemoveModifiesStashedInput() {
+
+        Gingester gingester = new Gingester();
+        gingester.cli("" +
+                "-t JsonCreate {hello:'world',bye:'world'} " +
+                "-s -t JsonRemove $.bye -f");
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+        gingester.add(result::set);
+        gingester.run();
 
         assertTrue(result.get().has("hello"));
         assertFalse(result.get().has("bye"));
     }
 
     @Test
-    void testRemoveNested() {
+    void testNested() {
+
+        Gingester gingester = new Gingester();
+        gingester.cli("" +
+                "-t JsonCreate \"{hello:'world',bye:'world',nested:{foo:123,bar:234}}\" " +
+                "-s -t JsonRemove $.nested.bar -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-
-        ObjectNode in = JsonNodeFactory.instance.objectNode();
-        in.put("hello", "world");
-        in.put("bye", "world");
-
-        ObjectNode nested = JsonNodeFactory.instance.objectNode();
-        in.set("nested", nested);
-        nested.put("foo", 123);
-        nested.put("bar", 234);
-
-        new Remove(new Remove.Parameters("$.nested.bar")).transform(
-                new Context.Builder().build(),
-                in,
-                (UniReceiver<JsonNode>) result::set
-        );
+        gingester.add(result::set);
+        gingester.run();
 
         assertTrue(result.get().has("hello"));
         assertTrue(result.get().has("bye"));
