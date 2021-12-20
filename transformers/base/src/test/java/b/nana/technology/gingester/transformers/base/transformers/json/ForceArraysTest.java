@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,5 +31,20 @@ class ForceArraysTest {
         assertTrue(results.remove().get("container").get("list").get("item").isArray());
         assertTrue(results.remove().get("container").get("list").get("item").isArray());
         assertTrue(results.remove().get("container").get("list").get("item").isArray());
+    }
+
+    @Test
+    void testForceArraysOnRoot() {
+
+        Gingester gingester = new Gingester();
+        gingester.cli("" +
+                "-t JsonCreate {hello:123} " +
+                "-t JsonForceArrays $");
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+        gingester.add(result::set);
+        gingester.run();
+
+        assertEquals(123, result.get().get(0).get("hello").intValue());
     }
 }

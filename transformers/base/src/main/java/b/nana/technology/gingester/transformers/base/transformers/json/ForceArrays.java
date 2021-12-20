@@ -41,25 +41,34 @@ public final class ForceArrays implements Transformer<JsonNode, JsonNode> {
             for (JsonNode result : results) {
                 String jsonPath = result.asText();
                 JsonPointer jsonPointer = JsonPointer.compile(jsonPathToPointer(jsonPath));
-                JsonNode container = in.at(jsonPointer.head());
-                if (container.isObject()) {
-                    String targetName = jsonPointer.last().toString().substring(1);
-                    JsonNode target = container.get(targetName);
-                    if (!target.isArray()) {
+                JsonPointer head = jsonPointer.head();
+                if (head == null) {
+                    if (!in.isArray()) {
                         ArrayNode wrapper = JsonNodeFactory.instance.arrayNode();
-                        wrapper.add(target);
-                        ((ObjectNode) container).set(targetName, wrapper);
-                    }
-                } else if (container.isArray()) {
-                    int targetIndex = Integer.parseInt(jsonPointer.last().toString().substring(1));
-                    JsonNode target = container.get(targetIndex);
-                    if (!target.isArray()) {
-                        ArrayNode wrapper = JsonNodeFactory.instance.arrayNode();
-                        wrapper.add(target);
-                        ((ArrayNode) container).set(targetIndex, wrapper);
+                        wrapper.add(in);
+                        in = wrapper;
                     }
                 } else {
-                    throw new IllegalStateException("Container is neither object nor array");
+                    JsonNode container = in.at(jsonPointer.head());
+                    if (container.isObject()) {
+                        String targetName = jsonPointer.last().toString().substring(1);
+                        JsonNode target = container.get(targetName);
+                        if (!target.isArray()) {
+                            ArrayNode wrapper = JsonNodeFactory.instance.arrayNode();
+                            wrapper.add(target);
+                            ((ObjectNode) container).set(targetName, wrapper);
+                        }
+                    } else if (container.isArray()) {
+                        int targetIndex = Integer.parseInt(jsonPointer.last().toString().substring(1));
+                        JsonNode target = container.get(targetIndex);
+                        if (!target.isArray()) {
+                            ArrayNode wrapper = JsonNodeFactory.instance.arrayNode();
+                            wrapper.add(target);
+                            ((ArrayNode) container).set(targetIndex, wrapper);
+                        }
+                    } else {
+                        throw new IllegalStateException("Container is neither object nor array");
+                    }
                 }
             }
         }
