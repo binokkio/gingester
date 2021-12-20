@@ -75,6 +75,8 @@ public final class Context implements Iterable<Context> {
                     for (String n : name) {
                         if (result instanceof Map) {
                             result = ((Map<?, ?>) result).get(n);
+                        } else if (result instanceof List) {
+                            result = ((List<?>) result).get(Integer.parseInt(n));
                         } else if (result instanceof JsonNode) {
                             JsonNode jsonNode = (JsonNode) result;
                             if (jsonNode.isObject()) {
@@ -84,8 +86,6 @@ public final class Context implements Iterable<Context> {
                             } else {
                                 result = null;
                             }
-                        } else if (result instanceof List) {
-                            result = ((List<?>) result).get(Integer.parseInt(n));
                         } else {
                             return null;
                         }

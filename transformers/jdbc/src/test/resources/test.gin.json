@@ -1,7 +1,7 @@
 {
   "transformers": [
     {
-      "transformer": "Json.Create",
+      "transformer": "JsonCreate",
       "parameters": {
         "a": 123,
         "b": "Hello, World!",
@@ -10,16 +10,16 @@
     },
     "Stash",
     {
-      "transformer": "Jdbc.Dml",
+      "transformer": "JdbcDml",
       "parameters": {
         "url": "jdbc:sqlite:test.sqlite3",
         "ddl": "CREATE TABLE test (a INTEGER, b TEXT, c BOOLEAN)",
         "dml": {
           "statement": "INSERT INTO test VALUES (?, ?, ?)",
           "parameters": [
-            "stash/a",
-            "stash/b",
-            "stash/c"
+            "stash.a",
+            "stash.b",
+            "stash.c"
           ]
         }
       }

@@ -19,20 +19,20 @@ public class IndexLookupTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Resource.Open /b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json " +
-                "-t Json.Stream $.array[*] " +
+                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json " +
+                "-t JsonStream $.array[*] " +
                 "-s " +
-                "-t Json.Path $.id " +
-                "-t Json.AsLong " +
+                "-t JsonPath $.id " +
+                "-t JsonAsLong " +
                 "-t Index " +
-                "-t Resource.Open /b/nana/technology/gingester/transformers/base/transformers/dsv/with-external-references.csv " +
-                "-t Dsv.ToJson " +
+                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/transformers/dsv/with-external-references.csv " +
+                "-t DsvToJson " +
                 "-s " +
-                "-t Json.Path $.reference " +
-                "-t Json.AsLong " +
+                "-t JsonPath $.reference " +
+                "-t JsonAsLong " +
                 "-t Lookup " +
                 "-w " +
-                "-t Json.Set lookup");
+                "-t JsonSet lookup");
 
         gingester.add(results::add);
 

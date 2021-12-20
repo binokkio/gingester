@@ -2,24 +2,24 @@
   "report": 0,
   "transformers": [
     {
-      "transformer": "Resource.Open",
+      "transformer": "ResourceOpen",
       "parameters": "/b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json"
     },
     {
-      "transformer": "Json.Stream",
+      "transformer": "JsonStream",
       "parameters": "$.array.*"
     },
     "Stash",
-    "Json.ToBytes",
-    "Bytes.ToInputStream",
+    "JsonToBytes",
+    "BytesToInputStream",
     {
-      "transformer": "Json.Stream",
+      "transformer": "JsonStream",
       "parameters": "$.message"
     },
-    "Json.ToBytes",
-    "Bytes.ToInputStream",
+    "JsonToBytes",
+    "BytesToInputStream",
     {
-      "transformer": "Path.Write",
+      "transformer": "PathWrite",
       "parameters": "${tempDir}/message-${stash.id}.txt"
     }
   ]

@@ -7,6 +7,8 @@ import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
+import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import net.jodah.typetools.TypeResolver;
 
@@ -15,6 +17,7 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
@@ -26,17 +29,19 @@ public final class Controller<I, O> {
 
     final boolean async;
     private final int maxWorkers;
-    private final int maxQueueSize;
+    final int maxQueueSize;
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links;
     public final Map<String, Controller<Exception, ?>> excepts;
-    final Set<Controller<?, ?>> indicates = new HashSet<>();
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
+    final Set<Controller<?, ?>> indicates = new HashSet<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
+    int downstreamLeaves;
+    final boolean isLeave;
     public final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
@@ -45,7 +50,7 @@ public final class Controller<I, O> {
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
-    private final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
+    final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
     public final Counter delt;
@@ -65,51 +70,71 @@ public final class Controller<I, O> {
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         delt = new SimpleCounter(acks != null || report);
+        isLeave = configuration.getLinks().isEmpty() && configuration.getExcepts().isEmpty();
         isExceptionHandler = gingester.isExceptionHandler();
 
         links = configuration.getLinks().stream().collect(
                 LinkedHashMap::new,
                 (map, link) -> map.put(link, null),
-                Map::putAll
-        );
+                Map::putAll);
 
         excepts = configuration.getExcepts().stream().collect(
                 LinkedHashMap::new,
                 (map, link) -> map.put(link, null),
-                Map::putAll
-        );
+                Map::putAll);
 
         phaser = gingester.getPhaser();
         phaser.bulkRegister(maxWorkers);
     }
 
+    @SuppressWarnings("unchecked")
     public void initialize() {
         links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
         excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
         configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
     }
 
+    @SuppressWarnings("unchecked")
     public Class<I> getInputType() {
-        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
-        return (Class<I>) types[0];
+        return (Class<I>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[0];
     }
 
+    @SuppressWarnings("unchecked")
     public Class<O> getOutputType() {
-        if (transformer.getClass().getAnnotation(Passthrough.class) == null) {
-            Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass());
-            return (Class<O>) types[1];
+        if (transformer instanceof OutputFetcher) {
+            return (Class<O>) getCommonSuperClass(gingester.getControllers().stream()
+                    .filter(c -> c.links.containsKey(id) || c.excepts.containsKey(id))
+                    .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
+                    .collect(Collectors.toList()));
+        } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
+            return (Class<O>) getActualInputType();
         } else {
-            List<Class<?>> actualInputTypes = new ArrayList<>();
-            gingester.getControllers().stream()
-                    .filter(c -> c.links.containsKey(id))
-                    .map(Controller::getOutputType)
-                    .forEach(actualInputTypes::add);
-            if (isExceptionHandler) actualInputTypes.add(Exception.class);
-            AtomicReference<Class<?>> pointer = new AtomicReference<>(actualInputTypes.get(0));
-            while (actualInputTypes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
-                pointer.set(pointer.get().getSuperclass());
-            }
-            return (Class<O>) pointer.get();
+            return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[1];
+        }
+    }
+
+    private Class<?> getActualInputType() {
+        List<Class<?>> inputTypes = new ArrayList<>();
+        gingester.getControllers().stream()
+                .filter(c -> c.links.containsKey(id))
+                .map(Controller::getOutputType)
+                .forEach(inputTypes::add);
+        if (isExceptionHandler) inputTypes.add(Exception.class);
+        return getCommonSuperClass(inputTypes);
+    }
+
+    private Class<?> getStashType(String[] name) {
+        if (name.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
+        if (transformer instanceof InputStasher && (
+                (name.length == 1 && ((InputStasher) transformer).getInputStashName().equals(name[0])) ||
+                (name[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(name[1]))
+        )) {
+            return getActualInputType();
+        } else {
+            return getCommonSuperClass(gingester.getControllers().stream()
+                    .filter(c -> c.links.containsKey(id) || c.excepts.containsKey(id))
+                    .map(c -> c.getStashType(name))
+                    .collect(Collectors.toList()));
         }
     }
 
@@ -142,6 +167,8 @@ public final class Controller<I, O> {
             }
             found = next;
         }
+
+        downstreamLeaves = (int) downstream.stream().filter(c -> c.isLeave).count();
     }
 
     public void discoverSyncs() {
@@ -165,9 +192,7 @@ public final class Controller<I, O> {
                         Set<Controller<?, ?>> downstreamCopy = new HashSet<>(controller.downstream);
                         downstreamCopy.add(controller);
                         downstreamCopy.retainAll(incoming);
-                        if (!downstreamCopy.isEmpty()) {
-                            syncedThrough.put(controller, downstreamCopy);
-                        }
+                        syncedThrough.put(controller, downstreamCopy);
                     }
                 }
             }
@@ -245,10 +270,9 @@ public final class Controller<I, O> {
     public void finish(Controller<?, ?> from, Context context) {
         lock.lock();
         try {
-            // TODO this needs backpressure when called from the ControllerReceiver
             FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
             if (finishTracker.indicate(from)) {
-//                while (queue.size() >= maxQueueSize) queueNotFull.await();  // TODO deadlocks PackTest.testPackIndividually(), look into
+                // not checking if the queue is full, finish signals have their own backpressure system
                 queue.add((Worker.SyncJob) () -> {
                     finishTracker.indicate(this);
                     queueNotEmpty.signalAll();
@@ -337,6 +361,16 @@ public final class Controller<I, O> {
 
 
 
+    static Class<?> getCommonSuperClass(List<Class<?>> classes) {
+        AtomicReference<Class<?>> pointer = new AtomicReference<>(classes.get(0));
+        while (classes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
+            pointer.set(pointer.get().getSuperclass());
+        }
+        return pointer.get();
+    }
+
+
+
     Controller() {
         configuration = null;
         gingester = null;
@@ -352,6 +386,7 @@ public final class Controller<I, O> {
         acks = null;
         links = Collections.emptyMap();
         excepts = Collections.emptyMap();
+        isLeave = false;
         isExceptionHandler = false;
     }
 }

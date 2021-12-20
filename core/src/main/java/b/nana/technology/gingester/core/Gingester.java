@@ -182,8 +182,7 @@ public final class Gingester {
 
             Transformer<?, ?> transformer = transformerConfiguration.getInstance()
                     .orElseGet(() -> {
-                        String name = transformerConfiguration.getName()
-                                .orElseThrow(() -> new IllegalStateException("Neither a transformer name nor instance was given"));
+                        String name = transformerConfiguration.getName().orElseThrow();
                         return transformerConfiguration.getParameters()
                                 .map(parameters -> TransformerFactory.instance(name, parameters))
                                 .orElseGet(() -> TransformerFactory.instance(name));

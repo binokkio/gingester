@@ -18,10 +18,10 @@ class ForceArraysTest {
 
         Gingester gingester = new Gingester();
 
-        gingester.cli("-t Resource.Open /b/nana/technology/gingester/transformers/base/transformers/xml/arrays-issue.xml");
-        gingester.add("Xml.ToJson");
-        gingester.cli("-t Json.Path $.record[*]");
-        gingester.cli("-t Json.ForceArrays [\"$.container.list.item\"]");
+        gingester.cli("-t ResourceOpen /b/nana/technology/gingester/transformers/base/transformers/xml/arrays-issue.xml");
+        gingester.add("XmlToJson");
+        gingester.cli("-t JsonPath $.record[*]");
+        gingester.cli("-t JsonForceArrays [\"$.container.list.item\"]");
         gingester.add(results::add);
 
         gingester.run();

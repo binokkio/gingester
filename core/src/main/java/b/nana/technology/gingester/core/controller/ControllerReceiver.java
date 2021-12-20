@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final Controller<I, O> controller;
+    private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
 
     ControllerReceiver(Controller<I, O> controller) {
         this.controller = controller;
@@ -91,11 +93,37 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void finish(Context context) {
         if (!controller.syncs.isEmpty()) {
+            startSync(context);
             if (Thread.currentThread() instanceof Worker) {
                 ((Worker) Thread.currentThread()).flush();
             }
             for (Controller<?, ?> target : controller.indicates) {
                 target.finish(controller, context);
+            }
+        }
+    }
+
+    private void startSync(Context context) {
+        synchronized (activeSyncs) {
+            while (activeSyncs.size() >= controller.maxQueueSize) {
+                try {
+                    activeSyncs.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);  // TODO
+                }
+            }
+            activeSyncs.put(context, 0);
+        }
+    }
+
+    void onFinishSignalReachedLeave(Context context) {
+        if (context.isSeed()) return;
+        synchronized (activeSyncs) {
+            int count = activeSyncs.remove(context);
+            if (++count == controller.downstreamLeaves) {
+                activeSyncs.notify();
+            } else {
+                activeSyncs.put(context, count);
             }
         }
     }

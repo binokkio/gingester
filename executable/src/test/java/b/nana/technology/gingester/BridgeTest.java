@@ -21,9 +21,9 @@ class BridgeTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t String.Create 'Hello, World!' " +
+                "-t StringCreate 'Hello, World!' " +
                 "-t Pack greeting.txt " +
-                "-t InputStream.ToBytes");
+                "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
         gingester.add(result::set);
@@ -43,10 +43,10 @@ class BridgeTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t String.Create 'Hello, World!' " +
+                "-t StringCreate 'Hello, World!' " +
                 "-s -t Throttle " +
                 "-t Pack greeting.txt " +
-                "-t InputStream.ToBytes");
+                "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
         gingester.add(result::set);
@@ -66,9 +66,9 @@ class BridgeTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Json.Create '{hello:1,world:2}' " +
-                "-t InputStream.Append '!!!' " +
-                "-t InputStream.ToString");
+                "-t JsonCreate '{hello:1,world:2}' " +
+                "-t InputStreamAppend '!!!' " +
+                "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
         gingester.add(result::set);
@@ -84,10 +84,10 @@ class BridgeTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Json.Create '{hello:1,world:2}' " +
+                "-t JsonCreate '{hello:1,world:2}' " +
                 "-s -t Throttle " +
-                "-t InputStream.Append '!!!' " +
-                "-t InputStream.ToString");
+                "-t InputStreamAppend '!!!' " +
+                "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
         gingester.add(result::set);
@@ -102,10 +102,10 @@ class BridgeTest {
 
         Gingester gingester = new Gingester();
         gingester.cli("" +
-                "-t Time.Now " +
-                "-t Path.Size");
+                "-t TimeNow " +
+                "-t PathSize");
 
         IllegalStateException e = assertThrows(IllegalStateException.class, gingester::run);
-        assertEquals("Transformations from Time.Now to Path.Size must be specified", e.getMessage());
+        assertEquals("Transformations from TimeNow to PathSize must be specified", e.getMessage());
     }
 }

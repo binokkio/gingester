@@ -19,11 +19,11 @@ class NdjsonTest {
         Gingester gingester = new Gingester();
 
         gingester.cli("" +
-                "-t Json.Create '{hello:\"world\"}' " +
+                "-t JsonCreate '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
-                "-t InputStream.Join " +
+                "-t InputStreamJoin " +
                 "-t Compress " +
-                "-t InputStream.ToBytes");
+                "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
         gingester.add(result::set);
