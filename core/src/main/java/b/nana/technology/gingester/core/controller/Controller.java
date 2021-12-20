@@ -362,6 +362,7 @@ public final class Controller<I, O> {
 
 
     static Class<?> getCommonSuperClass(List<Class<?>> classes) {
+        if (classes.isEmpty()) return Object.class;  // TODO this is a quick fix
         AtomicReference<Class<?>> pointer = new AtomicReference<>(classes.get(0));
         while (classes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
             pointer.set(pointer.get().getSuperclass());
