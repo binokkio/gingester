@@ -88,6 +88,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.string.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToJson.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.Trim.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.AsOffsetDateTime.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.FromMillis.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.FromSeconds.class,
