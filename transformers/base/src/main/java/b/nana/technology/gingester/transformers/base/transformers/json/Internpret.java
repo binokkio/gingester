@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 
 @Description("Interpret nested (internal) JSON strings")
-public class Internpret extends ToJsonTransformer<JsonNode> {
+public final class Internpret extends ToJsonTransformer<JsonNode> {
 
     public Internpret(Parameters parameters) {
         super(parameters);
