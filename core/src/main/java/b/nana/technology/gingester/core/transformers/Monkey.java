@@ -22,12 +22,11 @@ public final class Monkey implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-
         if (counter.incrementAndGet() % interval == 0) {
             throw new Bananas();
+        } else {
+            out.accept(context, in);
         }
-
-        out.accept(context, in);
     }
 
     public static class Parameters {
@@ -44,6 +43,8 @@ public final class Monkey implements Transformer<Object, Object> {
     }
 
     public static class Bananas extends RuntimeException {
-
+        private Bananas() {
+            super("\uD83D\uDC35\uD83C\uDF4C");
+        }
     }
 }
