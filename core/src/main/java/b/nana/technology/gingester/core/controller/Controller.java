@@ -12,6 +12,7 @@ import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import net.jodah.typetools.TypeResolver;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicReference;
@@ -365,7 +366,8 @@ public final class Controller<I, O> {
         if (classes.isEmpty()) return Object.class;  // TODO this is a quick fix
         AtomicReference<Class<?>> pointer = new AtomicReference<>(classes.get(0));
         while (classes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
-            pointer.set(pointer.get().getSuperclass());
+            Class<?> superClass = pointer.get().getSuperclass();
+            pointer.set(superClass == null ? Object.class : superClass);  // TODO this is a quick fix
         }
         return pointer.get();
     }
