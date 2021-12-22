@@ -5,47 +5,39 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 
-public final class Link implements Transformer<Path, Path> {
+public final class Create implements Transformer<Object, Path> {
 
     private final Context.Template pathTemplate;
-    private final boolean mkdirs;
 
-    public Link(Parameters parameters) {
+    public Create(Parameters parameters) {
         pathTemplate = Context.newTemplate(parameters.path);
-        mkdirs = parameters.mkdirs;
     }
 
     @Override
-    public void transform(Context context, Path in, Receiver<Path> out) throws Exception {
-
-        Path target = Path.of(pathTemplate.render(context));
-
-        Path parent = target.getParent();
-        if (mkdirs && parent != null && !Files.exists(parent)) {
-            Files.createDirectories(parent);
-        }
-
-        Files.createLink(target, in);
+    public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
+        Path path = Paths.get(pathTemplate.render(context));
         out.accept(
                 context.stash(Map.of(
-                        "description", target.toString(),
+                        "description", path.toString(),
                         "path", Map.of(
-                                "absolute", target.toAbsolutePath(),
-                                "tail", target.getFileName()
+                                "absolute", path.toAbsolutePath(),
+                                "tail", path.getFileName()
                         )
                 )),
-                target
+                path
         );
     }
 
     public static class Parameters {
 
         public String path;
-        public boolean mkdirs = true;
 
         @JsonCreator
         public Parameters() {}
