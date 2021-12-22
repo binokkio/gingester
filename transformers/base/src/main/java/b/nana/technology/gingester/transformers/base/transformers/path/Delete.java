@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public final class Unlink implements Transformer<Path, Path> {
+public final class Delete implements Transformer<Path, Path> {
 
     @Override
     public void transform(Context context, Path in, Receiver<Path> out) throws Exception {
