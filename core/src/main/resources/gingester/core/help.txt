@@ -17,7 +17,10 @@ General usage:
         send exceptions from the previous transformer (if any) and uncaught downstream exceptions to the given links
 
     -f/--fetch [<name>]
-        fetch value from stash
+        fetch value from stash by name
+
+    -fa/--fetch-all [<name>]
+        fetch all values from stash by name
 
     -h/--help
         print this help and exit
@@ -63,3 +66,6 @@ General usage:
 
     --
         mark previous transformer as terminal, it will not automatically link to the next transformer
+
+    + <comment>
+        has no effect

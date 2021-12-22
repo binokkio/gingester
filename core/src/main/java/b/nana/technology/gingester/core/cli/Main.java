@@ -50,6 +50,10 @@ public final class Main {
 
             switch (args[i]) {
 
+                case "+":
+                    i++;
+                    break;
+
                 case "-b":
                 case "--break":
                     break_ = true;
@@ -120,7 +124,7 @@ public final class Main {
                 case "--links":
                     requireNonNull(previous, "Found -l/--links before first transformer");
                     List<String> links = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         links.add(args[++i]);
                     }
                     previous.links(links);
@@ -129,7 +133,7 @@ public final class Main {
                 case "-e":
                 case "--excepts":
                     List<String> excepts = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         excepts.add(args[++i]);
                     }
                     if (previous != null) previous.excepts(excepts);
@@ -144,7 +148,7 @@ public final class Main {
                 case "-sf":
                 case "--sync-from":
                     syncFrom = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         syncFrom.add(args[++i]);
                     }
                     break;
@@ -157,6 +161,8 @@ public final class Main {
                     syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
                 case "-f":
                 case "--fetch":
+                case "-fa":
+                case "--fetch-all":
                 case "-s":
                 case "--stash":
                 case "-w":
@@ -168,7 +174,8 @@ public final class Main {
                     TransformerConfiguration transformer = new TransformerConfiguration();
 
                     if (fsw) {
-                        if (args[i].contains("f")) transformer.transformer("Fetch");
+                        if (args[i].matches(".*f.*a")) transformer.transformer("FetchAll");
+                        else if (args[i].contains("f")) transformer.transformer("Fetch");
                         else if (args[i].contains("w")) transformer.transformer("Swap");
                         else transformer.transformer("Stash");
                     } else {
@@ -193,7 +200,7 @@ public final class Main {
                         }
                     }
 
-                    if (args.length > i + 1 && !args[i + 1].startsWith("-")) {
+                    if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
                         transformer.jsonParameters(args[++i]);
                     }
 

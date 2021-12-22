@@ -52,8 +52,12 @@ public final class Write implements Transformer<InputStream, Path> {
             if (emitEarly) {
                 Monitor monitor = new Monitor();
                 out.accept(context.stash(Map.of(
+                        "monitor", monitor,
                         "description", pathString,
-                        "monitor", monitor
+                        "path", Map.of(
+                                "absolute", path.toAbsolutePath(),
+                                "tail", path.getFileName()
+                        )
                 )), path);
                 write(in, output);
                 output.close();
@@ -61,7 +65,13 @@ public final class Write implements Transformer<InputStream, Path> {
             } else {
                 write(in, output);
                 output.close();
-                out.accept(context.stash("description", pathString), path);
+                out.accept(context.stash(Map.of(
+                        "description", pathString,
+                        "path", Map.of(
+                                "absolute", path.toAbsolutePath(),
+                                "tail", path.getFileName()
+                        )
+                )), path);
             }
         }
     }
