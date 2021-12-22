@@ -157,6 +157,8 @@ public final class Main {
                     syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
                 case "-f":
                 case "--fetch":
+                case "-fa":
+                case "--fetch-all":
                 case "-s":
                 case "--stash":
                 case "-w":
@@ -168,7 +170,8 @@ public final class Main {
                     TransformerConfiguration transformer = new TransformerConfiguration();
 
                     if (fsw) {
-                        if (args[i].contains("f")) transformer.transformer("Fetch");
+                        if (args[i].matches(".*f.*a")) transformer.transformer("FetchAll");
+                        else if (args[i].contains("f")) transformer.transformer("Fetch");
                         else if (args[i].contains("w")) transformer.transformer("Swap");
                         else transformer.transformer("Stash");
                     } else {

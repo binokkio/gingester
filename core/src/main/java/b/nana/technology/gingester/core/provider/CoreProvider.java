@@ -13,6 +13,7 @@ public final class CoreProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 Fetch.class,
+                FetchAll.class,
                 Monkey.class,
                 OnFinish.class,
                 OnPrepare.class,
