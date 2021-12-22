@@ -66,3 +66,6 @@ General usage:
 
     --
         mark previous transformer as terminal, it will not automatically link to the next transformer
+
+    + <comment>
+        has no effect
