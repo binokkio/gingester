@@ -75,6 +75,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.path.Open.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Search.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Size.class,
+                b.nana.technology.gingester.transformers.base.transformers.path.Unlink.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Write.class,
                 b.nana.technology.gingester.transformers.base.transformers.regex.Find.class,
                 b.nana.technology.gingester.transformers.base.transformers.regex.Group.class,
