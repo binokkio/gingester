@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.jetty.http;
 
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 // TODO this is a very quick and dirty implementation only tested to work with a specific use case
 
+@Passthrough
 public final class Keycloak implements Transformer<Object, Object> {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
