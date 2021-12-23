@@ -3,7 +3,12 @@ package b.nana.technology.gingester.core.cli;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
+import b.nana.technology.gingester.core.freemarker.FreemarkerJacksonWrapper;
+import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
+import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,7 +77,7 @@ public final class Main {
                 case "-cf":
                 case "--cli-file":
                     try {
-                        args = splice(args, CliParser.parse(Files.readString(Paths.get(args[++i]))), i + 1);
+                        args = splice(Files.readString(Paths.get(args[++i])), args, i);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
@@ -83,12 +88,12 @@ public final class Main {
                     try {
                         String resource = args[++i];
                         InputStream resourceStream = Stream.of(resource, "/" + resource, "/gingester/" + resource)
-                                .flatMap(s -> Stream.of(s, s + ".gcli"))
+                                .flatMap(s -> Stream.of(s, s + ".cli"))
                                 .map(Main.class::getResourceAsStream)
                                 .filter(Objects::nonNull)
                                 .findFirst()
                                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
-                        args = splice(args, CliParser.parse(new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8)), i + 1);
+                        args = splice(new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8), args, i);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
@@ -251,11 +256,22 @@ public final class Main {
                 System.out.println("    " + help));
     }
 
-    private static String[] splice(String[] target, String[] items, int index) {
-        String[] result = new String[target.length + items.length];
+    private static String[] splice(String raw, String[] args, int i) throws JsonProcessingException {
+        if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
+            FreemarkerTemplateWrapper template = FreemarkerTemplateFactory.createAlternateSyntaxTemplate(raw, FreemarkerJacksonWrapper::new);
+            JsonNode parameters = GingesterConfiguration.OBJECT_READER.readTree(args[i + 1]);
+            String cli = template.render(parameters);
+            return splice(args, CliParser.parse(cli), i + 1, 1);
+        } else {
+            return splice(args, CliParser.parse(raw), i + 1, 0);
+        }
+    }
+
+    private static String[] splice(String[] target, String[] items, int index, int lose) {
+        String[] result = new String[target.length + items.length - lose];
         System.arraycopy(target, 0, result, 0, index);
         System.arraycopy(items, 0, result, index, items.length);
-        System.arraycopy(target, index, result, index + items.length, target.length - index);
+        System.arraycopy(target, index + lose, result, index + items.length, target.length - index - lose);
         return result;
     }
 }
