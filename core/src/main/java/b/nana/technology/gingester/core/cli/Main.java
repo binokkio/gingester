@@ -40,7 +40,6 @@ public final class Main {
     public static GingesterConfiguration parseArgs(String[] args) {
 
         boolean break_ = false;
-        boolean printConfig = false;
 
         GingesterConfiguration configuration = new GingesterConfiguration();
 
@@ -62,11 +61,6 @@ public final class Main {
                 case "-b":
                 case "--break":
                     break_ = true;
-                    break;
-
-                case "-pj":
-                case "--print-json":
-                    printConfig = true;
                     break;
 
                 case "-r":
@@ -94,32 +88,6 @@ public final class Main {
                                 .findFirst()
                                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
                         args = splice(new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8), args, i);
-                    } catch (IOException e) {
-                        throw new IllegalArgumentException(e);  // TODO
-                    }
-                    break;
-
-                case "-jf":
-                case "--json-file":
-                    try {
-                        GingesterConfiguration append = GingesterConfiguration.fromJson(Files.newInputStream(Paths.get(args[++i])));
-                        configuration.append(append);
-                    } catch (IOException e) {
-                        throw new IllegalArgumentException(e);  // TODO
-                    }
-                    break;
-
-                case "-jr":
-                case "--json-resource":
-                    try {
-                        String resource = args[++i];
-                        InputStream resourceStream = Stream.of(resource, "/gingester/rc/" + resource, "/gingester/rc/" + resource + ".json")
-                                .map(Main.class::getResourceAsStream)
-                                .filter(Objects::nonNull)
-                                .findFirst()
-                                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
-                        GingesterConfiguration append = GingesterConfiguration.fromJson(resourceStream);
-                        configuration.append(append);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
@@ -230,11 +198,6 @@ public final class Main {
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
             }
-        }
-
-        if (printConfig) {
-            System.out.println(configuration.toJson());
-            System.exit(0);
         }
 
         return configuration;

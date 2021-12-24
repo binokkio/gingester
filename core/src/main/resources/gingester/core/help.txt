@@ -25,18 +25,9 @@ General usage:
     -h/--help
         print this help and exit
 
-    -jf/--json-file <path/to/file>
-        append json config from file
-
-    -jr/--json-resource <path/to/resource>
-        append json config from resource
-
     -l/--links <link1> [<link2> [...]]
         link the previous transformer to the given links,
         it will not automatically link to the next transformer
-
-    -pj/--print-json
-        print the json configuration resulting from this cli interaction instead of executing it
 
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
