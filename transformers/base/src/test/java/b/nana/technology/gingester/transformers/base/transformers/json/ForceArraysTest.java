@@ -17,13 +17,13 @@ class ForceArraysTest {
 
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester();
+        Gingester gingester = new Gingester("" +
+                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/data/xml/arrays-issue.xml " +
+                "-t XmlToJson " +
+                "-t JsonPath $.record[*] " +
+                "-t JsonForceArrays [\"$.container.list.item\"]");
 
-        gingester.cli("-t ResourceOpen /b/nana/technology/gingester/transformers/base/data/xml/arrays-issue.xml");
-        gingester.cli("-t XmlToJson");
-        gingester.cli("-t JsonPath $.record[*]");
-        gingester.cli("-t JsonForceArrays [\"$.container.list.item\"]");
-        gingester.add(results::add);
+        gingester.attach(results::add);
 
         gingester.run();
 
@@ -36,13 +36,12 @@ class ForceArraysTest {
     @Test
     void testForceArraysOnRoot() {
 
-        Gingester gingester = new Gingester();
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate {hello:123} " +
                 "-t JsonForceArrays $");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertEquals(123, result.get().get(0).get("hello").intValue());

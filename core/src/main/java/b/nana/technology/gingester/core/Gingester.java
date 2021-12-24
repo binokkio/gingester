@@ -2,8 +2,9 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.cli.CliParser;
-import b.nana.technology.gingester.core.cli.Main;
+import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
+import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.controller.Context;
@@ -35,90 +36,91 @@ public final class Gingester {
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
+    private final Set<String> excepts;
+    private final int reportingIntervalSeconds;
+    private final String defaultAttachTarget;
 
-    private Set<String> excepts;
-    private int reportingIntervalSeconds;
-
-    /**
-     * Sets the given list of transformer ids as root exception handlers.
-     *
-     * @param excepts list of transformer ids
-     */
-    public void excepts(List<String> excepts) {
-        this.excepts = new HashSet<>(excepts);
+    public Gingester(String cli) {
+        this(CliParser.parse(CliSplitter.split(cli)));
     }
 
-    /**
-     * Configure reporting.
-     *
-     * @param reportingIntervalSeconds the interval in seconds at which to report, or 0 to disable reporting
-     */
-    public void report(int reportingIntervalSeconds) {
-        this.reportingIntervalSeconds = reportingIntervalSeconds;
+    public Gingester(GingesterConfiguration configuration) {
+
+        excepts = new HashSet<>(configuration.excepts);
+        reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
+
+        String lastId = null;
+        for (TransformerConfiguration transformer : configuration.transformers) {
+            lastId = add(transformer);
+        }
+        defaultAttachTarget = lastId;
+
+        setup();
     }
 
-    /**
-     * Attach consumer to most recently added transformer.
-     *
-     * @param consumer the consumer
-     * @param <T> the consumer type
-     */
-    public <T> void add(Consumer<T> consumer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.transformer(consumer);
-        add(configuration);
-    }
-
-    /**
-     * Attach consumer to target transformer.
-     *
-     * @param consumer the consumer
-     * @param targetId the id of the transformer whose output will be consumed
-     * @param <T> the consumer type
-     */
-    public <T> void attach(Consumer<T> consumer, String targetId) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.transformer(consumer);
-        configuration.links(Collections.emptyList());
-        String consumerId = add(configuration);
-        TransformerConfiguration target = transformerConfigurations.get(targetId);
-        List<String> newLinks = new ArrayList<>(target.getLinks().orElseGet(Collections::emptyList));
-        newLinks.add(consumerId);
-        target.links(newLinks);
-    }
-
-    /**
-     * Add bi-consumer.
-     *
-     * @param id the id for the given consumer
-     * @param biConsumer the bi-consumer
-     * @param <T> the bi-consumer type
-     */
-    public <T> void add(String id, BiConsumer<Context, T> biConsumer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.id(id);
-        configuration.transformer(biConsumer);
-        add(configuration);
-    }
-
-    /**
-     * Add transformer by configuration.
-     *
-     * @param configuration the transformer configuration
-     */
-    public String add(TransformerConfiguration configuration) {
+    private String add(TransformerConfiguration configuration) {
         String id = getId(configuration);
         transformerConfigurations.put(id, configuration);
         return id;
     }
 
     /**
-     * Apply given command line syntax instructions.
+     * Attach consumer to the "last" transformer.
      *
-     * @param cli the command line syntax to interpret
+     * @param consumer the consumer
+     * @param <T> the consumer type
      */
-    public void cli(String cli) {
-        Main.parseArgs(CliParser.parse(cli)).applyTo(this);
+    public <T> void attach(Consumer<T> consumer) {
+        attach(consumer, defaultAttachTarget);
+    }
+
+    /**
+     * Attach consumer to transformer.
+     *
+     * @param consumer the consumer
+     * @param targetId the id of the transformer whose output will be consumed
+     * @param <T> the consumer type
+     */
+    public <T> void attach(Consumer<T> consumer, String targetId) {
+        Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
+        attach(id, transformer, targetId);
+    }
+
+    /**
+     * Attach bi-consumer to the "last" transformer.
+     *
+     * @param biConsumer the bi-consumer
+     * @param <T> the bi-consumer type
+     */
+    public <T> void attach(BiConsumer<Context, T> biConsumer) {
+        attach(biConsumer, defaultAttachTarget);
+    }
+
+    /**
+     * Attach bi-consumer to transformer.
+     *
+     * @param biConsumer the bi-consumer
+     * @param targetId the id of the transformer whose output will be consumed
+     * @param <T> the bi-consumer type
+     */
+    public <T> void attach(BiConsumer<Context, T> biConsumer, String targetId) {
+        Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
+        attach(id, transformer, targetId);
+    }
+
+    private <T> void attach(String id, Transformer<T,T> transformer, String defaultAttachTarget) {
+
+        ControllerConfiguration<T, T> configuration = new ControllerConfiguration<T, T>()
+                .id(id)
+                .transformer(transformer);
+
+        Controller<T, T> controller = new Controller<>(configuration, new ControllerInterface(id));
+        controllers.put(id, controller);
+
+        Controller<?, T> target = (Controller<?, T>) controllers.get(defaultAttachTarget);
+        target.links.put(id, controller);
     }
 
     /**
@@ -150,7 +152,6 @@ public final class Gingester {
      * @param seedStash the seed stash
      */
     public void run(Map<String, Object> seedStash) {
-        setup();
         initialize();
         start(seedStash);
     }
@@ -165,7 +166,7 @@ public final class Gingester {
 
         transformerConfigurations.forEach((id, transformerConfiguration) -> {
 
-            Transformer<?, ?> transformer = transformerConfiguration.getInstance()
+            Transformer<?, ?> transformer = transformerConfiguration.getTransformer()
                     .orElseThrow(() -> new IllegalStateException("TransformerConfiguration does not contain transformer"));
 
             SetupControls setupControls = new SetupControls(phasers);

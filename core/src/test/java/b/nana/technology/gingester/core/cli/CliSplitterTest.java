@@ -4,12 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class CliParserTest {
+class CliSplitterTest {
 
     @Test
     void testSimpleHelloWorld() {
 
-        String[] args = CliParser.parse("hello world");
+        String[] args = CliSplitter.split("hello world");
 
         assertEquals(2, args.length);
         assertEquals("hello", args[0]);
@@ -19,7 +19,7 @@ class CliParserTest {
     @Test
     void testQuotedHelloWorld() {
 
-        String[] args = CliParser.parse("\"hello\" \"world\"");
+        String[] args = CliSplitter.split("\"hello\" \"world\"");
 
         assertEquals(2, args.length);
         assertEquals("hello", args[0]);
@@ -29,7 +29,7 @@ class CliParserTest {
     @Test
     void testSimpleJsonParameters() {
 
-        String[] args = CliParser.parse("-t Dummy '{\"hello\": \"world\"}'");
+        String[] args = CliSplitter.split("-t Dummy '{\"hello\": \"world\"}'");
 
         assertEquals(3, args.length);
         assertEquals("-t", args[0]);
@@ -40,7 +40,7 @@ class CliParserTest {
     @Test
     void testJsonParametersWithEscapedQuotes() {
 
-        String[] args = CliParser.parse("-t Dummy \"{\\\"hello\\\": \\\"world\\\"}\"");
+        String[] args = CliSplitter.split("-t Dummy \"{\\\"hello\\\": \\\"world\\\"}\"");
 
         assertEquals(3, args.length);
         assertEquals("-t", args[0]);

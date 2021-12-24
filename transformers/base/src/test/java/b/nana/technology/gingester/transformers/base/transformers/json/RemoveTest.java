@@ -1,11 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -17,13 +13,12 @@ class RemoveTest {
     @Test
     void testJsonRemoveOutputsRemovedJsonNode() {
 
-        Gingester gingester = new Gingester();
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate \"{hello:'world a',bye:'world b'}\" " +
                 "-t JsonRemove $.bye");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertEquals("world b", result.get().textValue());
@@ -32,13 +27,12 @@ class RemoveTest {
     @Test
     void testRemoveModifiesStashedInput() {
 
-        Gingester gingester = new Gingester();
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate {hello:'world',bye:'world'} " +
                 "-s -t JsonRemove $.bye -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertTrue(result.get().has("hello"));
@@ -48,13 +42,12 @@ class RemoveTest {
     @Test
     void testNested() {
 
-        Gingester gingester = new Gingester();
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate \"{hello:'world',bye:'world',nested:{foo:123,bar:234}}\" " +
                 "-s -t JsonRemove $.nested.bar -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertTrue(result.get().has("hello"));

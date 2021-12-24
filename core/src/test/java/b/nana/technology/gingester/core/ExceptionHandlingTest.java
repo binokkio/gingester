@@ -15,9 +15,7 @@ class ExceptionHandlingTest {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-e ExceptionHandler " +
                 "-t Generate \"{string:'Hello, World!',count:2}\" " +
                 "-t Monkey -- " +
@@ -41,16 +39,15 @@ class ExceptionHandlingTest {
     @Test
     void testExceptionInExceptionHandler() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-e ExceptionHandler " +
                 "-t Monkey 1 -- " +
-                "-t ExceptionHandler:Monkey 1 " +
-                "-e ResultHandler");
+                "-t ExceptionHandler:Monkey 1 -- " +
+                "-e ResultHandler " +
+                "-t ResultHandler:Passthrough");
 
         AtomicReference<Context> result = new AtomicReference<>();
-        gingester.add("ResultHandler", (c, e) -> result.set(c));
+        gingester.attach((c, e) -> result.set(c));
 
         gingester.run();
 

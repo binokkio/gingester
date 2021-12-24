@@ -9,24 +9,21 @@ class CircularRouteDetectionTest {
 
     @Test
     void test() {
-        Gingester gingester = new Gingester();
-        gingester.cli("-t Generate 'Hello, World!' -t Stash -t Fetch -l Generate");
+        Gingester gingester = new Gingester("-t Generate 'Hello, World!' -t Stash -t Fetch -l Generate");
         IllegalStateException e = assertThrows(IllegalStateException.class, gingester::run);
         assertEquals("Circular route detected: Generate -> Stash -> Fetch -> Generate", e.getMessage());
     }
 
     @Test
     void testMinimal() {
-        Gingester gingester = new Gingester();
-        gingester.cli("-s -l Stash");
+        Gingester gingester = new Gingester("-s -l Stash");
         IllegalStateException e = assertThrows(IllegalStateException.class, gingester::run);
         assertEquals("Circular route detected: Stash -> Stash", e.getMessage());
     }
 
     @Test
     void testCircularRouteThroughExceptionHandler() {
-        Gingester gingester = new Gingester();
-        gingester.cli("-e ExceptionHandler -t Generate 'Hello, World!' -- -t ExceptionHandler:Stash -l Generate");
+        Gingester gingester = new Gingester("-e ExceptionHandler -t Generate 'Hello, World!' -- -t ExceptionHandler:Stash -l Generate");
         IllegalStateException e = assertThrows(IllegalStateException.class, gingester::run);
         assertEquals("Circular route detected: Generate -> ExceptionHandler -> Generate", e.getMessage());
     }

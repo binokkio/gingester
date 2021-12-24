@@ -1,8 +1,6 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -20,14 +18,12 @@ class JdbcTransformerTest {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
 
-        Gingester writer = new Gingester();
-        writer.cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}");
+        Gingester writer = new Gingester("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}");
         writer.run();
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
-        Gingester reader = new Gingester();
-        reader.cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
-        reader.add(result::set);
+        Gingester reader = new Gingester("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
+        reader.attach(result::set);
         reader.run();
 
         Map<String, ?> container = result.get().get("test");
@@ -43,9 +39,7 @@ class JdbcTransformerTest {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate \"{a:123,b:true,c:'Hello, World!'}\" " +
                 "-s in " +
                 "-t JdbcDml \"{" +
@@ -54,7 +48,7 @@ class JdbcTransformerTest {
                 "}\" " +
                 "-t JdbcDql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
