@@ -12,7 +12,7 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
-import b.nana.technology.gingester.core.transformers.Seed;
+import b.nana.technology.gingester.core.transformers.Passthrough;
 import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,27 +58,7 @@ public final class Gingester {
     }
 
     /**
-     * Add transformer by name.
-     *
-     * @param transformer the name of the transformer to add
-     */
-    public void add(String transformer) {
-        add(new TransformerConfiguration(transformer));
-    }
-
-    /**
-     * Add transformer.
-     *
-     * @param transformer the consumer
-     */
-    public void add(Transformer<?, ?> transformer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.transformer(transformer);
-        add(configuration);
-    }
-
-    /**
-     * Add consumer.
+     * Attach consumer to most recently added transformer.
      *
      * @param consumer the consumer
      * @param <T> the consumer type
@@ -90,17 +70,21 @@ public final class Gingester {
     }
 
     /**
-     * Add consumer.
+     * Attach consumer to target transformer.
      *
-     * @param id the id for the given consumer
      * @param consumer the consumer
+     * @param targetId the id of the transformer whose output will be consumed
      * @param <T> the consumer type
      */
-    public <T> void add(String id, Consumer<T> consumer) {
+    public <T> void attach(Consumer<T> consumer, String targetId) {
         TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.id(id);
         configuration.transformer(consumer);
-        add(configuration);
+        configuration.links(Collections.emptyList());
+        String consumerId = add(configuration);
+        TransformerConfiguration target = transformerConfigurations.get(targetId);
+        List<String> newLinks = new ArrayList<>(target.getLinks().orElseGet(Collections::emptyList));
+        newLinks.add(consumerId);
+        target.links(newLinks);
     }
 
     /**
@@ -122,9 +106,10 @@ public final class Gingester {
      *
      * @param configuration the transformer configuration
      */
-    public void add(TransformerConfiguration configuration) {
+    public String add(TransformerConfiguration configuration) {
         String id = getId(configuration);
         transformerConfigurations.put(id, configuration);
+        return id;
     }
 
     /**
@@ -181,12 +166,7 @@ public final class Gingester {
         transformerConfigurations.forEach((id, transformerConfiguration) -> {
 
             Transformer<?, ?> transformer = transformerConfiguration.getInstance()
-                    .orElseGet(() -> {
-                        String name = transformerConfiguration.getName().orElseThrow();
-                        return transformerConfiguration.getParameters()
-                                .map(parameters -> TransformerFactory.instance(name, parameters))
-                                .orElseGet(() -> TransformerFactory.instance(name));
-                    });
+                    .orElseThrow(() -> new IllegalStateException("TransformerConfiguration does not contain transformer"));
 
             SetupControls setupControls = new SetupControls(phasers);
             transformer.setup(setupControls);
@@ -257,7 +237,7 @@ public final class Gingester {
         controllers.put("__seed__", new Controller<>(
                 new ControllerConfiguration<>()
                         .id("__seed__")
-                        .transformer(new Seed())
+                        .transformer(new Passthrough())
                         .links(new ArrayList<>(noIncoming.isEmpty() ? controllers.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
                         .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")

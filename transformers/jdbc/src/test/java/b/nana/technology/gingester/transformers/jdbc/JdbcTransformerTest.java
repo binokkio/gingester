@@ -20,11 +20,8 @@ class JdbcTransformerTest {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
 
-        GingesterConfiguration configuration = GingesterConfiguration.fromJson(getClass().getResourceAsStream("/test.gin.json"));
-        ((ObjectNode) configuration.transformers.get(2).getParameters().orElseThrow()).put("url", "jdbc:sqlite:" + tempFile);
-
         Gingester writer = new Gingester();
-        configuration.applyTo(writer);
+        writer.cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}");
         writer.run();
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();

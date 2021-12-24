@@ -3,13 +3,16 @@ package b.nana.technology.gingester.core.transformers;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Names(1)
-public final class Seed implements Transformer<Object, Object> {
+@b.nana.technology.gingester.core.annotations.Passthrough
+public final class Passthrough implements Transformer<Object, Object> {
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) {
+    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(context, in);
     }
 }

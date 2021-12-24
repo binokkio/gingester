@@ -1,0 +1,20 @@
+-r 0
+
+-t JsonCreate '{
+    "a": 123,
+    "b": "Hello, World!",
+    "c": true
+  }'
+-s
+-t JdbcDml '{
+    "url": "[=url]",
+    "ddl": "CREATE TABLE test (a INTEGER, b TEXT, c BOOLEAN)",
+    "dml": {
+      "statement": "INSERT INTO test VALUES (?, ?, ?)",
+      "parameters": [
+        "stash.a",
+        "stash.b",
+        "stash.c"
+      ]
+    }
+  }'

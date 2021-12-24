@@ -145,12 +145,13 @@ public final class Main {
                 case "--transformer":
 
                     TransformerConfiguration transformer = new TransformerConfiguration();
+                    String transformerName;
 
                     if (fsw) {
-                        if (args[i].matches(".*f.*a")) transformer.transformer("FetchAll");
-                        else if (args[i].contains("f")) transformer.transformer("Fetch");
-                        else if (args[i].contains("w")) transformer.transformer("Swap");
-                        else transformer.transformer("Stash");
+                        if (args[i].matches(".*f.*a")) transformerName = "FetchAll";
+                        else if (args[i].contains("f")) transformerName = "Fetch";
+                        else if (args[i].contains("w")) transformerName = "Swap";
+                        else transformerName = "Stash";
                     } else {
                         String next = args[++i];
                         if (next.matches("[\\d.]+")) {
@@ -166,15 +167,17 @@ public final class Main {
                             parts[parts.length - 1] = parts[parts.length - 1].substring(0, parts[parts.length - 1].length() - 1);
                         }
                         if (parts.length == 1) {
-                            transformer.transformer(parts[0]);
+                            transformerName = parts[0];
                         } else {
                             transformer.id(parts[0]);
-                            transformer.transformer(parts[1]);
+                            transformerName = parts[1];
                         }
                     }
 
                     if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
-                        transformer.jsonParameters(args[++i]);
+                        transformer.transformer(transformerName, args[++i]);
+                    } else {
+                        transformer.transformer(transformerName);
                     }
 
                     if (markSyncFrom) {
