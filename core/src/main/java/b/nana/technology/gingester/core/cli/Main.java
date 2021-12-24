@@ -257,13 +257,14 @@ public final class Main {
     }
 
     private static String[] splice(String raw, String[] args, int i) throws JsonProcessingException {
+        FreemarkerTemplateWrapper template = FreemarkerTemplateFactory.createAlternateSyntaxTemplate(raw, FreemarkerJacksonWrapper::new);
         if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
-            FreemarkerTemplateWrapper template = FreemarkerTemplateFactory.createAlternateSyntaxTemplate(raw, FreemarkerJacksonWrapper::new);
             JsonNode parameters = GingesterConfiguration.OBJECT_READER.readTree(args[i + 1]);
             String cli = template.render(parameters);
             return splice(args, CliParser.parse(cli), i + 1, 1);
         } else {
-            return splice(args, CliParser.parse(raw), i + 1, 0);
+            String cli = template.render();
+            return splice(args, CliParser.parse(cli), i + 1, 0);
         }
     }
 

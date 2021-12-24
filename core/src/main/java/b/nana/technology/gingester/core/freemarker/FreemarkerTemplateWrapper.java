@@ -13,12 +13,16 @@ public final class FreemarkerTemplateWrapper {
         this.template = template;
     }
 
+    public String render() {
+        return render(null);
+    }
+
     public String render(Object object) {
         StringWriter stringWriter = new StringWriter();
         try {
             template.process(object, stringWriter);
         } catch (IOException | TemplateException e) {
-            throw new RuntimeException(e);  // TODO
+            throw new RuntimeException(e.getMessage());  // TODO
         }
         return stringWriter.toString();
     }

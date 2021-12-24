@@ -10,8 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MainTest {
 
@@ -124,5 +123,17 @@ class MainTest {
         assertEquals(1, configuration.transformers.size());
         assertEquals("Cron.Job", configuration.transformers.get(0).getName().orElseThrow());
         assertEquals("0 1 2 3 4 5", configuration.transformers.get(0).getParameters().orElseThrow().textValue());
+    }
+
+    @Test
+    void testMissingCliTemplateParameterThrowsVariant1() {
+        Exception e = assertThrows(Exception.class, () -> Main.parseArgs(CliParser.parse("-cr hello-target.cli")));
+        assertTrue(e.getMessage().startsWith("The following has evaluated to null or missing:"));
+    }
+
+    @Test
+    void testMissingCliTemplateParameterThrowsVariant2() {
+        Exception e = assertThrows(Exception.class, () -> Main.parseArgs(CliParser.parse("-cr hello-target.cli '{}'")));
+        assertTrue(e.getMessage().startsWith("The following has evaluated to null or missing:"));
     }
 }

@@ -101,7 +101,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
         } else if (jsonNode.isBoolean()) {
             return (TemplateBooleanModel) jsonNode::booleanValue;
         } else if (jsonNode.isNull() || jsonNode.isMissingNode()) {
-            return TemplateModel.NOTHING;
+            return null;
         } else {
             return (TemplateScalarModel) jsonNode::asText;
         }
