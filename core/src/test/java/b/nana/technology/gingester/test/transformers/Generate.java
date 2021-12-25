@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class Generate implements Transformer<Object, String> {
+public final class Generate implements Transformer<Object, String> {
 
     private final String string;
     private final int count;

@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core.freemarker;
 
 import freemarker.template.Configuration;
 import freemarker.template.ObjectWrapper;
+import freemarker.template.Template;
 import freemarker.template.Version;
 
 import java.io.IOException;
@@ -27,7 +28,7 @@ public final class FreemarkerTemplateFactory {
         configuration.setInterpolationSyntax(interpolationSyntax);
         configuration.setObjectWrapper(objectWrapperFunction.apply(FREEMARKER_VERSION));
         try {
-            return new FreemarkerTemplateWrapper(new freemarker.template.Template("", templateString, configuration));
+            return new FreemarkerTemplateWrapper(new Template("", templateString, configuration));
         } catch (IOException e) {
             throw new RuntimeException(e);  // TODO
         }
