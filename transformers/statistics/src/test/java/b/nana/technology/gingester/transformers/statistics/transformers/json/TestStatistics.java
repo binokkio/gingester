@@ -15,14 +15,12 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t ResourceOpen /basic.csv " +
                 "-t DsvToJson " +
                 "-t JsonStatistics");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertEquals(26, result.get().get("index").get("presence").get("count").intValue());
@@ -69,15 +67,13 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-sft ResourceOpen /basic.ndjson " +
                 "-t InputStreamSplit " +
                 "-t InputStreamToJson " +
                 "-stt JsonStatistics");  // -sft and -stt are unnecessary but here to add some variation to the tests
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertNotNull(result.get().get("array[*]"));
@@ -89,15 +85,13 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t ResourceOpen /basic.ndjson " +
                 "-t InputStreamSplit " +
                 "-t InputStreamToJson " +
                 "-t JsonStatistics {array:{arrays:'indexed'}}");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertNull(result.get().get("array[*]"));
@@ -110,15 +104,13 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t ResourceOpen /nulls.ndjson " +
                 "-t InputStreamSplit " +  // \"s are unnecessary but here to add some variation to the tests
                 "-t InputStreamToJson " +
                 "-t JsonStatistics");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         assertEquals(2, result.get().get("foo").get("numerical").get("count").intValue());

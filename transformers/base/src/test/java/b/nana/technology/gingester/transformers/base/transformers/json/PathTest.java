@@ -19,7 +19,7 @@ class PathTest {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
-        JsonNode jsonNode = new ObjectMapper().readTree(getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json"));
+        JsonNode jsonNode = new ObjectMapper().readTree(getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/data/json/array-wrapped-objects.json"));
 
         Path path = new Path(new Path.Parameters("$..message"));
         path.transform(

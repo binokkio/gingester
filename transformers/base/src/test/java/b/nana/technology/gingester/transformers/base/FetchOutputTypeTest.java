@@ -12,16 +12,14 @@ class FetchOutputTypeTest {
     @Test
     void testBasic() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World' " +
                 "-t StringToBytes " +
                 "-s -f " +
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -31,16 +29,14 @@ class FetchOutputTypeTest {
     @Test
     void testWithStashName() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World' -t StringToBytes -s hello " +
                 "-t StringCreate 'Bye, World' -t StringToBytes -s bye " +
                 "-f hello " +
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -50,16 +46,14 @@ class FetchOutputTypeTest {
     @Test
     void testWithInputStasherId() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World' -t StringToBytes -t Target:Stash " +
                 "-t StringCreate 'Bye, World' -t StringToBytes -t Distraction:Stash " +
                 "-f Target.stash " +
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -69,16 +63,14 @@ class FetchOutputTypeTest {
     @Test
     void testWithStashNameAndInputStasherId() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World' -t StringToBytes -t Target:Stash hello " +
                 "-t StringCreate 'Bye, World' -t StringToBytes -t Distraction:Stash bye " +
                 "-f Target.hello " +
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 

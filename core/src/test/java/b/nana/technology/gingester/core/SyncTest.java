@@ -13,14 +13,12 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-t Generate 'Message from OnPrepare'");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -32,14 +30,12 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -51,14 +47,12 @@ class SyncTest {
 
         AtomicReference<Integer> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-stt SyncCounter");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -70,16 +64,14 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
                 "-t Monkey 1 -- " +
                 "-stt ExceptionHandler:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -91,9 +83,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -104,7 +94,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -116,9 +106,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -129,7 +117,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -141,9 +129,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -154,7 +140,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -166,9 +152,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -179,7 +163,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -191,9 +175,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-t Generate \"Hello, World!\" " +
@@ -204,7 +186,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -216,9 +198,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-l A B " +
                 "-t A:Stash -l C " +
@@ -226,7 +206,7 @@ class SyncTest {
                 "-stt C:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -238,9 +218,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-e C " +
                 "-sft Generate \"Hello, World!\" " +
                 "-l A B " +
@@ -249,7 +227,7 @@ class SyncTest {
                 "-stt C:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 

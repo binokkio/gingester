@@ -18,15 +18,13 @@ class BridgeTest {
     @Test
     void testShortBridge() throws IOException {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-t Pack greeting.txt " +
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -40,16 +38,14 @@ class BridgeTest {
     @Test
     void testShortBridgeWithPassthroughs() throws IOException {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-s -t Throttle " +
                 "-t Pack greeting.txt " +
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -63,15 +59,13 @@ class BridgeTest {
     @Test
     void testLongBridge() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate '{hello:1,world:2}' " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -81,16 +75,14 @@ class BridgeTest {
     @Test
     void testLongBridgeWithPassthroughs() {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate '{hello:1,world:2}' " +
                 "-s -t Throttle " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
 
         gingester.run();
 
@@ -100,8 +92,7 @@ class BridgeTest {
     @Test
     void testNoBridgingSolutionFoundThrows() {
 
-        Gingester gingester = new Gingester();
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t TimeNow " +
                 "-t PathSize");
 

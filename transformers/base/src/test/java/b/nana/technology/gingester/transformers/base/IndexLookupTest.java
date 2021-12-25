@@ -16,16 +16,14 @@ public class IndexLookupTest {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
-                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/transformers/json/array-wrapped-objects.json " +
+        Gingester gingester = new Gingester("" +
+                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/data/json/array-wrapped-objects.json " +
                 "-t JsonStream $.array[*] " +
                 "-s " +
                 "-t JsonPath $.id " +
                 "-t JsonAsLong " +
                 "-t Index " +
-                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/transformers/dsv/with-external-references.csv " +
+                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/data/dsv/with-external-references.csv " +
                 "-t DsvToJson " +
                 "-s " +
                 "-t JsonPath $.reference " +
@@ -34,7 +32,7 @@ public class IndexLookupTest {
                 "-w " +
                 "-t JsonSet lookup");
 
-        gingester.add(results::add);
+        gingester.attach(results::add);
 
         gingester.run();
 

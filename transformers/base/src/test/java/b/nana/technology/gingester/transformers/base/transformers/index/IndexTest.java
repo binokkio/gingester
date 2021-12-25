@@ -14,9 +14,7 @@ class IndexTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t A:StringCreate '\"Hello, World\"' -t Repeat 3 " +
                 "-t B:StringCreate 'Hello, World ${description}!' " +
                 "-s " +
@@ -29,7 +27,7 @@ class IndexTest {
                 "-s part2 " +
                 "-t StringCreate '${part1} - ${part2}'");
 
-        gingester.add(results::add);
+        gingester.attach(results::add);
 
         gingester.run();
 

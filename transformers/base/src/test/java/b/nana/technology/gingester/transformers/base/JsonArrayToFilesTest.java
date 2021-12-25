@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,12 +18,8 @@ class JsonArrayToFilesTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester();
-
-        GingesterConfiguration
-                .fromJson(getClass().getResourceAsStream("/configurations/json-array-to-files.gin.json"))
-                .applyTo(gingester)
-                .run(Map.of("tempDir", tempDir));
+        Gingester gingester = new Gingester("-cr /b/nana/technology/gingester/transformers/base/configurations/json-array-to-files.cli");
+        gingester.run(Map.of("tempDir", tempDir));
 
         Path message123 = tempDir.resolve("message-123.txt");
         assertTrue(Files.exists(message123));

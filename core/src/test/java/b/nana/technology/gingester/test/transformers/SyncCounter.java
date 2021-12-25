@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SyncCounter implements Transformer<Object, Integer> {
+public final class SyncCounter implements Transformer<Object, Integer> {
 
     private final ContextMap<AtomicInteger> state = new ContextMap<>();
 
