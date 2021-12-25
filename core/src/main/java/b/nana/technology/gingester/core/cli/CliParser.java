@@ -41,8 +41,9 @@ public final class CliParser {
 
     private CliParser() {}
 
-    public static GingesterConfiguration parse(URL template) {
-        return parse(template, null);
+    public static GingesterConfiguration parse(String template, Object parameters) {
+        String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
+        return parse(CliSplitter.split(cli));
     }
 
     public static GingesterConfiguration parse(URL template, Object parameters) {
@@ -54,10 +55,6 @@ public final class CliParser {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static GingesterConfiguration parse(String cli) {
-        return parse(CliSplitter.split(cli));
     }
 
     public static GingesterConfiguration parse(String[] args) {

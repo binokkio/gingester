@@ -36,36 +36,63 @@ public final class Gingester {
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
+
     private final Set<String> excepts;
     private final int reportingIntervalSeconds;
     private final String defaultAttachTarget;
 
     /**
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
+     * and square-bracket-interpolation syntax.
      *
-     * @param cli the cli instructions
+     * @param cli cli instructions template
      */
     public Gingester(String cli) {
-        this(CliParser.parse(cli));
+        this(cli, Collections.emptyMap());
     }
 
     /**
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
+     * and square-bracket-interpolation syntax.
+     *
+     * @param cli cli instructions template
+     * @param parameters the parameters for the template, e.g. a Java Map
+     */
+    public Gingester(String cli, Object parameters) {
+        this(CliParser.parse(cli, parameters));
+    }
+
+    /**
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
      */
     public Gingester(URL cli) {
-        this(CliParser.parse(cli));
+        this(cli, Collections.emptyMap());
     }
 
     /**
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
-     * @param template URL for the cli instructions template
+     * @param cli URL for the cli instructions
      * @param parameters the parameters for the template, e.g. a Java Map
      */
-    public Gingester(URL template, Object parameters) {
-        this(CliParser.parse(template, parameters));
+    public Gingester(URL cli, Object parameters) {
+        this(CliParser.parse(cli, parameters));
     }
 
     /**
+     * Construct Gingester with the given configuration.
      *
      * @param configuration the configuration to execute
      */
@@ -135,7 +162,7 @@ public final class Gingester {
         return id;
     }
 
-    private <T> void attach(String id, Transformer<T,T> transformer, String defaultAttachTarget) {
+    private <T> void attach(String id, Transformer<T, T> transformer, String defaultAttachTarget) {
 
         ControllerConfiguration<T, T> configuration = new ControllerConfiguration<T, T>()
                 .id(id)
