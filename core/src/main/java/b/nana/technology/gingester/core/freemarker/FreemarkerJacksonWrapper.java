@@ -47,6 +47,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                         public KeyValuePair next() {
                             String key = keys.next();
                             return new KeyValuePair() {
+
                                 public TemplateModel getKey() {
                                     return (TemplateScalarModel) () -> key;
                                 }
@@ -66,6 +67,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                 public TemplateCollectionModel keys() {
                     Iterator<String> keys = jsonNode.fieldNames();
                     return () -> new TemplateModelIterator() {
+
                         public boolean hasNext() {
                             return keys.hasNext();
                         }
@@ -80,6 +82,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                 public TemplateCollectionModel values() {
                     Iterator<JsonNode> values = jsonNode.iterator();
                     return () -> new TemplateModelIterator() {
+
                         public boolean hasNext() {
                             return values.hasNext();
                         }
