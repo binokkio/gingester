@@ -20,7 +20,7 @@ class StreamTest {
         Stream stream = new Stream(new Stream.Parameters("$..message"));
         stream.transform(
                 new Context.Builder().build(),
-                getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/data/json/array-wrapped-objects.json"),
+                getClass().getResourceAsStream("/data/json/array-wrapped-objects.json"),
                 (UniReceiver<JsonNode>) results::add
         );
 

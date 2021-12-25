@@ -18,7 +18,7 @@ class ForceArraysTest {
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
 
         Gingester gingester = new Gingester("" +
-                "-t ResourceOpen /b/nana/technology/gingester/transformers/base/data/xml/arrays-issue.xml " +
+                "-t ResourceOpen /data/xml/arrays-issue.xml " +
                 "-t XmlToJson " +
                 "-t JsonPath $.record[*] " +
                 "-t JsonForceArrays [\"$.container.list.item\"]");

@@ -18,7 +18,7 @@ class JsonArrayToFilesTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester("-cr /b/nana/technology/gingester/transformers/base/configurations/json-array-to-files.cli");
+        Gingester gingester = new Gingester("-cr /configurations/json-array-to-files.cli");
         gingester.run(Map.of("tempDir", tempDir));
 
         Path message123 = tempDir.resolve("message-123.txt");

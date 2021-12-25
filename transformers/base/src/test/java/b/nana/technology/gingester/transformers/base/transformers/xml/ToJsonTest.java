@@ -18,7 +18,7 @@ class ToJsonTest {
 
         new ToJson().transform(
                 new Context.Builder().build(),
-                getClass().getResourceAsStream("/b/nana/technology/gingester/transformers/base/data/xml/simple.xml"),
+                getClass().getResourceAsStream("/data/xml/simple.xml"),
                 (UniReceiver<JsonNode>) result::set
         );
 
