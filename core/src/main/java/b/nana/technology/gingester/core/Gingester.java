@@ -2,7 +2,6 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.cli.CliParser;
-import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
@@ -18,6 +17,7 @@ import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.function.BiConsumer;
@@ -40,10 +40,35 @@ public final class Gingester {
     private final int reportingIntervalSeconds;
     private final String defaultAttachTarget;
 
+    /**
+     *
+     * @param cli the cli instructions
+     */
     public Gingester(String cli) {
-        this(CliParser.parse(CliSplitter.split(cli)));
+        this(CliParser.parse(cli));
     }
 
+    /**
+     *
+     * @param cli URL for the cli instructions
+     */
+    public Gingester(URL cli) {
+        this(CliParser.parse(cli));
+    }
+
+    /**
+     *
+     * @param template URL for the cli instructions template
+     * @param parameters the parameters for the template, e.g. a Java Map
+     */
+    public Gingester(URL template, Object parameters) {
+        this(CliParser.parse(template, parameters));
+    }
+
+    /**
+     *
+     * @param configuration the configuration to execute
+     */
     public Gingester(GingesterConfiguration configuration) {
 
         excepts = new HashSet<>(configuration.excepts);
@@ -56,12 +81,6 @@ public final class Gingester {
         defaultAttachTarget = lastId;
 
         setup();
-    }
-
-    private String add(TransformerConfiguration configuration) {
-        String id = getId(configuration);
-        transformerConfigurations.put(id, configuration);
-        return id;
     }
 
     /**
@@ -108,6 +127,12 @@ public final class Gingester {
         Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
         String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
         attach(id, transformer, targetId);
+    }
+
+    private String add(TransformerConfiguration configuration) {
+        String id = getId(configuration);
+        transformerConfigurations.put(id, configuration);
+        return id;
     }
 
     private <T> void attach(String id, Transformer<T,T> transformer, String defaultAttachTarget) {

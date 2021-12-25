@@ -2,7 +2,6 @@ package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
-import b.nana.technology.gingester.core.freemarker.FreemarkerJacksonWrapper;
 import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -16,16 +15,16 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
+import static b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory.createCliTemplate;
 import static java.util.Objects.requireNonNull;
 
 public final class CliParser {
@@ -41,6 +40,25 @@ public final class CliParser {
     static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader();
 
     private CliParser() {}
+
+    public static GingesterConfiguration parse(URL template) {
+        return parse(template, null);
+    }
+
+    public static GingesterConfiguration parse(URL template, Object parameters) {
+        try {
+            String templateName = template.toString();
+            String templateSource = new String(template.openStream().readAllBytes(), StandardCharsets.UTF_8);
+            String cli = FreemarkerTemplateFactory.createCliTemplate(templateName, templateSource).render(parameters);
+            return parse(CliSplitter.split(cli));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static GingesterConfiguration parse(String cli) {
+        return parse(CliSplitter.split(cli));
+    }
 
     public static GingesterConfiguration parse(String[] args) {
 
@@ -76,7 +94,9 @@ public final class CliParser {
                 case "-cf":
                 case "--cli-file":
                     try {
-                        args = splice(Files.readString(Paths.get(args[++i])), args, i);
+                        String arg = args[++i];
+                        String raw = Files.readString(Paths.get(arg));
+                        args = splice(arg, raw, args, i);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
@@ -85,14 +105,14 @@ public final class CliParser {
                 case "-cr":
                 case "--cli-resource":
                     try {
-                        String resource = args[++i];
-                        InputStream resourceStream = Stream.of(resource, "/" + resource, "/gingester/" + resource)
+                        String arg = args[++i];
+                        String resource = Stream.of(arg, "/" + arg, "/gingester/" + arg)
                                 .flatMap(s -> Stream.of(s, s + ".cli"))
-                                .map(Main.class::getResourceAsStream)
-                                .filter(Objects::nonNull)
+                                .filter(s -> Main.class.getResourceAsStream(s) != null)
                                 .findFirst()
-                                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resource));
-                        args = splice(new String(resourceStream.readAllBytes(), StandardCharsets.UTF_8), args, i);
+                                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + arg));
+                        String raw = new String(Main.class.getResourceAsStream(resource).readAllBytes(), StandardCharsets.UTF_8);
+                        args = splice(resource, raw, args, i);
                     } catch (IOException e) {
                         throw new IllegalArgumentException(e);  // TODO
                     }
@@ -213,8 +233,8 @@ public final class CliParser {
         return configuration;
     }
 
-    private static String[] splice(String raw, String[] args, int i) throws JsonProcessingException {
-        FreemarkerTemplateWrapper template = FreemarkerTemplateFactory.createAlternateSyntaxTemplate(raw, FreemarkerJacksonWrapper::new);
+    private static String[] splice(String templateName, String templateSource, String[] args, int i) throws JsonProcessingException {
+        FreemarkerTemplateWrapper template = createCliTemplate(templateName, templateSource);
         if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
             JsonNode parameters = OBJECT_READER.readTree(args[i + 1]);
             String cli = template.render(parameters);

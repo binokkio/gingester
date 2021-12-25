@@ -23,7 +23,7 @@ public final class Context implements Iterable<Context> {
      * @return the compiled template
      */
     public static Template newTemplate(String template) {
-        FreemarkerTemplateWrapper wrapper = FreemarkerTemplateFactory.createTemplate(template, FreemarkerContextWrapper::new);
+        FreemarkerTemplateWrapper wrapper = FreemarkerTemplateFactory.createTemplate(template);
         return wrapper::render;
     }
 
