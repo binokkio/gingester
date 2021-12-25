@@ -22,7 +22,11 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
 
     private TemplateModel handleJsonNode(JsonNode jsonNode) {
         if (jsonNode.isObject()) {
-            return new TemplateHashModelEx2() {
+            return new TemplateJsonObjectModel() {
+
+                public String getAsString() {
+                    return jsonNode.toString();
+                }
 
                 public TemplateModel get(String key) {
                     return handleJsonNode(jsonNode.path(key));
@@ -87,7 +91,12 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                 }
             };
         } else if (jsonNode.isArray()) {
-            return new TemplateSequenceModel() {
+            return new TemplateJsonArrayModel() {
+
+                public String getAsString() {
+                    return jsonNode.toString();
+                }
+
                 public TemplateModel get(int index) {
                     return handleJsonNode(jsonNode.path(index));
                 }
@@ -105,5 +114,13 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
         } else {
             return (TemplateScalarModel) jsonNode::asText;
         }
+    }
+
+    public interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel {
+
+    }
+
+    public interface TemplateJsonArrayModel extends TemplateSequenceModel, TemplateScalarModel {
+
     }
 }
