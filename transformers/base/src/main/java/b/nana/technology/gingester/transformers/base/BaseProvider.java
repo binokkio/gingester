@@ -21,6 +21,7 @@ public final class BaseProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 b.nana.technology.gingester.transformers.base.transformers.bigdecimal.Multiply.class,
+                b.nana.technology.gingester.transformers.base.transformers.bytes.NotEmpty.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
@@ -65,7 +66,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.json.ReplaceBytesWithPaths.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Set.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Stream.class,
-                b.nana.technology.gingester.transformers.base.transformers.json.ToBytes.class,
+                b.nana.technology.gingester.transformers.base.transformers.json.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Wrap.class,
                 b.nana.technology.gingester.transformers.base.transformers.object.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Create.class,

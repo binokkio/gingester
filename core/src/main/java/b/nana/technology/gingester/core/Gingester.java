@@ -2,8 +2,8 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.cli.CliParser;
-import b.nana.technology.gingester.core.cli.Main;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
+import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.controller.Context;
@@ -12,11 +12,12 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
-import b.nana.technology.gingester.core.transformers.Seed;
+import b.nana.technology.gingester.core.transformers.Passthrough;
 import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.function.BiConsumer;
@@ -36,104 +37,142 @@ public final class Gingester {
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
 
-    private Set<String> excepts;
-    private int reportingIntervalSeconds;
+    private final Set<String> excepts;
+    private final int reportingIntervalSeconds;
+    private final String defaultAttachTarget;
 
     /**
-     * Sets the given list of transformer ids as root exception handlers.
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
+     * and square-bracket-interpolation syntax.
      *
-     * @param excepts list of transformer ids
+     * @param cli cli instructions template
      */
-    public void excepts(List<String> excepts) {
-        this.excepts = new HashSet<>(excepts);
+    public Gingester(String cli) {
+        this(cli, Collections.emptyMap());
     }
 
     /**
-     * Configure reporting.
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
+     * and square-bracket-interpolation syntax.
      *
-     * @param reportingIntervalSeconds the interval in seconds at which to report, or 0 to disable reporting
+     * @param cli cli instructions template
+     * @param parameters the parameters for the template, e.g. a Java Map
      */
-    public void report(int reportingIntervalSeconds) {
-        this.reportingIntervalSeconds = reportingIntervalSeconds;
+    public Gingester(String cli, Object parameters) {
+        this(CliParser.parse(cli, parameters));
     }
 
     /**
-     * Add transformer by name.
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
-     * @param transformer the name of the transformer to add
+     * @param cli URL for the cli instructions
      */
-    public void add(String transformer) {
-        add(new TransformerConfiguration(transformer));
+    public Gingester(URL cli) {
+        this(cli, Collections.emptyMap());
     }
 
     /**
-     * Add transformer.
+     * Construct Gingester with cli instructions.
+     * <p>
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
-     * @param transformer the consumer
+     * @param cli URL for the cli instructions
+     * @param parameters the parameters for the template, e.g. a Java Map
      */
-    public void add(Transformer<?, ?> transformer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.transformer(transformer);
-        add(configuration);
+    public Gingester(URL cli, Object parameters) {
+        this(CliParser.parse(cli, parameters));
     }
 
     /**
-     * Add consumer.
+     * Construct Gingester with the given configuration.
+     *
+     * @param configuration the configuration to execute
+     */
+    public Gingester(GingesterConfiguration configuration) {
+
+        excepts = new HashSet<>(configuration.excepts);
+        reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
+
+        String lastId = null;
+        for (TransformerConfiguration transformer : configuration.transformers) {
+            lastId = add(transformer);
+        }
+        defaultAttachTarget = lastId;
+
+        setup();
+    }
+
+    /**
+     * Attach consumer to the "last" transformer.
      *
      * @param consumer the consumer
      * @param <T> the consumer type
      */
-    public <T> void add(Consumer<T> consumer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.transformer(consumer);
-        add(configuration);
+    public <T> void attach(Consumer<T> consumer) {
+        attach(consumer, defaultAttachTarget);
     }
 
     /**
-     * Add consumer.
+     * Attach consumer to transformer.
      *
-     * @param id the id for the given consumer
      * @param consumer the consumer
+     * @param targetId the id of the transformer whose output will be consumed
      * @param <T> the consumer type
      */
-    public <T> void add(String id, Consumer<T> consumer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.id(id);
-        configuration.transformer(consumer);
-        add(configuration);
+    public <T> void attach(Consumer<T> consumer, String targetId) {
+        Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
+        attach(id, transformer, targetId);
     }
 
     /**
-     * Add bi-consumer.
+     * Attach bi-consumer to the "last" transformer.
      *
-     * @param id the id for the given consumer
      * @param biConsumer the bi-consumer
      * @param <T> the bi-consumer type
      */
-    public <T> void add(String id, BiConsumer<Context, T> biConsumer) {
-        TransformerConfiguration configuration = new TransformerConfiguration();
-        configuration.id(id);
-        configuration.transformer(biConsumer);
-        add(configuration);
+    public <T> void attach(BiConsumer<Context, T> biConsumer) {
+        attach(biConsumer, defaultAttachTarget);
     }
 
     /**
-     * Add transformer by configuration.
+     * Attach bi-consumer to transformer.
      *
-     * @param configuration the transformer configuration
+     * @param biConsumer the bi-consumer
+     * @param targetId the id of the transformer whose output will be consumed
+     * @param <T> the bi-consumer type
      */
-    public void add(TransformerConfiguration configuration) {
+    public <T> void attach(BiConsumer<Context, T> biConsumer, String targetId) {
+        Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
+        attach(id, transformer, targetId);
+    }
+
+    private String add(TransformerConfiguration configuration) {
         String id = getId(configuration);
         transformerConfigurations.put(id, configuration);
+        return id;
     }
 
-    /**
-     * Apply given command line syntax instructions.
-     *
-     * @param cli the command line syntax to interpret
-     */
-    public void cli(String cli) {
-        Main.parseArgs(CliParser.parse(cli)).applyTo(this);
+    private <T> void attach(String id, Transformer<T, T> transformer, String defaultAttachTarget) {
+
+        ControllerConfiguration<T, T> configuration = new ControllerConfiguration<T, T>()
+                .id(id)
+                .transformer(transformer);
+
+        Controller<T, T> controller = new Controller<>(configuration, new ControllerInterface(id));
+        controllers.put(id, controller);
+
+        Controller<?, T> target = (Controller<?, T>) controllers.get(defaultAttachTarget);
+        target.links.put(id, controller);
     }
 
     /**
@@ -165,7 +204,6 @@ public final class Gingester {
      * @param seedStash the seed stash
      */
     public void run(Map<String, Object> seedStash) {
-        setup();
         initialize();
         start(seedStash);
     }
@@ -180,13 +218,8 @@ public final class Gingester {
 
         transformerConfigurations.forEach((id, transformerConfiguration) -> {
 
-            Transformer<?, ?> transformer = transformerConfiguration.getInstance()
-                    .orElseGet(() -> {
-                        String name = transformerConfiguration.getName().orElseThrow();
-                        return transformerConfiguration.getParameters()
-                                .map(parameters -> TransformerFactory.instance(name, parameters))
-                                .orElseGet(() -> TransformerFactory.instance(name));
-                    });
+            Transformer<?, ?> transformer = transformerConfiguration.getTransformer()
+                    .orElseThrow(() -> new IllegalStateException("TransformerConfiguration does not contain transformer"));
 
             SetupControls setupControls = new SetupControls(phasers);
             transformer.setup(setupControls);
@@ -257,7 +290,7 @@ public final class Gingester {
         controllers.put("__seed__", new Controller<>(
                 new ControllerConfiguration<>()
                         .id("__seed__")
-                        .transformer(new Seed())
+                        .transformer(new Passthrough())
                         .links(new ArrayList<>(noIncoming.isEmpty() ? controllers.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
                         .excepts(new ArrayList<>(excepts)),
                 new ControllerInterface("__seed__")

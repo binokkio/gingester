@@ -22,7 +22,11 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
 
     private TemplateModel handleJsonNode(JsonNode jsonNode) {
         if (jsonNode.isObject()) {
-            return new TemplateHashModelEx2() {
+            return new TemplateJsonObjectModel() {
+
+                public String getAsString() {
+                    return jsonNode.toString();
+                }
 
                 public TemplateModel get(String key) {
                     return handleJsonNode(jsonNode.path(key));
@@ -43,6 +47,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                         public KeyValuePair next() {
                             String key = keys.next();
                             return new KeyValuePair() {
+
                                 public TemplateModel getKey() {
                                     return (TemplateScalarModel) () -> key;
                                 }
@@ -62,6 +67,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                 public TemplateCollectionModel keys() {
                     Iterator<String> keys = jsonNode.fieldNames();
                     return () -> new TemplateModelIterator() {
+
                         public boolean hasNext() {
                             return keys.hasNext();
                         }
@@ -76,6 +82,7 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                 public TemplateCollectionModel values() {
                     Iterator<JsonNode> values = jsonNode.iterator();
                     return () -> new TemplateModelIterator() {
+
                         public boolean hasNext() {
                             return values.hasNext();
                         }
@@ -87,7 +94,12 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
                 }
             };
         } else if (jsonNode.isArray()) {
-            return new TemplateSequenceModel() {
+            return new TemplateJsonArrayModel() {
+
+                public String getAsString() {
+                    return jsonNode.toString();
+                }
+
                 public TemplateModel get(int index) {
                     return handleJsonNode(jsonNode.path(index));
                 }
@@ -101,9 +113,17 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
         } else if (jsonNode.isBoolean()) {
             return (TemplateBooleanModel) jsonNode::booleanValue;
         } else if (jsonNode.isNull() || jsonNode.isMissingNode()) {
-            return TemplateModel.NOTHING;
+            return null;
         } else {
             return (TemplateScalarModel) jsonNode::asText;
         }
+    }
+
+    public interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel {
+
+    }
+
+    public interface TemplateJsonArrayModel extends TemplateSequenceModel, TemplateScalarModel {
+
     }
 }

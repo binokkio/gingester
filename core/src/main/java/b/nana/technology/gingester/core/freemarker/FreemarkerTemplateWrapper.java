@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.freemarker;
 
+import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
 import java.io.IOException;
@@ -7,10 +8,14 @@ import java.io.StringWriter;
 
 public final class FreemarkerTemplateWrapper {
 
-    private final freemarker.template.Template template;
+    private final Template template;
 
-    public FreemarkerTemplateWrapper(freemarker.template.Template template) {
+    public FreemarkerTemplateWrapper(Template template) {
         this.template = template;
+    }
+
+    public String render() {
+        return render(null);
     }
 
     public String render(Object object) {
@@ -18,7 +23,7 @@ public final class FreemarkerTemplateWrapper {
         try {
             template.process(object, stringWriter);
         } catch (IOException | TemplateException e) {
-            throw new RuntimeException(e);  // TODO
+            throw new RuntimeException(e.getMessage());  // TODO
         }
         return stringWriter.toString();
     }

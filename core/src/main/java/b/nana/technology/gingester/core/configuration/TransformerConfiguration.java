@@ -1,42 +1,16 @@
 package b.nana.technology.gingester.core.configuration;
 
-import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-@JsonAutoDetect(
-        fieldVisibility = JsonAutoDetect.Visibility.ANY,
-        getterVisibility = JsonAutoDetect.Visibility.NONE
-)
 public final class TransformerConfiguration extends BaseConfiguration<TransformerConfiguration> {
 
     private String id;
-    private String transformer;
-    private JsonNode parameters;
+    private String name;
+    private Transformer<?, ?> transformer;
     private Boolean report;
-
-    @JsonIgnore
-    private Transformer<?, ?> instance;
-
-
-
-    @JsonCreator
-    public TransformerConfiguration() {}
-
-    @JsonCreator
-    public TransformerConfiguration(String transformer) {
-        this.transformer = transformer;
-    }
 
 
 
@@ -45,46 +19,19 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
         return this;
     }
 
-    public TransformerConfiguration transformer(String transformer) {
-        this.transformer = transformer;
+    public TransformerConfiguration name(String name) {
+        this.name = name;
         return this;
     }
 
     public TransformerConfiguration transformer(Transformer<?, ?> transformer) {
-        this.transformer = TransformerFactory.getUniqueName(transformer);
-        this.instance = transformer;
+        this.transformer = transformer;
         return this;
     }
 
-    public <T> TransformerConfiguration transformer(Consumer<T> consumer) {
-        transformer = "Consumer";
-        instance = ((Transformer<T, T>) (context, in, out) -> {
-            consumer.accept(in);
-            out.accept(context, in);
-        });
-        return this;
-    }
-
-    public <T> TransformerConfiguration transformer(BiConsumer<Context, T> consumer) {
-        transformer = "Consumer";
-        instance = ((Transformer<T, T>) (context, in, out) -> {
-            consumer.accept(context, in);
-            out.accept(context, in);
-        });
-        return this;
-    }
-
-    public TransformerConfiguration parameters(Object parameters) {
-        this.parameters = GingesterConfiguration.OBJECT_MAPPER.valueToTree(parameters);
-        return this;
-    }
-
-    public TransformerConfiguration jsonParameters(String json) {
-        try {
-            parameters = GingesterConfiguration.OBJECT_READER.readTree(json);
-        } catch (JsonProcessingException e) {
-            parameters = JsonNodeFactory.instance.textNode(json);
-        }
+    public TransformerConfiguration transformer(String name, Transformer<?, ?> transformer) {
+        this.name = name;
+        this.transformer = transformer;
         return this;
     }
 
@@ -100,15 +47,15 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
     }
 
     public Optional<String> getName() {
+        if (name != null) {
+            return Optional.of(name);
+        } else {
+            return getTransformer().map(TransformerFactory::getUniqueName);
+        }
+    }
+
+    public Optional<Transformer<?, ?>> getTransformer() {
         return Optional.ofNullable(transformer);
-    }
-
-    public Optional<Transformer<?, ?>> getInstance() {
-        return Optional.ofNullable(instance);
-    }
-
-    public Optional<JsonNode> getParameters() {
-        return Optional.ofNullable(parameters);
     }
 
     public Optional<Boolean> getReport() {

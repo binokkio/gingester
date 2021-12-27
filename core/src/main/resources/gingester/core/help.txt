@@ -7,11 +7,13 @@ General usage:
     -b/--break
         ignore all following transformers
 
-    -cf/--cli-file <path/to/file>
-        append cli config from file
+    -cf/--cli-file <path/to/file> [<parameters>]
+        include cli from file, supports Freemarker square-bracket-tag and square-bracket-interpolation templating
+        provide [<parameters>] in JSON syntax to be used as template data
 
-    -cr/--cli-resource <path/to/resource>
-        append cli config from resource
+    -cr/--cli-resource <path/to/resource> [<parameters>]
+        include cli from resource, supports Freemarker square-bracket-tag and square-bracket-interpolation templating
+        provide [<parameters>] in JSON syntax to be used as template data
 
     -e/--excepts <link1> [<link2> [...]]
         send exceptions from the previous transformer (if any) and uncaught downstream exceptions to the given links
@@ -25,18 +27,9 @@ General usage:
     -h/--help
         print this help and exit
 
-    -jf/--json-file <path/to/file>
-        append json config from file
-
-    -jr/--json-resource <path/to/resource>
-        append json config from resource
-
     -l/--links <link1> [<link2> [...]]
         link the previous transformer to the given links,
         it will not automatically link to the next transformer
-
-    -pj/--print-json
-        print the json configuration resulting from this cli interaction instead of executing it
 
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
@@ -47,11 +40,11 @@ General usage:
     -sf/--sync-from <link1> [<link2> [...]]
         mark the linked transformers to be synced with when -stt is used later
 
-    -sft/--sync-from-transformer [<workers>] [<id>:]<name>[!] [<parameters>]
+    -sft/--sync-from-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         equal to -t but marks the transformer to be synced with when -stt is used later
 
-    -stt/--sync-to-transformer [<workers>] [<id>:]<name>[!] [<parameters>]
-        equal to -t but syncs the transformer with those marked by -sf/-sft or the ingest-seed if there are no marks
+    -stt/--sync-to-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
+        equal to -t but syncs the transformer with those most recently marked by -sf/-sft or the ingest-seed if there are no marks
 
     -t/--transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         add transformer to the pipeline
@@ -60,12 +53,13 @@ General usage:
         provide [<maxBatchSize>] to limit the maximum batch size for this transformer
         provide [<id>] to be able to refer to this transformer by the provided id
         provide [!] to enable throughput reporting for the transformer
+        provide [<parameters>] to configure the transformer
 
     -w/--swap [<name>]
-        swap value in stash
+        stash value and fetch previous value
 
     --
-        mark previous transformer as terminal, it will not automatically link to the next transformer
+        prevent the previous transformer from automatically being linked to the next transformer
 
     + <comment>
         has no effect

@@ -25,12 +25,10 @@ public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
 
         return new TemplateHashModel() {
 
-            @Override
             public TemplateModel get(String name) throws TemplateModelException {
                 return handleUnknownType(context.fetch(name).findFirst().orElse(TemplateModel.NOTHING));
             }
 
-            @Override
             public boolean isEmpty() {
                 return false;
             }

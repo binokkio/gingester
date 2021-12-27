@@ -4,7 +4,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-public class Question implements Transformer<String, String> {
+public final class Question implements Transformer<String, String> {
 
     @Override
     public void transform(Context context, String in, Receiver<String> out) {

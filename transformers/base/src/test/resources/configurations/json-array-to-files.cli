@@ -1,0 +1,7 @@
+-r 0
+
+-t ResourceOpen /data/json/array-wrapped-objects.json
+-t JsonStream $.array.*
+-s
+-t JsonStream $.message
+-t PathWrite "${tempDir}/message-${stash.id}.txt"

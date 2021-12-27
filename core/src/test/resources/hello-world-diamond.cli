@@ -1,0 +1,14 @@
++ 'Generate the string "Hello, World", link it to Emphasize and Question'
+-t Generate 'Hello, World'
+-l Emphasize Question
+
++ 'Emphasize the incoming value, link through to the ResultsCollector'
+-t Emphasize
+-l ResultsCollector
+
++ 'Question the incoming value, link through to the ResultsCollector'
+-t Question
+-l ResultsCollector
+
++ 'Simply pass the incoming values through unchanged, allows unit tests to attach consumers'
+-t ResultsCollector:Passthrough

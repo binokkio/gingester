@@ -20,9 +20,7 @@ class PackTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-sft Repeat 1000 " +
                 "-t StringToBytes " +
@@ -55,9 +53,7 @@ class PackTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-sft StringCreate 'Hello, World!' " +
                 "-t Repeat 1000 " +
                 "-t StringToBytes " +
@@ -90,9 +86,7 @@ class PackTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-t Repeat 1000 " +
                 "-t StringToBytes " +

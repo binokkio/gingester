@@ -16,9 +16,7 @@ class NdjsonTest {
     @Test
     void test() throws IOException {
 
-        Gingester gingester = new Gingester();
-
-        gingester.cli("" +
+        Gingester gingester = new Gingester("" +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
                 "-t InputStreamJoin " +
@@ -26,7 +24,7 @@ class NdjsonTest {
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        gingester.add(result::set);
+        gingester.attach(result::set);
         gingester.run();
 
         String test = new String(new GZIPInputStream(new ByteArrayInputStream(result.get())).readAllBytes(), StandardCharsets.UTF_8);
