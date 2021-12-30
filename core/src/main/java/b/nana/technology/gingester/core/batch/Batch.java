@@ -40,6 +40,10 @@ public final class Batch<T> implements Iterable<Item<T>> {
         return values.size();
     }
 
+    public Item<T> peek() {
+        return values.get(0);
+    }
+
     @Override
     public Iterator<Item<T>> iterator() {
         return values.iterator();

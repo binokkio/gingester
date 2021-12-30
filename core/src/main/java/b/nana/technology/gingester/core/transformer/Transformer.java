@@ -72,6 +72,9 @@ public interface Transformer<I, O> {
      */
     default void prepare(Context context, Receiver<O> out) throws Exception {}
 
+    default void beforeBatch(Context context) throws Exception {}
+    default void afterBatch(Context context) throws Exception {}
+
     /**
      * Transformer transform.
      *

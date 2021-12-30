@@ -57,7 +57,6 @@ public final class Worker extends Thread {
                 controller.lock.unlock();
             }
             perform(job);
-            flush();
         }
 
         controller.phaser.arriveAndAwaitAdvance();
@@ -92,6 +91,7 @@ public final class Worker extends Thread {
 
             if (finishTracker.isFullyIndicated()) {
                 if (finishTracker.acknowledge(this)) {
+                    unlockFlushLock();
                     iterator.remove();
                     if (controller.isLeave) context.controller.receiver.onFinishSignalReachedLeave(context);
                     controller.queue.add(() -> {  // not checking max queue size, worker is adding to their own queue
@@ -104,6 +104,7 @@ public final class Worker extends Thread {
                     });
                     controller.queueNotEmpty.signal();
                 } else if (context.isSeed()) {
+                    unlockFlushLock();
                     done = true;
                 }
             }
@@ -125,6 +126,12 @@ public final class Worker extends Thread {
             target.accept(batch);
             batches.remove(target);
         }
+    }
+
+    void unlockFlushLock() {
+        controller.lock.unlock();
+        flush();
+        controller.lock.lock();
     }
 
     <T> void flush() {

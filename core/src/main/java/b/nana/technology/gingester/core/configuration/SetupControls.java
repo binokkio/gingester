@@ -34,6 +34,8 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
         return this;
     }
 
+    // TODO requireOutgoingMaxBatchSize?
+
     public SetupControls acksCounter(Counter acksCounter) {
         this.acksCounter = acksCounter;
         return this;

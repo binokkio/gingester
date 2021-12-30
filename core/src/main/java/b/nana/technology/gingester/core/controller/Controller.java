@@ -12,7 +12,6 @@ import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import net.jodah.typetools.TypeResolver;
 
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicReference;
@@ -301,6 +300,11 @@ public final class Controller<I, O> {
     public void transform(Batch<I> batch) {
 
         if (maxBatchSize == 1 || batch.getSize() != batchSize) {
+            try {
+                transformer.beforeBatch(batch.peek().getContext());
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
             for (Item<I> item : batch) {
                 try {
                     transformer.transform(item.getContext(), item.getValue(), receiver);
@@ -308,8 +312,18 @@ public final class Controller<I, O> {
                     receiver.except("transform", item.getContext(), item.getValue(), e);
                 }
             }
+            try {
+                transformer.afterBatch(batch.peek().getContext());
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
         } else {
 
+            try {
+                transformer.beforeBatch(batch.peek().getContext());
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
             long batchStarted = System.nanoTime();
             for (Item<I> item : batch) {
                 try {
@@ -319,12 +333,17 @@ public final class Controller<I, O> {
                 }
             }
             long batchFinished = System.nanoTime();
+            try {
+                transformer.afterBatch(batch.peek().getContext());
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
             double batchDuration = batchFinished - batchStarted;
 
-            if ((batchDuration < 2_000_000 && batch.getSize() != maxBatchSize) ||
-                (batchDuration > 4_000_000 && batch.getSize() != 1)) {
+            if ((batchDuration < 4_000_000 && batch.getSize() != maxBatchSize) ||
+                (batchDuration > 8_000_000 && batch.getSize() != 1)) {
 
-                double abrupt = 3_000_000 / batchDuration * batch.getSize();
+                double abrupt = 6_000_000 / batchDuration * batch.getSize();
                 double dampened = (abrupt + batch.getSize() * 9) / 10;
                 batchSize = (int) Math.min(maxBatchSize, dampened);
             }
@@ -345,9 +364,19 @@ public final class Controller<I, O> {
 
     public void transform(Context context, I in) {
         try {
+            transformer.beforeBatch(context);
+        } catch (Exception e) {
+            throw new RuntimeException(e);  // TODO
+        }
+        try {
             transformer.transform(context, in, receiver);
         } catch (Exception e) {
             receiver.except("transform", context, in, e);
+        }
+        try {
+            transformer.afterBatch(context);
+        } catch (Exception e) {
+            throw new RuntimeException(e);  // TODO
         }
         if (report) delt.count();
     }
