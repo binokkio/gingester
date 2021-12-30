@@ -40,11 +40,20 @@ public final class Join implements Transformer<InputStream, InputStream> {
     }
 
     @Override
+    public void beforeBatch(Context context) {
+        contextMap.lock(context);
+    }
+
+    @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
-        contextMap.act(context, pipedOutputStream -> {
-            in.transferTo(pipedOutputStream);
-            if (delimiter.length > 0) pipedOutputStream.write(delimiter);
-        });
+        PipedOutputStream outputStream = contextMap.getLocked();
+        in.transferTo(outputStream);
+        if (delimiter.length > 0) outputStream.write(delimiter);
+    }
+
+    @Override
+    public void afterBatch(Context context) {
+        contextMap.unlock();
     }
 
     @Override
