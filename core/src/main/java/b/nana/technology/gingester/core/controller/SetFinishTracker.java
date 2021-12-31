@@ -17,18 +17,16 @@ final class SetFinishTracker implements FinishTracker {
 
     @Override
     public boolean indicate(Controller<?, ?> indicator) {
-        indicated.add(indicator);
         return indicated.size() == tracker.syncedThrough.get(context.controller).size();
-    }
-
-    @Override
-    public boolean acknowledge(Worker worker) {
-        acknowledged.add(worker);
-        return acknowledged.size() == tracker.workers.size();
     }
 
     @Override
     public boolean isFullyIndicated() {
         return indicated.contains(tracker);
+    }
+
+    @Override
+    public boolean acknowledge(Worker worker) {
+        return acknowledged.add(worker) && acknowledged.size() == tracker.workers.size();
     }
 }

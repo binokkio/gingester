@@ -2,9 +2,7 @@ package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.batch.Batch;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public final class Worker extends Thread {
 
@@ -59,6 +57,7 @@ public final class Worker extends Thread {
             perform(job);
         }
 
+        flush();
         controller.phaser.arriveAndAwaitAdvance();
 
         if (id == 0) {
@@ -82,17 +81,16 @@ public final class Worker extends Thread {
 
     private void handleFinishingContexts() throws InterruptedException {
 
-        Iterator<Map.Entry<Context, FinishTracker>> iterator = controller.finishing.entrySet().iterator();
-        while (iterator.hasNext()) {
+        Map<Context, FinishTracker> copy = new LinkedHashMap<>(controller.finishing);
+        for (Map.Entry<Context, FinishTracker> entry : copy.entrySet()) {
 
-            Map.Entry<Context, FinishTracker> entry = iterator.next();
             Context context = entry.getKey();
             FinishTracker finishTracker = entry.getValue();
 
             if (finishTracker.isFullyIndicated()) {
                 if (finishTracker.acknowledge(this)) {
+                    controller.finishing.remove(context);
                     unlockFlushLock();
-                    iterator.remove();
                     if (controller.isLeave) context.controller.receiver.onFinishSignalReachedLeave(context);
                     controller.queue.add(() -> {  // not checking max queue size, worker is adding to their own queue
                         if (context.controller.syncs.contains(controller)) {
@@ -104,7 +102,6 @@ public final class Worker extends Thread {
                     });
                     controller.queueNotEmpty.signal();
                 } else if (context.isSeed()) {
-                    unlockFlushLock();
                     done = true;
                 }
             }

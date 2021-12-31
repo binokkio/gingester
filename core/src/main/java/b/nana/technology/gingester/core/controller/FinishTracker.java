@@ -9,6 +9,13 @@ public interface FinishTracker {
     }
 
     boolean indicate(Controller<?, ?> indicator);
-    boolean acknowledge(Worker worker);
     boolean isFullyIndicated();
+
+    /**
+     * Acknowledge finish signal.
+     *
+     * @param worker the worker who is acknowledging
+     * @return true if all workers have acknowledged and the given worker did so for the first time
+     */
+    boolean acknowledge(Worker worker);
 }
