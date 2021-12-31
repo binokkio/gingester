@@ -340,10 +340,10 @@ public final class Controller<I, O> {
             }
             double batchDuration = batchFinished - batchStarted;
 
-            if ((batchDuration < 4_000_000 && batch.getSize() != maxBatchSize) ||
-                (batchDuration > 8_000_000 && batch.getSize() != 1)) {
+            if ((batchDuration < 2_000_000 && batch.getSize() != maxBatchSize) ||
+                (batchDuration > 4_000_000 && batch.getSize() != 1)) {
 
-                double abrupt = 6_000_000 / batchDuration * batch.getSize();
+                double abrupt = 3_000_000 / batchDuration * batch.getSize();
                 double dampened = (abrupt + batch.getSize() * 9) / 10;
                 batchSize = (int) Math.min(maxBatchSize, dampened);
             }
