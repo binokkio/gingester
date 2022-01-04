@@ -17,6 +17,7 @@ final class SetFinishTracker implements FinishTracker {
 
     @Override
     public boolean indicate(Controller<?, ?> indicator) {
+        indicated.add(indicator);
         return indicated.size() == tracker.syncedThrough.get(context.controller).size();
     }
 

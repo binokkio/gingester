@@ -107,7 +107,12 @@ public final class Gingester {
         }
         defaultAttachTarget = lastId;
 
-        setup();
+        TransformerConfiguration last = transformerConfigurations.get(lastId);
+        if (last.getLinks().isPresent()) {
+            List<String> newLinks = new ArrayList<>(last.getLinks().get());
+            newLinks.remove("__maybe_next__");
+            last.links(newLinks);
+        }
     }
 
     /**
@@ -129,8 +134,8 @@ public final class Gingester {
      */
     public <T> void attach(Consumer<T> consumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
-        attach(id, transformer, targetId);
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
+        attach(id, targetId);
     }
 
     /**
@@ -152,8 +157,8 @@ public final class Gingester {
      */
     public <T> void attach(BiConsumer<Context, T> biConsumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer));
-        attach(id, transformer, targetId);
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
+        attach(id, targetId);
     }
 
     private String add(TransformerConfiguration configuration) {
@@ -162,17 +167,11 @@ public final class Gingester {
         return id;
     }
 
-    private <T> void attach(String id, Transformer<T, T> transformer, String defaultAttachTarget) {
-
-        ControllerConfiguration<T, T> configuration = new ControllerConfiguration<T, T>()
-                .id(id)
-                .transformer(transformer);
-
-        Controller<T, T> controller = new Controller<>(configuration, new ControllerInterface(id));
-        controllers.put(id, controller);
-
-        Controller<?, T> target = (Controller<?, T>) controllers.get(defaultAttachTarget);
-        target.links.put(id, controller);
+    private <T> void attach(String id, String targetId) {
+        TransformerConfiguration target = transformerConfigurations.get(targetId);
+        List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
+        links.add(id);
+        target.links(links);
     }
 
     /**
@@ -204,6 +203,7 @@ public final class Gingester {
      * @param seedStash the seed stash
      */
     public void run(Map<String, Object> seedStash) {
+        setup();
         initialize();
         start(seedStash);
     }
@@ -237,6 +237,22 @@ public final class Gingester {
             this.configurations.put(id, configuration);
         });
 
+        // seed
+        Set<String> noIncoming = new HashSet<>(configurations.keySet());
+        noIncoming.removeAll(excepts);
+        configurations.values().stream()
+                .flatMap(c -> Stream.concat(c.getLinks().stream(), c.getExcepts().stream()))
+                .forEach(noIncoming::remove);
+        configurations.put("__seed__", new ControllerConfiguration<>()
+                .id("__seed__")
+                .transformer(new Passthrough())
+                .links(new ArrayList<>(noIncoming.isEmpty() ? configurations.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
+                .excepts(new ArrayList<>(excepts)));
+
+        // explore, bridge TODO
+        earlyExplore("__seed__", new ArrayDeque<>());
+
+        // ...
         setupControls.forEach((id, setupControls) -> {
             if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
                 if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
@@ -281,21 +297,6 @@ public final class Gingester {
 
     private void initialize() {
 
-        Set<String> noIncoming = new HashSet<>(controllers.keySet());
-        noIncoming.removeAll(excepts);
-        controllers.values().stream()
-                .flatMap(controller -> Stream.concat(controller.links.keySet().stream(), controller.excepts.keySet().stream()))
-                .forEach(noIncoming::remove);
-
-        controllers.put("__seed__", new Controller<>(
-                new ControllerConfiguration<>()
-                        .id("__seed__")
-                        .transformer(new Passthrough())
-                        .links(new ArrayList<>(noIncoming.isEmpty() ? controllers.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
-                        .excepts(new ArrayList<>(excepts)),
-                new ControllerInterface("__seed__")
-        ));
-
         controllers.values().forEach(Controller::initialize);
 
         explore(controllers.get("__seed__"), new ArrayDeque<>());
@@ -335,6 +336,31 @@ public final class Gingester {
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
+        }
+    }
+
+    private void earlyExplore(String pointer, ArrayDeque<String> route) {
+        if (route.contains(pointer)) {
+            Iterator<String> iterator = route.iterator();
+            while (!iterator.next().equals(pointer)) iterator.remove();
+            throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + pointer);
+        } else {
+//            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
+            route.add(pointer);
+            configurations.get(pointer).getLinks().forEach(next -> earlyExplore(next, new ArrayDeque<>(route)));
+            Iterator<String> iterator = route.descendingIterator();
+            while (iterator.hasNext()) {
+                String id = iterator.next();
+                boolean isExceptionHandler = excepts.contains(id) ||
+                        configurations.values().stream().anyMatch(c -> c.getExcepts().contains(id));
+                if (isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
+                ControllerConfiguration<?, ?> controller = configurations.get(id);
+                if (!controller.getExcepts().isEmpty()) {
+                    for (String exceptionHandler : controller.getExcepts()) {
+                        earlyExplore(exceptionHandler, new ArrayDeque<>(route));
+                    }
+                }
+            }
         }
     }
 
@@ -419,6 +445,7 @@ public final class Gingester {
             return id;
         }
     }
+    
 
     private Optional<String> resolveMaybeNext(String from) {
         boolean next = false;

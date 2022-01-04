@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.common.inputstream;
+package b.nana.technology.gingester.transformers.base.common.iostream;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -19,7 +19,6 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
     public SetupControls(Map<String, Phaser> phasers) {
         this.phasers = phasers;
-        links(Collections.singletonList("__maybe_next__"));
     }
 
 
