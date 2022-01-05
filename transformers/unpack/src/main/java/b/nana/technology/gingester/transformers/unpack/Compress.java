@@ -12,8 +12,6 @@ import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.zip.GZIPOutputStream;
 
 @Names(1)
@@ -54,9 +52,9 @@ public final class Compress implements Transformer<OutputStreamWrapper, OutputSt
     @Override
     public void transform(Context context, OutputStreamWrapper in, Receiver<OutputStreamWrapper> out) throws Exception {
         OutputStreamWrapper next = new OutputStreamWrapper();
+        out.accept(context, next);
         OutputStream compressed = compressor.wrap(next);
         in.wrap(compressed);
-        out.accept(context, next);
     }
 
     public static class Parameters {

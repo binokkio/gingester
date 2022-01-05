@@ -1,26 +1,35 @@
 package b.nana.technology.gingester.core.configuration;
 
+import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.reporting.Counter;
+import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import net.jodah.typetools.TypeResolver;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public final class ControllerConfiguration<I, O> {
+
+    private final Gingester.ControllerConfigurationInterface gingester;
 
     private String id;
     private Transformer<I, O> transformer;
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
-    private List<String> links = Collections.emptyList();
+    public Map<String, String> links = new LinkedHashMap<>();
     private List<String> syncs = Collections.emptyList();
     private List<String> excepts = Collections.emptyList();
     private boolean report;
     private Counter acksCounter;
 
-
+    public ControllerConfiguration(Gingester.ControllerConfigurationInterface gingester) {
+        this.gingester = gingester;
+    }
 
     public ControllerConfiguration<I, O> id(String id) {
         this.id = id;
@@ -48,7 +57,8 @@ public final class ControllerConfiguration<I, O> {
     }
 
     public ControllerConfiguration<I, O> links(List<String> links) {
-        this.links = links;
+        this.links.clear();
+        links.forEach(l -> this.links.put(l, l));
         return this;
     }
 
@@ -94,7 +104,7 @@ public final class ControllerConfiguration<I, O> {
         return Optional.ofNullable(maxBatchSize);
     }
 
-    public List<String> getLinks() {
+    public Map<String, String> getLinks() {
         return links;
     }
 
@@ -112,5 +122,61 @@ public final class ControllerConfiguration<I, O> {
 
     public Counter getAcksCounter() {
         return acksCounter;
+    }
+
+
+
+    @SuppressWarnings("unchecked")
+    public Class<I> getInputType() {
+        return (Class<I>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[0];
+    }
+
+    @SuppressWarnings("unchecked")
+    public Class<O> getOutputType() {
+        if (transformer instanceof OutputFetcher) {
+            return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
+                    .filter(c -> c.links.containsKey(id) || c.excepts.contains(id))
+                    .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
+                    .collect(Collectors.toList()));
+        } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
+            return (Class<O>) getActualInputType();
+        } else {
+            return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[1];
+        }
+    }
+
+    private Class<?> getActualInputType() {
+        List<Class<?>> inputTypes = new ArrayList<>();
+        gingester.getControllers().values().stream()
+                .filter(c -> c.links.containsKey(id))
+                .map(ControllerConfiguration::getOutputType)
+                .forEach(inputTypes::add);
+//        if (isExceptionHandler) inputTypes.add(Exception.class);
+        return getCommonSuperClass(inputTypes);
+    }
+
+    private Class<?> getStashType(String[] name) {
+        if (name.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
+        if (transformer instanceof InputStasher && (
+                (name.length == 1 && ((InputStasher) transformer).getInputStashName().equals(name[0])) ||
+                        (name[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(name[1]))
+        )) {
+            return getActualInputType();
+        } else {
+            return getCommonSuperClass(gingester.getControllers().values().stream()
+                    .filter(c -> c.links.containsKey(id) || c.excepts.contains(id))
+                    .map(c -> c.getStashType(name))
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    static Class<?> getCommonSuperClass(List<Class<?>> classes) {
+        if (classes.isEmpty()) return Object.class;  // TODO this is a quick fix
+        AtomicReference<Class<?>> pointer = new AtomicReference<>(classes.get(0));
+        while (classes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
+            Class<?> superClass = pointer.get().getSuperclass();
+            pointer.set(superClass == null ? Object.class : superClass);  // TODO this is a quick fix
+        }
+        return pointer.get();
     }
 }

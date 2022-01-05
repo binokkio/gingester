@@ -1,23 +1,18 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
-import b.nana.technology.gingester.core.transformer.InputStasher;
-import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
@@ -33,7 +28,7 @@ public final class Controller<I, O> {
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
-    public final Map<String, Controller<O, ?>> links;
+    public final Map<String, Controller<O, ?>> links = new HashMap<>();
     public final Map<String, Controller<Exception, ?>> excepts;
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
@@ -73,11 +68,7 @@ public final class Controller<I, O> {
         isLeave = configuration.getLinks().isEmpty() && configuration.getExcepts().isEmpty();
         isExceptionHandler = gingester.isExceptionHandler();
 
-        links = configuration.getLinks().stream().collect(
-                LinkedHashMap::new,
-                (map, link) -> map.put(link, null),
-                Map::putAll);
-
+        // TODO initialize in initialize instead
         excepts = configuration.getExcepts().stream().collect(
                 LinkedHashMap::new,
                 (map, link) -> map.put(link, null),
@@ -89,53 +80,9 @@ public final class Controller<I, O> {
 
     @SuppressWarnings("unchecked")
     public void initialize() {
-        links.replaceAll((id, nullController) -> (Controller<O, ?>) gingester.getController(id).orElseThrow());
+        configuration.getLinks().forEach((k, v) -> links.put(k, (Controller<O, ?>) gingester.getController(v).orElseThrow()));
         excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
         configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
-    }
-
-    @SuppressWarnings("unchecked")
-    public Class<I> getInputType() {
-        return (Class<I>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[0];
-    }
-
-    @SuppressWarnings("unchecked")
-    public Class<O> getOutputType() {
-        if (transformer instanceof OutputFetcher) {
-            return (Class<O>) getCommonSuperClass(gingester.getControllers().stream()
-                    .filter(c -> c.links.containsKey(id) || c.excepts.containsKey(id))
-                    .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
-                    .collect(Collectors.toList()));
-        } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
-            return (Class<O>) getActualInputType();
-        } else {
-            return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[1];
-        }
-    }
-
-    private Class<?> getActualInputType() {
-        List<Class<?>> inputTypes = new ArrayList<>();
-        gingester.getControllers().stream()
-                .filter(c -> c.links.containsKey(id))
-                .map(Controller::getOutputType)
-                .forEach(inputTypes::add);
-        if (isExceptionHandler) inputTypes.add(Exception.class);
-        return getCommonSuperClass(inputTypes);
-    }
-
-    private Class<?> getStashType(String[] name) {
-        if (name.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
-        if (transformer instanceof InputStasher && (
-                (name.length == 1 && ((InputStasher) transformer).getInputStashName().equals(name[0])) ||
-                (name[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(name[1]))
-        )) {
-            return getActualInputType();
-        } else {
-            return getCommonSuperClass(gingester.getControllers().stream()
-                    .filter(c -> c.links.containsKey(id) || c.excepts.containsKey(id))
-                    .map(c -> c.getStashType(name))
-                    .collect(Collectors.toList()));
-        }
     }
 
     public void discoverIncoming() {
@@ -416,7 +363,6 @@ public final class Controller<I, O> {
         report = false;
         delt = null;
         acks = null;
-        links = Collections.emptyMap();
         excepts = Collections.emptyMap();
         isLeave = false;
         isExceptionHandler = false;

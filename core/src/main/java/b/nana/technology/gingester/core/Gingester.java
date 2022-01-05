@@ -35,6 +35,7 @@ public final class Gingester {
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
+    private final Map<String, Phaser> phasers = new HashMap<>();
     private final Phaser phaser = new Phaser();
 
     private final Set<String> excepts;
@@ -214,8 +215,6 @@ public final class Gingester {
             throw new IllegalStateException("No transformers configured");
         }
 
-        Map<String, Phaser> phasers = new HashMap<>();
-
         transformerConfigurations.forEach((id, transformerConfiguration) -> {
 
             Transformer<?, ?> transformer = transformerConfiguration.getTransformer()
@@ -224,14 +223,12 @@ public final class Gingester {
             SetupControls setupControls = new SetupControls(phasers);
             transformer.setup(setupControls);
 
-            ControllerConfiguration<?, ?> configuration = combine(id, transformer, transformerConfiguration, setupControls);
+            ControllerConfiguration<?, ?> configuration = combine(new ControllerConfigurationInterface(), id, transformer, transformerConfiguration, setupControls);
 
             // resolve or remove __maybe_next__ links
-            List<String> links = new ArrayList<>(configuration.getLinks());
-            if (links.removeIf("__maybe_next__"::equals)) {
-                resolveMaybeNext(id).ifPresent(links::add);
+            if (configuration.getLinks().remove("__maybe_next__", "__maybe_next__")) {
+                resolveMaybeNext(id).ifPresent(s -> configuration.getLinks().put(s, s));
             }
-            configuration.links(links);
 
             this.setupControls.put(id, setupControls);
             this.configurations.put(id, configuration);
@@ -241,16 +238,16 @@ public final class Gingester {
         Set<String> noIncoming = new HashSet<>(configurations.keySet());
         noIncoming.removeAll(excepts);
         configurations.values().stream()
-                .flatMap(c -> Stream.concat(c.getLinks().stream(), c.getExcepts().stream()))
+                .flatMap(c -> Stream.concat(c.getLinks().values().stream(), c.getExcepts().stream()))
                 .forEach(noIncoming::remove);
-        configurations.put("__seed__", new ControllerConfiguration<>()
+        configurations.put("__seed__", new ControllerConfiguration<>(new ControllerConfigurationInterface())
                 .id("__seed__")
                 .transformer(new Passthrough())
                 .links(new ArrayList<>(noIncoming.isEmpty() ? configurations.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
                 .excepts(new ArrayList<>(excepts)));
 
         // explore, bridge TODO
-        earlyExplore("__seed__", new ArrayDeque<>());
+        explore("__seed__", new ArrayDeque<>());
 
         // ...
         setupControls.forEach((id, setupControls) -> {
@@ -259,7 +256,7 @@ public final class Gingester {
                     throw new IllegalStateException();  // TODO
                 }
 
-                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().stream().map(configurations::get);
+                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().values().stream().map(configurations::get);
 
                 if (setupControls.getRequireOutgoingSync()) {
                     String incompatible = outgoingConfigurations
@@ -296,11 +293,7 @@ public final class Gingester {
     }
 
     private void initialize() {
-
         controllers.values().forEach(Controller::initialize);
-
-        explore(controllers.get("__seed__"), new ArrayDeque<>());
-
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
@@ -339,15 +332,15 @@ public final class Gingester {
         }
     }
 
-    private void earlyExplore(String pointer, ArrayDeque<String> route) {
+    private void explore(String pointer, ArrayDeque<String> route) {
         if (route.contains(pointer)) {
             Iterator<String> iterator = route.iterator();
             while (!iterator.next().equals(pointer)) iterator.remove();
             throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + pointer);
         } else {
-//            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
+            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
             route.add(pointer);
-            configurations.get(pointer).getLinks().forEach(next -> earlyExplore(next, new ArrayDeque<>(route)));
+            configurations.get(pointer).getLinks().values().forEach(next -> explore(next, new ArrayDeque<>(route)));
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
@@ -357,28 +350,6 @@ public final class Gingester {
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
                     for (String exceptionHandler : controller.getExcepts()) {
-                        earlyExplore(exceptionHandler, new ArrayDeque<>(route));
-                    }
-                }
-            }
-        }
-    }
-
-    private void explore(Controller<?, ?> pointer, ArrayDeque<Controller<?, ?>> route) {
-        if (route.contains(pointer)) {
-            Iterator<Controller<?, ?>> iterator = route.iterator();
-            while (!iterator.next().equals(pointer)) iterator.remove();
-            throw new IllegalStateException("Circular route detected: " + route.stream().map(c -> c.id).collect(Collectors.joining(" -> ")) + " -> " + pointer.id);
-        } else {
-            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
-            route.add(pointer);
-            pointer.links.values().forEach(next -> explore(next, new ArrayDeque<>(route)));
-            Iterator<Controller<?, ?>> iterator = route.descendingIterator();
-            while (iterator.hasNext()) {
-                Controller<?, ?> controller = iterator.next();
-                if (controller.isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
-                if (!controller.excepts.isEmpty()) {
-                    for (Controller<Exception, ?> exceptionHandler : controller.excepts.values()) {
                         explore(exceptionHandler, new ArrayDeque<>(route));
                     }
                 }
@@ -386,43 +357,42 @@ public final class Gingester {
         }
     }
 
-    private <I, O> void maybeBridge(Controller<?, I> upstream, Controller<O, ?> downstream) {
+    private <I, O> void maybeBridge(String upstreamId, String downstreamId) {
 
-        Class<I> output = upstream.getOutputType();
-        Class<O> input = downstream.getInputType();
+        ControllerConfiguration<?, ?> upstream = configurations.get(upstreamId);
+        ControllerConfiguration<?, ?> downstream = configurations.get(downstreamId);
+
+        Class<?> output = upstream.getOutputType();
+        Class<?> input = downstream.getInputType();
 
         if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
             if (!input.isAssignableFrom(output)) {
 
                 Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
-                        .orElseThrow(() -> new IllegalStateException("Transformations from " + upstream.id + " to " + downstream.id + " must be specified"));  // TODO
+                        .orElseThrow(() -> new IllegalStateException("Transformations from " + upstreamId + " to " + downstreamId + " must be specified"));  // TODO
 
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Bridging from " + upstream.id + " to " + downstream.id + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
+                    LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
                 }
 
-                Controller<?, I> pointer = upstream;
+                ControllerConfiguration<?, ?> pointer = upstream;
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
-                    String id = getId(new TransformerConfiguration().transformer(transformer));
-                    transformerConfigurations.put(id, null);  // TODO adding id to prevent id collisions for bridge transformers
+                    String id = add(new TransformerConfiguration().transformer(transformer));
 
-                    ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>()
+                    SetupControls setupControls = new SetupControls(phasers);
+                    transformer.setup(setupControls);
+                    this.setupControls.put(id, setupControls);
+
+                    ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>(new ControllerConfigurationInterface())
                             .id(id)
                             .transformer(transformer)
-                            .links(Collections.singletonList(downstream.id));
+                            .links(Collections.singletonList(downstreamId));
 
-                    // TODO this is a quick fix, downstream could now be async unnecessarily
-                    if (setupControls.get(pointer.id) != null && setupControls.get(pointer.id).getRequireOutgoingAsync()) {
-                        configuration.maxWorkers(1);
-                    }
-
-                    Controller<I, O> controller = new Controller<>(configuration, new ControllerInterface(id));
-                    controller.initialize();
-                    controllers.put(id, controller);
-                    pointer.links.replace(downstream.id, controller);
-                    pointer = (Controller<?, I>) controller;
+                    configurations.put(id, configuration);
+                    pointer.links.replace(downstreamId, id);
+                    pointer = configuration;
                 }
             }
         }
@@ -445,7 +415,6 @@ public final class Gingester {
             return id;
         }
     }
-    
 
     private Optional<String> resolveMaybeNext(String from) {
         boolean next = false;
@@ -457,6 +426,12 @@ public final class Gingester {
             }
         }
         return Optional.empty();
+    }
+
+    public class ControllerConfigurationInterface {
+        public LinkedHashMap<String, ControllerConfiguration<?, ?>> getControllers() {
+            return configurations;
+        }
     }
 
     public class ControllerInterface {
