@@ -2,12 +2,13 @@ package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
+import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,8 +17,6 @@ class FromJsonTest {
     @Test
     void test() throws Exception {
 
-        // TODO use 2 threads, this test only works because of the PipedInputStream buffer
-
         FromJson.Parameters parameters = new FromJson.Parameters();
         parameters.delimiter = '1';
         parameters.quote = '2';
@@ -25,9 +24,9 @@ class FromJsonTest {
         FromJson fromJson = new FromJson(parameters);
         Context context = new Context.Builder().build();
 
-        AtomicReference<InputStream> output = new AtomicReference<>();
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        fromJson.prepare(context, (UniReceiver<InputStream>) output::set);
+        fromJson.prepare(context, (UniReceiver<OutputStreamWrapper>) o -> o.wrap(output));
 
         ObjectNode message1 = JsonNodeFactory.instance.objectNode();
         message1.put("message", "Hello, World 1!");
@@ -48,7 +47,7 @@ class FromJsonTest {
                 "2Hello, World 1!2\n" +
                 "2Hello, World 22!2\n" +
                 "Hello, World 3!\n",
-                new String(output.get().readAllBytes())
+                output.toString(StandardCharsets.UTF_8)
         );
     }
 }

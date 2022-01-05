@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -13,14 +14,11 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class FromJson implements Transformer<JsonNode, InputStream> {
+public final class FromJson implements Transformer<JsonNode, OutputStreamWrapper> {
 
     private final ObjectWriter writer;
 
@@ -39,18 +37,18 @@ public final class FromJson implements Transformer<JsonNode, InputStream> {
     @Override
     public void setup(SetupControls controls) {
         controls.syncs(Collections.singletonList("__seed__"));
-        controls.requireOutgoingAsync();
+        controls.requireOutgoingSync();
     }
 
     @Override
-    public void prepare(Context context, Receiver<InputStream> out) {
-        State state = new State(writer);
-        states.put(context, state);
-        out.accept(context, state.pipedInputStream);
+    public void prepare(Context context, Receiver<OutputStreamWrapper> out) {
+        OutputStreamWrapper outputStreamWrapper = new OutputStreamWrapper();
+        out.accept(context, outputStreamWrapper);
+        states.put(context, new State(writer, outputStreamWrapper));
     }
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<InputStream> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<OutputStreamWrapper> out) throws Exception {
         states.act(context, state -> {
 
             if (!state.headerWritten) {
@@ -67,22 +65,18 @@ public final class FromJson implements Transformer<JsonNode, InputStream> {
     }
 
     @Override
-    public void finish(Context context, Receiver<InputStream> out) throws Exception {
+    public void finish(Context context, Receiver<OutputStreamWrapper> out) throws Exception {
         states.remove(context).writer.close();
     }
 
     private static class State {
 
         private final SequenceWriter writer;
-        private final PipedInputStream pipedInputStream;
         private boolean headerWritten;
 
-        public State(ObjectWriter writer) {
-            PipedOutputStream pipedOutputStream = new PipedOutputStream();
-            pipedInputStream = new PipedInputStream();
+        public State(ObjectWriter writer, OutputStreamWrapper outputStreamWrapper) {
             try {
-                pipedOutputStream.connect(pipedInputStream);
-                this.writer = writer.writeValues(pipedOutputStream);
+                this.writer = writer.writeValues(outputStreamWrapper);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

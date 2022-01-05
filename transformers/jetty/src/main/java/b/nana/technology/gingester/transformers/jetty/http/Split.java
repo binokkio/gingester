@@ -3,8 +3,8 @@ package b.nana.technology.gingester.transformers.jetty.http;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.base.common.inputstream.PrefixInputStream;
-import b.nana.technology.gingester.transformers.base.common.inputstream.Splitter;
+import b.nana.technology.gingester.transformers.base.common.iostream.PrefixInputStream;
+import b.nana.technology.gingester.transformers.base.common.iostream.Splitter;
 
 import java.io.InputStream;
 import java.util.Arrays;

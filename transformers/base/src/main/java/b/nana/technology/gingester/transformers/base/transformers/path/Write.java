@@ -16,6 +16,10 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/*
+ * TODO change input type to OutputStreamWrapper but keep the emitEarly and monitoring functionality.
+ */
+
 public final class Write implements Transformer<InputStream, Path> {
 
     private final Context.Template pathTemplate;

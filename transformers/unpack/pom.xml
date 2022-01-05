@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.11.1-SNAPSHOT</version>
+        <version>0.11.1</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -20,6 +20,11 @@
         <dependency>
             <groupId>b.nana.technology.gingester</groupId>
             <artifactId>core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>base</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -45,12 +50,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>b.nana.technology.gingester.transformers</groupId>
-            <artifactId>base</artifactId>
-            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
 

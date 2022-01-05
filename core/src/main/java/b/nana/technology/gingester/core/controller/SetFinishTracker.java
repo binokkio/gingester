@@ -22,13 +22,12 @@ final class SetFinishTracker implements FinishTracker {
     }
 
     @Override
-    public boolean acknowledge(Worker worker) {
-        acknowledged.add(worker);
-        return acknowledged.size() == tracker.workers.size();
+    public boolean isFullyIndicated() {
+        return indicated.contains(tracker);
     }
 
     @Override
-    public boolean isFullyIndicated() {
-        return indicated.contains(tracker);
+    public boolean acknowledge(Worker worker) {
+        return acknowledged.add(worker) && acknowledged.size() == tracker.workers.size();
     }
 }

@@ -18,13 +18,14 @@ final class IntFinishTracker implements FinishTracker {
     }
 
     @Override
-    public boolean acknowledge(Worker worker) {
-        acknowledged |= worker.mask;
-        return acknowledged == acknowledgedTarget;
+    public boolean isFullyIndicated() {
+        return indicated > indicatedTarget;
     }
 
     @Override
-    public boolean isFullyIndicated() {
-        return indicated > indicatedTarget;
+    public boolean acknowledge(Worker worker) {
+        int before = acknowledged;
+        acknowledged |= worker.mask;
+        return before != acknowledged && acknowledged == acknowledgedTarget;
     }
 }
