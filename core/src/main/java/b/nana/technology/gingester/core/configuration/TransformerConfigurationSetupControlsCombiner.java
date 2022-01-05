@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.Collections;
@@ -11,9 +12,9 @@ public final class TransformerConfigurationSetupControlsCombiner {
 
     private TransformerConfigurationSetupControlsCombiner() {}
 
-    public static <I, O> ControllerConfiguration<I, O> combine(String id, Transformer<?, ?> instance, TransformerConfiguration transformer, SetupControls setup) {
+    public static <I, O> ControllerConfiguration<I, O> combine(Gingester.ControllerConfigurationInterface gingester, String id, Transformer<?, ?> instance, TransformerConfiguration transformer, SetupControls setup) {
 
-        ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>();
+        ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>(gingester);
 
         configuration
                 .id(id)

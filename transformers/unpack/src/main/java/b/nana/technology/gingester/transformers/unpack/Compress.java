@@ -5,15 +5,17 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
 @Names(1)
-public final class Compress implements Transformer<InputStream, InputStream> {
+public final class Compress implements Transformer<OutputStreamWrapper, OutputStreamWrapper> {
 
     private final Compressor compressor;
 
@@ -44,20 +46,15 @@ public final class Compress implements Transformer<InputStream, InputStream> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireOutgoingAsync();
+        controls.requireOutgoingSync();
     }
 
     @Override
-    public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
-
-        PipedOutputStream pipedOutputStream = new PipedOutputStream();
-        PipedInputStream pipedInputStream = new PipedInputStream();
-        pipedOutputStream.connect(pipedInputStream);
-        out.accept(context, pipedInputStream);
-
-        OutputStream outputStream = compressor.wrap(pipedOutputStream);
-        in.transferTo(outputStream);
-        outputStream.close();
+    public void transform(Context context, OutputStreamWrapper in, Receiver<OutputStreamWrapper> out) throws Exception {
+        OutputStreamWrapper next = new OutputStreamWrapper();
+        out.accept(context, next);
+        OutputStream compressed = compressor.wrap(next);
+        in.wrap(compressed);
     }
 
     public static class Parameters {

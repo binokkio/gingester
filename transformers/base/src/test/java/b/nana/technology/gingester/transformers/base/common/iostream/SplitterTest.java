@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.common.inputstream;
+package b.nana.technology.gingester.transformers.base.common.iostream;
 
 import org.junit.jupiter.api.Test;
 
@@ -6,7 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static b.nana.technology.gingester.transformers.base.common.inputstream.Helpers.*;
+import static b.nana.technology.gingester.transformers.base.common.iostream.Helpers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

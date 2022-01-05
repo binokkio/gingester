@@ -2,7 +2,6 @@ package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.reporting.Counter;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Phaser;
@@ -19,7 +18,6 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
     public SetupControls(Map<String, Phaser> phasers) {
         this.phasers = phasers;
-        links(Collections.singletonList("__maybe_next__"));
     }
 
 
@@ -33,6 +31,8 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
         this.requireOutgoingAsync = true;
         return this;
     }
+
+    // TODO requireOutgoingMaxBatchSize?
 
     public SetupControls acksCounter(Counter acksCounter) {
         this.acksCounter = acksCounter;

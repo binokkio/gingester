@@ -24,7 +24,7 @@ class PackTest {
                 "-t StringCreate 'Hello, World!' " +
                 "-sft Repeat 1000 " +
                 "-t StringToBytes " +
-                "-stt Pack hello.txt " +
+                "-stt Pack hello.txt -t Compress " +
                 "-t PathWrite " + tempDir.resolve("result-${description}.tar.gz"));
 
         gingester.run();
@@ -57,7 +57,7 @@ class PackTest {
                 "-sft StringCreate 'Hello, World!' " +
                 "-t Repeat 1000 " +
                 "-t StringToBytes " +
-                "-stt Pack hello-${description}.txt " +
+                "-stt Pack hello-${description}.txt -t Compress " +
                 "-t PathWrite " + tempDir.resolve("result.tar.gz"));
 
         gingester.run();
@@ -90,7 +90,7 @@ class PackTest {
                 "-t StringCreate 'Hello, World!' " +
                 "-t Repeat 1000 " +
                 "-t StringToBytes " +
-                "-t Pack hello-${description}.txt " +
+                "-t Pack hello-${description}.txt -t Compress " +
                 "-t PathWrite " + tempDir.resolve("result.tar.gz"));
 
         gingester.run();

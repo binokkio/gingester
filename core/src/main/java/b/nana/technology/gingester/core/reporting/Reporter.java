@@ -52,14 +52,32 @@ public final class Reporter extends Thread {
             sampler.sample();
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(String.format(
-                        "%s: %,d processed at %,.2f/s over the last %,.0f seconds, %,.2f/s overall",
+                        "%s: %,d out at %,.2f/s (%s), %,.2f/s (%s)",
                         controller.id,
                         sampler.getValue(),
                         sampler.getCurrentChangePerSecond(),
-                        sampler.getCurrentNanos() / 1_000_000_000d,
-                        sampler.getEpochChangePerSecond()
+                        humanize(sampler.getCurrentNanos()),
+                        sampler.getEpochChangePerSecond(),
+                        humanize(sampler.getEpochNanos())
                 ));
             }
         });
+    }
+
+    private String humanize(long nanos) {
+        long asSeconds = nanos / 1_000_000_000;
+        long days = asSeconds / 86400;
+        long hours = asSeconds % 86400 / 3600;
+        long minutes = asSeconds % 86400 % 3600 / 60;
+        long seconds = asSeconds % 86400 % 3600 % 60;
+        if (days != 0) {
+            return days + "d" + hours + "h" + minutes + "m" + seconds + "s";
+        } else if (hours != 0) {
+            return hours + "h" + minutes + "m" + seconds + "s";
+        } else if (minutes != 0) {
+            return minutes + "m" + seconds + "s";
+        } else {
+            return seconds + "s";
+        }
     }
 }

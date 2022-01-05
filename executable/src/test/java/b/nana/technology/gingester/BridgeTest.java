@@ -20,7 +20,7 @@ class BridgeTest {
 
         Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
-                "-t Pack greeting.txt " +
+                "-t Pack greeting.txt -t Compress " +
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
@@ -40,8 +40,8 @@ class BridgeTest {
 
         Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
-                "-s -t Throttle " +
-                "-t Pack greeting.txt " +
+                "-s -t Passthrough " +
+                "-t Pack greeting.txt -t Compress " +
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
@@ -77,7 +77,7 @@ class BridgeTest {
 
         Gingester gingester = new Gingester("" +
                 "-t JsonCreate '{hello:1,world:2}' " +
-                "-s -t Throttle " +
+                "-s -t Passthrough " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");
 

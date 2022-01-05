@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.freemarker.FreemarkerContextWrapper;
 import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
 import com.fasterxml.jackson.databind.JsonNode;

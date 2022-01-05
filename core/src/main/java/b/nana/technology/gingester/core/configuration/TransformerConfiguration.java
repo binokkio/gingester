@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.configuration;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
+import java.util.Collections;
 import java.util.Optional;
 
 public final class TransformerConfiguration extends BaseConfiguration<TransformerConfiguration> {
@@ -11,6 +12,12 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
     private String name;
     private Transformer<?, ?> transformer;
     private Boolean report;
+
+
+
+    public TransformerConfiguration() {
+        links(Collections.singletonList("__maybe_next__"));
+    }
 
 
 
