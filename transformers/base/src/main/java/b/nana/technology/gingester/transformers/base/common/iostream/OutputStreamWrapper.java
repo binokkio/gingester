@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.base.common.iostream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class OutputStreamWrapper extends OutputStream {
+public final class OutputStreamWrapper extends OutputStream {
 
     private OutputStream wrapped;
 

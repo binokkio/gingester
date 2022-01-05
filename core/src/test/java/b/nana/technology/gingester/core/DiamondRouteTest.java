@@ -31,8 +31,6 @@ class DiamondRouteTest {
         gingester.attach(results::add, "Emphasize");
         gingester.run();
 
-        System.out.println(results);
-
         assertEquals(1, results.size());
         assertEquals("Hello, World!", results.remove());
     }

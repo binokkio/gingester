@@ -8,23 +8,20 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
 
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 
 @Pure
-public final class FromOutputStreamWrapper implements Transformer<OutputStreamWrapper, InputStream> {
+public final class ToOutputStream implements Transformer<InputStream, OutputStreamWrapper> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.requireOutgoingAsync();
+        controls.requireOutgoingSync();
     }
 
     @Override
-    public void transform(Context context, OutputStreamWrapper in, Receiver<InputStream> out) throws Exception {
-        PipedOutputStream pipedOutputStream = new PipedOutputStream();
-        PipedInputStream pipedInputStream = new PipedInputStream(65536);
-        pipedOutputStream.connect(pipedInputStream);
-        in.wrap(pipedOutputStream);
-        out.accept(context, pipedInputStream);
+    public void transform(Context context, InputStream in, Receiver<OutputStreamWrapper> out) throws Exception {
+        OutputStreamWrapper outputStreamWrapper = new OutputStreamWrapper();
+        out.accept(context, outputStreamWrapper);
+        in.transferTo(outputStreamWrapper);  // don't forget about the ByteArrayInputStream implementation when considering replacing this
+        outputStreamWrapper.close();
     }
 }

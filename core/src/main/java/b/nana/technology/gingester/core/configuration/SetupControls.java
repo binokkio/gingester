@@ -2,7 +2,6 @@ package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.reporting.Counter;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Phaser;

@@ -5,7 +5,6 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public final class Drain implements Transformer<InputStream, InputStream> {

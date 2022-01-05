@@ -3,7 +3,6 @@ package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 
 import java.io.InputStream;
