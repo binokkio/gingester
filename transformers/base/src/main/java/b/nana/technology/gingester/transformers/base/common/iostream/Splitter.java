@@ -9,6 +9,7 @@ public final class Splitter {
     private final byte[] delimiter;
     private final PrefixInputStream source;
     private boolean peek;
+    private int readAhead = 256;
 
     public Splitter(InputStream source, byte[] delimiter) {
         this.source = new PrefixInputStream(source);
@@ -46,21 +47,26 @@ public final class Splitter {
             public int read(byte[] destination, int offset, int length) throws IOException {
                 if (done) return -1;
                 int seen = 0;
-                int read = source.read(destination, offset, length);
+                int read = source.read(destination, offset, Math.min(length, readAhead));
                 for (int i = offset; i < offset + read; i++) {
                     if (destination[i] == delimiter[seen]) {
                         if (++seen == delimiter.length) {
+                            int actual = i - offset - (seen - 1);
+                            if (actual < readAhead - 256) readAhead -= 256;
                             source.copyPrefix(destination, i + 1, read - (i - offset) - 1);
                             peek = false;
                             done = true;
-                            return i - offset - (seen - 1);
+                            return actual;
                         }
                     } else if (seen > 0) {
                         i -= seen;
                         seen = 0;
                     }
                 }
-                if (seen == 0) return read;
+                if (seen == 0) {
+                    if (read == readAhead) readAhead += 256;
+                    return read;
+                }
                 return peek(seen) ? read - seen : read;
             }
 
