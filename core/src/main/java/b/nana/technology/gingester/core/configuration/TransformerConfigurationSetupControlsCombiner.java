@@ -20,7 +20,7 @@ public final class TransformerConfigurationSetupControlsCombiner {
                 .id(id)
                 .transformer((Transformer<I, O>) instance)
                 .report(transformer.getReport().orElse(false))
-                .links(choose(transformer::getLinks, setup::getLinks, Collections::emptyList))
+                .links(choose(setup::getLinks, transformer::getLinks, Collections::emptyList))  // TODO throw if both provide links
                 .syncs(choose(transformer::getSyncs, setup::getSyncs, Collections::emptyList))
                 .excepts(choose(transformer::getExcepts, setup::getExcepts, Collections::emptyList));
 
