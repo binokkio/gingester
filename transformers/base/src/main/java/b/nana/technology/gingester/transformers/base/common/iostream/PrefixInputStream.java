@@ -9,7 +9,7 @@ public final class PrefixInputStream extends InputStream {
     private final InputStream source;
     private final ArrayDeque<Slice> prefixes = new ArrayDeque<>();
     private int prefixRemaining;
-    private int bufferSize = 8192;
+    private int bufferSize = 256;
     private byte[] recycle;
 
     public PrefixInputStream(InputStream source) {
@@ -37,8 +37,8 @@ public final class PrefixInputStream extends InputStream {
 
     public void copyPrefix(byte[] source, int offset, int length) {
         byte[] prefix;
-        if (source.length > bufferSize) {
-            setMinimumBufferSize(source.length);
+        if (length > bufferSize) {
+            setMinimumBufferSize(length);
             prefix = new byte[bufferSize];
         } else if (recycle != null) {
             prefix = recycle;

@@ -23,7 +23,7 @@ public final class Drain implements Transformer<InputStream, InputStream> {
 
     public static class Parameters {
 
-        public int bufferSize = 65536;
+        public int bufferSize = 8192;
 
         @JsonCreator
         public Parameters() {}
