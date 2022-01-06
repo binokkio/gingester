@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RouteTest {
 
@@ -50,5 +52,21 @@ class RouteTest {
         });
 
         assertEquals("world", result.get());
+    }
+    
+    @Test
+    void testInFlow() {
+
+        Gingester gingester = new Gingester("" +
+                "-t StringCreate 'Hello, World!' " +
+                "-t RegexRoute \"{'.ello.*': 'Hello', '.*': 'Other'}\" " +
+                "-t Other:Passthrough -- " +
+                "-t Hello:Passthrough");
+        
+        AtomicReference<String> result = new AtomicReference<>();
+        gingester.attach(result::set);
+        gingester.run();
+        
+        assertEquals("Hello, World!", result.get());
     }
 }
