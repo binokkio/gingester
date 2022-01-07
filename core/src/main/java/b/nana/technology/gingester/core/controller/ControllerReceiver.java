@@ -147,18 +147,21 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void except(Context context, Exception cause) {
 
+        Boolean handled = null;
+
         for (Context c : context) {
-            if (!c.controller.excepts.isEmpty()) {
-                for (Controller<Exception, ?> target : c.controller.excepts.values()) {
-                    accept(context, cause, target);
+            c.markFlawed();
+            if (handled == null) {
+                if (!c.controller.excepts.isEmpty()) {
+                    c.controller.excepts.values().forEach(target -> accept(context, cause, target));
+                    handled = true;
+                } else if (c.controller.isExceptionHandler) {  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
+                    handled = false;
                 }
-                return;
-            } else if (c.controller.isExceptionHandler) {  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
-                break;
             }
         }
 
-        if (LOGGER.isWarnEnabled()) {
+        if ((handled == null || !handled) && LOGGER.isWarnEnabled()) {
             LOGGER.warn(String.format(
                     "Uncaught exception during %s::%s for %s",
                     context.fetch("transformer").findFirst().orElseThrow(),

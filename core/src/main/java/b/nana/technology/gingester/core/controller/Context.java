@@ -30,6 +30,7 @@ public final class Context implements Iterable<Context> {
     final Context parent;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
+    private volatile boolean isFlawless = true;
 
     private Context(Builder builder) {
         parent = builder.parent;
@@ -39,6 +40,14 @@ public final class Context implements Iterable<Context> {
 
     public boolean isSeed() {
         return parent == null;
+    }
+
+    public boolean isFlawless() {
+        return isFlawless;
+    }
+
+    void markFlawed() {
+        isFlawless = false;
     }
 
     /**

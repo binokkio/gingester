@@ -16,6 +16,7 @@ public final class CoreProvider implements Provider {
                 FetchAll.class,
                 Monkey.class,
                 OnFinish.class,
+                OnFlawless.class,
                 OnPrepare.class,
                 Passthrough.class,
                 Repeat.class,
