@@ -167,7 +167,7 @@ public final class TransformerFactory {
         String[] parts = transformer.getCanonicalName().split("\\.");
         String name = Arrays.stream(nameFormat).mapToObj(i -> camelCase(parts[parts.length - i])).collect(Collectors.joining());
         StringBuilder builder = new StringBuilder(name);
-        return Stream.concat(Stream.of(name), IntStream.of(Arrays.stream(nameFormat).max().orElseThrow() + 1, parts.length - 1)
+        return Stream.concat(Stream.of(name), IntStream.range(Arrays.stream(nameFormat).max().orElseThrow() + 1, parts.length - 1)
                 .mapToObj(i -> parts[parts.length - i])
                 .filter(s -> !s.equalsIgnoreCase("transformers"))
                 .map(s -> builder.insert(0, camelCase(s)).toString()));
