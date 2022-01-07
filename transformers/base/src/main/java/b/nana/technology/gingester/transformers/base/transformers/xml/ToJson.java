@@ -8,7 +8,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import java.io.InputStream;
 
-public class ToJson implements Transformer<InputStream, JsonNode> {
+public final class ToJson implements Transformer<InputStream, JsonNode> {
 
     private final XmlMapper xmlMapper = new XmlMapper();
 

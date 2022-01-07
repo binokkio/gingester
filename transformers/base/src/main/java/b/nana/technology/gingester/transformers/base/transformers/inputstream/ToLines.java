@@ -8,9 +8,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class SplitLines extends CharsetTransformer<InputStream, String> {
+public final class ToLines extends CharsetTransformer<InputStream, String> {
 
-    public SplitLines(Parameters parameters) {
+    public ToLines(Parameters parameters) {
         super(parameters);
     }
 
