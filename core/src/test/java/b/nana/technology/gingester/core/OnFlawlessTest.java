@@ -16,7 +16,7 @@ class OnFlawlessTest {
                 "-t Repeat 3 " +
                 "-sft Generate 'Hello, World!' " +
                 "-t Monkey " +
-                "-stt OnFlawless " +
+                "-stt OnFinish flawless " +
                 "-f description");
 
         ArrayDeque<Integer> results = new ArrayDeque<>();

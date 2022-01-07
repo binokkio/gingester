@@ -135,7 +135,7 @@ public final class ControllerConfiguration<I, O> {
     public Class<O> getOutputType() {
         if (transformer instanceof OutputFetcher) {
             return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
-                    .filter(c -> c.links.containsKey(id) || c.excepts.contains(id))
+                    .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
                     .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
                     .collect(Collectors.toList()));
         } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
@@ -148,7 +148,7 @@ public final class ControllerConfiguration<I, O> {
     private Class<?> getActualInputType() {
         List<Class<?>> inputTypes = new ArrayList<>();
         gingester.getControllers().values().stream()
-                .filter(c -> c.links.containsKey(id))
+                .filter(c -> c.links.containsValue(id))
                 .map(ControllerConfiguration::getOutputType)
                 .forEach(inputTypes::add);
 //        if (isExceptionHandler) inputTypes.add(Exception.class);
@@ -164,7 +164,7 @@ public final class ControllerConfiguration<I, O> {
             return getActualInputType();
         } else {
             return getCommonSuperClass(gingester.getControllers().values().stream()
-                    .filter(c -> c.links.containsKey(id) || c.excepts.contains(id))
+                    .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
                     .map(c -> c.getStashType(name))
                     .collect(Collectors.toList()));
         }
