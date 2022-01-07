@@ -20,8 +20,13 @@ public final class OnFinish implements Transformer<Object, Object> {
     private final List<String> flawed;
 
     public OnFinish(Parameters parameters) {
+
         flawless = parameters.flawless;
         flawed = parameters.flawed;
+
+        if (flawless != null && flawed != null && (flawless.isEmpty() || flawed.isEmpty())) {
+            throw new IllegalStateException("Explicit empty list not allowed for OnFinish parameter");
+        }
     }
 
     @Override
