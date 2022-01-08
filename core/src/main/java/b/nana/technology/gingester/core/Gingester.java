@@ -183,9 +183,8 @@ public final class Gingester {
      * <li>call {@link Transformer#setup(SetupControls)} on all transformers
      * <li>consolidate the transformer setup controls with the transformer configurations
      * <li>create a seed transformer with id __seed__ and link it to all transformers with no incoming links
-     * <li>start a single worker thread for each transformer
+     * <li>start the workers for each transformer
      * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
-     * <li>start the remaining worker threads as configured
      * <li>give the seed controller a single input, which it will pass through to its links
      * <li>start a reporting thread if configured
      * <li>block until all transformers are done
