@@ -4,6 +4,8 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -20,6 +22,8 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
 public class Search implements Transformer<Object, Path> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
+
     private final FileSystem fileSystem = FileSystems.getDefault();
 
     private final Context.Template rootTemplate;
@@ -32,6 +36,12 @@ public class Search implements Transformer<Object, Path> {
         globTemplates = parameters.globs.stream().map(Context::newTemplate).collect(Collectors.toList());
         patternTemplates = parameters.patterns.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
+
+        for (String glob : parameters.globs) {
+            if (glob.startsWith("/") || glob.startsWith(".") || glob.contains("//") || glob.contains("/./") || glob.contains("/../")) {
+                LOGGER.warn("Glob '{}' will not match anything, use '{root:\"\",globs:\"\"}' to search outside of the working directory and use globs without \".\", \"..\", \"/\" as path elements", glob);
+            }
+        }
     }
 
     @Override
