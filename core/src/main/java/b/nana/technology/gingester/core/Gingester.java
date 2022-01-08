@@ -193,20 +193,9 @@ public final class Gingester {
      * </ul>
      */
     public void run() {
-        run(Collections.emptyMap());
-    }
-
-    /**
-     * Run the configured transformations with the given seed stash.
-     * <p>
-     * See the {@link #run()} documentation for details.
-     *
-     * @param seedStash the seed stash
-     */
-    public void run(Map<String, Object> seedStash) {
         setup();
         initialize();
-        start(seedStash);
+        start();
     }
 
     private void setup() {
@@ -298,7 +287,7 @@ public final class Gingester {
         controllers.values().forEach(Controller::discoverSyncs);
     }
 
-    private void start(Map<String, Object> seedStash) {
+    private void start() {
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
@@ -307,9 +296,7 @@ public final class Gingester {
         if (reportingIntervalSeconds > 0) reporter.start();
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
-        Context seed = new Context.Builder()
-                .stash(seedStash)
-                .build(seedController);
+        Context seed = new Context.Builder().build(seedController);
         seedController.accept(new Batch<>(seed, new Object()));
         seedController.finish(null, seed);
 

@@ -4,4 +4,4 @@
 -t JsonStream $.array.*
 -s
 -t JsonStream $.message
--t PathWrite "${tempDir}/message-${stash.id}.txt"
+-t PathWrite "[=tempDir]/message-${stash.id}.txt"
