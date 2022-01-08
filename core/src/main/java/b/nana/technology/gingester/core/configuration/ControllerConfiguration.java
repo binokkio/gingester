@@ -21,7 +21,7 @@ public final class ControllerConfiguration<I, O> {
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
-    public Map<String, String> links = new LinkedHashMap<>();
+    private Map<String, String> links = Collections.emptyMap();
     private List<String> syncs = Collections.emptyList();
     private List<String> excepts = Collections.emptyList();
     private boolean report;
@@ -57,8 +57,8 @@ public final class ControllerConfiguration<I, O> {
     }
 
     public ControllerConfiguration<I, O> links(List<String> links) {
-        this.links.clear();
-        links.forEach(l -> this.links.put(l, l));
+        this.links = new LinkedHashMap<>();
+        links.forEach(link -> this.links.put(link, link));
         return this;
     }
 
@@ -80,6 +80,22 @@ public final class ControllerConfiguration<I, O> {
     public ControllerConfiguration<I, O> acksCounter(Counter acksCounter) {
         this.acksCounter = acksCounter;
         return this;
+    }
+
+
+
+    public void updateLinkTarget(String link, String target) {
+        links.replace(link, target);
+    }
+
+    public void replaceMaybeNextLink(String next) {
+        if (links.remove("__maybe_next__", "__maybe_next__")) {
+            links.put(next, next);
+        }
+    }
+
+    public void removeMaybeNextLink() {
+        links.remove("__maybe_next__", "__maybe_next__");
     }
 
 

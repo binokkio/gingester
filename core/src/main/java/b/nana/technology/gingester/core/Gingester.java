@@ -224,11 +224,10 @@ public final class Gingester {
             transformer.setup(setupControls);
 
             ControllerConfiguration<?, ?> configuration = combine(new ControllerConfigurationInterface(), id, transformer, transformerConfiguration, setupControls);
-
-            // resolve or remove __maybe_next__ links
-            if (configuration.getLinks().remove("__maybe_next__", "__maybe_next__")) {
-                resolveMaybeNext(id).ifPresent(s -> configuration.getLinks().put(s, s));
-            }
+            resolveMaybeNext(id).ifPresentOrElse(
+                    configuration::replaceMaybeNextLink,
+                    configuration::removeMaybeNextLink
+            );
 
             this.setupControls.put(id, setupControls);
             this.configurations.put(id, configuration);
@@ -391,7 +390,7 @@ public final class Gingester {
                             .links(Collections.singletonList(downstreamId));
 
                     configurations.put(id, configuration);
-                    pointer.links.replace(downstreamId, id);
+                    pointer.updateLinkTarget(downstreamId, id);
                     pointer = configuration;
                 }
             }

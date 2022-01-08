@@ -22,7 +22,7 @@ public final class Reporter extends Thread {
         this.intervalMillis = intervalSeconds * 1000;
         this.targets = targets.stream().filter(c -> c.report).collect(Collectors.toMap(
                 c -> c,
-                c -> new Sampler(c.acks != null ? c.acks : c.delt),
+                c -> new Sampler(c.acks != null ? c.acks : c.dealt),
                 (a, b) -> { throw new UnsupportedOperationException("Not implemented"); },
                 LinkedHashMap::new
         ));
