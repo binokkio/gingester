@@ -152,25 +152,24 @@ public final class TransformerFactory {
     }
 
     public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
+        int names = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : 2;
         return getNames(transformer)
+                .skip(names - 1)
                 .filter(name -> getTransformersByName(name).skip(1).findFirst().isEmpty())
                 .findFirst().orElseThrow(() -> new IllegalStateException("No unique name for " + transformer.getCanonicalName()));
     }
 
     private static Stream<Class<? extends Transformer<?, ?>>> getTransformersByName(String query) {
-        return TRANSFORMERS.stream().filter(c -> getNames(c).anyMatch(name -> name.endsWith(query)));
+        return TRANSFORMERS.stream().filter(c -> getNames(c).anyMatch(query::equals));
     }
 
     private static Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
-        int[] nameFormat = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : new int[] { 2, 1 };
-        if (nameFormat.length == 0) throw new IllegalArgumentException("Empty @Name on " + transformer.getCanonicalName());
         String[] parts = transformer.getCanonicalName().split("\\.");
-        String name = Arrays.stream(nameFormat).mapToObj(i -> camelCase(parts[parts.length - i])).collect(Collectors.joining());
-        StringBuilder builder = new StringBuilder(name);
-        return Stream.concat(Stream.of(name), IntStream.range(Arrays.stream(nameFormat).max().orElseThrow() + 1, parts.length - 1)
+        StringBuilder nameBuilder = new StringBuilder();
+        return IntStream.range(1, parts.length - 1)
                 .mapToObj(i -> parts[parts.length - i])
                 .filter(s -> !s.equalsIgnoreCase("transformers"))
-                .map(s -> builder.insert(0, camelCase(s)).toString()));
+                .map(s -> nameBuilder.insert(0, camelCase(s)).toString());
     }
 
     public static <I, O> Stream<String> getTransformerHelps() {
