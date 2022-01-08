@@ -246,7 +246,7 @@ public final class Gingester {
                 .excepts(new ArrayList<>(excepts)));
 
         // explore, bridge TODO
-        explore("__seed__", new ArrayDeque<>());
+        explore("__seed__", "__seed__", new ArrayDeque<>());
 
         // ...
         setupControls.forEach((id, setupControls) -> {
@@ -331,15 +331,15 @@ public final class Gingester {
         }
     }
 
-    private void explore(String pointer, ArrayDeque<String> route) {
-        if (route.contains(pointer)) {
+    private void explore(String nextName, String nextId, ArrayDeque<String> route) {
+        if (route.contains(nextId)) {
             Iterator<String> iterator = route.iterator();
-            while (!iterator.next().equals(pointer)) iterator.remove();
-            throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + pointer);
+            while (!iterator.next().equals(nextId)) iterator.remove();
+            throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + nextId);
         } else {
-            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
-            route.add(pointer);
-            configurations.get(pointer).getLinks().values().forEach(next -> explore(next, new ArrayDeque<>(route)));
+            if (!route.isEmpty()) maybeBridge(route.getLast(), nextName, nextId);
+            route.add(nextId);
+            configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route)));
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
@@ -349,14 +349,14 @@ public final class Gingester {
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
                     for (String exceptionHandler : controller.getExcepts()) {
-                        explore(exceptionHandler, new ArrayDeque<>(route));
+                        explore(exceptionHandler, exceptionHandler, new ArrayDeque<>(route));
                     }
                 }
             }
         }
     }
 
-    private <I, O> void maybeBridge(String upstreamId, String downstreamId) {
+    private <I, O> void maybeBridge(String upstreamId, String linkName, String downstreamId) {
 
         ControllerConfiguration<?, ?> upstream = configurations.get(upstreamId);
         ControllerConfiguration<?, ?> downstream = configurations.get(downstreamId);
@@ -387,10 +387,10 @@ public final class Gingester {
                     ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>(new ControllerConfigurationInterface())
                             .id(id)
                             .transformer(transformer)
-                            .links(Collections.singletonList(downstreamId));
+                            .links(Collections.singletonMap(linkName, downstreamId));
 
                     configurations.put(id, configuration);
-                    pointer.updateLinkTarget(downstreamId, id);
+                    pointer.updateLink(linkName, id);
                     pointer = configuration;
                 }
             }

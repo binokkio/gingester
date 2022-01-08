@@ -62,6 +62,11 @@ public final class ControllerConfiguration<I, O> {
         return this;
     }
 
+    public ControllerConfiguration<I, O> links(Map<String, String> links) {
+        this.links = new LinkedHashMap<>(links);
+        return this;
+    }
+
     public ControllerConfiguration<I, O> syncs(List<String> syncs) {
         this.syncs = syncs;
         return this;
@@ -84,14 +89,12 @@ public final class ControllerConfiguration<I, O> {
 
 
 
-    public void updateLinkTarget(String link, String target) {
-        links.replace(link, target);
+    public void updateLink(String linkName, String target) {
+        links.replace(linkName, target);
     }
 
     public void replaceMaybeNextLink(String next) {
-        if (links.remove("__maybe_next__", "__maybe_next__")) {
-            links.put(next, next);
-        }
+        links.replaceAll((name, target) -> target.equals("__maybe_next__") ? next : target);
     }
 
     public void removeMaybeNextLink() {
