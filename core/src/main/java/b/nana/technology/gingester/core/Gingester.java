@@ -168,7 +168,7 @@ public final class Gingester {
         return id;
     }
 
-    private <T> void attach(String id, String targetId) {
+    private void attach(String id, String targetId) {
         TransformerConfiguration target = transformerConfigurations.get(targetId);
         List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
         links.add(id);
@@ -224,6 +224,12 @@ public final class Gingester {
             this.setupControls.put(id, setupControls);
             this.configurations.put(id, configuration);
         });
+
+        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
+            configurations.values().stream()
+                    .filter(c -> c.getLinks().isEmpty())
+                    .forEach(c -> c.report(true));
+        }
     }
 
     private void setupSeed() {
@@ -242,13 +248,17 @@ public final class Gingester {
     private void setupExceptionLogger() {
         configurations.put("__elog__", new ControllerConfiguration<>(new ControllerConfigurationInterface())
                 .id("__elog__")
-                .transformer((context, exception, out) -> LOGGER.warn(
-                        String.format(
-                                "Exception during %s::%s for %s",
-                                context.fetch("transformer").findFirst().orElseThrow(),
-                                context.fetch("method").findFirst().orElseThrow(),
-                                context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
-                        ), exception)));
+                .transformer((context, exception, out) -> {
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.warn(
+                                String.format(
+                                        "Exception during %s::%s for %s",
+                                        context.fetch("transformer").findFirst().orElseThrow(),
+                                        context.fetch("method").findFirst().orElseThrow(),
+                                        context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
+                                ), exception);
+                    }
+                }));
 
         configurations.values()
                 .stream().flatMap(c -> c.getExcepts().stream())
@@ -325,7 +335,6 @@ public final class Gingester {
     }
 
     private void align() {
-
         setupControls.forEach((id, setupControls) -> {
             if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
                 if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
@@ -355,18 +364,13 @@ public final class Gingester {
                 }
             }
         });
-
-        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
-            configurations.values().stream()
-                    .filter(c -> c.getLinks().isEmpty())
-                    .forEach(c -> c.report(true));
-        }
-
-        configurations.forEach((id, configuration) ->
-                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
     }
 
     private void initialize() {
+
+        configurations.forEach((id, configuration) ->
+                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
+
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);

@@ -1,18 +1,12 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 final class ControllerReceiver<I, O> implements Receiver<O> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final Controller<I, O> controller;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
