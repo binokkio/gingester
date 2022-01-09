@@ -147,27 +147,22 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void except(Context context, Exception cause) {
 
-        Boolean handled = null;
+        boolean handled = false;
 
         for (Context c : context) {
             c.markFlawed();
-            if (handled == null) {
+            if (!handled) {
                 if (!c.controller.excepts.isEmpty()) {
                     c.controller.excepts.values().forEach(target -> accept(context, cause, target));
                     handled = true;
-                } else if (c.controller.isExceptionHandler) {  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
-                    handled = false;
+                } else if (c.controller.isExceptionHandler) {
+                    throw new IllegalStateException(c.controller.id + " is an exception handler without `excepts`");
                 }
             }
         }
 
-        if ((handled == null || !handled) && LOGGER.isWarnEnabled()) {
-            LOGGER.warn(String.format(
-                    "Uncaught exception during %s::%s for %s",
-                    context.fetch("transformer").findFirst().orElseThrow(),
-                    context.fetch("method").findFirst().orElseThrow(),
-                    context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
-            ), cause);
+        if (!handled) {
+            throw new IllegalStateException("No exception handlers for exception", cause);
         }
     }
 }
