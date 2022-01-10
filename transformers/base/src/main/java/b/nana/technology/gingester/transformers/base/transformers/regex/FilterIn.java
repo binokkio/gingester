@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public final class Filter implements Transformer<String, String> {
+public final class FilterIn implements Transformer<String, String> {
 
     private final List<Pattern> patterns;
 
-    public Filter(Parameters parameters) {
+    public FilterIn(Parameters parameters) {
         patterns = parameters.patterns.stream().map(Pattern::compile).collect(Collectors.toList());
     }
 

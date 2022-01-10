@@ -99,7 +99,7 @@ public final class Gingester {
      */
     public Gingester(GingesterConfiguration configuration) {
 
-        excepts = new HashSet<>(configuration.excepts);
+        excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
         reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
 
         String lastId = null;
@@ -168,7 +168,7 @@ public final class Gingester {
         return id;
     }
 
-    private <T> void attach(String id, String targetId) {
+    private void attach(String id, String targetId) {
         TransformerConfiguration target = transformerConfigurations.get(targetId);
         List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
         links.add(id);
@@ -183,9 +183,8 @@ public final class Gingester {
      * <li>call {@link Transformer#setup(SetupControls)} on all transformers
      * <li>consolidate the transformer setup controls with the transformer configurations
      * <li>create a seed transformer with id __seed__ and link it to all transformers with no incoming links
-     * <li>start a single worker thread for each transformer
+     * <li>start the workers for each transformer
      * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
-     * <li>start the remaining worker threads as configured
      * <li>give the seed controller a single input, which it will pass through to its links
      * <li>start a reporting thread if configured
      * <li>block until all transformers are done
@@ -193,23 +192,16 @@ public final class Gingester {
      * </ul>
      */
     public void run() {
-        run(Collections.emptyMap());
-    }
-
-    /**
-     * Run the configured transformations with the given seed stash.
-     * <p>
-     * See the {@link #run()} documentation for details.
-     *
-     * @param seedStash the seed stash
-     */
-    public void run(Map<String, Object> seedStash) {
-        setup();
+        configure();
+        setupSeed();
+        setupExceptionLogger();
+        explore("__seed__", "__seed__", new ArrayDeque<>());
+        align();
         initialize();
-        start(seedStash);
+        start();
     }
 
-    private void setup() {
+    private void configure() {
 
         if (transformerConfigurations.isEmpty()) {
             throw new IllegalStateException("No transformers configured");
@@ -224,17 +216,23 @@ public final class Gingester {
             transformer.setup(setupControls);
 
             ControllerConfiguration<?, ?> configuration = combine(new ControllerConfigurationInterface(), id, transformer, transformerConfiguration, setupControls);
-
-            // resolve or remove __maybe_next__ links
-            if (configuration.getLinks().remove("__maybe_next__", "__maybe_next__")) {
-                resolveMaybeNext(id).ifPresent(s -> configuration.getLinks().put(s, s));
-            }
+            resolveMaybeNext(id).ifPresentOrElse(
+                    configuration::replaceMaybeNextLink,
+                    configuration::removeMaybeNextLink
+            );
 
             this.setupControls.put(id, setupControls);
             this.configurations.put(id, configuration);
         });
 
-        // seed
+        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
+            configurations.values().stream()
+                    .filter(c -> c.getLinks().isEmpty())
+                    .forEach(c -> c.report(true));
+        }
+    }
+
+    private void setupSeed() {
         Set<String> noIncoming = new HashSet<>(configurations.keySet());
         noIncoming.removeAll(excepts);
         configurations.values().stream()
@@ -245,102 +243,40 @@ public final class Gingester {
                 .transformer(new Passthrough())
                 .links(new ArrayList<>(noIncoming.isEmpty() ? configurations.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
                 .excepts(new ArrayList<>(excepts)));
+    }
 
-        // explore, bridge TODO
-        explore("__seed__", new ArrayDeque<>());
-
-        // ...
-        setupControls.forEach((id, setupControls) -> {
-            if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
-                if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
-                    throw new IllegalStateException();  // TODO
-                }
-
-                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().values().stream().map(configurations::get);
-
-                if (setupControls.getRequireOutgoingSync()) {
-                    String incompatible = outgoingConfigurations
-                            .filter(o -> o.getMaxWorkers().isPresent())
-                            .filter(o -> o.getMaxWorkers().get() > 0)
-                            .map(ControllerConfiguration::getId)
-                            .collect(Collectors.joining(", "));
-                    if (!incompatible.isEmpty()) {
-                        throw new IllegalStateException(id + " requires outgoing links to be sync, but " + incompatible + " are async (maxWorkers > 0)");
+    private void setupExceptionLogger() {
+        configurations.put("__elog__", new ControllerConfiguration<>(new ControllerConfigurationInterface())
+                .id("__elog__")
+                .transformer((context, exception, out) -> {
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.warn(
+                                String.format(
+                                        "Exception during %s::%s for %s",
+                                        context.fetch("transformer").findFirst().orElseThrow(),
+                                        context.fetch("method").findFirst().orElseThrow(),
+                                        context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
+                                ), exception);
                     }
-                } else if (setupControls.getRequireOutgoingAsync()) {
-                    String incompatible = outgoingConfigurations
-                            .peek(o -> { if (o.getMaxWorkers().isEmpty()) o.maxWorkers(1); })
-                            .filter(o -> o.getMaxWorkers().get() == 0)
-                            .map(ControllerConfiguration::getId)
-                            .collect(Collectors.joining(", "));
-                    if (!incompatible.isEmpty()) {
-                        throw new IllegalStateException(id + " requires outgoing links to be async, but " + incompatible + " are sync (maxWorkers == 0)");
-                    }
-                }
-            }
-        });
+                }));
 
-        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
-            configurations.values().forEach(c -> {
-                if (c.getLinks().isEmpty()) {
-                    c.report(true);
-                }
-            });
-        }
-
-        configurations.forEach((id, configuration) ->
-                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
+        configurations.values()
+                .stream().flatMap(c -> c.getExcepts().stream())
+                .map(configurations::get)
+                .filter(c -> !c.getId().equals("__elog__"))
+                .filter(c -> c.getExcepts().isEmpty())
+                .forEach(c -> c.excepts(Collections.singletonList("__elog__")));
     }
 
-    private void initialize() {
-        controllers.values().forEach(Controller::initialize);
-        controllers.values().forEach(Controller::discoverIncoming);
-        controllers.values().forEach(Controller::discoverDownstream);
-        controllers.values().forEach(Controller::discoverSyncs);
-    }
-
-    private void start(Map<String, Object> seedStash) {
-
-        controllers.values().forEach(Controller::open);
-        phaser.awaitAdvance(0);
-
-        Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
-        if (reportingIntervalSeconds > 0) reporter.start();
-
-        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
-        Context seed = new Context.Builder()
-                .stash(seedStash)
-                .build(seedController);
-        seedController.accept(new Batch<>(seed, new Object()));
-        seedController.finish(null, seed);
-
-        try {
-
-            for (Controller<?, ?> controller : controllers.values()) {
-                for (Worker worker : controller.workers) {
-                    worker.join();
-                }
-            }
-
-            if (reportingIntervalSeconds > 0) {
-                reporter.interrupt();
-                reporter.join();
-            }
-
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
-        }
-    }
-
-    private void explore(String pointer, ArrayDeque<String> route) {
-        if (route.contains(pointer)) {
+    private void explore(String nextName, String nextId, ArrayDeque<String> route) {
+        if (route.contains(nextId)) {
             Iterator<String> iterator = route.iterator();
-            while (!iterator.next().equals(pointer)) iterator.remove();
-            throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + pointer);
+            while (!iterator.next().equals(nextId)) iterator.remove();
+            throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + nextId);
         } else {
-            if (!route.isEmpty()) maybeBridge(route.getLast(), pointer);
-            route.add(pointer);
-            configurations.get(pointer).getLinks().values().forEach(next -> explore(next, new ArrayDeque<>(route)));
+            if (!route.isEmpty()) maybeBridge(route.getLast(), nextName, nextId);
+            route.add(nextId);
+            configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route)));
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
@@ -350,14 +286,14 @@ public final class Gingester {
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
                     for (String exceptionHandler : controller.getExcepts()) {
-                        explore(exceptionHandler, new ArrayDeque<>(route));
+                        explore(exceptionHandler, exceptionHandler, new ArrayDeque<>(route));
                     }
                 }
             }
         }
     }
 
-    private <I, O> void maybeBridge(String upstreamId, String downstreamId) {
+    private <I, O> void maybeBridge(String upstreamId, String linkName, String downstreamId) {
 
         ControllerConfiguration<?, ?> upstream = configurations.get(upstreamId);
         ControllerConfiguration<?, ?> downstream = configurations.get(downstreamId);
@@ -388,13 +324,87 @@ public final class Gingester {
                     ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>(new ControllerConfigurationInterface())
                             .id(id)
                             .transformer(transformer)
-                            .links(Collections.singletonList(downstreamId));
+                            .links(Collections.singletonMap(linkName, downstreamId));
 
                     configurations.put(id, configuration);
-                    pointer.links.replace(downstreamId, id);
+                    pointer.updateLink(linkName, id);
                     pointer = configuration;
                 }
             }
+        }
+    }
+
+    private void align() {
+        setupControls.forEach((id, setupControls) -> {
+            if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
+                if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
+                    throw new IllegalStateException("SetupControls for " + id + " require outgoing to be both sync and async");
+                }
+
+                Stream<ControllerConfiguration<?, ?>> outgoingConfigurations = configurations.get(id).getLinks().values().stream().map(configurations::get);
+
+                if (setupControls.getRequireOutgoingSync()) {
+                    String incompatible = outgoingConfigurations
+                            .filter(o -> o.getMaxWorkers().isPresent())
+                            .filter(o -> o.getMaxWorkers().get() > 0)
+                            .map(ControllerConfiguration::getId)
+                            .collect(Collectors.joining(", "));
+                    if (!incompatible.isEmpty()) {
+                        throw new IllegalStateException(id + " requires outgoing links to be sync, but " + incompatible + " are async (maxWorkers > 0)");
+                    }
+                } else if (setupControls.getRequireOutgoingAsync()) {
+                    String incompatible = outgoingConfigurations
+                            .peek(o -> { if (o.getMaxWorkers().isEmpty()) o.maxWorkers(1); })
+                            .filter(o -> o.getMaxWorkers().get() == 0)
+                            .map(ControllerConfiguration::getId)
+                            .collect(Collectors.joining(", "));
+                    if (!incompatible.isEmpty()) {
+                        throw new IllegalStateException(id + " requires outgoing links to be async, but " + incompatible + " are sync (maxWorkers == 0)");
+                    }
+                }
+            }
+        });
+    }
+
+    private void initialize() {
+
+        configurations.forEach((id, configuration) ->
+                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
+
+        controllers.values().forEach(Controller::initialize);
+        controllers.values().forEach(Controller::discoverIncoming);
+        controllers.values().forEach(Controller::discoverDownstream);
+        controllers.values().forEach(Controller::discoverSyncs);
+    }
+
+    private void start() {
+
+        controllers.values().forEach(Controller::open);
+        phaser.awaitAdvance(0);
+
+        Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
+        if (reportingIntervalSeconds > 0) reporter.start();
+
+        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
+        Context seed = new Context.Builder().build(seedController);
+        seedController.accept(new Batch<>(seed, new Object()));
+        seedController.finish(null, seed);
+
+        try {
+
+            for (Controller<?, ?> controller : controllers.values()) {
+                for (Worker worker : controller.workers) {
+                    worker.join();
+                }
+            }
+
+            if (reportingIntervalSeconds > 0) {
+                reporter.interrupt();
+                reporter.join();
+            }
+
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);  // TODO
         }
     }
 

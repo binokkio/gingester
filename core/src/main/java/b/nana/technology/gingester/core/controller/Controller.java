@@ -10,7 +10,6 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
 import java.util.concurrent.Phaser;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -28,8 +27,8 @@ public final class Controller<I, O> {
     private final int maxBatchSize;
     volatile int batchSize = 1;
 
-    public final Map<String, Controller<O, ?>> links = new HashMap<>();
-    public final Map<String, Controller<Exception, ?>> excepts;
+    public final Map<String, Controller<O, ?>> links = new LinkedHashMap<>();
+    public final Map<String, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     final Set<Controller<?, ?>> indicates = new HashSet<>();
@@ -48,7 +47,7 @@ public final class Controller<I, O> {
     final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
 
     public final boolean report;
-    public final Counter delt;
+    public final Counter dealt;
     public final Counter acks;
 
     public Controller(ControllerConfiguration<I, O> configuration, Gingester.ControllerInterface gingester) {
@@ -64,15 +63,9 @@ public final class Controller<I, O> {
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
-        delt = new SimpleCounter(acks != null || report);
+        dealt = new SimpleCounter(acks != null || report);
         isLeave = configuration.getLinks().isEmpty() && configuration.getExcepts().isEmpty();
         isExceptionHandler = gingester.isExceptionHandler();
-
-        // TODO initialize in initialize instead
-        excepts = configuration.getExcepts().stream().collect(
-                LinkedHashMap::new,
-                (map, link) -> map.put(link, null),
-                Map::putAll);
 
         phaser = gingester.getPhaser();
         phaser.bulkRegister(maxWorkers);
@@ -80,8 +73,8 @@ public final class Controller<I, O> {
 
     @SuppressWarnings("unchecked")
     public void initialize() {
-        configuration.getLinks().forEach((k, v) -> links.put(k, (Controller<O, ?>) gingester.getController(v).orElseThrow()));
-        excepts.replaceAll((id, nullController) -> (Controller<Exception, ?>) gingester.getController(id).orElseThrow());
+        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) gingester.getController(id).orElseThrow()));
+        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) gingester.getController(id).orElseThrow()));
         configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
     }
 
@@ -306,7 +299,7 @@ public final class Controller<I, O> {
 //            }
         }
 
-        if (report) delt.count(batch.getSize());
+        if (report) dealt.count(batch.getSize());
     }
 
     public void transform(Context context, I in) {
@@ -325,7 +318,7 @@ public final class Controller<I, O> {
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO
         }
-        if (report) delt.count();
+        if (report) dealt.count();
     }
 
     public void finish(Context context) {
@@ -334,18 +327,6 @@ public final class Controller<I, O> {
         } catch (Exception e) {
             receiver.except("finish", context, e);
         }
-    }
-
-
-
-    static Class<?> getCommonSuperClass(List<Class<?>> classes) {
-        if (classes.isEmpty()) return Object.class;  // TODO this is a quick fix
-        AtomicReference<Class<?>> pointer = new AtomicReference<>(classes.get(0));
-        while (classes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
-            Class<?> superClass = pointer.get().getSuperclass();
-            pointer.set(superClass == null ? Object.class : superClass);  // TODO this is a quick fix
-        }
-        return pointer.get();
     }
 
 
@@ -361,9 +342,8 @@ public final class Controller<I, O> {
         maxQueueSize = 0;
         maxBatchSize = 0;
         report = false;
-        delt = null;
+        dealt = null;
         acks = null;
-        excepts = Collections.emptyMap();
         isLeave = false;
         isExceptionHandler = false;
     }

@@ -18,8 +18,12 @@ class JsonArrayToFilesTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester("-cr /configurations/json-array-to-files.cli");
-        gingester.run(Map.of("tempDir", tempDir));
+        Gingester gingester = new Gingester(
+                getClass().getResource("/configurations/json-array-to-files.cli"),
+                Map.of("tempDir", tempDir)
+        );
+
+        gingester.run();
 
         Path message123 = tempDir.resolve("message-123.txt");
         assertTrue(Files.exists(message123));

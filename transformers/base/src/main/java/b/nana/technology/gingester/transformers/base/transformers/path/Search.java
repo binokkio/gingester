@@ -4,49 +4,65 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
-public final class Search implements Transformer<Object, Path> {
+public class Search implements Transformer<Object, Path> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
 
     private final FileSystem fileSystem = FileSystems.getDefault();
 
     private final Context.Template rootTemplate;
     private final List<Context.Template> globTemplates;
+    private final List<Context.Template> patternTemplates;
     private final boolean findDirs;
 
     public Search(Parameters parameters) {
         rootTemplate = Context.newTemplate(parameters.root);
         globTemplates = parameters.globs.stream().map(Context::newTemplate).collect(Collectors.toList());
+        patternTemplates = parameters.patterns.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
-    }
 
-    private static int calculateMaxDepth(List<String> globs) {
-        int maxDepth = 0;
-        for (String glob : globs) {
-            if (glob.contains("**")) {
-                maxDepth = Integer.MAX_VALUE;
-            } else {
-                maxDepth = Math.max(maxDepth, glob.split("/").length);
+        for (String glob : parameters.globs) {
+            if (glob.startsWith("/") || glob.startsWith(".") || glob.contains("//") || glob.contains("/./") || glob.contains("/../")) {
+                LOGGER.warn("Glob '{}' will not match anything, use '{root:\"\",globs:\"\"}' to search outside of the working directory and use globs without \".\", \"..\", \"/\" as path elements", glob);
             }
         }
-        return maxDepth;
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
+    public final void transform(Context context, Object in, Receiver<Path> out) throws Exception {
         Path root = Path.of(rootTemplate.render(context)).toAbsolutePath();
         List<String> globs = globTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
-        Files.walkFileTree(root, new Visitor(root, globs, context, out));
+        List<String> patterns = patternTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
+        Files.walkFileTree(root, new Visitor(root, globs, patterns, context, out));
+    }
+
+    /**
+     * Enrich the PathSearch stash.
+     *
+     * Subclasses can implement this method to add information to the stash by mutating the
+     * map passed to the `stash` parameter.
+     *
+     * @param relative the path matching the PathSearch globs relative to the PathSearch root
+     * @param stash the stash to enrich
+     */
+    protected void enrich(Path relative, Map<String, Object> stash) {
+
     }
 
     private class Visitor implements FileVisitor<Path> {
@@ -57,10 +73,13 @@ public final class Search implements Transformer<Object, Path> {
         private final Context context;
         private final Receiver<Path> out;
 
-        public Visitor(Path root, List<String> globs, Context context, Receiver<Path> out) {
+        public Visitor(Path root, List<String> globs, List<String> patterns, Context context, Receiver<Path> out) {
             this.root = root;
-            this.pathMatchers = globs.stream().map(s -> "glob:" + s).map(fileSystem::getPathMatcher).collect(Collectors.toList());
-            this.maxDepth = calculateMaxDepth(globs);
+            this.pathMatchers = Stream.concat(
+                    globs.stream().map(s -> "glob:" + s).map(fileSystem::getPathMatcher),
+                    patterns.stream().map(s -> "regex:" + s).map(fileSystem::getPathMatcher)
+            ).collect(Collectors.toList());
+            this.maxDepth = calculateMaxDepth(globs, patterns);
             this.context = context;
             this.out = out;
         }
@@ -92,20 +111,34 @@ public final class Search implements Transformer<Object, Path> {
         private void handle(Path path, Path relative) {
             for (PathMatcher pathMatcher : pathMatchers) {
                 if (pathMatcher.matches(relative)) {
-                    out.accept(
-                            context.stash(Map.of(
-                                    "description", relative.toString(),
-                                    "path", Map.of(
-                                            "tail", path.getFileName(),
-                                            "relative", relative,
-                                            "absolute", path
-                                    )
-                            )),
-                            path
-                    );
+                    Map<String, Object> stash = new HashMap<>();
+                    stash.put("description", relative.toString());
+                    Map<String, Object> pathStash = new HashMap<>();
+                    stash.put("path", pathStash);
+                    pathStash.put("tail", path.getFileName());
+                    pathStash.put("relative", relative);
+                    pathStash.put("absolute", path);
+                    enrich(relative, stash);
+                    out.accept(context.stash(stash), path);
                     return;
                 }
             }
+        }
+    }
+
+    private static int calculateMaxDepth(List<String> globs, List<String> patterns) {
+        if (patterns.isEmpty()) {
+            int maxDepth = 0;
+            for (String glob : globs) {
+                if (glob.contains("**")) {
+                    maxDepth = Integer.MAX_VALUE;
+                } else {
+                    maxDepth = Math.max(maxDepth, glob.split("/").length);
+                }
+            }
+            return maxDepth;
+        } else {
+            return Integer.MAX_VALUE;
         }
     }
 
@@ -113,6 +146,7 @@ public final class Search implements Transformer<Object, Path> {
 
         public String root = "";
         public List<String> globs = Collections.singletonList("**");
+        public List<String> patterns = Collections.emptyList();
         public boolean findDirs;
 
         @JsonCreator

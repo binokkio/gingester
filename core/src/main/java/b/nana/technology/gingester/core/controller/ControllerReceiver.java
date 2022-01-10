@@ -1,18 +1,12 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 final class ControllerReceiver<I, O> implements Receiver<O> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
     private final Controller<I, O> controller;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
@@ -147,24 +141,22 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void except(Context context, Exception cause) {
 
+        boolean handled = false;
+
         for (Context c : context) {
-            if (!c.controller.excepts.isEmpty()) {
-                for (Controller<Exception, ?> target : c.controller.excepts.values()) {
-                    accept(context, cause, target);
+            c.markFlawed();
+            if (!handled) {
+                if (!c.controller.excepts.isEmpty()) {
+                    c.controller.excepts.values().forEach(target -> accept(context, cause, target));
+                    handled = true;
+                } else if (c.controller.isExceptionHandler) {
+                    throw new IllegalStateException(c.controller.id + " is an exception handler without `excepts`");
                 }
-                return;
-            } else if (c.controller.isExceptionHandler) {  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
-                break;
             }
         }
 
-        if (LOGGER.isWarnEnabled()) {
-            LOGGER.warn(String.format(
-                    "Uncaught exception during %s::%s for %s",
-                    context.fetch("transformer").findFirst().orElseThrow(),
-                    context.fetch("method").findFirst().orElseThrow(),
-                    context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
-            ), cause);
+        if (!handled) {
+            throw new IllegalStateException("No exception handlers for exception", cause);
         }
     }
 }

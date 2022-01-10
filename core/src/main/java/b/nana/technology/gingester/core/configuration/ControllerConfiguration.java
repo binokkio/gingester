@@ -21,7 +21,7 @@ public final class ControllerConfiguration<I, O> {
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
-    public Map<String, String> links = new LinkedHashMap<>();
+    private Map<String, String> links = Collections.emptyMap();
     private List<String> syncs = Collections.emptyList();
     private List<String> excepts = Collections.emptyList();
     private boolean report;
@@ -57,8 +57,13 @@ public final class ControllerConfiguration<I, O> {
     }
 
     public ControllerConfiguration<I, O> links(List<String> links) {
-        this.links.clear();
-        links.forEach(l -> this.links.put(l, l));
+        this.links = new LinkedHashMap<>();
+        links.forEach(link -> this.links.put(link, link));
+        return this;
+    }
+
+    public ControllerConfiguration<I, O> links(Map<String, String> links) {
+        this.links = new LinkedHashMap<>(links);
         return this;
     }
 
@@ -80,6 +85,20 @@ public final class ControllerConfiguration<I, O> {
     public ControllerConfiguration<I, O> acksCounter(Counter acksCounter) {
         this.acksCounter = acksCounter;
         return this;
+    }
+
+
+
+    public void updateLink(String linkName, String target) {
+        links.replace(linkName, target);
+    }
+
+    public void replaceMaybeNextLink(String next) {
+        links.replaceAll((name, target) -> target.equals("__maybe_next__") ? next : target);
+    }
+
+    public void removeMaybeNextLink() {
+        links.remove("__maybe_next__", "__maybe_next__");
     }
 
 
@@ -135,7 +154,7 @@ public final class ControllerConfiguration<I, O> {
     public Class<O> getOutputType() {
         if (transformer instanceof OutputFetcher) {
             return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
-                    .filter(c -> c.links.containsKey(id) || c.excepts.contains(id))
+                    .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
                     .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
                     .collect(Collectors.toList()));
         } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
@@ -148,7 +167,7 @@ public final class ControllerConfiguration<I, O> {
     private Class<?> getActualInputType() {
         List<Class<?>> inputTypes = new ArrayList<>();
         gingester.getControllers().values().stream()
-                .filter(c -> c.links.containsKey(id))
+                .filter(c -> c.links.containsValue(id))
                 .map(ControllerConfiguration::getOutputType)
                 .forEach(inputTypes::add);
 //        if (isExceptionHandler) inputTypes.add(Exception.class);
@@ -164,7 +183,7 @@ public final class ControllerConfiguration<I, O> {
             return getActualInputType();
         } else {
             return getCommonSuperClass(gingester.getControllers().values().stream()
-                    .filter(c -> c.links.containsKey(id) || c.excepts.contains(id))
+                    .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
                     .map(c -> c.getStashType(name))
                     .collect(Collectors.toList()));
         }
