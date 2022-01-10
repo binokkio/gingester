@@ -52,7 +52,7 @@ public final class Reporter extends Thread {
             sampler.sample();
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(String.format(
-                        "%s: %,d out at %,.2f/s (%s), %,.2f/s (%s)",
+                        "%s: %,d processed at %,.2f/s (%s), %,.2f/s (%s)",
                         controller.id,
                         sampler.getValue(),
                         sampler.getCurrentChangePerSecond(),
