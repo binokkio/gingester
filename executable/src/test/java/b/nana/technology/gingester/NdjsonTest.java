@@ -20,6 +20,7 @@ class NdjsonTest {
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
                 "-t InputStreamJoin " +
+                "-t InputStreamAppend " +
                 "-t Compress " +
                 "-t InputStreamToBytes");
 

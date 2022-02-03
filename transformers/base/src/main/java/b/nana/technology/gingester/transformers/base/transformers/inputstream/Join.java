@@ -17,7 +17,7 @@ import java.util.Collections;
 @Names(1)
 public final class Join implements Transformer<InputStream, OutputStreamWrapper> {
 
-    private final ContextMap<OutputStream> contextMap = new ContextMap<>();
+    private final ContextMap<State> contextMap = new ContextMap<>();
     private final byte[] delimiter;
 
     public Join(Parameters parameters) {
@@ -33,7 +33,7 @@ public final class Join implements Transformer<InputStream, OutputStreamWrapper>
     @Override
     public void prepare(Context context, Receiver<OutputStreamWrapper> out) throws Exception {
         OutputStreamWrapper outputStreamWrapper = new OutputStreamWrapper();
-        contextMap.put(context, outputStreamWrapper);
+        contextMap.put(context, new State(outputStreamWrapper));
         out.accept(context, outputStreamWrapper);
     }
 
@@ -44,9 +44,15 @@ public final class Join implements Transformer<InputStream, OutputStreamWrapper>
 
     @Override
     public void transform(Context context, InputStream in, Receiver<OutputStreamWrapper> out) throws Exception {
-        OutputStream outputStream = contextMap.getLocked();
-        in.transferTo(outputStream);
-        if (delimiter.length > 0) outputStream.write(delimiter);
+        State state = contextMap.getLocked();
+        if (delimiter.length > 0) {
+            if (state.anythingWritten) {
+                state.outputStream.write(delimiter);
+            } else {
+                state.anythingWritten = true;
+            }
+        }
+        in.transferTo(state.outputStream);
     }
 
     @Override
@@ -56,7 +62,7 @@ public final class Join implements Transformer<InputStream, OutputStreamWrapper>
 
     @Override
     public void finish(Context context, Receiver<OutputStreamWrapper> out) throws Exception {
-        contextMap.remove(context).close();
+        contextMap.remove(context).outputStream.close();
     }
 
     public static class Parameters {
@@ -69,6 +75,16 @@ public final class Join implements Transformer<InputStream, OutputStreamWrapper>
         @JsonCreator
         public Parameters(String delimiter) {
             this.delimiter = delimiter;
+        }
+    }
+
+    private static class State {
+
+        private final OutputStream outputStream;
+        private boolean anythingWritten;
+
+        private State(OutputStream outputStream) {
+            this.outputStream = outputStream;
         }
     }
 }
