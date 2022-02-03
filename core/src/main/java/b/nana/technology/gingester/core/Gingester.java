@@ -250,13 +250,29 @@ public final class Gingester {
                 .id("__elog__")
                 .transformer((context, exception, out) -> {
                     if (LOGGER.isWarnEnabled()) {
-                        LOGGER.warn(
-                                String.format(
-                                        "Exception during %s::%s for %s",
-                                        context.fetch("transformer").findFirst().orElseThrow(),
-                                        context.fetch("method").findFirst().orElseThrow(),
-                                        context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "))
-                                ), exception);
+                        String description = context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "));
+                        if (description.isEmpty()) {
+                            LOGGER.warn(
+                                    String.format(
+                                            "%s during %s::%s: %s",
+                                            ((Exception) exception).getClass().getSimpleName(),
+                                            context.fetch("transformer").findFirst().orElseThrow(),
+                                            context.fetch("method").findFirst().orElseThrow(),
+                                            ((Exception) exception).getMessage())
+                                    , exception
+                            );
+                        } else {
+                            LOGGER.warn(
+                                    String.format(
+                                            "%s during %s::%s of %s: %s",
+                                            ((Exception) exception).getClass().getSimpleName(),
+                                            context.fetch("transformer").findFirst().orElseThrow(),
+                                            context.fetch("method").findFirst().orElseThrow(),
+                                            ((Exception) exception).getMessage(),
+                                            description)
+                                    , exception
+                            );
+                        }
                     }
                 }));
 

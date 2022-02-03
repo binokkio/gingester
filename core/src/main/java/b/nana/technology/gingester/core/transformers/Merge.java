@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,9 +23,9 @@ public final class Merge implements Transformer<Object, Object> {
         this.parameters = parameters;
         for (Instruction instruction : parameters) {
             requireNonNull(instruction.fetch);
-            requireNonNull(instruction.stash);
-            if (instruction.fetch.equals(instruction.stash)) {
-                throw new IllegalStateException("`fetch` must not equals `stash` and `stash` must not equal anything stashed");
+            if (instruction.stash == null) instruction.stash = instruction.fetch;
+            if (instruction.list && instruction.fetch.equals(instruction.stash)) {
+                throw new IllegalStateException("`stash` must not be null or equal to `fetch` when `list` is true");
             }
         }
     }
@@ -61,13 +62,7 @@ public final class Merge implements Transformer<Object, Object> {
 
         for (Instruction instruction : parameters) {
             List<Object> values = merged.get(instruction.stash);
-            if (instruction.list == null) {
-                if (values.size() == 1) {
-                    stash.put(instruction.stash, values.get(0));
-                } else {
-                    stash.put(instruction.stash, values);
-                }
-            } else if (instruction.list) {
+            if (instruction.list) {
                 stash.put(instruction.stash, values);
             } else {
                 if (values.size() == 1) {
@@ -86,8 +81,17 @@ public final class Merge implements Transformer<Object, Object> {
     }
 
     public static class Instruction {
+
         public String fetch;
         public String stash;
-        public Boolean list;
+        public boolean list;
+
+        @JsonCreator
+        public Instruction() {}
+
+        @JsonCreator
+        public Instruction(String fetch) {
+            this.fetch = fetch;
+        }
     }
 }
