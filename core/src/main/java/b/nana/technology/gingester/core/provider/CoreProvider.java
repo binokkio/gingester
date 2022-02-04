@@ -22,6 +22,7 @@ public final class CoreProvider implements Provider {
                 Repeat.class,
                 Stash.class,
                 Swap.class,
+                Throw.class,
                 Void.class
         );
     }

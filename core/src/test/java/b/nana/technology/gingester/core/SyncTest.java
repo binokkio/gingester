@@ -67,7 +67,7 @@ class SyncTest {
         Gingester gingester = new Gingester("" +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
-                "-t Monkey 1 -- " +
+                "-t Throw 'Exception!' -- " +
                 "-stt ExceptionHandler:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
