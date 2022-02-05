@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamMonitor;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -27,7 +28,7 @@ public final class Open implements Transformer<Path, InputStream> {
         try (InputStream inputStream = Files.newInputStream(in)) {
             Optional<Object> monitor = context.fetch("monitor").findFirst();
             if (monitor.isPresent()) {
-                out.accept(context, new InputStreamWrapper(inputStream, (Write.Monitor) monitor.get()));
+                out.accept(context, new InputStreamWrapper(inputStream, (OutputStreamMonitor) monitor.get()));
             } else {
                 out.accept(context, inputStream);
             }
@@ -36,9 +37,9 @@ public final class Open implements Transformer<Path, InputStream> {
 
     private static final class InputStreamWrapper extends FilterInputStream {
 
-        private final Write.Monitor monitor;
+        private final OutputStreamMonitor monitor;
 
-        protected InputStreamWrapper(InputStream inputStream, Write.Monitor monitor) {
+        protected InputStreamWrapper(InputStream inputStream, OutputStreamMonitor monitor) {
             super(inputStream);
             this.monitor = monitor;
         }

@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -14,31 +13,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
- * TODO change input type to OutputStreamWrapper but keep the emitEarly and monitoring functionality.
+ * TODO create new WriteAsync and OverwriteAsync transformers that take an OutputStreamWrapper as input
  */
 
-public final class Write implements Transformer<InputStream, Path> {
+public class Write implements Transformer<InputStream, Path> {
 
     private final Context.Template pathTemplate;
     private final boolean mkdirs;
     private final StandardOpenOption[] openOptions;
-    private final boolean emitEarly;
     private final int bufferSize;
 
     public Write(Parameters parameters) {
         pathTemplate = Context.newTemplate(parameters.path);
         mkdirs = parameters.mkdirs;
         openOptions = parameters.openOptions;
-        emitEarly = parameters.emitEarly;
         bufferSize = parameters.bufferSize;
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        if (emitEarly) controls.requireOutgoingAsync();
     }
 
     @Override
@@ -53,30 +44,15 @@ public final class Write implements Transformer<InputStream, Path> {
         }
 
         try (OutputStream output = Files.newOutputStream(path, openOptions)) {
-            if (emitEarly) {
-                Monitor monitor = new Monitor();
-                out.accept(context.stash(Map.of(
-                        "monitor", monitor,
-                        "description", pathString,
-                        "path", Map.of(
-                                "absolute", path.toAbsolutePath(),
-                                "tail", path.getFileName()
-                        )
-                )), path);
-                write(in, output);
-                output.close();
-                monitor.close();
-            } else {
-                write(in, output);
-                output.close();
-                out.accept(context.stash(Map.of(
-                        "description", pathString,
-                        "path", Map.of(
-                                "absolute", path.toAbsolutePath(),
-                                "tail", path.getFileName()
-                        )
-                )), path);
-            }
+            write(in, output);
+            output.close();
+            out.accept(context.stash(Map.of(
+                    "description", pathString,
+                    "path", Map.of(
+                            "absolute", path.toAbsolutePath(),
+                            "tail", path.getFileName()
+                    )
+            )), path);
         }
     }
 
@@ -93,7 +69,6 @@ public final class Write implements Transformer<InputStream, Path> {
         public String path;
         public boolean mkdirs = true;
         public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };
-        public boolean emitEarly;
         public int bufferSize = 8192;
 
         @JsonCreator
@@ -102,30 +77,6 @@ public final class Write implements Transformer<InputStream, Path> {
         @JsonCreator
         public Parameters(String path) {
             this.path = path;
-        }
-    }
-
-    public static class Monitor {
-
-        private final AtomicBoolean closed = new AtomicBoolean();
-
-        public boolean isClosed() {
-            return closed.get();
-        }
-
-        public void awaitClose(long millis) throws InterruptedException {
-            synchronized (closed) {
-                if (!closed.get()) {
-                    closed.wait(millis);
-                }
-            }
-        }
-
-        private void close() {
-            synchronized (closed) {
-                closed.set(true);
-                closed.notifyAll();
-            }
         }
     }
 }
