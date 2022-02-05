@@ -7,35 +7,48 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class OutputStreamWrapper extends OutputStream implements OutputStreamMonitor {
 
     private final AtomicBoolean closed = new AtomicBoolean();
-    private OutputStream wrapped;
+    private OutputStream destination;
 
     public void wrap(OutputStream outputStream) {
-        wrapped = outputStream;
+        destination = outputStream;
     }
 
     @Override
     public void write(int i) throws IOException {
-        wrapped.write(i);
+        requireDestination();
+        destination.write(i);
     }
 
     @Override
     public void write(byte[] b) throws IOException {
-        wrapped.write(b);
+        requireDestination();
+        destination.write(b);
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        wrapped.write(b, off, len);
+        requireDestination();
+        destination.write(b, off, len);
+    }
+
+    private void requireDestination() {
+        if (destination == null) {
+            throw new IllegalStateException("OutputStream has no destination");
+        }
     }
 
     @Override
     public void flush() throws IOException {
-        wrapped.flush();
+        if (destination != null) {
+            destination.flush();
+        }
     }
 
     @Override
     public void close() throws IOException {
-        wrapped.close();
+        if (destination != null) {
+            destination.close();
+        }
         synchronized (closed) {
             closed.set(true);
             closed.notifyAll();
