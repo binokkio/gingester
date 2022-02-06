@@ -2,37 +2,70 @@ package b.nana.technology.gingester.transformers.base.common.iostream;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class OutputStreamWrapper extends OutputStream {
+public final class OutputStreamWrapper extends OutputStream implements OutputStreamMonitor {
 
-    private OutputStream wrapped;
+    private final AtomicBoolean closed = new AtomicBoolean();
+    private OutputStream destination;
 
     public void wrap(OutputStream outputStream) {
-        wrapped = outputStream;
+        destination = outputStream;
     }
 
     @Override
     public void write(int i) throws IOException {
-        wrapped.write(i);
+        requireDestination();
+        destination.write(i);
     }
 
     @Override
     public void write(byte[] b) throws IOException {
-        wrapped.write(b);
+        requireDestination();
+        destination.write(b);
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        wrapped.write(b, off, len);
+        requireDestination();
+        destination.write(b, off, len);
+    }
+
+    private void requireDestination() {
+        if (destination == null) {
+            throw new IllegalStateException("OutputStream has no destination");
+        }
     }
 
     @Override
     public void flush() throws IOException {
-        wrapped.flush();
+        if (destination != null) {
+            destination.flush();
+        }
     }
 
     @Override
     public void close() throws IOException {
-        wrapped.close();
+        if (destination != null) {
+            destination.close();
+        }
+        synchronized (closed) {
+            closed.set(true);
+            closed.notifyAll();
+        }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed.get();
+    }
+
+    @Override
+    public void awaitClose(long millis) throws InterruptedException {
+        synchronized (closed) {
+            if (!closed.get()) {
+                closed.wait(millis);
+            }
+        }
     }
 }

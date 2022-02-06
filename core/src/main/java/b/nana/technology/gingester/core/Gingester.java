@@ -264,12 +264,12 @@ public final class Gingester {
                         } else {
                             LOGGER.warn(
                                     String.format(
-                                            "%s during %s::%s of %s: %s",
+                                            "%s during %s::%s of '%s': %s",
                                             ((Exception) exception).getClass().getSimpleName(),
                                             context.fetch("transformer").findFirst().orElseThrow(),
                                             context.fetch("method").findFirst().orElseThrow(),
-                                            ((Exception) exception).getMessage(),
-                                            description)
+                                            description,
+                                            ((Exception) exception).getMessage())
                                     , exception
                             );
                         }
