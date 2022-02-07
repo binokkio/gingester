@@ -7,6 +7,8 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.io.BufferedOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,11 +20,13 @@ public class WriteAsync implements Transformer<OutputStreamWrapper, Path> {
     private final Context.Template pathTemplate;
     private final boolean mkdirs;
     private final StandardOpenOption[] openOptions;
+    private final int bufferSize;
 
     public WriteAsync(Parameters parameters) {
         pathTemplate = Context.newTemplate(parameters.path);
         mkdirs = parameters.mkdirs;
         openOptions = parameters.openOptions;
+        bufferSize = parameters.bufferSize;
     }
 
     @Override
@@ -41,7 +45,9 @@ public class WriteAsync implements Transformer<OutputStreamWrapper, Path> {
             Files.createDirectories(parent);
         }
 
-        in.wrap(Files.newOutputStream(path, openOptions));
+        OutputStream outputStream = Files.newOutputStream(path, openOptions);
+        if (bufferSize != 0) outputStream = new BufferedOutputStream(outputStream, bufferSize);
+        in.wrap(outputStream);
 
         out.accept(context.stash(Map.of(
                 "monitor", in,
@@ -58,6 +64,7 @@ public class WriteAsync implements Transformer<OutputStreamWrapper, Path> {
         public String path;
         public boolean mkdirs = true;
         public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };
+        public int bufferSize = 8192;
 
         @JsonCreator
         public Parameters() {}
