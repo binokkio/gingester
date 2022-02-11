@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,10 +20,10 @@ public final class SetHeaders implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
-        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst()
+        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch("http", "response").findFirst()
                 .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
 
-        headers.forEach(response::setHeader);
+        headers.forEach(response::addHeader);
 
         out.accept(context, in);
     }

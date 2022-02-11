@@ -9,7 +9,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -49,7 +48,7 @@ public final class Keycloak implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        HttpServletResponse response = (HttpServletResponse) context.fetch("http", "response", "servlet").findFirst()
+        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch("http", "response").findFirst()
                 .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
 
         Cookie cookie = (Cookie) context.fetch("http", "request", "cookies", cookieName)
@@ -83,10 +82,12 @@ public final class Keycloak implements Transformer<Object, Object> {
 
             response.setStatus(302);
             response.addHeader("Location", getRedirectUrl(context));
+            response.respondEmpty();
 
         } else if (!sessions.containsKey(sessionId)) {
             response.setStatus(302);
             response.addHeader("Location", authUrl + "&redirect_uri=" + getRedirectUrl(context));
+            response.respondEmpty();
         } else {
             out.accept(context.stash("keycloak", sessions.get(sessionId)), in);
         }

@@ -119,10 +119,9 @@ public final class Server implements Transformer<Object, InputStream> {
                     httpRequestStash.put("cookies", cookieMap);
                 }
 
-                httpStash.put("response", Map.of(
-                        "servlet", response,
-                        "handled", new AtomicBoolean()
-                ));
+                ResponseWrapper responseWrapper = new ResponseWrapper(response);
+
+                httpStash.put("response", responseWrapper);
 
                 Context.Builder contextBuilder = context.stash(Map.of(
                         "description", jettyRequest.getMethod() + " " + target,
@@ -130,11 +129,85 @@ public final class Server implements Transformer<Object, InputStream> {
                 ));
 
                 out.accept(contextBuilder, request.getInputStream());
+                responseWrapper.awaitResponse();
             }
         });
 
         server.start();
         server.join();
+    }
+
+    public static class ResponseWrapper {
+
+        public final HttpServletResponse servlet;
+        public final AtomicBoolean responded = new AtomicBoolean();
+
+        public ResponseWrapper(HttpServletResponse servlet) {
+            this.servlet = servlet;
+        }
+
+        public void setStatus(int status) {
+            servlet.setStatus(status);
+        }
+
+        public void addCookie(Cookie cookie) {
+            servlet.addCookie(cookie);
+        }
+
+        public void addHeader(String name, String value) {
+            servlet.addHeader(name, value);
+        }
+
+        public void respondEmpty() {
+            if (responded.get()) {
+                throw new IllegalStateException("Already responded");
+            }
+            finish();
+        }
+
+        public void respond(Responder responder) throws Exception {
+            if (!responded.getAndSet(true)) {
+                responder.respond(servlet);
+            } else {
+                throw new IllegalStateException("Already responded");
+            }
+            finish();
+        }
+
+        private void finish() {
+            responded.set(true);
+            synchronized (responded) {
+                responded.notifyAll();
+            }
+        }
+
+        public void awaitResponse() {
+            if (!responded.get()) {
+                synchronized (responded) {
+                    while (!responded.get()) {
+                        try {
+                            responded.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();  // TODO
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns the underlying HttpServletResponse.
+         *
+         * Note that `respond` or `respondEmpty` must be called on `this` regardless of
+         * any interactions directly on the HttpServletResponse returned by this method.
+         */
+        public HttpServletResponse getServlet() {
+            return servlet;
+        }
+    }
+
+    public interface Responder {
+        void respond(HttpServletResponse servlet) throws Exception;
     }
 
     public static class Parameters {
