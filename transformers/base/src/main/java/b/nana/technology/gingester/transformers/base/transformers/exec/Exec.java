@@ -6,16 +6,18 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Names(1)
 public final class Exec implements Transformer<InputStream, InputStream> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Exec.class);
 
     private final ExecutorService errDrainer = Executors.newCachedThreadPool();
 
@@ -43,16 +45,22 @@ public final class Exec implements Transformer<InputStream, InputStream> {
         out.accept(context.stash("description", command), process.getInputStream());
 
         // TODO emit stderr instead, to a transformer specified by a parameter
-        InputStream err = process.getErrorStream();
+        BufferedReader processStdErr = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
         errDrainer.submit(() -> {
-            try {
-                System.err.println(new String(err.readAllBytes(), StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                e.printStackTrace();
+            while (true) {
+                try {
+                    String line = processStdErr.readLine();
+                    if (line == null) break;
+                    LOGGER.info("{}: {}", command, line);
+                } catch (IOException e) {
+                    throw new RuntimeException("Reading " + command + " stderr threw", e);
+                }
             }
         });
 
-        in.transferTo(process.getOutputStream());
+        OutputStream processStdIn = process.getOutputStream();
+        in.transferTo(processStdIn);
+        processStdIn.close();
 
         int resultCode = process.waitFor();
         // TODO throw an exception on non-zero resultCode?
