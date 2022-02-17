@@ -40,13 +40,15 @@ public abstract class RabbitmqTransformer<I, O> implements Transformer<I, O> {
         connection = connectionFactory.newConnection();
         channel = connection.createChannel();
 
-        channel.queueDeclare(
-                parameters.queue,
-                parameters.durable,
-                parameters.exclusive,
-                parameters.autoDelete,
-                parameters.arguments
-        );
+        if (parameters.declare) {
+            channel.queueDeclare(
+                    parameters.queue,
+                    parameters.durable,
+                    parameters.exclusive,
+                    parameters.autoDelete,
+                    parameters.arguments
+            );
+        }
     }
 
     @Override
@@ -68,10 +70,10 @@ public abstract class RabbitmqTransformer<I, O> implements Transformer<I, O> {
         public String username;
         public String password;
         public String queue;
+        public boolean declare;
         public boolean durable;
         public boolean exclusive;
         public boolean autoDelete;
-        public boolean autoAck;
         public Map<String, Object> arguments;
     }
 }
