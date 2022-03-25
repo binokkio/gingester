@@ -28,18 +28,28 @@ public final class Context implements Iterable<Context> {
 
 
     final Context parent;
+    final Context group;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
     private volatile boolean isFlawless = true;
 
     private Context(Builder builder) {
         parent = builder.parent;
+        group = builder.group;
         controller = builder.controller;
         stash = builder.stash;
     }
 
     public boolean isSeed() {
         return parent == null;
+    }
+
+    public boolean hasGroup() {
+        return group != null;
+    }
+
+    private Optional<Context> getGroup() {
+        return Optional.ofNullable(group);
     }
 
     public boolean isFlawless() {
@@ -130,7 +140,7 @@ public final class Context implements Iterable<Context> {
             public Context next() {
                 Context self = pointer;
                 pointer = pointer.parent;
-                return self;
+                return self.getGroup().orElse(self);
             }
         };
     }
@@ -213,6 +223,7 @@ public final class Context implements Iterable<Context> {
     public static final class Builder {
 
         private final Context parent;
+        private Context group;
         private Controller<?, ?> controller;
         private Map<String, Object> stash;
 
@@ -222,6 +233,11 @@ public final class Context implements Iterable<Context> {
 
         public Builder(Context parent) {
             this.parent = parent;
+        }
+
+        public Builder group(Context group) {
+            this.group = group;
+            return this;
         }
 
         /**

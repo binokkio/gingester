@@ -13,7 +13,7 @@ public final class ContextMap<T> {
         if (collision != null) throw new IllegalStateException("ContextMap already contains value for " + context);
     }
 
-    public Entry<T> getEntry(Context context) {
+    private Entry<T> getEntry(Context context) {
         for (Context c : context) {
             Entry<T> entry = values.get(c);
             if (entry != null) return entry;
@@ -30,6 +30,16 @@ public final class ContextMap<T> {
         entry.lock.lock();
         try {
             action.perform(entry.value);
+        } finally {
+            entry.lock.unlock();
+        }
+    }
+
+    public <V> V act(Context context, Function<T, V> action) throws Exception {
+        Entry<T> entry = getEntry(context);
+        entry.lock.lock();
+        try {
+            return action.perform(entry.value);
         } finally {
             entry.lock.unlock();
         }
@@ -59,6 +69,10 @@ public final class ContextMap<T> {
 
     public interface Action<T> {
         void perform(T value) throws Exception;
+    }
+
+    public interface Function<T, V> {
+        V perform(T value) throws Exception;
     }
 
     public static class Entry<T> {

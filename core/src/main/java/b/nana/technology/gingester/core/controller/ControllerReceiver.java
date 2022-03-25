@@ -55,6 +55,18 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         finish(context);
     }
 
+    @Override
+    public Context acceptGroup(Context.Builder group) {
+        Context context = group.build(controller);
+        prepare(context);
+        return context;
+    }
+
+    @Override
+    public void closeGroup(Context group) {
+        finish(group);
+    }
+
     private Context maybeExtend(Context context) {
         if (context.controller != controller && (
                 !controller.syncs.isEmpty() ||
@@ -67,8 +79,10 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void prepare(Context context) {
-        for (Controller<?, ?> target : controller.syncs) {
-            target.prepare(context);
+        if (!context.hasGroup()) {
+            for (Controller<?, ?> target : controller.syncs) {
+                target.prepare(context);
+            }
         }
     }
 
@@ -86,7 +100,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void finish(Context context) {
-        if (!controller.syncs.isEmpty()) {
+        if (!context.hasGroup() && !controller.syncs.isEmpty()) {
             startSync(context);
             if (Thread.currentThread() instanceof Worker) {
                 ((Worker) Thread.currentThread()).flush();
