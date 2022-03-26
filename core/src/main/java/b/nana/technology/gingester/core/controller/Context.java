@@ -48,10 +48,6 @@ public final class Context implements Iterable<Context> {
         return group != null;
     }
 
-    private Optional<Context> getGroup() {
-        return Optional.ofNullable(group);
-    }
-
     public boolean isFlawless() {
         return isFlawless;
     }
@@ -146,8 +142,8 @@ public final class Context implements Iterable<Context> {
                     nextIsGroup = false;
                 } else {
                     next = pointer;
-                    nextIsGroup = next.hasGroup();
-                    if (!nextIsGroup) pointer = pointer.parent;
+                    if (next.hasGroup()) nextIsGroup = true;
+                    else pointer = pointer.parent;
                 }
                 return next;
             }

@@ -9,16 +9,15 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Passthrough
-public final class CountModulo implements Transformer<Object, Object> {
+public final class CountLimit implements Transformer<Object, Object> {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
-    private final int divisor;
+    private final long limit;
 
-    public CountModulo(Parameters parameters) {
-        divisor = parameters.divisor;
+    public CountLimit(Parameters parameters) {
+        limit = parameters.limit;
     }
 
     @Override
@@ -33,50 +32,61 @@ public final class CountModulo implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-        Context.Builder contextBuilder = contextMap.get(context).group(context);
+
+        Context.Builder contextBuilder = contextMap.act(context, state -> {
+            return state.group(context);
+        });
+
         out.accept(contextBuilder, in);
     }
 
     @Override
     public void finish(Context context, Receiver<Object> out) {
-        contextMap.remove(context).close(out);
+        contextMap.remove(context).close();
     }
 
     public static class Parameters {
 
-        public int divisor;
+        public long limit;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(int divisor) {
-            this.divisor = divisor;
+        public Parameters(long limit) {
+            this.limit = limit;
         }
     }
 
     private class State {
 
-        private final AtomicLong counter = new AtomicLong();
+        private final Context groupParent;
+        private final Receiver<Object> out;
 
-        private final Context[] groups;
+        private Context group;
+        private long counter;
 
-        private State(Context context, Receiver<Object> out) {
-            groups = new Context[divisor];
-            for (int i = 0; i < groups.length; i++) {
-                groups[i] = out.acceptGroup(context.stash("countModulo", i));
-            }
+        public State(Context groupParent, Receiver<Object> out) {
+            this.groupParent = groupParent;
+            this.out = out;
         }
 
         private Context.Builder group(Context context) {
-            long count = counter.getAndIncrement();
+
+            long count = counter++;
+
+            if (count % limit == 0) {
+                close();
+                group = out.acceptGroup(groupParent.stash("limitGroup", counter / limit));
+            }
+
             return context
                     .stash("count", count)
-                    .group(groups[(int) (count % divisor)]);
+                    .group(group);
         }
 
-        private void close(Receiver<Object> out) {
-            for (Context group : groups) {
+        private void close() {
+            if (group != null) {
                 out.closeGroup(group);
             }
         }
