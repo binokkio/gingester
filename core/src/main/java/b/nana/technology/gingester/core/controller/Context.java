@@ -130,6 +130,7 @@ public final class Context implements Iterable<Context> {
         return new Iterator<>() {
 
             private Context pointer = Context.this;
+            private boolean nextIsGroup = false;
 
             @Override
             public boolean hasNext() {
@@ -138,9 +139,17 @@ public final class Context implements Iterable<Context> {
 
             @Override
             public Context next() {
-                Context self = pointer;
-                pointer = pointer.parent;
-                return self.getGroup().orElse(self);
+                Context next;
+                if (nextIsGroup) {
+                    next = pointer.group;
+                    pointer = pointer.parent;
+                    nextIsGroup = false;
+                } else {
+                    next = pointer;
+                    nextIsGroup = next.hasGroup();
+                    if (!nextIsGroup) pointer = pointer.parent;
+                }
+                return next;
             }
         };
     }
@@ -152,10 +161,10 @@ public final class Context implements Iterable<Context> {
     public String prettyStash() {
         List<Context> contexts = stream().collect(Collectors.toList());
         Collections.reverse(contexts);
-        Map<String, Object> combined = new LinkedHashMap<>();
+        Map<Object, Object> combined = new LinkedHashMap<>();
         for (Context context : contexts) {
             combined.put(
-                    context.controller.id,
+                    new StringBuilder(context.controller.id),  // TODO quick fix to prevent key collisions
                     context.stash != null ? context.stash : "{}"
             );
         }

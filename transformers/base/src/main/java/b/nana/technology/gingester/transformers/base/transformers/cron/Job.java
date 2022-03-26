@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.transformers.base.common.cron.CronExpression;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.time.Duration;
