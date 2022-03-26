@@ -403,7 +403,7 @@ public final class Gingester {
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
         Context seed = new Context.Builder().build(seedController);
-        seedController.accept(new Batch<>(seed, new Object()));
+        seedController.accept(new Batch<>(seed, "seed signal"));
         seedController.finish(null, seed);
 
         try {
