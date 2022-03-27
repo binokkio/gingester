@@ -74,7 +74,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private Context maybeExtend(Context context) {
-        if (!context.isSeed() && (syncs || !controller.excepts.isEmpty())) {
+        if (context.controller != controller && (syncs || !controller.excepts.isEmpty())) {
             return context.extend().synced(syncs).build(controller);
         } else {
             return context;
