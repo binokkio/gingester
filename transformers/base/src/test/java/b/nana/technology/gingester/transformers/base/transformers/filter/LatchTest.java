@@ -15,8 +15,7 @@ class LatchTest {
     @Test
     void test() throws Exception {
 
-
-        Context seed = new Context.Builder().build();
+        Context seed = new Context.Builder().synced(true).build();
 
         Latch latch = new Latch();
         latch.prepare(seed, null);
