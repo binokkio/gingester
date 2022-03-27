@@ -402,7 +402,7 @@ public final class Gingester {
         if (reportingIntervalSeconds > 0) reporter.start();
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
-        Context seed = new Context.Builder().build(seedController);
+        Context seed = new Context.Builder().synced(true).build(seedController);
         seedController.accept(new Batch<>(seed, "seed signal"));
         seedController.finish(null, seed);
 

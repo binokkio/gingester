@@ -29,6 +29,7 @@ public final class Context implements Iterable<Context> {
 
     final Context parent;
     final Context group;
+    private final boolean synced;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
     private volatile boolean isFlawless = true;
@@ -36,6 +37,7 @@ public final class Context implements Iterable<Context> {
     private Context(Builder builder) {
         parent = builder.parent;
         group = builder.group;
+        synced = builder.synced;
         controller = builder.controller;
         stash = builder.stash;
     }
@@ -46,6 +48,10 @@ public final class Context implements Iterable<Context> {
 
     public boolean hasGroup() {
         return group != null;
+    }
+
+    public boolean isSynced() {
+        return synced;
     }
 
     public boolean isFlawless() {
@@ -229,6 +235,7 @@ public final class Context implements Iterable<Context> {
 
         private final Context parent;
         private Context group;
+        private boolean synced;
         private Controller<?, ?> controller;
         private Map<String, Object> stash;
 
@@ -242,6 +249,11 @@ public final class Context implements Iterable<Context> {
 
         public Builder group(Context group) {
             this.group = group;
+            return this;
+        }
+
+        public Builder synced(boolean synced) {
+            this.synced = synced;
             return this;
         }
 

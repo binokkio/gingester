@@ -137,6 +137,8 @@ public final class Controller<I, O> {
                 }
             }
         }
+
+        receiver.discoverSyncs();
     }
 
     /**
