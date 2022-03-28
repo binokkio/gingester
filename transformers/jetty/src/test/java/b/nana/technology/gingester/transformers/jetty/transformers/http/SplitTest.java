@@ -21,10 +21,10 @@ class SplitTest {
     @Test
     void testFileOnly() throws Exception {
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash(Map.of("http", Map.of("request", Map.of("headers", Map.of(
                         "Content-Type", "multipart/form-data; boundary=---------------------------17192798713081016645112320327"
-                ))))).build();
+                ))))).buildForTesting();
 
         AtomicReference<Item<byte[]>> result = new AtomicReference<>();
 
@@ -48,10 +48,10 @@ class SplitTest {
     @Test
     void testFileWithMetaData() throws Exception {
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash(Map.of("http", Map.of("request", Map.of("headers", Map.of(
                         "Content-Type", "multipart/form-data; boundary=---------------------------403540100931368458281198214153"
-                ))))).build();
+                ))))).buildForTesting();
 
         List<Item<byte[]>> results = new ArrayList<>();
 

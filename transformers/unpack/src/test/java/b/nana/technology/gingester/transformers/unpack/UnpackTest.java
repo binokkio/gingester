@@ -18,9 +18,9 @@ class UnpackTest {
     @Test
     void testUnpackTestTarGz() throws Exception {
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash(Map.of("description", "/tmp/test.tar.gz"))
-                .build();
+                .buildForTesting();
 
         Queue<String> results = new ArrayDeque<>();
 
@@ -48,9 +48,9 @@ class UnpackTest {
     @Test
     void testUnpackTestRar() throws Exception {
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash(Map.of("description", "/tmp/test.rar"))
-                .build();
+                .buildForTesting();
 
         Queue<String> results = new ArrayDeque<>();
 

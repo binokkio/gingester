@@ -21,7 +21,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(new ToJson.Parameters());
         toJson.transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 getClass().getResourceAsStream("/data/dsv/test.csv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -42,7 +42,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 getClass().getResourceAsStream("/data/dsv/test.dsv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -62,7 +62,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 getClass().getResourceAsStream("/data/dsv/test.csv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -83,7 +83,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 getClass().getResourceAsStream("/data/dsv/with-escapes.csv"),
                 (UniReceiver<JsonNode>) results::add
         );
@@ -100,7 +100,7 @@ class ToJsonTest {
 
         ToJson toJson = new ToJson(new ToJson.Parameters());
         toJson.transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 getClass().getResourceAsStream("/data/dsv/with-extras.csv"),
                 (UniReceiver<JsonNode>) results::add
         );

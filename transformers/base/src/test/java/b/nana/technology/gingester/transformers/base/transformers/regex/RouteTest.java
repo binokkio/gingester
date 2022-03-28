@@ -22,7 +22,7 @@ class RouteTest {
         Route.Parameters parameters = new Route.Parameters();
         parameters.routes = routes;
 
-        Context context = new Context.Builder().build();
+        Context context = Context.newTestContext();
 
         AtomicReference<String> result = new AtomicReference<>();
 

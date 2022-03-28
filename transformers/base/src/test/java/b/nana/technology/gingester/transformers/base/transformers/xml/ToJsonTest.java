@@ -17,7 +17,7 @@ class ToJsonTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new ToJson().transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 getClass().getResourceAsStream("/data/xml/simple.xml"),
                 (UniReceiver<JsonNode>) result::set
         );

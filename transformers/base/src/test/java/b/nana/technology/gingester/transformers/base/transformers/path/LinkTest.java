@@ -25,7 +25,7 @@ class LinkTest {
         AtomicReference<Path> result = new AtomicReference<>();
 
         new Link(new Link.Parameters(link.toString()))
-                .transform(new Context.Builder().build(), original, (UniReceiver<Path>) result::set);
+                .transform(Context.newTestContext(), original, (UniReceiver<Path>) result::set);
 
         assertEquals(link, result.get());
         assertEquals("Hello, World!", Files.readString(result.get()));

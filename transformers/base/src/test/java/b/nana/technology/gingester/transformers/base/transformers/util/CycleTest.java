@@ -21,7 +21,7 @@ class CycleTest {
 
         Cycle cycle = new Cycle(parameters);
 
-        Context context = new Context.Builder().build();
+        Context context = Context.newTestContext();
         Queue<Object> results = new ArrayDeque<>();
 
         cycle.transform(context, context, (UniReceiver<Object>) results::add);

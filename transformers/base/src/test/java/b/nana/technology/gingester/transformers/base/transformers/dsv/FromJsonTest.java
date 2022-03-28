@@ -22,7 +22,7 @@ class FromJsonTest {
         parameters.quote = '2';
 
         FromJson fromJson = new FromJson(parameters);
-        Context context = new Context.Builder().synced(true).build();
+        Context context = Context.newTestContext();
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 

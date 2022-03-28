@@ -138,7 +138,7 @@ public final class Controller<I, O> {
             }
         }
 
-        receiver.discoverSyncs();
+        receiver.examineController();
     }
 
     /**
@@ -333,10 +333,10 @@ public final class Controller<I, O> {
 
 
 
-    Controller() {
+    Controller(String controllerId) {
         configuration = null;
         gingester = null;
-        id = "__unknown__";
+        id = controllerId;
         transformer = null;
         phaser = null;
         async = false;

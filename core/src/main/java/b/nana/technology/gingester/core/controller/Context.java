@@ -26,20 +26,32 @@ public final class Context implements Iterable<Context> {
         return wrapper::render;
     }
 
+    public static Context newSeedContext(Controller<?, ?> seedController) {
+        return new Context(null, null, true, seedController, Map.of());
+    }
 
-    final Context parent;
-    final Context group;
+    public static Context newTestContext() {
+        return new Context(null, null, true, new Controller<>("__test_seed__"), Map.of());
+    }
+
+
+    private final Context parent;
+    private final Context group;
     private final boolean synced;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
     private volatile boolean isFlawless = true;
 
+    private Context(Context parent, Context group, boolean synced, Controller<?, ?> controller, Map<String, Object> stash) {
+        this.parent = parent;
+        this.group = group;
+        this.synced = synced;
+        this.controller = controller;
+        this.stash = stash;
+    }
+
     private Context(Builder builder) {
-        parent = builder.parent;
-        group = builder.group;
-        synced = builder.synced;
-        controller = builder.controller;
-        stash = builder.stash;
+        this(builder.parent, builder.group, builder.synced, builder.controller, builder.stash);
     }
 
     public boolean isSeed() {
@@ -239,11 +251,7 @@ public final class Context implements Iterable<Context> {
         private Controller<?, ?> controller;
         private Map<String, Object> stash;
 
-        public Builder() {
-            parent = null;
-        }
-
-        public Builder(Context parent) {
+        private Builder(Context parent) {
             this.parent = parent;
         }
 
@@ -281,16 +289,16 @@ public final class Context implements Iterable<Context> {
         }
 
         /**
-         * Build context without controller, only for seeding/testing!
+         * Build context with a dummy controller, only for testing!
          *
          * @return the context
          */
-        public Context build() {
-            this.controller = new Controller<>();
+        public Context buildForTesting() {
+            this.controller = new Controller<>("__test__");
             return new Context(this);
         }
 
-        public Context build(Controller<?, ?> controller) {
+        Context build(Controller<?, ?> controller) {
             this.controller = controller;
             return new Context(this);
         }
