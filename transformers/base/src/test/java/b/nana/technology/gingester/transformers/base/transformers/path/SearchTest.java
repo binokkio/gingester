@@ -26,7 +26,7 @@ class SearchTest {
         parameters.root = tempDir.toString();
         parameters.globs = Collections.singletonList("*");
 
-        new Search(parameters).transform(new Context.Builder().build(), null, (UniReceiver<Path>) result::add);
+        new Search(parameters).transform(Context.newTestContext(), null, (UniReceiver<Path>) result::add);
 
         assertEquals(1, result.size());
         assertEquals(target, result.remove());
@@ -55,7 +55,7 @@ class SearchTest {
         parameters.root = tempDir.toString();
         parameters.globs = Arrays.asList("a.txt", "c.txt");
 
-        new Search(parameters).transform(new Context.Builder().build(), null, (UniReceiver<Path>) result::add);
+        new Search(parameters).transform(Context.newTestContext(), null, (UniReceiver<Path>) result::add);
 
         assertEquals(2, result.size());
         assertEquals(Set.of(a, c), result);

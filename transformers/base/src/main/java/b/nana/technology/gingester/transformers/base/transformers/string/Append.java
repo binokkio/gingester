@@ -5,17 +5,19 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import static java.util.Objects.requireNonNull;
+
 public final class Append implements Transformer<String, String> {
 
-    private final String append;
+    private final Context.Template append;
 
     public Append(Parameters parameters) {
-        append = parameters.append;
+        append = Context.newTemplate(requireNonNull(parameters.append));
     }
 
     @Override
     public void transform(Context context, String in, Receiver<String> out) {
-        out.accept(context, in + append);
+        out.accept(context, in + append.render(context));
     }
 
     public static class Parameters {

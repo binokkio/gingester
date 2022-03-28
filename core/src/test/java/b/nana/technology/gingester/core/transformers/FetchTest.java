@@ -16,9 +16,9 @@ class FetchTest {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash("hello", "Hello, World!")
-                .build();
+                .buildForTesting();
 
         Fetch fetch = new Fetch(new Fetch.Parameters("hello"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);
@@ -31,13 +31,13 @@ class FetchTest {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash(
                         "hello", Map.of(
                                 "world", "Hello, World!"
                         )
                 )
-                .build();
+                .buildForTesting();
 
         Fetch fetch = new Fetch(new Fetch.Parameters("hello.world"));
         fetch.transform(context, null, (UniReceiver<Object>) result::set);

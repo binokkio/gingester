@@ -20,9 +20,9 @@ class ContextTest {
 
         array.add("Hello, World!");
 
-        Context context = new Context.Builder()
+        Context context = Context.newTestContext()
                 .stash("stash", stash)
-                .build();
+                .buildForTesting();
 
         String result = ((JsonNode) context.fetch("stash", "array", "0").findFirst().orElseThrow()).asText();
         assertEquals("Hello, World!", result);

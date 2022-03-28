@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.cron;
+package b.nana.technology.gingester.transformers.base.common.cron;
 
 /*
  * Copyright (C) 2012- Frode Carlsen.
@@ -16,8 +16,8 @@ package b.nana.technology.gingester.transformers.base.transformers.cron;
  * limitations under the License.
  *
  * Note: rewritten to standard Java 8 DateTime by zemiak (c) 2016
- * Note: copied to b.nana.technology.gingester.transformers.base.transformers.cron by binokkio
- * Note: made package-private and final by binokkio
+ * Note: copied to b.nana.technology.gingester.transformers.base.common.cron by binokkio
+ * Note: made final by binokkio
  */
 
 import java.time.*;
@@ -125,7 +125,7 @@ import java.util.regex.Pattern;
  * Day-of-week field &quot;FRI-MON&quot; is invalid,but &quot;FRI-SUN,MON&quot; is valid
  *
  */
-final class CronExpression {
+public final class CronExpression {
 
     enum CronFieldType {
         SECOND(0, 59, null) {

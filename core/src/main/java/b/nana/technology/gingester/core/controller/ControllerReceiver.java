@@ -11,8 +11,18 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     private final Controller<I, O> controller;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
 
+    private boolean controllerHasSyncs;
+    private boolean controllerHasSyncsOrExcepts;
+
     ControllerReceiver(Controller<I, O> controller) {
         this.controller = controller;
+    }
+
+    public void examineController() {
+        controllerHasSyncs = !controller.syncs.isEmpty();
+        controllerHasSyncsOrExcepts =
+                controllerHasSyncs ||
+                !controller.excepts.isEmpty();
     }
 
     @Override
@@ -27,7 +37,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     @Override
     public void accept(Context.Builder contextBuilder, O output) {
-        Context context = contextBuilder.build(controller);
+        Context context = contextBuilder.synced(!contextBuilder.hasGroup() && controllerHasSyncs).build(controller);
         prepare(context);
         for (Controller<O, ?> target : controller.links.values()) {
             accept(context, output, target);
@@ -47,7 +57,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     @Override
     public void accept(Context.Builder contextBuilder, O output, String targetId) {
-        Context context = contextBuilder.build(controller);
+        Context context = contextBuilder.synced(!contextBuilder.hasGroup() && controllerHasSyncs).build(controller);
         Controller<O, ?> target = controller.links.get(targetId);
         if (target == null) throw new IllegalStateException("Link not configured!");
         prepare(context);
@@ -55,20 +65,31 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         finish(context);
     }
 
+    @Override
+    public Context acceptGroup(Context.Builder group) {
+        Context context = group.synced(true).build(controller);
+        prepare(context);
+        return context;
+    }
+
+    @Override
+    public void closeGroup(Context group) {
+        finish(group);
+    }
+
     private Context maybeExtend(Context context) {
-        if (context.controller != controller && (
-                !controller.syncs.isEmpty() ||
-                !controller.excepts.isEmpty()
-        )) {
-            return context.extend().build(controller);
+        if (context.controller != controller && controllerHasSyncsOrExcepts) {
+            return context.extend().synced(controllerHasSyncs).build(controller);
         } else {
             return context;
         }
     }
 
     private void prepare(Context context) {
-        for (Controller<?, ?> target : controller.syncs) {
-            target.prepare(context);
+        if (context.controller == controller && context.isSynced()) {
+            for (Controller<?, ?> target : controller.syncs) {
+                target.prepare(context);
+            }
         }
     }
 
@@ -86,8 +107,8 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void finish(Context context) {
-        if (!controller.syncs.isEmpty()) {
-            startSync(context);
+        if (context.controller == controller && context.isSynced()) {
+            startFinishSignal(context);
             if (Thread.currentThread() instanceof Worker) {
                 ((Worker) Thread.currentThread()).flush();
             }
@@ -97,7 +118,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         }
     }
 
-    private void startSync(Context context) {
+    private void startFinishSignal(Context context) {
         synchronized (activeSyncs) {
             while (activeSyncs.size() >= controller.maxQueueSize) {
                 try {

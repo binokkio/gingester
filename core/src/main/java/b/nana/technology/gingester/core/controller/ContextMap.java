@@ -9,14 +9,17 @@ public final class ContextMap<T> {
     private final ThreadLocal<Entry<T>> locked = new ThreadLocal<>();
 
     public void put(Context context, T value) {
+        if (!context.isSynced()) throw new IllegalArgumentException("Given context is not a synced context");
         Object collision = values.put(context, new Entry<>(value));
         if (collision != null) throw new IllegalStateException("ContextMap already contains value for " + context);
     }
 
-    public Entry<T> getEntry(Context context) {
+    private Entry<T> getEntry(Context context) {
         for (Context c : context) {
-            Entry<T> entry = values.get(c);
-            if (entry != null) return entry;
+            if (c.isSynced()) {
+                Entry<T> entry = values.get(c);
+                if (entry != null) return entry;
+            }
         }
         throw new IllegalStateException("ContextMap has no value for  " + context);
     }
@@ -30,6 +33,16 @@ public final class ContextMap<T> {
         entry.lock.lock();
         try {
             action.perform(entry.value);
+        } finally {
+            entry.lock.unlock();
+        }
+    }
+
+    public <V> V act(Context context, Function<T, V> action) throws Exception {
+        Entry<T> entry = getEntry(context);
+        entry.lock.lock();
+        try {
+            return action.perform(entry.value);
         } finally {
             entry.lock.unlock();
         }
@@ -59,6 +72,10 @@ public final class ContextMap<T> {
 
     public interface Action<T> {
         void perform(T value) throws Exception;
+    }
+
+    public interface Function<T, V> {
+        V perform(T value) throws Exception;
     }
 
     public static class Entry<T> {

@@ -23,7 +23,7 @@ class PathTest {
 
         Path path = new Path(new Path.Parameters("$..message"));
         path.transform(
-                new Context.Builder().build(),
+                Context.newTestContext(),
                 jsonNode,
                 (UniReceiver<JsonNode>) results::add
         );
