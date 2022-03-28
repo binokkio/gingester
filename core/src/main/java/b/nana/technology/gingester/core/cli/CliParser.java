@@ -153,7 +153,13 @@ public final class CliParser {
                     markSyncFrom = true;
                 case "-stt":
                 case "--sync-to-transformer":
-                    syncTo = !markSyncFrom;  // bit of trickery to basically skip this case if we fell through the -sft case
+                    syncTo = !markSyncFrom;  // a bit of trickery to basically skip this case if we fell through the -sft case
+                case "-stft":
+                case "--sync-to-and-from-transformer":
+                    if (!markSyncFrom && !syncTo) {
+                        markSyncFrom = true;
+                        syncTo = true;
+                    }
                 case "-f":
                 case "--fetch":
                 case "-fa":
@@ -209,11 +215,8 @@ public final class CliParser {
                         transformer.transformer(name, TransformerFactory.instance(name));
                     }
 
-                    if (markSyncFrom) {
-                        syncFrom = List.of(transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given"))));
-                    } else if (syncTo) {
-                        transformer.syncs(syncFrom);
-                    }
+                    if (syncTo) transformer.syncs(syncFrom);
+                    if (markSyncFrom) syncFrom = List.of(transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given"))));
 
                     previous = transformer;
 

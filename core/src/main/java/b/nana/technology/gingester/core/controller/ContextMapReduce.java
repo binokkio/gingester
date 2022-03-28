@@ -15,17 +15,20 @@ public final class ContextMapReduce<T> {
     private final Function<Thread, ConcurrentHashMap<Context, T>> hashMapSupplier = t -> new ConcurrentHashMap<>();
 
     public void put(Context context, Supplier<T> supplier) {
+        if (!context.isSynced()) throw new IllegalArgumentException("Given context is not a synced context");
         Object collision = suppliers.put(context, supplier);
         if (collision != null) throw new IllegalStateException("ContextMapReduce already contains supplier for " + context);
     }
 
     public T get(Context context) {
         for (Context c : context) {
-            Supplier<T> supplier = suppliers.get(c);
-            if (supplier != null) {
-                return values
-                        .computeIfAbsent(Thread.currentThread(), hashMapSupplier)
-                        .computeIfAbsent(c, x -> supplier.get());
+            if (c.isSynced()) {
+                Supplier<T> supplier = suppliers.get(c);
+                if (supplier != null) {
+                    return values
+                            .computeIfAbsent(Thread.currentThread(), hashMapSupplier)
+                            .computeIfAbsent(c, x -> supplier.get());
+                }
             }
         }
         throw new IllegalStateException("ContextMapReduce has no supplier for " + context);
@@ -41,14 +44,5 @@ public final class ContextMapReduce<T> {
         }
         if (ts.isEmpty()) ts.add(supplier.get());
         return ts.stream();
-    }
-
-    public boolean has(Context context) {
-        for (Context c : context) {
-            if (suppliers.containsKey(c)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

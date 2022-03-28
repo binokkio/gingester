@@ -13,6 +13,7 @@ public final class BaseProvider implements Provider {
     public Map<String, String> getCaseHints() {
         return Map.of(
                 "bigdecimal", "BigDecimal",
+                "groupby", "GroupBy",
                 "inputstream", "InputStream"
         );
     }
@@ -29,6 +30,9 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.exec.Exec.class,
+                b.nana.technology.gingester.transformers.base.transformers.groupby.CountLimit.class,
+                b.nana.technology.gingester.transformers.base.transformers.groupby.CountModulo.class,
+                b.nana.technology.gingester.transformers.base.transformers.groupby.Interval.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.ElementsContainingOwnText.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.ElementsContainingText.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.FromString.class,

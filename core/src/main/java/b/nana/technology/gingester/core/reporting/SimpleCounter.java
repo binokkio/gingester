@@ -1,11 +1,11 @@
 package b.nana.technology.gingester.core.reporting;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 public final class SimpleCounter implements Counter {
 
     private final boolean enabled;
-    private final AtomicLong value = new AtomicLong();
+    private final LongAdder value = new LongAdder();
 
     public SimpleCounter() {
         this(true);
@@ -18,14 +18,14 @@ public final class SimpleCounter implements Counter {
     @Override
     public void count() {
         if (enabled) {
-            value.incrementAndGet();
+            value.increment();
         }
     }
 
     @Override
     public void count(long delta) {
         if (enabled) {
-            value.addAndGet(delta);
+            value.add(delta);
         }
     }
 

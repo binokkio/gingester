@@ -20,7 +20,7 @@ class CreateTest {
         parameters.template = "Hello, World!";
 
         Create create = new Create(parameters);
-        create.transform(new Context.Builder().build(), null, (UniReceiver<String>) result::add);
+        create.transform(Context.newTestContext(), null, (UniReceiver<String>) result::add);
 
         assertEquals(1, result.size());
         assertEquals("Hello, World!", result.remove());
@@ -35,7 +35,7 @@ class CreateTest {
         parameters.template = "Hello, ${target}!";
 
         Create create = new Create(parameters);
-        create.transform(new Context.Builder().stash("target", "World").build(), null, (UniReceiver<String>) result::add);
+        create.transform(Context.newTestContext().stash("target", "World").buildForTesting(), null, (UniReceiver<String>) result::add);
 
         assertEquals(1, result.size());
         assertEquals("Hello, World!", result.remove());

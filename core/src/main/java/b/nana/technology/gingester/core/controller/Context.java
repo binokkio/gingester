@@ -26,20 +26,44 @@ public final class Context implements Iterable<Context> {
         return wrapper::render;
     }
 
+    public static Context newSeedContext(Controller<?, ?> seedController) {
+        return new Context(null, null, true, seedController, Map.of());
+    }
 
-    final Context parent;
+    public static Context newTestContext() {
+        return new Context(null, null, true, new Controller<>("__test_seed__"), Map.of());
+    }
+
+
+    private final Context parent;
+    private final Context group;
+    private final boolean synced;
     final Controller<?, ?> controller;
     private final Map<String, Object> stash;
     private volatile boolean isFlawless = true;
 
+    private Context(Context parent, Context group, boolean synced, Controller<?, ?> controller, Map<String, Object> stash) {
+        this.parent = parent;
+        this.group = group;
+        this.synced = synced;
+        this.controller = controller;
+        this.stash = stash;
+    }
+
     private Context(Builder builder) {
-        parent = builder.parent;
-        controller = builder.controller;
-        stash = builder.stash;
+        this(builder.parent, builder.group, builder.synced, builder.controller, builder.stash);
     }
 
     public boolean isSeed() {
         return parent == null;
+    }
+
+    public boolean hasGroup() {
+        return group != null;
+    }
+
+    public boolean isSynced() {
+        return synced;
     }
 
     public boolean isFlawless() {
@@ -120,6 +144,7 @@ public final class Context implements Iterable<Context> {
         return new Iterator<>() {
 
             private Context pointer = Context.this;
+            private boolean nextIsGroup = false;
 
             @Override
             public boolean hasNext() {
@@ -128,9 +153,17 @@ public final class Context implements Iterable<Context> {
 
             @Override
             public Context next() {
-                Context self = pointer;
-                pointer = pointer.parent;
-                return self;
+                Context next;
+                if (nextIsGroup) {
+                    next = pointer.group;
+                    pointer = pointer.parent;
+                    nextIsGroup = false;
+                } else {
+                    next = pointer;
+                    if (next.hasGroup()) nextIsGroup = true;
+                    else pointer = pointer.parent;
+                }
+                return next;
             }
         };
     }
@@ -142,10 +175,10 @@ public final class Context implements Iterable<Context> {
     public String prettyStash() {
         List<Context> contexts = stream().collect(Collectors.toList());
         Collections.reverse(contexts);
-        Map<String, Object> combined = new LinkedHashMap<>();
+        Map<Object, Object> combined = new LinkedHashMap<>();
         for (Context context : contexts) {
             combined.put(
-                    context.controller.id,
+                    new StringBuilder(context.controller.id),  // TODO quick fix to prevent key collisions
                     context.stash != null ? context.stash : "{}"
             );
         }
@@ -213,15 +246,27 @@ public final class Context implements Iterable<Context> {
     public static final class Builder {
 
         private final Context parent;
+        private Context group;
+        private boolean synced;
         private Controller<?, ?> controller;
         private Map<String, Object> stash;
 
-        public Builder() {
-            parent = null;
+        private Builder(Context parent) {
+            this.parent = parent;
         }
 
-        public Builder(Context parent) {
-            this.parent = parent;
+        public Builder group(Context group) {
+            this.group = group;
+            return this;
+        }
+
+        boolean hasGroup() {
+            return group != null;
+        }
+
+        Builder synced(boolean synced) {
+            this.synced = synced;
+            return this;
         }
 
         /**
@@ -248,16 +293,16 @@ public final class Context implements Iterable<Context> {
         }
 
         /**
-         * Build context without controller, only for seeding/testing!
+         * Build context with a dummy controller, only for testing!
          *
          * @return the context
          */
-        public Context build() {
-            this.controller = new Controller<>();
+        public Context buildForTesting() {
+            this.controller = new Controller<>("__test__");
             return new Context(this);
         }
 
-        public Context build(Controller<?, ?> controller) {
+        Context build(Controller<?, ?> controller) {
             this.controller = controller;
             return new Context(this);
         }
