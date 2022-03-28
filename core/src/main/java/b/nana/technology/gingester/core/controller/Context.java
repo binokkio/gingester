@@ -260,7 +260,11 @@ public final class Context implements Iterable<Context> {
             return this;
         }
 
-        public Builder synced(boolean synced) {
+        boolean hasGroup() {
+            return group != null;
+        }
+
+        Builder synced(boolean synced) {
             this.synced = synced;
             return this;
         }
