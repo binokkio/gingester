@@ -41,15 +41,15 @@ public class Write implements Transformer<InputStream, Path> {
 
         try (OutputStream output = Files.newOutputStream(path, openOptions)) {
             write(in, output);
-            output.close();
-            out.accept(context.stash(Map.of(
-                    "description", pathString,
-                    "path", Map.of(
-                            "absolute", path.toAbsolutePath(),
-                            "tail", path.getFileName()
-                    )
-            )), path);
         }
+
+        out.accept(context.stash(Map.of(
+                "description", pathString,
+                "path", Map.of(
+                        "absolute", path.toAbsolutePath(),
+                        "tail", path.getFileName()
+                )
+        )), path);
     }
 
     private void write(InputStream inputStream, OutputStream outputStream) throws IOException {

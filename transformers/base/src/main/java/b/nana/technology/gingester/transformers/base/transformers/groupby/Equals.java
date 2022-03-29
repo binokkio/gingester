@@ -8,17 +8,14 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Passthrough
-public final class CountLimit implements Transformer<Object, Object> {
+public final class Equals implements Transformer<Object, Object> {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
-    private final long limit;
-
-    public CountLimit(Parameters parameters) {
-        limit = parameters.limit;
-    }
 
     @Override
     public void setup(SetupControls controls) {
@@ -32,16 +29,8 @@ public final class CountLimit implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-
-        /*
-            For CountLimit groups are created and closed in the `group` call, so we need
-            to `out.accept` within the `contextMap.act`. What would not work is using
-            `contextMap.apply` to get the group and then `out.accept` after that because
-            an interleaving `transform` might call `group` and close the group between the
-            `contextMap.apply` and `out.accept`.
-         */
-
-        contextMap.act(context, state -> out.accept(state.group(context), in));
+        Context group = contextMap.apply(context, state -> state.getGroup(in));
+        out.accept(context.extend().group(group), in);
     }
 
     @Override
@@ -62,37 +51,23 @@ public final class CountLimit implements Transformer<Object, Object> {
         }
     }
 
-    private class State {
+    private static class State {
 
         private final Context groupParent;
         private final Receiver<Object> out;
-
-        private Context group;
-        private long counter;
+        private final Map<Object, Context> groups = new HashMap<>();
 
         public State(Context groupParent, Receiver<Object> out) {
             this.groupParent = groupParent;
             this.out = out;
         }
 
-        private Context.Builder group(Context context) {
-
-            long count = counter++;
-
-            if (count % limit == 0) {
-                close();
-                group = out.acceptGroup(groupParent.stash("limitGroup", counter / limit));
-            }
-
-            return context
-                    .stash("count", count)
-                    .group(group);
+        private Context getGroup(Object object) {
+            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.extend()));
         }
 
         private void close() {
-            if (group != null) {
-                out.closeGroup(group);
-            }
+            groups.values().forEach(out::closeGroup);
         }
     }
 }

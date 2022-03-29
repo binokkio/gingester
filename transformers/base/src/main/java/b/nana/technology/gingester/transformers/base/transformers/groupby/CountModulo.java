@@ -33,6 +33,12 @@ public final class CountModulo implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+
+        /*
+            For CountModulo all groups are created in `prepare` and closed in `finish`
+            so there is no need to synchronize within the state at all.
+         */
+
         Context.Builder contextBuilder = contextMap.get(context).group(context);
         out.accept(contextBuilder, in);
     }
@@ -61,10 +67,10 @@ public final class CountModulo implements Transformer<Object, Object> {
 
         private final Context[] groups;
 
-        private State(Context context, Receiver<Object> out) {
+        private State(Context groupParent, Receiver<Object> out) {
             groups = new Context[divisor];
             for (int i = 0; i < groups.length; i++) {
-                groups[i] = out.acceptGroup(context.stash("countModulo", i));
+                groups[i] = out.acceptGroup(groupParent.stash("countModulo", i));
             }
         }
 

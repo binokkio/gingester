@@ -18,7 +18,7 @@ public final class SyncCounter implements Transformer<Object, Integer> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Integer> out) throws Exception {
-        state.act(context, AtomicInteger::incrementAndGet);
+        state.apply(context, AtomicInteger::incrementAndGet);
     }
 
     @Override

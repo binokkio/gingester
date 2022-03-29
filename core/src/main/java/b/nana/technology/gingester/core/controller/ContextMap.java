@@ -5,6 +5,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public final class ContextMap<T> {
 
+    // TODO there might be an optimization possible for the common case where there is only one entry and
+    // TODO that entry is for the __seed__ context. E.g. in `put` something like
+    // TODO `seedOptimization = context.isSeed() && values.isEmpty()`, keep a second reference to the seedValue
+    // TODO outside of `values`.
+
     private final ConcurrentHashMap<Context, Entry<T>> values = new ConcurrentHashMap<>();
     private final ThreadLocal<Entry<T>> locked = new ThreadLocal<>();
 
@@ -38,11 +43,11 @@ public final class ContextMap<T> {
         }
     }
 
-    public <V> V act(Context context, Function<T, V> action) throws Exception {
+    public <V> V apply(Context context, Function<T, V> function) throws Exception {
         Entry<T> entry = getEntry(context);
         entry.lock.lock();
         try {
-            return action.perform(entry.value);
+            return function.perform(entry.value);
         } finally {
             entry.lock.unlock();
         }
