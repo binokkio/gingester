@@ -80,6 +80,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.json.Wrap.class,
                 b.nana.technology.gingester.transformers.base.transformers.list.Stream.class,
                 b.nana.technology.gingester.transformers.base.transformers.object.ToJson.class,
+                b.nana.technology.gingester.transformers.base.transformers.object.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Create.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Delete.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.LastModified.class,
@@ -118,7 +119,6 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.util.Latch.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Sample.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Throttle.class,
-                b.nana.technology.gingester.transformers.base.transformers.util.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.xml.ToJson.class
         );
     }
