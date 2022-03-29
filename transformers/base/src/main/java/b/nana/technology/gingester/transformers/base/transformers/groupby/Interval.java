@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
@@ -46,8 +47,8 @@ public final class Interval implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-        Context group = contextMap.act(context, State::getGroup);
-        out.accept(context.extend().group(group), in);
+        contextMap.get(context).withCurrentGroup(group ->
+                out.accept(context.extend().group(group), in));
     }
 
     @Override
@@ -95,18 +96,13 @@ public final class Interval implements Transformer<Object, Object> {
             );
         }
 
-        private Context getGroup() {
-            Context result = currentGroup;
-            if (result == null) {
-                result = out.acceptGroup(parent.stash("interval", currentInterval++));
-                currentGroup = result;
+        private synchronized void withCurrentGroup(Consumer<Context> consumer) {
+            if (currentGroup == null) {
+                currentGroup = out.acceptGroup(parent.stash("interval", currentInterval++));
             }
-            return result;
+            consumer.accept(currentGroup);
         }
 
-        // synchronized because the scheduledExecutorService and finish can run parallel, and we need to prevent
-        // the scheduledExecutorService call to set currentGroup to null and then the finish call to overtake which
-        // could get the __seed__ finish signal to get ahead of the group finish signal
         private synchronized void closeCurrentGroup() {
             Context moribund = currentGroup;
             currentGroup = null;

@@ -38,11 +38,11 @@ public final class ContextMap<T> {
         }
     }
 
-    public <V> V act(Context context, Function<T, V> action) throws Exception {
+    public <V> V apply(Context context, Function<T, V> function) throws Exception {
         Entry<T> entry = getEntry(context);
         entry.lock.lock();
         try {
-            return action.perform(entry.value);
+            return function.perform(entry.value);
         } finally {
             entry.lock.unlock();
         }

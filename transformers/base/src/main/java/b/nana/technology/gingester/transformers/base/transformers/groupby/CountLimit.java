@@ -33,11 +33,15 @@ public final class CountLimit implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        Context.Builder contextBuilder = contextMap.act(context, state -> {
-            return state.group(context);
-        });
+        /*
+            For CountLimit groups are created and closed in the `group` call, so we need
+            to `out.accept` within the `contextMap.act`. What would not work is using
+            `contextMap.apply` to get the group and then `out.accept` after that because
+            an interleaving `transform` might call `group` and close the group between the
+            `contextMap.apply` and `out.accept`.
+         */
 
-        out.accept(contextBuilder, in);
+        contextMap.act(context, state -> out.accept(state.group(context), in));
     }
 
     @Override
