@@ -76,16 +76,16 @@ public final class Interval implements Transformer<Object, Object> {
 
     private class State {
 
-        private final Context parent;
+        private final Context groupParent;
         private final Receiver<Object> out;
         private final ScheduledFuture<?> scheduledFuture;
 
         private int currentInterval;
         private volatile Context currentGroup;
 
-        private State(Context parent, Receiver<Object> out) {
+        private State(Context groupParent, Receiver<Object> out) {
 
-            this.parent = parent;
+            this.groupParent = groupParent;
             this.out = out;
 
             scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(
@@ -98,7 +98,7 @@ public final class Interval implements Transformer<Object, Object> {
 
         private synchronized void withCurrentGroup(Consumer<Context> consumer) {
             if (currentGroup == null) {
-                currentGroup = out.acceptGroup(parent.stash("interval", currentInterval++));
+                currentGroup = out.acceptGroup(groupParent.stash("interval", currentInterval++));
             }
             consumer.accept(currentGroup);
         }
