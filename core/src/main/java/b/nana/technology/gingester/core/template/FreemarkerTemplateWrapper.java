@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.freemarker;
+package b.nana.technology.gingester.core.template;
 
 import freemarker.template.Template;
 import freemarker.template.TemplateException;

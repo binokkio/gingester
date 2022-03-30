@@ -2,8 +2,11 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +29,9 @@ public class Search implements Transformer<Object, Path> {
 
     private final FileSystem fileSystem = FileSystems.getDefault();
 
-    private final Context.Template rootTemplate;
-    private final List<Context.Template> globTemplates;
-    private final List<Context.Template> patternTemplates;
+    private final Template rootTemplate;
+    private final List<Template> globTemplates;
+    private final List<Template> patternTemplates;
     private final boolean findDirs;
 
     public Search(Parameters parameters) {
@@ -37,7 +40,8 @@ public class Search implements Transformer<Object, Path> {
         patternTemplates = parameters.patterns.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
 
-        for (String glob : parameters.globs) {
+        for (TemplateParameters globTemplateParameters : parameters.globs) {
+            String glob = globTemplateParameters.getTemplateString();
             if (glob.startsWith("/") || glob.startsWith(".") || glob.contains("//") || glob.contains("/./") || glob.contains("/../")) {
                 LOGGER.warn("Glob '{}' will not match anything, use '{root:\"\",globs:\"\"}' to search outside of the working directory and use globs without \".\", \"..\", \"/\" as path elements", glob);
             }
@@ -144,16 +148,16 @@ public class Search implements Transformer<Object, Path> {
 
     public static class Parameters {
 
-        public String root = "";
-        public List<String> globs = Collections.singletonList("**");
-        public List<String> patterns = Collections.emptyList();
+        public TemplateParameters root = new TemplateParameters("");
+        public List<TemplateParameters> globs = Collections.singletonList(new TemplateParameters("**"));
+        public List<TemplateParameters> patterns = Collections.emptyList();
         public boolean findDirs;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String glob) {
+        public Parameters(@JsonProperty("globs") TemplateParameters glob) {
             this.globs = Collections.singletonList(glob);
         }
     }

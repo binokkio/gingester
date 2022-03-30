@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.nio.file.StandardOpenOption;
@@ -18,7 +19,7 @@ public final class OverwriteAsync extends WriteAsync {
         }
 
         @JsonCreator
-        public Parameters(String path) {
+        public Parameters(TemplateParameters path) {
             this.path = path;
             this.openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING };
         }

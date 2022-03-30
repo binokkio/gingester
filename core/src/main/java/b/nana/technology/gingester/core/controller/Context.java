@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
-import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
@@ -18,12 +18,11 @@ public final class Context implements Iterable<Context> {
      *
      * See {@link Template} for details.
      *
-     * @param template the template string
+     * @param templateParameters the template parameters
      * @return the compiled template
      */
-    public static Template newTemplate(String template) {
-        FreemarkerTemplateWrapper wrapper = FreemarkerTemplateFactory.createTemplate(template);
-        return wrapper::render;
+    public static Template newTemplate(TemplateParameters templateParameters) {
+        return new Template(templateParameters);
     }
 
     public static Context newSeedContext(Controller<?, ?> seedController) {
@@ -308,13 +307,4 @@ public final class Context implements Iterable<Context> {
         }
     }
 
-    /**
-     * Context template.
-     * <p>
-     * Render strings using the Apache FreeMarker template engine and the Gingester Context as its data model. Template
-     * variables are resolved as if they were interpreted by {@link Context#fetch(String...)}.
-     */
-    public interface Template {
-        String render(Context context);
-    }
 }

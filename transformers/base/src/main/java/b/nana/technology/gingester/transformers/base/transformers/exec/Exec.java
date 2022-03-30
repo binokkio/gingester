@@ -4,6 +4,8 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.slf4j.Logger;
@@ -21,8 +23,8 @@ public final class Exec implements Transformer<InputStream, InputStream> {
 
     private final ExecutorService errDrainer = Executors.newCachedThreadPool();
 
-    private final Context.Template commandTemplate;
-    private final Context.Template workDirTemplate;
+    private final Template commandTemplate;
+    private final Template workDirTemplate;
 
     public Exec(Parameters parameters) {
         commandTemplate = Context.newTemplate(parameters.command);
@@ -73,14 +75,14 @@ public final class Exec implements Transformer<InputStream, InputStream> {
 
     public static class Parameters {
 
-        public String command;
-        public String workDir = "";
+        public TemplateParameters command;
+        public TemplateParameters workDir = new TemplateParameters("");
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String command) {
+        public Parameters(TemplateParameters command) {
             this.command = command;
         }
     }

@@ -2,6 +2,8 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -10,7 +12,7 @@ import java.util.regex.Pattern;
 public final class Replace implements Transformer<String, String> {
 
     private final Pattern pattern;
-    private final Context.Template replacementTemplate;
+    private final Template replacementTemplate;
 
     public Replace(Parameters parameters) {
         pattern = Pattern.compile(parameters.pattern);
@@ -25,7 +27,7 @@ public final class Replace implements Transformer<String, String> {
     public static class Parameters {
 
         public String pattern;
-        public String replacement = "_";
+        public TemplateParameters replacement = new TemplateParameters("_");
 
         @JsonCreator
         public Parameters() {}

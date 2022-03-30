@@ -2,8 +2,8 @@ package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
-import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory;
-import b.nana.technology.gingester.core.freemarker.FreemarkerTemplateWrapper;
+import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
+import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static b.nana.technology.gingester.core.freemarker.FreemarkerTemplateFactory.createCliTemplate;
+import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.createCliTemplate;
 import static java.util.Objects.requireNonNull;
 
 public final class CliParser {

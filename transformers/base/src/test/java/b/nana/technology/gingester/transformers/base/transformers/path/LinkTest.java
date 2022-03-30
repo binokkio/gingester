@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -24,7 +25,7 @@ class LinkTest {
 
         AtomicReference<Path> result = new AtomicReference<>();
 
-        new Link(new Link.Parameters(link.toString()))
+        new Link(new Link.Parameters(new TemplateParameters(link.toString())))
                 .transform(Context.newTestContext(), original, (UniReceiver<Path>) result::set);
 
         assertEquals(link, result.get());

@@ -2,6 +2,8 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -11,7 +13,7 @@ import java.util.Map;
 
 public final class Create implements Transformer<Object, Path> {
 
-    private final Context.Template pathTemplate;
+    private final Template pathTemplate;
 
     public Create(Parameters parameters) {
         pathTemplate = Context.newTemplate(parameters.path);
@@ -34,13 +36,13 @@ public final class Create implements Transformer<Object, Path> {
 
     public static class Parameters {
 
-        public String path;
+        public TemplateParameters path;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String path) {
+        public Parameters(TemplateParameters path) {
             this.path = path;
         }
     }

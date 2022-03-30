@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.freemarker;
+package b.nana.technology.gingester.core.template;
 
 import b.nana.technology.gingester.core.controller.Context;
 import freemarker.template.TemplateHashModel;
@@ -26,7 +26,7 @@ public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
         return new TemplateHashModel() {
 
             public TemplateModel get(String name) throws TemplateModelException {
-                return handleUnknownType(context.fetch(name).findFirst().orElse(TemplateModel.NOTHING));
+                return handleUnknownType(context.fetch(name).findFirst().orElse(null));
             }
 
             public boolean isEmpty() {
