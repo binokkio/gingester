@@ -205,7 +205,7 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
 
                 if (jsonNode.isNumber()) {
                     handleNumericalValue(jsonNode.doubleValue());
-                } else {
+                } else if (!jsonNode.isBoolean()) {
                     double numericalValue = jsonNode.asDouble();
                     String textValue = jsonNode.asText();
                     if (numericalValue != 0 || textValue.equals("0") || textValue.equals("0.0")) {
