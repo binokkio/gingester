@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -23,8 +24,8 @@ class SearchTest {
         Files.write(target, "Hello, World!".getBytes(StandardCharsets.UTF_8));
 
         Search.Parameters parameters = new Search.Parameters();
-        parameters.root = tempDir.toString();
-        parameters.globs = Collections.singletonList("*");
+        parameters.root = new TemplateParameters(tempDir.toString());
+        parameters.globs = List.of(new TemplateParameters("*"));
 
         new Search(parameters).transform(Context.newTestContext(), null, (UniReceiver<Path>) result::add);
 
@@ -52,8 +53,8 @@ class SearchTest {
         Files.write(c, "Hello, World!".getBytes(StandardCharsets.UTF_8));
 
         Search.Parameters parameters = new Search.Parameters();
-        parameters.root = tempDir.toString();
-        parameters.globs = Arrays.asList("a.txt", "c.txt");
+        parameters.root = new TemplateParameters(tempDir.toString());
+        parameters.globs = List.of(new TemplateParameters("a.txt"), new TemplateParameters("c.txt"));
 
         new Search(parameters).transform(Context.newTestContext(), null, (UniReceiver<Path>) result::add);
 

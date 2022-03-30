@@ -4,6 +4,8 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.github.junrar.Archive;
@@ -27,7 +29,7 @@ import java.util.zip.GZIPInputStream;
 @Names(1)
 public final class Unpack implements Transformer<InputStream, InputStream> {
 
-    private final Context.Template descriptionTemplate;
+    private final Template descriptionTemplate;
 
     public Unpack(Parameters parameters) {
         descriptionTemplate = Context.newTemplate(parameters.description);
@@ -112,13 +114,13 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
 
     public static class Parameters {
 
-        public String description = "${description}";
+        public TemplateParameters description = new TemplateParameters("${description}");
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String description) {
+        public Parameters(TemplateParameters description) {
             this.description = description;
         }
     }

@@ -2,12 +2,14 @@ package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public final class Throw implements Transformer<Object, Void> {
 
-    private final Context.Template messageTemplate;
+    private final Template messageTemplate;
 
     public Throw(Parameters parameters) {
         this.messageTemplate = Context.newTemplate(parameters.message);
@@ -26,13 +28,13 @@ public final class Throw implements Transformer<Object, Void> {
 
     public static class Parameters {
 
-        public String message;
+        public TemplateParameters message;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String message) {
+        public Parameters(TemplateParameters message) {
             this.message = message;
         }
     }

@@ -2,6 +2,8 @@ package b.nana.technology.gingester.transformers.base.transformers.json;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,8 +20,8 @@ import java.util.regex.Pattern;
 
 public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNode> {
 
-    private final Context.Template directoryTemplate;
-    private final Context.Template pathsRelativeToTemplate;
+    private final Template directoryTemplate;
+    private final Template pathsRelativeToTemplate;
     private final Pattern filenameReplacePattern;
     private final String extension;
     private final OpenOption[] openOptions;
@@ -82,8 +84,8 @@ public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNo
     }
 
     public static class Parameters {
-        public String directory = "";
-        public String pathsRelativeTo;
+        public TemplateParameters directory = new TemplateParameters("");
+        public TemplateParameters pathsRelativeTo;
         public String filenameReplacePattern = "[\\\\/|\"'.,:;#*?!<>\\[\\]{}\\s\\p{Cc}]";
         public String extension = "";
         public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };

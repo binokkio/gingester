@@ -254,22 +254,20 @@ public final class Gingester {
                         if (description.isEmpty()) {
                             LOGGER.warn(
                                     String.format(
-                                            "%s during %s::%s: %s",
+                                            "%s during %s::%s",
                                             ((Exception) exception).getClass().getSimpleName(),
                                             context.fetch("transformer").findFirst().orElseThrow(),
-                                            context.fetch("method").findFirst().orElseThrow(),
-                                            ((Exception) exception).getMessage())
+                                            context.fetch("method").findFirst().orElseThrow())
                                     , exception
                             );
                         } else {
                             LOGGER.warn(
                                     String.format(
-                                            "%s during %s::%s of '%s': %s",
+                                            "%s during %s::%s of '%s'",
                                             ((Exception) exception).getClass().getSimpleName(),
                                             context.fetch("transformer").findFirst().orElseThrow(),
                                             context.fetch("method").findFirst().orElseThrow(),
-                                            description,
-                                            ((Exception) exception).getMessage())
+                                            description)
                                     , exception
                             );
                         }

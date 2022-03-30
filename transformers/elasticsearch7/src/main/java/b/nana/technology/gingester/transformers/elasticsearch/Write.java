@@ -5,6 +5,8 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.elasticsearch.action.bulk.*;
 import org.elasticsearch.action.index.IndexRequest;
@@ -27,8 +29,8 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Write.class);
 
-    private final Context.Template indexFormat;
-    private final Context.Template idFormat;
+    private final Template indexTemplate;
+    private final Template idTemplate;
     private final String mapping;
     private final Set<String> indicesSeen = new HashSet<>();
     private BulkProcessor bulkProcessor;
@@ -38,8 +40,8 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
 
         super(parameters);
 
-        indexFormat = Context.newTemplate(parameters.indexFormat);
-        idFormat = parameters.idFormat == null ? null : Context.newTemplate(parameters.idFormat);
+        indexTemplate = Context.newTemplate(parameters.index);
+        idTemplate = parameters.id == null ? null : Context.newTemplate(parameters.id);
         try {
             mapping = parameters.mapping == null ? null : Files.readString(Paths.get(parameters.mapping));
         } catch (IOException e) {
@@ -70,7 +72,7 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
     @Override
     public void transform(Context context, byte[] in, Receiver<Void> out) throws Exception {
 
-        String index = indexFormat.render(context);
+        String index = indexTemplate.render(context);
 
         if (mapping != null) {
             if (!indicesSeen.contains(index)) {
@@ -84,7 +86,7 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
         }
 
         IndexRequest indexRequest = new IndexRequest(index);
-        if (idFormat != null) indexRequest.id(idFormat.render(context));
+        if (idTemplate != null) indexRequest.id(idTemplate.render(context));
         indexRequest.source(in, XContentType.JSON);
         bulkProcessor.add(indexRequest);
     }
@@ -124,16 +126,16 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
 
     public static class Parameters extends ElasticsearchTransformer.Parameters {
 
-        public String indexFormat;
-        public String idFormat;
+        public TemplateParameters index;
+        public TemplateParameters id;
         public String mapping;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String indexFormat) {
-            this.indexFormat = indexFormat;
+        public Parameters(TemplateParameters index) {
+            this.index = index;
         }
     }
 }

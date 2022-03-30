@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.string;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -17,7 +18,7 @@ class CreateTest {
         Queue<String> result = new ArrayDeque<>();
 
         Create.Parameters parameters = new Create.Parameters();
-        parameters.template = "Hello, World!";
+        parameters.template = new TemplateParameters("Hello, World!");
 
         Create create = new Create(parameters);
         create.transform(Context.newTestContext(), null, (UniReceiver<String>) result::add);
@@ -32,7 +33,7 @@ class CreateTest {
         Queue<String> result = new ArrayDeque<>();
 
         Create.Parameters parameters = new Create.Parameters();
-        parameters.template = "Hello, ${target}!";
+        parameters.template = new TemplateParameters("Hello, ${target}!");
 
         Create create = new Create(parameters);
         create.transform(Context.newTestContext().stash("target", "World").buildForTesting(), null, (UniReceiver<String>) result::add);

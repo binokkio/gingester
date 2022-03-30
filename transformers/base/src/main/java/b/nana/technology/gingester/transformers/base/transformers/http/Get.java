@@ -3,6 +3,8 @@ package b.nana.technology.gingester.transformers.base.transformers.http;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -16,7 +18,7 @@ import java.util.Map;
 
 public final class Get implements Transformer<Object, InputStream> {
 
-    private final Context.Template uriTemplate;
+    private final Template uriTemplate;
     private final HttpClient.Redirect followRedirects;
     private final Map<String, String> headers;
 
@@ -47,7 +49,7 @@ public final class Get implements Transformer<Object, InputStream> {
 
     public static class Parameters {
 
-        public String uri;
+        public TemplateParameters uri;
         public HttpClient.Redirect followRedirects = HttpClient.Redirect.NORMAL;
         public Map<String, String> headers = Collections.emptyMap();
 
@@ -55,7 +57,7 @@ public final class Get implements Transformer<Object, InputStream> {
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String uri) {
+        public Parameters(TemplateParameters uri) {
             this.uri = uri;
         }
     }

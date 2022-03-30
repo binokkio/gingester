@@ -2,6 +2,8 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -16,7 +18,7 @@ import java.util.Map;
 
 public class Write implements Transformer<InputStream, Path> {
 
-    private final Context.Template pathTemplate;
+    private final Template pathTemplate;
     private final boolean mkdirs;
     private final StandardOpenOption[] openOptions;
     private final int bufferSize;
@@ -62,7 +64,7 @@ public class Write implements Transformer<InputStream, Path> {
 
     public static class Parameters {
 
-        public String path;
+        public TemplateParameters path;
         public boolean mkdirs = true;
         public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };
         public int bufferSize = 8192;
@@ -71,7 +73,7 @@ public class Write implements Transformer<InputStream, Path> {
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String path) {
+        public Parameters(TemplateParameters path) {
             this.path = path;
         }
     }

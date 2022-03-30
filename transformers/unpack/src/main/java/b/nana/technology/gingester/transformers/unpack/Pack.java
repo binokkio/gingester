@@ -5,6 +5,8 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,7 +19,7 @@ import java.util.Collections;
 public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
 
     private final ContextMap<TarArchiveOutputStream> contextMap = new ContextMap<>();
-    private final Context.Template entryTemplate;
+    private final Template entryTemplate;
 
     public Pack(Parameters parameters) {
         entryTemplate = Context.newTemplate(parameters.entry);
@@ -55,13 +57,13 @@ public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
 
     public static class Parameters {
 
-        public String entry;
+        public TemplateParameters entry;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String entry) {
+        public Parameters(TemplateParameters entry) {
             this.entry = entry;
         }
     }

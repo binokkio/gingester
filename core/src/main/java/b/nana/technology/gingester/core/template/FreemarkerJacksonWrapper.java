@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.freemarker;
+package b.nana.technology.gingester.core.template;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import freemarker.template.*;
