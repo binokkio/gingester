@@ -18,38 +18,28 @@ import java.util.regex.Pattern;
 
 public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNode> {
 
-    private final Path directory;
+    private final Context.Template directoryTemplate;
+    private final Context.Template pathsRelativeToTemplate;
     private final Pattern filenameReplacePattern;
     private final String extension;
     private final OpenOption[] openOptions;
-    private final Path pathRelativeTo;
 
     public ReplaceBytesWithPaths(Parameters parameters) {
-
-        directory = Paths.get(parameters.directory);
+        directoryTemplate = Context.newTemplate(parameters.directory);
+        pathsRelativeToTemplate = Context.newTemplate(parameters.pathsRelativeTo != null ? parameters.pathsRelativeTo : parameters.directory);
         filenameReplacePattern = Pattern.compile(parameters.filenameReplacePattern);
         extension = parameters.extension;
         openOptions = parameters.openOptions;
-        pathRelativeTo = Paths.get(parameters.pathRelativeTo != null ? parameters.pathRelativeTo : parameters.directory);
-
-        if (!directory.startsWith(pathRelativeTo)) {
-            throw new IllegalStateException("!directory.startsWith(relativeTo)");
-        }
-
-        try {
-            Files.createDirectories(directory);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
-        transform(in, "", new HashSet<>());
+        transform(context, in, "", new HashSet<>());
         out.accept(context, in);
     }
 
-    private void transform(JsonNode jsonNode, String jsonPointer, Set<Path> usedPaths) throws IOException {
+    private void transform(Context context, JsonNode jsonNode, String jsonPointer, Set<Path> usedPaths) throws IOException {
+        Path pathRelativeTo = Paths.get(pathsRelativeToTemplate.render(Context.newTestContext()));
         if (jsonNode.isObject()) {
             Iterator<String> keys = jsonNode.fieldNames();
             while (keys.hasNext()) {
@@ -57,11 +47,11 @@ public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNo
                 String childJsonPointer = jsonPointer + "/" + key;
                 JsonNode child = jsonNode.get(key);
                 if (child.isBinary()) {
-                    Path path = findUnusedPath(childJsonPointer, usedPaths);
+                    Path path = findUnusedPath(context, childJsonPointer, usedPaths);
                     Files.write(path, ((BinaryNode) child).binaryValue(), openOptions);
                     ((ObjectNode) jsonNode).put(key, pathRelativeTo.relativize(path).toString());
                 } else if (child.isContainerNode()) {
-                    transform(child, childJsonPointer, usedPaths);
+                    transform(context, child, childJsonPointer, usedPaths);
                 }
             }
         } else if (jsonNode.isArray()) {
@@ -69,18 +59,20 @@ public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNo
                 String childJsonPointer = jsonPointer + "/" + i;
                 JsonNode child = jsonNode.get(i);
                 if (child.isBinary()) {
-                    Path path = findUnusedPath(childJsonPointer, usedPaths);
+                    Path path = findUnusedPath(context, childJsonPointer, usedPaths);
                     Files.write(path, ((BinaryNode) child).binaryValue(), openOptions);
                     ((ArrayNode) jsonNode).set(i, ((ArrayNode) jsonNode).textNode(pathRelativeTo.relativize(path).toString()));
                 } else if (child.isContainerNode()) {
-                    transform(child, childJsonPointer, usedPaths);
+                    transform(context, child, childJsonPointer, usedPaths);
                 }
             }
         }
     }
 
-    private Path findUnusedPath(String jsonPointer, Set<Path> usedPaths) {
+    private Path findUnusedPath(Context context, String jsonPointer, Set<Path> usedPaths) throws IOException {
         String filename = filenameReplacePattern.matcher(jsonPointer.substring(1)).replaceAll("_");
+        Path directory = Paths.get(directoryTemplate.render(context));
+        Files.createDirectories(directory);
         Path path = directory.resolve(filename + extension);
         for (int i = 1; usedPaths.contains(path); i++) {
             path = directory.resolve(filename + '-' + i + extension);
@@ -91,9 +83,9 @@ public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNo
 
     public static class Parameters {
         public String directory = "";
+        public String pathsRelativeTo;
         public String filenameReplacePattern = "[\\\\/|\"'.,:;#*?!<>\\[\\]{}\\s\\p{Cc}]";
         public String extension = "";
         public StandardOpenOption[] openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE_NEW };
-        public String pathRelativeTo;
     }
 }
