@@ -1,10 +1,12 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -23,6 +25,18 @@ public final class Context implements Iterable<Context> {
      */
     public static Template newTemplate(TemplateParameters templateParameters) {
         return new Template(templateParameters);
+    }
+
+    /**
+     * Create a new Context.Template.
+     *
+     * See {@link Template} for details.
+     *
+     * @param templateParameters the template parameters
+     * @return the compiled template
+     */
+    public static <T> TemplateMapper<T> newTemplateMapper(TemplateParameters templateParameters, Function<String, T> mapper) {
+        return new TemplateMapper<>(templateParameters, mapper);
     }
 
     public static Context newSeedContext(Controller<?, ?> seedController) {
