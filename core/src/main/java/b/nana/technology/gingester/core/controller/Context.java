@@ -16,24 +16,24 @@ public final class Context implements Iterable<Context> {
     private static final int INDENT = 2;
 
     /**
-     * Create a new Context.Template.
+     * Create a new Template.
      *
      * See {@link Template} for details.
      *
      * @param templateParameters the template parameters
-     * @return the compiled template
+     * @return the template
      */
     public static Template newTemplate(TemplateParameters templateParameters) {
         return new Template(templateParameters);
     }
 
     /**
-     * Create a new Context.Template.
+     * Create a new TemplateMapper.
      *
-     * See {@link Template} for details.
+     * See {@link TemplateMapper} for details.
      *
      * @param templateParameters the template parameters
-     * @return the compiled template
+     * @return the template mapper
      */
     public static <T> TemplateMapper<T> newTemplateMapper(TemplateParameters templateParameters, Function<String, T> mapper) {
         return new TemplateMapper<>(templateParameters, mapper);
@@ -320,5 +320,4 @@ public final class Context implements Iterable<Context> {
             return new Context(this);
         }
     }
-
 }
