@@ -8,7 +8,7 @@
 
     <groupId>b.nana.technology.gingester</groupId>
     <artifactId>gingester</artifactId>
-    <version>0.14.3</version>
+    <version>0.14.4</version>
 
     <packaging>pom</packaging>
 
