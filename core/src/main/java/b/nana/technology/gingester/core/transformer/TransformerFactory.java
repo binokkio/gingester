@@ -1,5 +1,7 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.provider.Provider;
@@ -175,7 +177,12 @@ public final class TransformerFactory {
     public static <I, O> Stream<String> getTransformerHelps() {
         return TRANSFORMERS.stream()
                 .map(transformer -> {
-                    StringBuilder help = new StringBuilder(getUniqueName(transformer));
+
+                    // TODO indenting is now spread out over the Main class and here, would be nice to consolidate
+
+                    String uniqueName = getUniqueName(transformer);
+                    StringBuilder help = new StringBuilder(uniqueName);
+
                     getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
                         Class<?> parametersClass = constructor.getParameterTypes()[0];
                         try {
@@ -186,6 +193,15 @@ public final class TransformerFactory {
                             e.printStackTrace();
                         }
                     });
+
+                    Optional.ofNullable(transformer.getAnnotation(Description.class))
+                            .map(description -> "\n        " + description.value())
+                            .ifPresent(help::append);
+
+                    Arrays.stream(transformer.getAnnotationsByType(Example.class))
+                            .map(example -> "\n        e.g. " + uniqueName + " " + example.example() + "  # " + example.description())
+                            .forEach(help::append);
+
                     return help.toString();
                 })
                 .sorted();

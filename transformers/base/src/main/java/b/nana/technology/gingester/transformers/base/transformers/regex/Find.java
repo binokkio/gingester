@@ -2,6 +2,8 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.TemplateMapper;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -10,29 +12,30 @@ import java.util.regex.Pattern;
 
 public final class Find implements Transformer<String, Matcher> {
 
-    private final Pattern pattern;
+    private final TemplateMapper<Pattern> pattern;
 
     public Find(Parameters parameters) {
-        this.pattern = Pattern.compile(parameters.pattern);
+        this.pattern = Context.newTemplateMapper(parameters.regexes, Pattern::compile);
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<Matcher> out) throws Exception {
-        Matcher matcher = pattern.matcher(in);
-        if (!matcher.find()) throw new IllegalStateException("Pattern not found");
-        out.accept(context, matcher);
+    public void transform(Context context, String in, Receiver<Matcher> out) {
+        Matcher matcher = pattern.render(context).matcher(in);
+        while (matcher.find()) {
+            out.accept(context, matcher);
+        }
     }
 
     public static class Parameters {
 
-        public String pattern;
+        public TemplateParameters regexes;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String pattern) {
-            this.pattern = pattern;
+        public Parameters(TemplateParameters regexes) {
+            this.regexes = regexes;
         }
     }
 }

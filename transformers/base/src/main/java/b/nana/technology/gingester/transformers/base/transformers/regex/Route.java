@@ -20,7 +20,12 @@ public final class Route implements Transformer<String, String> {
     public Route(Parameters parameters) {
         routes = parameters.routes.entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(Pattern.compile(e.getKey()), e.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> { throw new IllegalStateException("Collision in RegexRoute routes"); },
+                        LinkedHashMap::new
+                ));
     }
 
     @Override
@@ -31,7 +36,7 @@ public final class Route implements Transformer<String, String> {
     @Override
     public void transform(Context context, String in, Receiver<String> out) throws Exception {
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
-            if (route.getKey().matcher(in).matches()) {
+            if (route.getKey().matcher(in).find()) {
                 out.accept(context, in, route.getValue());
                 break;
             }

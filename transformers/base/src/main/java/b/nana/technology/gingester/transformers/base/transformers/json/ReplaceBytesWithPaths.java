@@ -84,7 +84,7 @@ public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNo
     }
 
     public static class Parameters {
-        public TemplateParameters directory = new TemplateParameters("");
+        public TemplateParameters directory = new TemplateParameters("", true);
         public TemplateParameters pathsRelativeTo;
         public String filenameReplacePattern = "[\\\\/|\"'.,:;#*?!<>\\[\\]{}\\s\\p{Cc}]";
         public String extension = "";

@@ -1,10 +1,12 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -14,15 +16,27 @@ public final class Context implements Iterable<Context> {
     private static final int INDENT = 2;
 
     /**
-     * Create a new Context.Template.
+     * Create a new Template.
      *
      * See {@link Template} for details.
      *
      * @param templateParameters the template parameters
-     * @return the compiled template
+     * @return the template
      */
     public static Template newTemplate(TemplateParameters templateParameters) {
         return new Template(templateParameters);
+    }
+
+    /**
+     * Create a new TemplateMapper.
+     *
+     * See {@link TemplateMapper} for details.
+     *
+     * @param templateParameters the template parameters
+     * @return the template mapper
+     */
+    public static <T> TemplateMapper<T> newTemplateMapper(TemplateParameters templateParameters, Function<String, T> mapper) {
+        return new TemplateMapper<>(templateParameters, mapper);
     }
 
     public static Context newSeedContext(Controller<?, ?> seedController) {
@@ -129,6 +143,8 @@ public final class Context implements Iterable<Context> {
     /**
      * Fetch object(s) from stash, reversed.
      *
+     * See {@link #fetch(String...)} for details.
+     *
      * @param name the stash name, e.g. {@code fetch("Path.Search", "description")};
      * @return the same as {@link #fetch(String...)}, but reversed.
      */
@@ -222,6 +238,16 @@ public final class Context implements Iterable<Context> {
     }
 
     /**
+     * Create a new builder with this context as parent and the given group as group.
+     *
+     * @param group the group
+     * @return the context builder
+     */
+    public Builder group(Context group) {
+        return new Builder(this).group(group);
+    }
+
+    /**
      * Create a new builder with this context as parent and the given key-value as stash.
      *
      * @param key the key to stash
@@ -254,6 +280,12 @@ public final class Context implements Iterable<Context> {
             this.parent = parent;
         }
 
+        /**
+         * Replace the group this context is to be part of when built.
+         *
+         * @param group the group to add the to-be-build context to
+         * @return this builder
+         */
         public Builder group(Context group) {
             this.group = group;
             return this;
@@ -266,6 +298,15 @@ public final class Context implements Iterable<Context> {
         Builder synced(boolean synced) {
             this.synced = synced;
             return this;
+        }
+
+        /**
+         * Get the current stash, if any.
+         *
+         * @return the current stash, is any
+         */
+        public Optional<Map<String, Object>> getStash() {
+            return Optional.ofNullable(stash);
         }
 
         /**
@@ -306,5 +347,4 @@ public final class Context implements Iterable<Context> {
             return new Context(this);
         }
     }
-
 }

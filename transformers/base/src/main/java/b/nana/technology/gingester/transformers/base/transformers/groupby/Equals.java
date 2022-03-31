@@ -30,7 +30,7 @@ public final class Equals implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         Context group = contextMap.apply(context, state -> state.getGroup(in));
-        out.accept(context.extend().group(group), in);
+        out.accept(context.group(group), in);
     }
 
     @Override
@@ -63,7 +63,7 @@ public final class Equals implements Transformer<Object, Object> {
         }
 
         private Context getGroup(Object object) {
-            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.extend()));
+            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.stash("groupKey", o)));
         }
 
         private void close() {

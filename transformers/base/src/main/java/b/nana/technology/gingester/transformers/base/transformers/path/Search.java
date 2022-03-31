@@ -1,5 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
@@ -23,6 +25,15 @@ import java.util.stream.Stream;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
+@Description("Search the filesystem for paths")
+@Example(example = "'*'", description = "Find all files in the working directory")
+@Example(example = "'**'", description = "Find all files in the working directory and subdirectories recursively")
+@Example(example = "'*.csv'", description = "Find all files with names ending on \".csv\" in the working directory")
+@Example(example = "'[\"*.csv\", \"*.txt\"]'", description = "Find all files with names ending on \".csv\" or \".txt\" in the working directory")
+@Example(example = "'{globs: \"*\", findDirs: true}'", description = "Find all files and directories in the working directory")
+@Example(example = "'{globs: \"*\", root: \"/tmp\"}'", description = "Find all files in the /tmp directory")
+@Example(example = "'{regexes: \"h[ae]l{2,}o\"}'", description = "Find files matching the given regular expression")
+@Example(example = "'/absolute/path'", description = "Will NOT work! Set the `root` parameter to the deepest directory containing the target paths instead")
 public class Search implements Transformer<Object, Path> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
@@ -31,13 +42,13 @@ public class Search implements Transformer<Object, Path> {
 
     private final Template rootTemplate;
     private final List<Template> globTemplates;
-    private final List<Template> patternTemplates;
+    private final List<Template> regexTemplates;
     private final boolean findDirs;
 
     public Search(Parameters parameters) {
         rootTemplate = Context.newTemplate(parameters.root);
         globTemplates = parameters.globs.stream().map(Context::newTemplate).collect(Collectors.toList());
-        patternTemplates = parameters.patterns.stream().map(Context::newTemplate).collect(Collectors.toList());
+        regexTemplates = parameters.regexes.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
 
         for (TemplateParameters globTemplateParameters : parameters.globs) {
@@ -52,8 +63,8 @@ public class Search implements Transformer<Object, Path> {
     public final void transform(Context context, Object in, Receiver<Path> out) throws Exception {
         Path root = Path.of(rootTemplate.render(context)).toAbsolutePath();
         List<String> globs = globTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
-        List<String> patterns = patternTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
-        Files.walkFileTree(root, new Visitor(root, globs, patterns, context, out));
+        List<String> regexes = regexTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
+        Files.walkFileTree(root, new Visitor(root, globs, regexes, context, out));
     }
 
     /**
@@ -77,13 +88,13 @@ public class Search implements Transformer<Object, Path> {
         private final Context context;
         private final Receiver<Path> out;
 
-        public Visitor(Path root, List<String> globs, List<String> patterns, Context context, Receiver<Path> out) {
+        public Visitor(Path root, List<String> globs, List<String> regexes, Context context, Receiver<Path> out) {
             this.root = root;
             this.pathMatchers = Stream.concat(
                     globs.stream().map(s -> "glob:" + s).map(fileSystem::getPathMatcher),
-                    patterns.stream().map(s -> "regex:" + s).map(fileSystem::getPathMatcher)
+                    regexes.stream().map(s -> "regex:" + s).map(fileSystem::getPathMatcher)
             ).collect(Collectors.toList());
-            this.maxDepth = calculateMaxDepth(globs, patterns);
+            this.maxDepth = calculateMaxDepth(globs, regexes);
             this.context = context;
             this.out = out;
         }
@@ -130,8 +141,8 @@ public class Search implements Transformer<Object, Path> {
         }
     }
 
-    private static int calculateMaxDepth(List<String> globs, List<String> patterns) {
-        if (patterns.isEmpty()) {
+    private static int calculateMaxDepth(List<String> globs, List<String> regexes) {
+        if (regexes.isEmpty()) {
             int maxDepth = 0;
             for (String glob : globs) {
                 if (glob.contains("**")) {
@@ -148,9 +159,9 @@ public class Search implements Transformer<Object, Path> {
 
     public static class Parameters {
 
-        public TemplateParameters root = new TemplateParameters("");
-        public List<TemplateParameters> globs = Collections.singletonList(new TemplateParameters("**"));
-        public List<TemplateParameters> patterns = Collections.emptyList();
+        public TemplateParameters root = new TemplateParameters("", true);
+        public List<TemplateParameters> globs = Collections.emptyList();
+        public List<TemplateParameters> regexes = Collections.emptyList();
         public boolean findDirs;
 
         @JsonCreator
