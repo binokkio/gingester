@@ -63,7 +63,7 @@ public final class Equals implements Transformer<Object, Object> {
         }
 
         private Context getGroup(Object object) {
-            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.extend()));
+            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.stash("groupKey", o)));
         }
 
         private void close() {
