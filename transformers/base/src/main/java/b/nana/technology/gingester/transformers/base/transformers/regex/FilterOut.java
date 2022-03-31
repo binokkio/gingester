@@ -16,7 +16,7 @@ public final class FilterOut implements Transformer<String, String> {
     private final List<TemplateMapper<Pattern>> patterns;
 
     public FilterOut(Parameters parameters) {
-        patterns = parameters.patterns.stream()
+        patterns = parameters.regexes.stream()
                 .map(tp -> Context.newTemplateMapper(tp, Pattern::compile))
                 .collect(Collectors.toList());
     }
@@ -30,14 +30,14 @@ public final class FilterOut implements Transformer<String, String> {
 
     public static class Parameters {
 
-        public List<TemplateParameters> patterns;
+        public List<TemplateParameters> regexes;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(List<TemplateParameters> patterns) {
-            this.patterns = patterns;
+        public Parameters(List<TemplateParameters> regexes) {
+            this.regexes = regexes;
         }
     }
 }

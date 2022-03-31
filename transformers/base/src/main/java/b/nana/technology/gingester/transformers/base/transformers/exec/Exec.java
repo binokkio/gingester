@@ -76,7 +76,7 @@ public final class Exec implements Transformer<InputStream, InputStream> {
     public static class Parameters {
 
         public TemplateParameters command;
-        public TemplateParameters workDir = new TemplateParameters("");
+        public TemplateParameters workDir = new TemplateParameters("", true);
 
         @JsonCreator
         public Parameters() {}

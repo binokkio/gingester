@@ -183,28 +183,24 @@ public final class TransformerFactory {
                     String uniqueName = getUniqueName(transformer);
                     StringBuilder help = new StringBuilder(uniqueName);
 
-                    List<String> examples = Arrays.stream(transformer.getAnnotationsByType(Example.class))
-                            .map(example -> "\n        e.g. " + uniqueName + " " + example.example() + "  # " + example.description())
-                            .collect(Collectors.toList());
-
-                    if (examples.isEmpty()) {
-                        getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
-                            Class<?> parametersClass = constructor.getParameterTypes()[0];
-                            try {
-                                Object parameters = parametersClass.getConstructor().newInstance();
-                                help.append(' ');
-                                help.append(OBJECT_MAPPER.writeValueAsString(parameters));
-                            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | JsonProcessingException e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    }
+                    getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
+                        Class<?> parametersClass = constructor.getParameterTypes()[0];
+                        try {
+                            Object parameters = parametersClass.getConstructor().newInstance();
+                            help.append(' ');
+                            help.append(OBJECT_MAPPER.writeValueAsString(parameters));
+                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | JsonProcessingException e) {
+                            e.printStackTrace();
+                        }
+                    });
 
                     Optional.ofNullable(transformer.getAnnotation(Description.class))
                             .map(description -> "\n        " + description.value())
                             .ifPresent(help::append);
 
-                    examples.forEach(help::append);
+                    Arrays.stream(transformer.getAnnotationsByType(Example.class))
+                            .map(example -> "\n        e.g. " + uniqueName + " " + example.example() + "  # " + example.description())
+                            .forEach(help::append);
 
                     return help.toString();
                 })

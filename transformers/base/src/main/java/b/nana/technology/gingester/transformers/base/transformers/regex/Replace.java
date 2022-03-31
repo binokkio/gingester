@@ -16,7 +16,7 @@ public final class Replace implements Transformer<String, String> {
     private final Template replacementTemplate;
 
     public Replace(Parameters parameters) {
-        patternTemplate = Context.newTemplateMapper(parameters.pattern, Pattern::compile);
+        patternTemplate = Context.newTemplateMapper(parameters.regex, Pattern::compile);
         replacementTemplate = Context.newTemplate(parameters.replacement);
     }
 
@@ -29,15 +29,15 @@ public final class Replace implements Transformer<String, String> {
 
     public static class Parameters {
 
-        public TemplateParameters pattern;
+        public TemplateParameters regex;
         public TemplateParameters replacement = new TemplateParameters("_", true);
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(TemplateParameters pattern) {
-            this.pattern = pattern;
+        public Parameters(TemplateParameters regex) {
+            this.regex = regex;
         }
     }
 }

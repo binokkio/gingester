@@ -114,7 +114,7 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
 
     public static class Parameters {
 
-        public TemplateParameters description = new TemplateParameters("${description}");
+        public TemplateParameters description = new TemplateParameters("${description}", false);
 
         @JsonCreator
         public Parameters() {}
