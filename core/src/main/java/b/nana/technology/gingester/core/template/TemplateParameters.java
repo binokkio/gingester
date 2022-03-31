@@ -15,6 +15,7 @@ public final class TemplateParameters {
     public String template;
     public Interpretation is = Interpretation.STRING;
     public Boolean invariant;
+    // TODO add a syntax enum with the different Freemarker options and "OFF"/"NONE"
 
     @JsonCreator
     public TemplateParameters() {
