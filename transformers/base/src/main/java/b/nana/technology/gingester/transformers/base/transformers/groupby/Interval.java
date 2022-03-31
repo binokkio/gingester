@@ -48,7 +48,7 @@ public final class Interval implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         contextMap.get(context).withCurrentGroup(group ->
-                out.accept(context.extend().group(group), in));
+                out.accept(context.group(group), in));
     }
 
     @Override

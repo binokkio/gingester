@@ -238,6 +238,16 @@ public final class Context implements Iterable<Context> {
     }
 
     /**
+     * Create a new builder with this context as parent and the given group as group.
+     *
+     * @param group the group
+     * @return the context builder
+     */
+    public Builder group(Context group) {
+        return new Builder(this).group(group);
+    }
+
+    /**
      * Create a new builder with this context as parent and the given key-value as stash.
      *
      * @param key the key to stash
@@ -271,7 +281,7 @@ public final class Context implements Iterable<Context> {
         }
 
         /**
-         * Make the to-be-build context part of the given group.
+         * Replace the group this context is to be part of when built.
          *
          * @param group the group to add the to-be-build context to
          * @return this builder
