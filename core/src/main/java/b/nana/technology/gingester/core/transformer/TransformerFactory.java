@@ -1,5 +1,7 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.provider.Provider;
@@ -175,17 +177,35 @@ public final class TransformerFactory {
     public static <I, O> Stream<String> getTransformerHelps() {
         return TRANSFORMERS.stream()
                 .map(transformer -> {
-                    StringBuilder help = new StringBuilder(getUniqueName(transformer));
-                    getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
-                        Class<?> parametersClass = constructor.getParameterTypes()[0];
-                        try {
-                            Object parameters = parametersClass.getConstructor().newInstance();
-                            help.append(' ');
-                            help.append(OBJECT_MAPPER.writeValueAsString(parameters));
-                        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | JsonProcessingException e) {
-                            e.printStackTrace();
-                        }
-                    });
+
+                    // TODO indenting is now spread out over the Main class and here, would be nice to consolidate
+
+                    String uniqueName = getUniqueName(transformer);
+                    StringBuilder help = new StringBuilder(uniqueName);
+
+                    List<String> examples = Arrays.stream(transformer.getAnnotationsByType(Example.class))
+                            .map(example -> "\n        e.g. " + uniqueName + " " + example.example() + "  # " + example.description())
+                            .collect(Collectors.toList());
+
+                    if (examples.isEmpty()) {
+                        getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
+                            Class<?> parametersClass = constructor.getParameterTypes()[0];
+                            try {
+                                Object parameters = parametersClass.getConstructor().newInstance();
+                                help.append(' ');
+                                help.append(OBJECT_MAPPER.writeValueAsString(parameters));
+                            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | JsonProcessingException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+
+                    Optional.ofNullable(transformer.getAnnotation(Description.class))
+                            .map(description -> "\n        " + description.value())
+                            .ifPresent(help::append);
+
+                    examples.forEach(help::append);
+
                     return help.toString();
                 })
                 .sorted();

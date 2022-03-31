@@ -1,5 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
@@ -23,6 +25,13 @@ import java.util.stream.Stream;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 
+@Description("Search the filesystem for paths")
+@Example(example = "'*'", description = "Find all files in the working directory")
+@Example(example = "'**'", description = "Find all files in the working directory and subdirectories recursively")
+@Example(example = "'*.csv'", description = "Find all files with names ending on \".csv\" in the working directory")
+@Example(example = "'[\"*.csv\", \".txt\"]'", description = "Find all files with names ending on \".csv\" or \".txt\" in the working directory")
+@Example(example = "'{globs: \"*\", findDirs: true}'", description = "Find all files and directories in the working directory")
+@Example(example = "'{root: \"/tmp\", globs: \"*\"}'", description = "Find all files in the /tmp directory")
 public class Search implements Transformer<Object, Path> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
