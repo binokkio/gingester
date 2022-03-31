@@ -165,7 +165,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         boolean handled = false;
 
         for (Context c : context) {
-            c.markFlawed();
+            c.markFlawed();  // TODO decide what the expected behavior here is, mark the entire context chain as flawed or only up to the exception handling controller
             if (!handled) {
                 if (!c.controller.excepts.isEmpty()) {
                     c.controller.excepts.values().forEach(target -> accept(context, cause, target));

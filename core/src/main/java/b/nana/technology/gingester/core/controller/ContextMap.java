@@ -8,7 +8,7 @@ public final class ContextMap<T> {
     // TODO there might be an optimization possible for the common case where there is only one entry and
     // TODO that entry is for the __seed__ context. E.g. in `put` something like
     // TODO `seedOptimization = context.isSeed() && values.isEmpty()`, keep a second reference to the seedValue
-    // TODO outside of `values`.
+    // TODO Entry outside of `values`.
 
     private final ConcurrentHashMap<Context, Entry<T>> values = new ConcurrentHashMap<>();
     private final ThreadLocal<Entry<T>> locked = new ThreadLocal<>();
@@ -83,10 +83,10 @@ public final class ContextMap<T> {
         V perform(T value) throws Exception;
     }
 
-    public static class Entry<T> {
+    private static class Entry<T> {
 
-        public final ReentrantLock lock = new ReentrantLock();
-        public final T value;
+        private final ReentrantLock lock = new ReentrantLock();
+        private final T value;
 
         private Entry(T value) {
             this.value = value;
