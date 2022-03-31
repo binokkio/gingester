@@ -21,7 +21,7 @@ public class TemplateMapper<T> {
     private final T invariant;
 
     public TemplateMapper(TemplateParameters templateParameters, Function<String, T> mapper) {
-        this.templateWrapper = FreemarkerTemplateFactory.createTemplate(templateParameters.getTemplateString());
+        this.templateWrapper = templateParameters.createTemplateWrapper();
         this.mapper = mapper;
 
         if (templateParameters.invariant == null) {

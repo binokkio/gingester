@@ -52,6 +52,11 @@ public final class TemplateParameters {
         }
     }
 
+    @JsonIgnore
+    FreemarkerTemplateWrapper createTemplateWrapper() {
+        return FreemarkerTemplateFactory.createTemplate(getTemplateString());
+    }
+
     public enum Interpretation {
         FILE,
         RESOURCE,
