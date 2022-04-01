@@ -6,10 +6,12 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JdbcTransformerTest {
 
@@ -57,5 +59,19 @@ class JdbcTransformerTest {
         assertEquals(true, result.get().get("test").get("b"));
         assertEquals("Hello, World!", result.get().get("test").get("c"));
         assertEquals(369, result.get().get("test").get("a3"));
+    }
+
+    @Test
+    void testJdbcTables() {
+
+        Gingester gingester = new Gingester("" +
+                "-t JdbcTables \"{ddl:['CREATE TABLE hello (one INT)','CREATE TABLE world (two INT)']}\"");
+
+        ArrayDeque<String> tableNames = new ArrayDeque<>();
+        gingester.attach(tableNames::add).run();
+
+        assertEquals(2, tableNames.size());
+        assertTrue(tableNames.contains("hello"));
+        assertTrue(tableNames.contains("world"));
     }
 }

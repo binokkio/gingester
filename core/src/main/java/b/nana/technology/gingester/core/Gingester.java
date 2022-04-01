@@ -266,7 +266,7 @@ public final class Gingester {
                                             ((Exception) exception).getClass().getSimpleName(),
                                             context.fetch("transformer").findFirst().orElseThrow(),
                                             context.fetch("method").findFirst().orElseThrow())
-                                    , exception
+                                    , (Throwable) exception
                             );
                         } else {
                             LOGGER.warn(
@@ -276,7 +276,7 @@ public final class Gingester {
                                             context.fetch("transformer").findFirst().orElseThrow(),
                                             context.fetch("method").findFirst().orElseThrow(),
                                             description)
-                                    , exception
+                                    , (Throwable) exception
                             );
                         }
                     }
