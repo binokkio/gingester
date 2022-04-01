@@ -7,6 +7,7 @@ import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.regex.Pattern;
 
@@ -36,7 +37,7 @@ public final class Replace implements Transformer<String, String> {
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(TemplateParameters regex) {
+        public Parameters(@JsonProperty("regex") TemplateParameters regex) {
             this.regex = regex;
         }
     }

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.core.template.TemplateParameters;
@@ -65,5 +66,22 @@ class SearchTest {
         Files.delete(b);
         Files.delete(c);
         Files.delete(tempDir);
+    }
+
+    @Test
+    void testCliVariations() {
+        new Gingester("-t PathSearch '*'");
+        new Gingester("-t PathSearch '\"*\"'");
+        new Gingester("-t PathSearch \"'*'\"");
+        new Gingester("-t PathSearch ['hello']");
+        new Gingester("-t PathSearch [hello','world']");
+        new Gingester("-t PathSearch \"['hello', 'world']\"");
+        new Gingester("-t PathSearch '[\"hello\", \"world\"]'");
+        new Gingester("-t PathSearch {globs:'*'}");
+        new Gingester("-t PathSearch {globs:['hello','world']}");
+        new Gingester("-t PathSearch {globs:['hello',{template:'world'}]}");
+        new Gingester("-t PathSearch {globs:[{template:'*'}]}");
+        new Gingester("-t PathSearch {template:'*'}");
+        new Gingester("-t PathSearch ['hello',{template:'world'}]");
     }
 }

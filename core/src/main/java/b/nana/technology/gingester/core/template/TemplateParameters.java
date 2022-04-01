@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.core.template;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.IOException;
@@ -17,12 +16,10 @@ public final class TemplateParameters {
     public Boolean invariant;
     // TODO add a syntax enum with the different Freemarker options and "OFF"/"NONE"
 
-    @JsonCreator
     public TemplateParameters() {
 
     }
 
-    @JsonCreator
     public TemplateParameters(String template) {
         this.template = template;
     }
@@ -52,7 +49,6 @@ public final class TemplateParameters {
         }
     }
 
-    @JsonIgnore
     FreemarkerTemplateWrapper createTemplateWrapper() {
         return FreemarkerTemplateFactory.createTemplate(getTemplateString());
     }

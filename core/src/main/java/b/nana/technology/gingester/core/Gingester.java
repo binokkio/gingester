@@ -119,47 +119,55 @@ public final class Gingester {
     /**
      * Attach consumer to the "last" transformer.
      *
-     * @param consumer the consumer
      * @param <T> the consumer type
+     * @param consumer the consumer
+     * @return this gingester
      */
-    public <T> void attach(Consumer<T> consumer) {
+    public <T> Gingester attach(Consumer<T> consumer) {
         attach(consumer, defaultAttachTarget);
+        return this;
     }
 
     /**
      * Attach consumer to transformer.
      *
+     * @param <T> the consumer type
      * @param consumer the consumer
      * @param targetId the id of the transformer whose output will be consumed
-     * @param <T> the consumer type
+     * @return this gingester
      */
-    public <T> void attach(Consumer<T> consumer, String targetId) {
+    public <T> Gingester attach(Consumer<T> consumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
         String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
         attach(id, targetId);
+        return this;
     }
 
     /**
      * Attach bi-consumer to the "last" transformer.
      *
-     * @param biConsumer the bi-consumer
      * @param <T> the bi-consumer type
+     * @param biConsumer the bi-consumer
+     * @return this gingester
      */
-    public <T> void attach(BiConsumer<Context, T> biConsumer) {
+    public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
         attach(biConsumer, defaultAttachTarget);
+        return this;
     }
 
     /**
      * Attach bi-consumer to transformer.
      *
+     * @param <T> the bi-consumer type
      * @param biConsumer the bi-consumer
      * @param targetId the id of the transformer whose output will be consumed
-     * @param <T> the bi-consumer type
+     * @return this gingester
      */
-    public <T> void attach(BiConsumer<Context, T> biConsumer, String targetId) {
+    public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
         String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
         attach(id, targetId);
+        return this;
     }
 
     private String add(TransformerConfiguration configuration) {

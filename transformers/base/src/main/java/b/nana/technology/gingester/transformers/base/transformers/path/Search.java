@@ -2,13 +2,14 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,19 +158,22 @@ public class Search implements Transformer<Object, Path> {
         }
     }
 
-    public static class Parameters {
 
+
+    @JsonDeserialize(using = Deserializer.class)
+    public static class Parameters {
         public TemplateParameters root = new TemplateParameters("", true);
         public List<TemplateParameters> globs = Collections.emptyList();
         public List<TemplateParameters> regexes = Collections.emptyList();
         public boolean findDirs;
+    }
 
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(@JsonProperty("globs") TemplateParameters glob) {
-            this.globs = Collections.singletonList(glob);
+    public static class Deserializer extends NormalizingDeserializer<Parameters> {
+        public Deserializer() {
+            super(Parameters.class);
+            rule(JsonNode::isTextual, text -> o("globs", text));
+            rule(JsonNode::isArray, array -> o("globs", array));
+            rule(json -> json.has("template"), json -> o("globs", json));
         }
     }
 }
