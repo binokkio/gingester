@@ -12,8 +12,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 @Description("Create a string, optionally using Freemarker templating")
 @Example(example = "'Hello, World!'", description = "Create a simple string")
 @Example(example = "'Hello, ${target}!'", description = "Create a string greeting a `target` stashed by an upstream transformer")
-@Example(example = "'{template: \"path/to/template.txt\", is: \"FILE\"}'", description = "Read template from file")
-@Example(example = "'{template: \"path/to/template.txt\", is: \"RESOURCE\"}'", description = "Read template from Java resource")
+@Example(example = "'{template: \"path/to/template.txt\", is: \"FILE\"}'", description = "Read template from file", test = false)
+@Example(example = "'{template: \"path/to/template.txt\", is: \"RESOURCE\"}'", description = "Read template from Java resource", test = false)
 public final class Create implements Transformer<Object, String> {
 
     private final Template template;

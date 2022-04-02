@@ -34,7 +34,7 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 @Example(example = "'{globs: \"*\", findDirs: true}'", description = "Find all files and directories in the working directory")
 @Example(example = "'{globs: \"*\", root: \"/tmp\"}'", description = "Find all files in the /tmp directory")
 @Example(example = "'{regexes: \"h[ae]l{2,}o\"}'", description = "Find files matching the given regular expression")
-@Example(example = "'/absolute/path'", description = "Will NOT work! Set the `root` parameter to the deepest directory containing the target paths instead")
+@Example(example = "'/absolute/path'", description = "Will NOT work! Set the `root` parameter to the deepest directory containing the target paths instead", test = false)
 public class Search implements Transformer<Object, Path> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);

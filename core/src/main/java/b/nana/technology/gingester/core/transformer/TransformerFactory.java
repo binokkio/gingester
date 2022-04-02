@@ -4,6 +4,8 @@ import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Pure;
+import b.nana.technology.gingester.core.cli.CliParser;
+import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -71,6 +73,7 @@ public final class TransformerFactory {
             ));
         }
 
+        // noinspection unchecked
         Class<? extends Transformer<I, O>> transformerClass = (Class<? extends Transformer<I, O>>) transformerClasses.get(0);
         return instance(transformerClass, jsonParameters);
     }
@@ -150,6 +153,7 @@ public final class TransformerFactory {
     }
 
     public static String getUniqueName(Transformer<?, ?> transformer) {
+        // noinspection unchecked
         return getUniqueName((Class<? extends Transformer<?, ?>>) transformer.getClass());
     }
 
@@ -174,6 +178,10 @@ public final class TransformerFactory {
                 .map(s -> nameBuilder.insert(0, camelCase(s)).toString());
     }
 
+    public static Stream<Class<? extends Transformer<?, ?>>> getTransformers() {
+        return TRANSFORMERS.stream();
+    }
+
     public static <I, O> Stream<String> getTransformerHelps() {
         return TRANSFORMERS.stream()
                 .map(transformer -> {
@@ -183,6 +191,7 @@ public final class TransformerFactory {
                     String uniqueName = getUniqueName(transformer);
                     StringBuilder help = new StringBuilder(uniqueName);
 
+                    // noinspection unchecked
                     getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
                         Class<?> parametersClass = constructor.getParameterTypes()[0];
                         try {
@@ -199,7 +208,34 @@ public final class TransformerFactory {
                             .ifPresent(help::append);
 
                     Arrays.stream(transformer.getAnnotationsByType(Example.class))
-                            .map(example -> "\n        e.g. " + uniqueName + " " + example.example() + "  # " + example.description())
+                            .map(example -> {
+
+                                StringBuilder stringBuilder = new StringBuilder("\n");
+
+                                boolean checkFailed = checkExample(uniqueName, example).isPresent();
+                                if (checkFailed) {
+                                    stringBuilder.append("broken: e.g. ");
+                                } else {
+                                    stringBuilder.append("        e.g. ");
+                                }
+
+                                stringBuilder.append(uniqueName);
+
+                                if (!example.example().isEmpty()) {
+                                    stringBuilder
+                                            .append(' ')
+                                            .append(example.example());
+                                }
+
+                                if (!example.description().isEmpty()) {
+                                    stringBuilder
+                                            .append("  # ")
+                                            .append(example.description());
+                                }
+
+                                return stringBuilder.toString();
+
+                            })
                             .forEach(help::append);
 
                     return help.toString();
@@ -208,6 +244,7 @@ public final class TransformerFactory {
     }
 
     private static <I, O> Optional<? extends Constructor<? extends Transformer<I, O>>> getParameterRichConstructor(Class<? extends Transformer<I, O>> transformerClass) {
+        // noinspection unchecked
         return Arrays.stream(transformerClass.getConstructors())
                 .map(c -> (Constructor<? extends Transformer<I, O>>) c)
                 .filter(method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].getSimpleName().equals("Parameters"))
@@ -216,5 +253,37 @@ public final class TransformerFactory {
 
     private static String camelCase(String name) {
         return CASE_HINTS.getOrDefault(name, Character.toUpperCase(name.charAt(0)) + name.substring(1));
+    }
+
+
+
+    public static Optional<CheckExampleException> checkExample(Class<? extends Transformer<?, ?>> transformer, Example example) {
+        return checkExample(getUniqueName(transformer), example);
+    }
+
+    public static Optional<CheckExampleException> checkExample(String uniqueName, Example example) {
+        if (example.test()) {
+            String cli = getExampleCli(uniqueName, example);
+            try {
+                CliParser.parse(CliSplitter.split("-t " + uniqueName + " " + example.example()));
+            } catch (Exception e) {
+                return Optional.of(new CheckExampleException(cli, e));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static String getExampleCli(String uniqueName, Example example) {
+        if (!example.example().isEmpty()) {
+            return "-t " + uniqueName + " " + example.example();
+        } else {
+            return "-t " + uniqueName;
+        }
+    }
+
+    public static class CheckExampleException extends Exception {
+        public CheckExampleException(String cli, Throwable cause) {
+            super("Example failed: " + cli, cause);
+        }
     }
 }

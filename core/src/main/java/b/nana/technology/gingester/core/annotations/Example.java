@@ -9,5 +9,6 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Example {
     String example();
     String description();
+    boolean test() default true;
 }
 
