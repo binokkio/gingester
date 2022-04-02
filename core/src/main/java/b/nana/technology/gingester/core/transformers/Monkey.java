@@ -1,5 +1,7 @@
 package b.nana.technology.gingester.core.transformers;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
@@ -11,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Names(1)
 @Passthrough
+@Description("Throw an exception for every nth item, pass the rest")
+@Example(example = "3", description = "Throw an exception for the 3rd, 6th, 9th item and so forth, pass the rest")
 public final class Monkey implements Transformer<Object, Object> {
 
     private final int interval;

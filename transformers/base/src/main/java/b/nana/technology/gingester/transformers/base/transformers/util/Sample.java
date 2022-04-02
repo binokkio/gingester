@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.util;
 
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.SetupControls;
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Names(1)
 @Passthrough
+@Example(example = "100", description = "Drop all but the first of every 100 items")
 public final class Sample implements Transformer<Object, Object> {
 
     private final ContextMap<AtomicLong> contextMap = new ContextMap<>();

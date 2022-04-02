@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.util;
 
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.SetupControls;
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 @Names(1)
 @Passthrough
+@Example(example = "10", description = "Slow the flow down to a maximum of 10 items per second")
 public final class Throttle implements Transformer<Object, Object> {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
