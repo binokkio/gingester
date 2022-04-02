@@ -14,11 +14,11 @@ public abstract class Statement {
     private final PreparedStatement preparedStatement;
     private final List<Parameter> parameters;
 
-    public Statement(Connection connection, JdbcTransformer.Parameters.Statement statement) throws SQLException {
-        preparedStatement = connection.prepareStatement(statement.statement);
+    public Statement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters) throws SQLException {
+        preparedStatement = connection.prepareStatement(statement);
         this.parameters = new ArrayList<>();
-        for (int i = 0; i < statement.parameters.size(); i++) {
-            this.parameters.add(new Parameter(preparedStatement, i + 1, statement.parameters.get(i)));
+        for (int i = 0; i < parameters.size(); i++) {
+            this.parameters.add(new Parameter(preparedStatement, i + 1, parameters.get(i)));
         }
     }
 
@@ -30,5 +30,9 @@ public abstract class Statement {
 
     public PreparedStatement getPreparedStatement() {
         return preparedStatement;
+    }
+
+    public void close() throws SQLException {
+        preparedStatement.close();
     }
 }

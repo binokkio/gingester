@@ -2,8 +2,6 @@ package b.nana.technology.gingester.core.template;
 
 import b.nana.technology.gingester.core.controller.Context;
 
-import java.util.function.Function;
-
 /**
  * Context template.
  * <p>
@@ -13,6 +11,6 @@ import java.util.function.Function;
 public final class Template extends TemplateMapper<String> {
 
     public Template(TemplateParameters templateParameters) {
-        super(templateParameters, Function.identity());
+        super(templateParameters, s -> s);
     }
 }

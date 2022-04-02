@@ -8,7 +8,6 @@ import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 

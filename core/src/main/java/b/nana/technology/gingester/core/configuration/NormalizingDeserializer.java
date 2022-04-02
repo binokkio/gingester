@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerFactory;
@@ -20,14 +19,16 @@ import java.util.function.Predicate;
 
 /**
  * Iffy deserializer that allows for some rule based normalization before
- * calling through to the "normal" deserializer.
+ * calling through to the "normal" deserializer. Meant to be used for
+ * Gingester transformer parameters deserialization which does not need to be
+ * very performant.
  */
 public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
 
     private final List<Rule> rules = new ArrayList<>();
     private final JavaType javaType;
 
-    protected NormalizingDeserializer(Class<T> target) {
+    public NormalizingDeserializer(Class<T> target) {
         super(target);
         javaType = TypeFactory.defaultInstance().constructType(target);
     }
@@ -63,6 +64,7 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
             treeParser.nextToken();
         }
 
+        // noinspection unchecked
         return (T) defaultDeserializer.deserialize(treeParser, context);
     }
 

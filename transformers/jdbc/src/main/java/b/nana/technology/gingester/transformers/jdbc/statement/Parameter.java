@@ -19,15 +19,15 @@ public final class Parameter {
 
     private final int index;
     private final String[] stash;
-    private final String type;
-    private final JsonNode instructions;
+//    private final String type;
+//    private final JsonNode instructions;
 
     public Parameter(PreparedStatement preparedStatement, int index, JdbcTransformer.Parameters.Statement.Parameter parameter) throws SQLException {
         this.preparedStatement = preparedStatement;
         this.index = index;
         this.stash = Fetch.parseStashName(parameter.stash);
-        this.type = preparedStatement.getParameterMetaData().getParameterTypeName(index);
-        this.instructions = parameter.instructions;
+//        this.type = preparedStatement.getParameterMetaData().getParameterTypeName(index);
+//        this.instructions = parameter.instructions;
     }
 
     void update(Context context) throws SQLException {

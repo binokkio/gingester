@@ -28,7 +28,8 @@ public final class Worker extends Thread {
             try {
                 controller.transformer.open();
             } catch (Exception e) {
-                e.printStackTrace();  // TODO
+                e.printStackTrace();  // TODO set a failure flag and arriveAndAwaitAdvance, then return before the main loop, allowing Gingester to error out completely
+                return;
             }
         }
 

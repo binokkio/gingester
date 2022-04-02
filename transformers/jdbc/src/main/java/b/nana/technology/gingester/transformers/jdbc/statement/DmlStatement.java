@@ -5,11 +5,12 @@ import b.nana.technology.gingester.transformers.jdbc.JdbcTransformer;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 public final class DmlStatement extends Statement {
 
-    public DmlStatement(Connection connection, JdbcTransformer.Parameters.Statement statement) throws SQLException {
-        super(connection, statement);
+    public DmlStatement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters) throws SQLException {
+        super(connection, statement, parameters);
     }
 
     public int execute(Context context) throws SQLException {

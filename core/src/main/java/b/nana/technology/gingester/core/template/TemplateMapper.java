@@ -2,7 +2,7 @@ package b.nana.technology.gingester.core.template;
 
 import b.nana.technology.gingester.core.controller.Context;
 
-import java.util.function.Function;
+import java.util.Optional;
 
 /**
  * Context template mapper.
@@ -17,10 +17,10 @@ import java.util.function.Function;
 public class TemplateMapper<T> {
 
     private final FreemarkerTemplateWrapper templateWrapper;
-    private final Function<String, T> mapper;
+    private final Mapper<T> mapper;
     private final T invariant;
 
-    public TemplateMapper(TemplateParameters templateParameters, Function<String, T> mapper) {
+    public TemplateMapper(TemplateParameters templateParameters, Mapper<T> mapper) {
         this.templateWrapper = templateParameters.createTemplateWrapper();
         this.mapper = mapper;
 
@@ -37,11 +37,11 @@ public class TemplateMapper<T> {
             }
 
             invariant = render != null ?
-                    mapper.apply(render) :
+                    map(render) :
                     null;
 
         } else if (templateParameters.invariant) {
-            invariant = mapper.apply(templateWrapper.render());
+            invariant = map(templateWrapper.render());
         } else {
             invariant = null;
         }
@@ -57,6 +57,50 @@ public class TemplateMapper<T> {
      * @return the resulting T
      */
     public T render(Context context) {
-        return invariant != null ? invariant : mapper.apply(templateWrapper.render(context));
+        return invariant != null ? invariant : map(templateWrapper.render(context));
+    }
+
+    /**
+     * Check if this template is invariant.
+     *
+     * An invariant template is rendered and mapped only once during construction the same resulting T is returned for
+     * every call to {@link #render(Context)}.
+     *
+     * @return true if this template is invariant, false otherwise
+     */
+    public boolean isInvariant() {
+        return invariant != null;
+    }
+
+    /**
+     * Get the invariant T of this template if this template is invariant.
+     *
+     * @return the invariant T, or empty if this template is not invariant
+     */
+    public Optional<T> getInvariant() {
+        return Optional.ofNullable(invariant);
+    }
+
+    /**
+     * Get the invariant T of this template.
+     *
+     * @throws IllegalStateException if this template is not invariant
+     * @return the invariant T
+     */
+    public T requireInvariant() throws IllegalStateException {
+        return getInvariant()
+                .orElseThrow(() -> new IllegalStateException("getInvariant called a template that is not invariant"));
+    }
+
+    private T map(String string) {
+        try {
+            return mapper.map(string);
+        } catch (Exception e) {
+            throw new RuntimeException(e);  // TODO
+        }
+    }
+
+    public interface Mapper<T> {
+        T map(String string) throws Exception;
     }
 }

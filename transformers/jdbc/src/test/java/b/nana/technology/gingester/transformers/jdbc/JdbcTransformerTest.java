@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.Gingester;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,9 +20,7 @@ class JdbcTransformerTest {
     void test() throws IOException {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
-
-        Gingester writer = new Gingester("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}");
-        writer.run();
+        new Gingester("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
         Gingester reader = new Gingester("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
@@ -48,6 +47,7 @@ class JdbcTransformerTest {
                 "   ddl:'CREATE TABLE test (a INTEGER, b BOOLEAN, c TEXT)'," +
                 "   dml:{statement:'INSERT INTO test VALUES (?, ?, ?)',parameters:['in.a','in.b','in.c']}" +
                 "}\" " +
+                "-t Repeat 3 " +
                 "-t JdbcDql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
         gingester.attach(result::set);
@@ -73,5 +73,27 @@ class JdbcTransformerTest {
         assertEquals(2, tableNames.size());
         assertTrue(tableNames.contains("hello"));
         assertTrue(tableNames.contains("world"));
+    }
+
+    @Test
+    void testTemplating() throws IOException {
+
+        Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
+        new Gingester("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+
+        Gingester gingester = new Gingester("" +
+                "-t Repeat 3 " +
+                "-t JdbcTables {url:'[=url]'} " +
+                "-t JdbcDql {url:'[=url]',dql:{template:'/test.sql',is:'RESOURCE'}} " +
+                "-t ObjectToJson",
+                Map.of("url", "jdbc:sqlite:" + tempFile));
+
+        ArrayDeque<JsonNode> results = new ArrayDeque<>();
+        gingester.attach(results::add).run();
+
+        assertEquals(3, results.size());
+        assertEquals("{\"test\":{\"a\":123,\"b\":\"Hello, World!\",\"c\":true}}", results.remove().toString());
+        assertEquals("{\"test\":{\"a\":123,\"b\":\"Hello, World!\",\"c\":true}}", results.remove().toString());
+        assertEquals("{\"test\":{\"a\":123,\"b\":\"Hello, World!\",\"c\":true}}", results.remove().toString());
     }
 }

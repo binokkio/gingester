@@ -1,13 +1,16 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -39,16 +42,25 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
     @Override
     public void open() throws Exception {
         connection = DriverManager.getConnection(url, properties);
-        connection.setAutoCommit(false);
-        try {
-            for (String statement : ddl) {
-                connection.createStatement().execute(statement);
-            }
-            connection.commit();
-        } catch (SQLException e) {
-            connection.rollback();
-            throw e;
+
+        if (this instanceof Dml || !ddl.isEmpty()) {
+            connection.setAutoCommit(false);
         }
+
+        if (!ddl.isEmpty()) {
+            try {
+                for (String statement : ddl) {
+                    try (Statement s = connection.createStatement()) {
+                        s.execute(statement);
+                    }
+                }
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        }
+
         ddlExecuted.arrive();
     }
 
@@ -71,31 +83,32 @@ public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
         public Map<String, Object> properties = Collections.emptyMap();
         public List<String> ddl = Collections.emptyList();
 
+        @JsonDeserialize(using = Statement.Deserializer.class)
         public static class Statement {
 
-            public String statement;
-            public List<Parameter> parameters = Collections.emptyList();
-
-            @JsonCreator
-            public Statement() {}
-
-            @JsonCreator
-            public Statement(String statement) {
-                this.statement = statement;
+            public static class Deserializer extends NormalizingDeserializer<Statement> {
+                public Deserializer() {
+                    super(Statement.class);
+                    rule(JsonNode::isTextual, text -> o("statement", text));
+                    rule(json -> json.has("template"), json -> o("statement", json));
+                }
             }
 
+            public TemplateParameters statement;
+            public List<Parameter> parameters = Collections.emptyList();
+
+            @JsonDeserialize(using = Parameter.Deserializer.class)
             public static class Parameter {
+
+                public static class Deserializer extends NormalizingDeserializer<Parameter> {
+                    public Deserializer() {
+                        super(Parameter.class);
+                        rule(JsonNode::isTextual, text -> o("stash", text));
+                    }
+                }
 
                 public String stash;
                 public JsonNode instructions;  // can be used to communicate e.g. date formats
-
-                @JsonCreator
-                public Parameter() {}
-
-                @JsonCreator
-                public Parameter(String stash) {
-                    this.stash = stash;
-                }
             }
         }
     }

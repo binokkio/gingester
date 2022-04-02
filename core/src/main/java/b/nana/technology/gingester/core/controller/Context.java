@@ -6,7 +6,6 @@ import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -35,7 +34,7 @@ public final class Context implements Iterable<Context> {
      * @param templateParameters the template parameters
      * @return the template mapper
      */
-    public static <T> TemplateMapper<T> newTemplateMapper(TemplateParameters templateParameters, Function<String, T> mapper) {
+    public static <T> TemplateMapper<T> newTemplateMapper(TemplateParameters templateParameters, TemplateMapper.Mapper<T> mapper) {
         return new TemplateMapper<>(templateParameters, mapper);
     }
 

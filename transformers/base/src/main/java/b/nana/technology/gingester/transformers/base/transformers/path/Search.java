@@ -158,22 +158,21 @@ public class Search implements Transformer<Object, Path> {
         }
     }
 
-
-
-    @JsonDeserialize(using = Deserializer.class)
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
+
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, text -> o("globs", text));
+                rule(JsonNode::isArray, array -> o("globs", array));
+                rule(json -> json.has("template"), json -> o("globs", json));
+            }
+        }
+
         public TemplateParameters root = new TemplateParameters("", true);
         public List<TemplateParameters> globs = Collections.emptyList();
         public List<TemplateParameters> regexes = Collections.emptyList();
         public boolean findDirs;
-    }
-
-    public static class Deserializer extends NormalizingDeserializer<Parameters> {
-        public Deserializer() {
-            super(Parameters.class);
-            rule(JsonNode::isTextual, text -> o("globs", text));
-            rule(JsonNode::isArray, array -> o("globs", array));
-            rule(json -> json.has("template"), json -> o("globs", json));
-        }
     }
 }
