@@ -38,13 +38,18 @@ General usage:
         stash value
 
     -sf/--sync-from <link1> [<link2> [...]]
-        mark the linked transformers to be synced with when -stt is used later
+        mark the linked transformers to be synced with when -stt or -stft is used later
 
     -sft/--sync-from-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
-        equal to -t but marks the transformer to be synced with when -stt is used later
+        equal to -t but marks the transformer to be synced with when -stt or -stft is used later
+
+    -stft/--sync-to-and-from-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
+        equal to -t but syncs the transformer with those most recently marked by -sf, -sft or -stft, or the
+        ingest-seed if there are no marks, also marks the transformer to be synced with when -stt or -stft is used later
 
     -stt/--sync-to-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
-        equal to -t but syncs the transformer with those most recently marked by -sf/-sft or the ingest-seed if there are no marks
+        equal to -t but syncs the transformer with those most recently marked by -sf, -sft or -stft, or the
+        ingest-seed if there are no marks
 
     -t/--transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         add transformer to the pipeline
