@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
+@Names(1)
 public final class Merge implements Transformer<Object, Object> {
 
     private final ContextMap<Map<String, List<Object>>> state = new ContextMap<>();
@@ -67,7 +69,7 @@ public final class Merge implements Transformer<Object, Object> {
             } else {
                 if (values.size() == 1) {
                     stash.put(instruction.stash, values.get(0));
-                } else {
+                } else if (!values.isEmpty()){
                     throw new IllegalStateException("Multiple values for " + instruction.stash);
                 }
             }
