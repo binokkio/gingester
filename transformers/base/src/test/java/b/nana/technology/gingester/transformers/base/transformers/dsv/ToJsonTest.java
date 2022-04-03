@@ -58,7 +58,7 @@ class ToJsonTest {
         Queue<JsonNode> results = new ArrayDeque<>();
 
         ToJson.Parameters parameters = new ToJson.Parameters();
-        parameters.columnNames = List.of("x", "y", "z");
+        parameters.header = List.of("x", "y", "z");
 
         ToJson toJson = new ToJson(parameters);
         toJson.transform(

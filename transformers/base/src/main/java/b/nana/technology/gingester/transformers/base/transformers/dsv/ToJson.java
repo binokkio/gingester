@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.dsv;
 
+import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+@Description("Parse input as delimiter-separated values and output a JSON object for each DSV record")
 public final class ToJson implements Transformer<InputStream, JsonNode> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -50,8 +52,8 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
             csvSchemaBuilder.setAnyPropertyName(extras);
         }
 
-        CsvSchema csvSchema = parameters.columnNames != null ?
-                csvSchemaBuilder.addColumns(parameters.columnNames, CsvSchema.ColumnType.STRING).build() :
+        CsvSchema csvSchema = parameters.header != null ?
+                csvSchemaBuilder.addColumns(parameters.header, CsvSchema.ColumnType.STRING).build() :
                 csvSchemaBuilder.build().withHeader();
 
         objectReader = csvMapper
@@ -82,7 +84,7 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
         public char delimiter = ',';
         public Character quote = '"';
         public Character escape;
-        public List<String> columnNames;
+        public List<String> header;
         public String extras = "__extras__";
     }
 
