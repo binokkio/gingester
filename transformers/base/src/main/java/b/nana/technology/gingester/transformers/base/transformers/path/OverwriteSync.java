@@ -5,13 +5,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.nio.file.StandardOpenOption;
 
-public final class OverwriteAsync extends WriteAsync {
+public final class OverwriteSync extends WriteSync {
 
-    public OverwriteAsync(Parameters parameters) {
+    public OverwriteSync(Parameters parameters) {
         super(parameters);
     }
 
-    public static class Parameters extends WriteAsync.Parameters {
+    public static class Parameters extends WriteSync.Parameters {
 
         @JsonCreator
         public Parameters() {
