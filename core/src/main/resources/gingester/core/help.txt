@@ -8,15 +8,16 @@ General usage:
         ignore all following transformers
 
     -cf/--cli-file <path/to/file> [<parameters>]
-        include cli from file, supports Freemarker square-bracket-tag and square-bracket-interpolation templating
+        add cli from file, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
         provide [<parameters>] in JSON syntax to be used as template data
 
     -cr/--cli-resource <path/to/resource> [<parameters>]
-        include cli from resource, supports Freemarker square-bracket-tag and square-bracket-interpolation templating
+        add cli from resource, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
         provide [<parameters>] in JSON syntax to be used as template data
 
     -e/--excepts <link1> [<link2> [...]]
-        send exceptions from the previous transformer (if any) and uncaught downstream exceptions to the given links
+        send exceptions from the previous transformer (if any) and
+        uncaught downstream exceptions to the given links
 
     -f/--fetch [<name>]
         fetch value from stash by name
@@ -28,8 +29,7 @@ General usage:
         print this help and exit
 
     -l/--links <link1> [<link2> [...]]
-        link the previous transformer to the given links,
-        it will not automatically link to the next transformer
+        link the previous transformer to the given links, it will not automatically link to the next transformer
 
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
@@ -43,9 +43,11 @@ General usage:
     -sft/--sync-from-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         equal to -t but marks the transformer to be synced with when -stt or -stft is used later
 
-    -stft/--sync-to-and-from-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
+    -stft/--sync-to-and-from-transformer
+            [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         equal to -t but syncs the transformer with those most recently marked by -sf, -sft or -stft, or the
-        ingest-seed if there are no marks, also marks the transformer to be synced with when -stt or -stft is used later
+        ingest-seed if there are no marks, also marks the transformer to be synced with when -stt or -stft is
+        used later
 
     -stt/--sync-to-transformer [[<workers>][.[<queueSize>][.<maxBatchSize>]]] [<id>:]<name>[!] [<parameters>]
         equal to -t but syncs the transformer with those most recently marked by -sf, -sft or -stft, or the
@@ -85,10 +87,11 @@ Terminology:
         PathSearch finds 3 CSV files, each containing a header and 100 records. DsvToJson will output 300 JSON
         objects which will all be joined together and written to the file `all.ndjson`.
 
-        To get an output file for each input file, Join needs to be in sync with the output of PathSearch, like so:
-        `-sft PathSearch '*.csv' -t DsvToJson -stt Join -t PathWrite ${path.tail}.ndjson`. Now the synced-to Join will
-        create a separate output for each output of the synced-from PathSearch. Because Join is in sync with PathSearch
-        its downstream has access to the PathSearch context, which is used in the PathWrite filename.
+        To get an output file for each input file, Join needs to be in sync with the output of PathSearch, like
+        so: `-sft PathSearch '*.csv' -t DsvToJson -stt Join -t PathWrite ${path.tail}.ndjson`. Now the synced-to
+        Join will create a separate output for each output of the synced-from PathSearch. Because Join is in
+        sync with PathSearch its downstream has access to the PathSearch context, which is used in the PathWrite
+        filename.
 
-        When a transformer requires synchronization but is not instructed to be in sync with anything, as in the second
-        paragraph of this section, it is synced with the seed (see previous section).
+        When a transformer requires synchronization but is not instructed to be in sync with anything, as in the
+        second paragraph of this section, it is synced with the seed (see previous section).
