@@ -1,0 +1,1 @@
+../core/src/main/resources/gingester/core/help.txt
