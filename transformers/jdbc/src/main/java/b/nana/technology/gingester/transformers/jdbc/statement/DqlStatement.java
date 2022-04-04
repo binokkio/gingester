@@ -64,7 +64,11 @@ public final class DqlStatement extends Statement {
         try {
             return resultSetMetaData.getColumnTypeName(i).equals("BOOLEAN") ? resultSet.getBoolean(i) : resultSet.getObject(i);
         } catch (SQLException e) {
-            throw new RuntimeException(e);  // TODO
+            try {
+                return resultSet.getString(i);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);  // TODO
+            }
         }
     }
 }
