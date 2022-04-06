@@ -22,35 +22,38 @@ class RouteTest {
         Route.Parameters parameters = new Route.Parameters();
         parameters.routes = routes;
 
-        Context context = Context.newTestContext();
+        Context context = Context.newTestContext().stash("stash", "routed value").buildForTesting();
 
-        AtomicReference<String> result = new AtomicReference<>();
+        AtomicReference<String> target = new AtomicReference<>();
+        AtomicReference<Object> routedValue = new AtomicReference<>();
 
         Route route = new Route(parameters);
         route.transform(context, "hello", new Receiver<>() {
 
             @Override
-            public void accept(Context context, String output) {
+            public void accept(Context context, Object output) {
                 throw new IllegalStateException("Should not be called");
             }
 
             @Override
-            public void accept(Context.Builder contextBuilder, String output) {
+            public void accept(Context.Builder contextBuilder, Object output) {
                 throw new IllegalStateException("Should not be called");
             }
 
             @Override
-            public void accept(Context context, String output, String targetId) {
-                result.set(targetId);
+            public void accept(Context context, Object output, String targetId) {
+                target.set(targetId);
+                routedValue.set(output);
             }
 
             @Override
-            public void accept(Context.Builder contextBuilder, String output, String targetId) {
+            public void accept(Context.Builder contextBuilder, Object output, String targetId) {
                 throw new IllegalStateException("Should not be called");
             }
         });
 
-        assertEquals("world", result.get());
+        assertEquals("world", target.get());
+        assertEquals("routed value", routedValue.get());
     }
     
     @Test
@@ -58,6 +61,7 @@ class RouteTest {
 
         Gingester gingester = new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
+                "-s " +
                 "-t RegexRoute \"{'.ello.*': 'Hello', '.*': 'Other'}\" " +
                 "-t Other:Passthrough -- " +
                 "-t Hello:Passthrough");
