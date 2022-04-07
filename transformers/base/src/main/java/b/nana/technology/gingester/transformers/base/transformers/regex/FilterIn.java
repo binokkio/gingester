@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Description("Pass only items of which a subsequence matches any of the regexes")
+@Description("Pass only items of which a subsequence matches any of the given regexes")
 @Example(example = "hello", description = "Pass only items containing \"hello\"")
 @Example(example = "'[\"hello\", \"bye\"]", description = "Pass only items containing \"hello\" or \"bye\"")
 @Example(example = "'^Hello, World!$'", description = "Pass only exactly \"Hello, World!\"")
