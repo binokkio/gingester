@@ -38,10 +38,11 @@ class UnpackTest {
                 }
         );
 
-        assertEquals(4, results.size());
+        assertEquals(5, results.size());
         assertEquals("/tmp/test.tar.gz :: test.tar :: b.gz :: b -> Hello, World!", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: c -> Hello, World!", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: dir/d.bz2 :: d -> Hello, World", results.remove());
+        assertEquals("/tmp/test.tar.gz :: test.tar :: f.7z :: e -> Hello, 7zip World!", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: test.zip :: a -> Hello, World!", results.remove());
     }
 

@@ -10,12 +10,15 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.github.junrar.Archive;
 import com.github.junrar.rarfile.FileHeader;
+import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
+import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 
 import java.io.FilterInputStream;
 import java.io.InputStream;
@@ -61,6 +64,17 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
             Deque<String> copy = new ArrayDeque<>(descriptions);
             copy.add(trim(descriptions.getLast(), 3));
             unpack(context, new XZCompressorInputStream(in), out, copy);
+        } else if (tailLowerCase.endsWith(".7z")) {
+            byte[] bytes = in.readAllBytes();  // not ideal, should add an alternative Unpack7Z transformer
+            SevenZFile sevenZFile = new SevenZFile(new SeekableInMemoryByteChannel(bytes));
+            SevenZArchiveEntry sevenZArchiveEntry;
+            while ((sevenZArchiveEntry = sevenZFile.getNextEntry()) != null) {
+                if (!sevenZArchiveEntry.isDirectory()) {
+                    Deque<String> copy = new ArrayDeque<>(descriptions);
+                    copy.add(sevenZArchiveEntry.getName());
+                    unpack(context, sevenZFile.getInputStream(sevenZArchiveEntry), out, copy);
+                }
+            }
         } else if (tailLowerCase.endsWith(".tar")) {
             TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in);
             TarArchiveEntry tarArchiveEntry;
