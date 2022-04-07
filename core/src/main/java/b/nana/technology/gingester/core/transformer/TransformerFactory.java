@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,8 @@ import java.util.stream.Stream;
 public final class TransformerFactory {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+            .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .disable(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature());
 
     private static final Set<Class<? extends Transformer<?, ?>>> TRANSFORMERS = ServiceLoader.load(Provider.class)
             .stream()
@@ -196,8 +198,10 @@ public final class TransformerFactory {
                         Class<?> parametersClass = constructor.getParameterTypes()[0];
                         try {
                             Object parameters = parametersClass.getConstructor().newInstance();
-                            help.append(' ');
-                            help.append(OBJECT_MAPPER.writeValueAsString(parameters));
+                            String defaultParameters = OBJECT_MAPPER.writeValueAsString(parameters);
+                            help.append(" '");
+                            help.append(defaultParameters);
+                            help.append('\'');
                         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | JsonProcessingException e) {
                             e.printStackTrace();
                         }
