@@ -40,11 +40,11 @@ public final class Context implements Iterable<Context> {
     }
 
     public static Context newSeedContext(Controller<?, ?> seedController) {
-        return new Context(null, null, true, seedController, Map.of());
+        return new Context(null, null, true, seedController, null);
     }
 
     public static Context newTestContext() {
-        return new Context(null, null, true, new Controller<>("__test_seed__"), Map.of());
+        return new Context(null, null, true, new Controller<>("__test_seed__"), null);
     }
 
 
@@ -200,10 +200,12 @@ public final class Context implements Iterable<Context> {
         Collections.reverse(contexts);
         Map<Object, Object> combined = new LinkedHashMap<>();
         for (Context context : contexts) {
-            combined.put(
-                    new StringBuilder(context.controller.id),  // TODO quick fix to prevent key collisions
-                    context.stash != null ? context.stash : "{}"
-            );
+            if (context.stash != null && !context.stash.isEmpty()) {
+                combined.put(
+                        new PrettyStashKey(context.controller.id),  // can't use the id as-is since grouping can cause it to occur multiple times
+                        context.stash
+                );
+            }
         }
         return pretty(combined, 0, false);
     }
@@ -353,6 +355,20 @@ public final class Context implements Iterable<Context> {
         Context build(Controller<?, ?> controller) {
             this.controller = controller;
             return new Context(this);
+        }
+    }
+
+    private static class PrettyStashKey {
+
+        private final String value;
+
+        private PrettyStashKey(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
         }
     }
 }
