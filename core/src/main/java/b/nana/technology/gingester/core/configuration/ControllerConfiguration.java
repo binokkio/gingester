@@ -177,8 +177,9 @@ public final class ControllerConfiguration<I, O> {
     private Class<?> getStashType(String[] name) {
         if (name.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
         if (transformer instanceof InputStasher && (
+                name.length == 0 ||
                 (name.length == 1 && ((InputStasher) transformer).getInputStashName().equals(name[0])) ||
-                        (name[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(name[1]))
+                (name[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(name[1]))
         )) {
             return getActualInputType();
         } else {
