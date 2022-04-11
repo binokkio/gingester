@@ -11,7 +11,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
 
     public static String[] parseStashName(String name) {
-        return name.split("\\.");  // TODO support escape sequence
+        if (name.isEmpty()) return new String[0];  // TODO maybe a specific type is better than a String[]
+        else return name.split("\\.");  // TODO support escape sequence
     }
 
     private final String[] name;

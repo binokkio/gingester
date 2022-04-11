@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.controller;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
+import b.nana.technology.gingester.core.transformer.InputStasher;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
@@ -39,11 +40,11 @@ public final class Context implements Iterable<Context> {
     }
 
     public static Context newSeedContext(Controller<?, ?> seedController) {
-        return new Context(null, null, true, seedController, Map.of());
+        return new Context(null, null, true, seedController, null);
     }
 
     public static Context newTestContext() {
-        return new Context(null, null, true, new Controller<>("__test_seed__"), Map.of());
+        return new Context(null, null, true, new Controller<>("__test_seed__"), null);
     }
 
 
@@ -106,37 +107,45 @@ public final class Context implements Iterable<Context> {
      * Fetch will step through instances of Map, List, and JsonNode.
      * <p>
      * To steer fetch towards a specific transformer, the transformer id should be given as the first name.
+     * <p>
+     * Passing 0 names will fetch all explicitly stashed values.
      *
      * @param name the stash name, e.g. {@code fetch("Path.Search", "description")};
      * @return stream of stashes matching the given name
      */
     public Stream<Object> fetch(String... name) {
-        return Stream.concat(
-                        stream().map(c -> c.stash).filter(Objects::nonNull),
-                        stream().filter(c -> c.stash != null).map(c -> Map.of(c.controller.id, c.stash))
-                ).map(s -> {
-                    Object result = s;
-                    for (String n : name) {
-                        if (result instanceof Map) {
-                            result = ((Map<?, ?>) result).get(n);
-                        } else if (result instanceof List) {
-                            result = ((List<?>) result).get(Integer.parseInt(n));
-                        } else if (result instanceof JsonNode) {
-                            JsonNode jsonNode = (JsonNode) result;
-                            if (jsonNode.isObject()) {
-                                result = jsonNode.get(n);
-                            } else if (jsonNode.isArray()) {
-                                result = jsonNode.get(Integer.parseInt(n));
-                            } else {
-                                result = null;
-                            }
-                        } else {
-                            return null;
-                        }
+        return stream().flatMap(context -> {
+                    if (context.stash == null) {
+                        return Stream.empty();
+                    } else if (name.length == 0 && context.controller.transformer instanceof InputStasher) {
+                        return context.stash.values().stream();  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
+                    } else {
+                        return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
+                                .map(s -> {
+                                    Object result = s;
+                                    for (String n : name) {
+                                        if (result instanceof Map) {
+                                            result = ((Map<?, ?>) result).get(n);
+                                        } else if (result instanceof List) {
+                                            result = ((List<?>) result).get(Integer.parseInt(n));
+                                        } else if (result instanceof JsonNode) {
+                                            JsonNode jsonNode = (JsonNode) result;
+                                            if (jsonNode.isObject()) {
+                                                result = jsonNode.get(n);
+                                            } else if (jsonNode.isArray()) {
+                                                result = jsonNode.get(Integer.parseInt(n));
+                                            } else {
+                                                result = null;
+                                            }
+                                        } else {
+                                            return null;
+                                        }
+                                    }
+                                    return result;
+                                })
+                                .filter(Objects::nonNull);
                     }
-                    return result;
-                })
-                .filter(Objects::nonNull);
+                });
     }
 
     /**
@@ -191,10 +200,12 @@ public final class Context implements Iterable<Context> {
         Collections.reverse(contexts);
         Map<Object, Object> combined = new LinkedHashMap<>();
         for (Context context : contexts) {
-            combined.put(
-                    new StringBuilder(context.controller.id),  // TODO quick fix to prevent key collisions
-                    context.stash != null ? context.stash : "{}"
-            );
+            if (context.stash != null && !context.stash.isEmpty()) {
+                combined.put(
+                        new PrettyStashKey(context.controller.id),  // can't use the id as-is since grouping can cause it to occur multiple times
+                        context.stash
+                );
+            }
         }
         return pretty(combined, 0, false);
     }
@@ -344,6 +355,20 @@ public final class Context implements Iterable<Context> {
         Context build(Controller<?, ?> controller) {
             this.controller = controller;
             return new Context(this);
+        }
+    }
+
+    private static class PrettyStashKey {
+
+        private final String value;
+
+        private PrettyStashKey(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value;
         }
     }
 }

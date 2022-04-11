@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -20,9 +21,10 @@ class RouteTest {
         routes.put(".*", "catch-all");
 
         Route.Parameters parameters = new Route.Parameters();
+        parameters.fetch = "value";
         parameters.routes = routes;
 
-        Context context = Context.newTestContext().stash("stash", "routed value").buildForTesting();
+        Context context = Context.newTestContext().stash("value", "routed value").buildForTesting();
 
         AtomicReference<String> target = new AtomicReference<>();
         AtomicReference<Object> routedValue = new AtomicReference<>();
@@ -71,5 +73,39 @@ class RouteTest {
         gingester.run();
         
         assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testRoutedValueIsFetched() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t JsonCreate '{hello:\"world\"}' " +
+                "-s record " +
+                "-t JsonToString " +
+                "-t RegexRoute '{\".\":\"Target\"}' " +
+                "-t Target:Passthrough")
+                .attach(result::set)
+                .run();
+
+        assertEquals("world", result.get().get("hello").asText());
+    }
+
+    @Test
+    void testRoutedValueCanBeBridged() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t JsonCreate '{hello:\"world\"}' " +
+                "-s record " +
+                "-t JsonToString " +
+                "-t RegexRoute '{\".\":\"Target\"}' " +
+                "-t Target:StringAppend '!'")
+                .attach(result::set)
+                .run();
+
+        assertEquals("{\"hello\":\"world\"}!", result.get());
     }
 }

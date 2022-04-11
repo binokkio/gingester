@@ -47,10 +47,12 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
     public void transform(Context context, String in, Receiver<Object> out) throws Exception {
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
             if (route.getKey().matcher(in).find()) {
-                context.fetch(fetch)
-                        .findFirst()
-                        .ifPresent(o -> out.accept(context, o, route.getValue()));
-                break;
+                out.accept(
+                        context,
+                        context.fetch(fetch).findFirst().orElseThrow(() -> new IllegalStateException("RegexRoute empty fetch")),
+                        route.getValue()
+                );
+                break;  // TODO parameterize
             }
         }
     }
@@ -65,7 +67,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
             }
         }
 
-        public String fetch = "stash";
+        public String fetch = "";
         public LinkedHashMap<String, String> routes;
     }
 }
