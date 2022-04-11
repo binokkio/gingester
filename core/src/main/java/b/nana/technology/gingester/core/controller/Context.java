@@ -117,8 +117,12 @@ public final class Context implements Iterable<Context> {
         return stream().flatMap(context -> {
                     if (context.stash == null) {
                         return Stream.empty();
-                    } else if (name.length == 0 && context.controller.transformer instanceof InputStasher) {
-                        return context.stash.values().stream();  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
+                    } else if (name.length == 0) {
+                        if (context.controller.transformer instanceof InputStasher) {
+                            return context.stash.values().stream();  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
+                        } else {
+                            return Stream.empty();
+                        }
                     } else {
                         return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
                                 .map(s -> {
