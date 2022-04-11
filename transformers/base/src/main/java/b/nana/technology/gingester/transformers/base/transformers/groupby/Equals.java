@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.groupby;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -9,18 +8,12 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Passthrough
 public final class Equals implements Transformer<Object, Object> {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
-
-    @Override
-    public void setup(SetupControls controls) {
-        controls.syncs(List.of("__seed__"));
-    }
 
     @Override
     public void prepare(Context context, Receiver<Object> out) {

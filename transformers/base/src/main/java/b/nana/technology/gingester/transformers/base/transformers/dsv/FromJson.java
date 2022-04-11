@@ -15,7 +15,6 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class FromJson implements Transformer<JsonNode, OutputStreamWrapper> {
@@ -36,7 +35,6 @@ public final class FromJson implements Transformer<JsonNode, OutputStreamWrapper
 
     @Override
     public void setup(SetupControls controls) {
-        controls.syncs(Collections.singletonList("__seed__"));
         controls.requireOutgoingSync();
     }
 

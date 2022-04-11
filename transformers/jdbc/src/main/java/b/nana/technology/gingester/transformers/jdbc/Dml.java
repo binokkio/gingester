@@ -30,8 +30,8 @@ public final class Dml extends JdbcTransformer<Object, Object> {
     @Override
     public void setup(SetupControls controls) {
         super.setup(controls);
-        if (commitMode == CommitMode.PER_FINISH) {
-            controls.syncs(Collections.singletonList("__seed__"));
+        if (commitMode != CommitMode.PER_FINISH) {
+            controls.syncs(Collections.emptyList());
         }
     }
 
@@ -71,7 +71,7 @@ public final class Dml extends JdbcTransformer<Object, Object> {
 
     @Override
     public void finish(Context context, Receiver<Object> out) throws Exception {
-        if (commitMode == CommitMode.PER_FINISH) getConnection().commit();
+        getConnection().commit();
     }
 
     @Override

@@ -31,12 +31,14 @@ public interface Transformer<I, O> {
     /**
      * Transformer setup.
      * <p>
-     * This is the first method called on this transformer during a Gingester run.
-     * Transformers with specific requirements can implement it and use the given {@link SetupControls} to get the
-     * setup they require.
-     * If this transformer must be in sync to work properly, it is recommended to set it up in sync with the
-     * Gingester seed: {@code controls.syncs(Collections.singletonList("__seed__"))}, the syncs set up here
-     * only take effect if no syncs were specified in the run configuration.
+     * This is the first method called on this transformer during a Gingester run. Transformers with specific
+     * requirements can implement it and use the given {@link SetupControls} to get the setup they require.
+     * <p>
+     * If this transformer overrides {@link Transformer#prepare(Context, Receiver)} or
+     * {@link Transformer#finish(Context, Receiver)} the given {@link SetupControls} will be pre-configured to
+     * sync with __seed__.
+     * <p>
+     * The syncs set up here only take effect if no syncs were specified in the run configuration.
      * <p>
      * The default implementation does nothing.
      *
@@ -47,8 +49,8 @@ public interface Transformer<I, O> {
     /**
      * Transformer open.
      * <p>
-     * Called by a thread dedicated to this transformer.
-     * Everything done by this method "happens-before" the first call to {@code prepare}, if any, and {@code transform}.
+     * Called by a thread dedicated to this transformer. Everything done by this method "happens-before" the
+     * first call to {@code prepare}, if any, and {@code transform}.
      * <p>
      * The default implementation does nothing.
      *
@@ -59,10 +61,9 @@ public interface Transformer<I, O> {
     /**
      * Transformer prepare.
      * <p>
-     * Called only when this transformer is "synced" with another transformer.
-     * Everything done by this method "happens-before" the first call to {@code transform} for the given {@code context}.
-     * If this transformer is in sync with a transformer called Foo, {@code prepare} will be called once for every
-     * output of Foo.
+     * Called only when this transformer is "synced" with another transformer. Everything done by this method
+     * "happens-before" the first call to {@code transform} for the given {@code context}. If this transformer
+     * is in sync with a transformer called Foo, {@code prepare} will be called once for every output of Foo.
      * <p>
      * The default implementation does nothing.
      *
@@ -88,10 +89,9 @@ public interface Transformer<I, O> {
     /**
      * Transformer finish.
      * <p>
-     * Called only when this transformer is "synced" with another transformer.
-     * Everything done by this method "happens-after" the last call to {@code transform} for the given {@code context}.
-     * If this transformer is in sync with a transformer called Foo, {@code finish} will be called once for every
-     * output of Foo.
+     * Called only when this transformer is "synced" with another transformer. Everything done by this method
+     * "happens-after" the last call to {@code transform} for the given {@code context}. If this transformer is
+     * in sync with a transformer called Foo, {@code finish} will be called once for every output of Foo.
      * <p>
      * The default implementation does nothing.
      *
@@ -104,8 +104,8 @@ public interface Transformer<I, O> {
     /**
      * Transformer close.
      * <p>
-     * Called by a thread dedicated to this transformer.
-     * Everything done by this method "happens-after" the last call to {@code finish}, if any, and {@code transform}.
+     * Called by a thread dedicated to this transformer. Everything done by this method "happens-after" the last
+     * call to {@code finish}, if any, and {@code transform}.
      * <p>
      * The default implementation does nothing.
      *

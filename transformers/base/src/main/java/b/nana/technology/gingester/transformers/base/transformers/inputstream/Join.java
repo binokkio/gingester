@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 
 @Names(1)
 public final class Join implements Transformer<InputStream, OutputStreamWrapper> {
@@ -26,7 +25,6 @@ public final class Join implements Transformer<InputStream, OutputStreamWrapper>
 
     @Override
     public void setup(SetupControls controls) {
-        controls.syncs(Collections.singletonList("__seed__"));
         controls.requireOutgoingSync();
     }
 

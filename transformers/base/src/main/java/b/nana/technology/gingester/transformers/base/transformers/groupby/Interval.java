@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.groupby;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -9,7 +8,6 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -28,11 +26,6 @@ public final class Interval implements Transformer<Object, Object> {
 
     public Interval(Parameters parameters) {
         intervalNanos = Duration.parse(requireNonNull(parameters.interval, "GroupByInterval must be given `interval` parameter")).toNanos();
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        controls.syncs(List.of("__seed__"));
     }
 
     @Override

@@ -220,7 +220,7 @@ public final class Gingester {
             Transformer<?, ?> transformer = transformerConfiguration.getTransformer()
                     .orElseThrow(() -> new IllegalStateException("TransformerConfiguration does not contain transformer"));
 
-            SetupControls setupControls = new SetupControls(phasers);
+            SetupControls setupControls = new SetupControls(transformer, phasers);
             transformer.setup(setupControls);
 
             ControllerConfiguration<?, ?> configuration = combine(new ControllerConfigurationInterface(), id, transformer, transformerConfiguration, setupControls);
@@ -339,7 +339,7 @@ public final class Gingester {
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
                     String id = add(new TransformerConfiguration().transformer(transformer));
 
-                    SetupControls setupControls = new SetupControls(phasers);
+                    SetupControls setupControls = new SetupControls(transformer, phasers);
                     transformer.setup(setupControls);
                     this.setupControls.put(id, setupControls);
 

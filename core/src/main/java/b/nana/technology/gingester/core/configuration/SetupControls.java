@@ -1,7 +1,12 @@
 package b.nana.technology.gingester.core.configuration;
 
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.reporting.Counter;
+import b.nana.technology.gingester.core.transformer.Transformer;
 
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Phaser;
@@ -16,8 +21,26 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
 
 
-    public SetupControls(Map<String, Phaser> phasers) {
+    public SetupControls(Transformer<?, ?> transformer, Map<String, Phaser> phasers) {
         this.phasers = phasers;
+
+        // if prepare or finish are overridden then preconfigure this SetupControls to sync with __seed__
+        try {
+
+            Method prepare = transformer.getClass().getMethod("prepare", Context.class, Receiver.class);
+            Method finish = transformer.getClass().getMethod("finish", Context.class, Receiver.class);
+
+            if (isOverridden(prepare) || isOverridden(finish)) {
+                syncs(List.of("__seed__"));
+            }
+
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static boolean isOverridden(Method method) {
+        return !method.getDeclaringClass().equals(Transformer.class);
     }
 
 

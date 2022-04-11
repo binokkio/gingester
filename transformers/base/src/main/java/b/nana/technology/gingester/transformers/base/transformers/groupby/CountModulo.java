@@ -1,14 +1,12 @@
 package b.nana.technology.gingester.transformers.base.transformers.groupby;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Passthrough
@@ -19,11 +17,6 @@ public final class CountModulo implements Transformer<Object, Object> {
 
     public CountModulo(Parameters parameters) {
         divisor = parameters.divisor;
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        controls.syncs(List.of("__seed__"));
     }
 
     @Override

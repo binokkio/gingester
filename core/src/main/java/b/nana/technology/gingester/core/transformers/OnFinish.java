@@ -31,7 +31,6 @@ public final class OnFinish implements Transformer<Object, Object> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.syncs(Collections.singletonList("__seed__"));
         if (flawless != null || flawed != null) {
             List<String> links = new ArrayList<>();
             if (flawless != null) links.addAll(flawless);

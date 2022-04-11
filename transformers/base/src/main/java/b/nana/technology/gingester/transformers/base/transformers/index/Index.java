@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.index;
 
 import b.nana.technology.gingester.core.annotations.Names;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -28,11 +27,6 @@ public final class Index implements Transformer<Object, Map<Object, Object>> {
         throwOnEmptyFetch = parameters.throwOnEmptyFetch;
         throwOnCollision = parameters.throwOnCollision;
         preserveInsertOrder = parameters.preserveInsertOrder;
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        controls.syncs(Collections.singletonList("__seed__"));
     }
 
     @Override

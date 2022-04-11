@@ -13,8 +13,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
-import java.util.Collections;
-
 @Names(1)
 public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
 
@@ -27,7 +25,6 @@ public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
 
     @Override
     public void setup(SetupControls controls) {
-        controls.syncs(Collections.singletonList("__seed__"));
         controls.requireOutgoingSync();
     }
 
