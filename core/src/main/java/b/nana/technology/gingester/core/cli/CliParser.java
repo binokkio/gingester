@@ -59,8 +59,6 @@ public final class CliParser {
 
     public static GingesterConfiguration parse(String[] args) {
 
-        boolean break_ = false;
-
         GingesterConfiguration configuration = new GingesterConfiguration();
 
         List<String> syncFrom = List.of("__seed__");
@@ -80,8 +78,7 @@ public final class CliParser {
 
                 case "-b":
                 case "--break":
-                    break_ = true;
-                    break;
+                    return configuration;
 
                 case "-r":
                 case "--report":
@@ -219,8 +216,6 @@ public final class CliParser {
                     if (markSyncFrom) syncFrom = List.of(transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given"))));
 
                     previous = transformer;
-
-                    if (break_) break;
 
                     configuration.transformers.add(transformer);
 
