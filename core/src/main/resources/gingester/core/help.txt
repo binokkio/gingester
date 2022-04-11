@@ -5,7 +5,7 @@ General usage:
     <> mark placeholders, [] mark optionals
 
     -b/--break
-        ignore all following transformers
+        ignore all following instructions
 
     -cf/--cli-file <path/to/file> [<parameters>]
         add cli from file, supports Freemarker square-bracket-tag/square-bracket-interpolation templating

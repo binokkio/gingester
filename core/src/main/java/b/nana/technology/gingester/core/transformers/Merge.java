@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -30,11 +29,6 @@ public final class Merge implements Transformer<Object, Object> {
                 throw new IllegalStateException("`stash` must not be null or equal to `fetch` when `list` is true");
             }
         }
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        controls.syncs(List.of("__seed__"));
     }
 
     @Override
