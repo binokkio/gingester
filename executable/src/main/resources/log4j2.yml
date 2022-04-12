@@ -8,10 +8,6 @@ Configuration:
         Pattern: "%.-3level %date - %msg%n"
 
   Loggers:
-    Logger:
-      - name: freemarker
-        level: off
-        additivity: false
     Root:
       level: info
       AppenderRef:

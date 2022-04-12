@@ -24,6 +24,7 @@ public final class FreemarkerTemplateFactory {
 
     private static FreemarkerTemplateWrapper createTemplate(String name, String templateString, Function<Version, ObjectWrapper> objectWrapperFunction, int tagSyntax, int interpolationSyntax) {
         Configuration configuration = new Configuration(FREEMARKER_VERSION);
+        configuration.setLogTemplateExceptions(false);
         configuration.setTagSyntax(tagSyntax);
         configuration.setInterpolationSyntax(interpolationSyntax);
         configuration.setObjectWrapper(objectWrapperFunction.apply(FREEMARKER_VERSION));
