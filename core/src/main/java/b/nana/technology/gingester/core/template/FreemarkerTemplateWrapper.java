@@ -5,6 +5,7 @@ import freemarker.template.TemplateException;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 
 public final class FreemarkerTemplateWrapper {
 
@@ -19,7 +20,7 @@ public final class FreemarkerTemplateWrapper {
     }
 
     public String render(Object object) {
-        StringWriter stringWriter = new StringWriter();
+        Writer stringWriter = new StringWriter();  // TODO replace with custom Writer backed by StringBuilder?
         try {
             template.process(object, stringWriter);
         } catch (IOException | TemplateException e) {
