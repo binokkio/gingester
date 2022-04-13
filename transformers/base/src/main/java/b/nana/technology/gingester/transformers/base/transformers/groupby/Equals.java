@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -11,9 +12,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Passthrough
-public final class Equals implements Transformer<Object, Object> {
+public final class Equals implements Transformer<Object, Object>, InputStasher {
+
+    private final static String GROUP_KEY_STASH_NAME = "groupKey";
 
     private final ContextMap<State> contextMap = new ContextMap<>();
+
+    @Override
+    public String getInputStashName() {
+        return GROUP_KEY_STASH_NAME;
+    }
 
     @Override
     public void prepare(Context context, Receiver<Object> out) {
@@ -56,7 +64,7 @@ public final class Equals implements Transformer<Object, Object> {
         }
 
         private Context getGroup(Object object) {
-            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.stash("groupKey", o)));
+            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.stash(GROUP_KEY_STASH_NAME, o)));
         }
 
         private void close() {

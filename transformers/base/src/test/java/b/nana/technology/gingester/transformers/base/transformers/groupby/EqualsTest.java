@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.Gingester;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -26,5 +27,23 @@ class EqualsTest {
 
         assertEquals(10, result.size());
         assertEquals(25, result.stream().mapToInt(s -> s.split("!").length).sum());
+    }
+
+    @Test
+    void testPureBridgeAfterFetchGroupKey() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t StringCreate 'Hello, World!' " +
+                "-sft GroupByEquals " +  // groupKey is type String
+                "-stt InputStreamJoin " +
+                "-t InputStreamDrain " +
+                "-f groupKey " +
+                "-t BytesToString")  // Pure StringToBytes must be inserted
+                .attach(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
     }
 }
