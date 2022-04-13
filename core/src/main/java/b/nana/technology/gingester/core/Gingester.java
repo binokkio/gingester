@@ -421,8 +421,7 @@ public final class Gingester {
             }
 
             if (reportingIntervalSeconds > 0) {
-                reporter.interrupt();
-                reporter.join();
+                reporter.stop();
             }
 
         } catch (InterruptedException e) {

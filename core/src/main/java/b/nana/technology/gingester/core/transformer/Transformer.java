@@ -112,4 +112,8 @@ public interface Transformer<I, O> {
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
      */
     default void close() throws Exception {}
+
+    default String onReport() {
+        return "";
+    }
 }

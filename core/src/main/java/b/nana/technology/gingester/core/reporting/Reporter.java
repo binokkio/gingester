@@ -8,17 +8,28 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public final class Reporter extends Thread {
+public final class Reporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
+
+    private final ThreadFactory threadFactory = runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setName("Gingester-Reporter");
+        return thread;
+    };
 
     private final int intervalMillis;
     private final Map<Controller<?, ?>, Sampler> targets;
 
+    private ScheduledExecutorService executorService;
+
     public Reporter(int intervalSeconds, Collection<Controller<?, ?>> targets) {
-        setName("Gingester-Reporter");
         this.intervalMillis = intervalSeconds * 1000;
         this.targets = targets.stream().filter(c -> c.report).collect(Collectors.toMap(
                 c -> c,
@@ -28,29 +39,23 @@ public final class Reporter extends Thread {
         ));
     }
 
-    @Override
-    public void run() {
-
+    public void start() {
+        executorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
         targets.forEach((c, s) -> s.epoch());
+        executorService.scheduleAtFixedRate(this::report, intervalMillis, intervalMillis, TimeUnit.MILLISECONDS);
+    }
 
-        while (true) {
-
-            try {
-                Thread.sleep(intervalMillis);
-            } catch (InterruptedException e) {
-                break;
-            }
-
-            report();
-        }
-
-        report();
+    public void stop() {
+        executorService.shutdown();
     }
 
     private void report() {
         targets.forEach((controller, sampler) -> {
             sampler.sample();
             if (LOGGER.isInfoEnabled()) {
+
+                String customMessage = controller.transformer.onReport();
+
                 LOGGER.info(String.format(
                         "%s: %,d processed at %,.2f/s (%s), %,.2f/s (%s)",
                         controller.id,
@@ -60,6 +65,10 @@ public final class Reporter extends Thread {
                         sampler.getEpochChangePerSecond(),
                         humanize(sampler.getEpochNanos())
                 ));
+
+                if (!customMessage.isEmpty()) {
+                    LOGGER.info(controller.id + ": " + customMessage);
+                }
             }
         });
     }
