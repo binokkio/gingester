@@ -199,11 +199,9 @@ public final class Controller<I, O> {
     public void accept(Batch<I> batch) {
         lock.lock();
         try {
-            while (queue.size() >= maxQueueSize) queueNotFull.await();
+            while (queue.size() >= maxQueueSize) queueNotFull.awaitUninterruptibly();
             queue.add(() -> transform(batch));
             queueNotEmpty.signal();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
         } finally {
             lock.unlock();
         }
