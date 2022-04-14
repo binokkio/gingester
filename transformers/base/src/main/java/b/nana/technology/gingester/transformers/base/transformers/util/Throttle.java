@@ -3,7 +3,6 @@ package b.nana.technology.gingester.transformers.base.transformers.util;
 import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -26,11 +25,6 @@ public final class Throttle implements Transformer<Object, Object> {
     public Throttle(Parameters parameters) {
         perSecond = parameters.perSecond;
         semaphore = new Semaphore(perSecond, true);
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        controls.maxWorkers(1);
     }
 
     @Override
