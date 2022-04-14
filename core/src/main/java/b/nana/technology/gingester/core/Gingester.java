@@ -40,6 +40,7 @@ public final class Gingester {
 
     private final Set<String> excepts;
     private final int reportingIntervalSeconds;
+    private final boolean gracefulShutdown;
     private final String defaultAttachTarget;
 
     /**
@@ -101,6 +102,7 @@ public final class Gingester {
 
         excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
         reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
+        gracefulShutdown = configuration.gracefulShutdown == null || configuration.gracefulShutdown;
 
         String lastId = null;
         for (TransformerConfiguration transformer : configuration.transformers) {
@@ -401,7 +403,9 @@ public final class Gingester {
 
     private void start() {
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown));
+        if (gracefulShutdown) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown));
+        }
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
