@@ -85,6 +85,10 @@ public final class CliParser {
                     configuration.report = Integer.parseInt(args[++i]);
                     break;
 
+                case "-ng":
+                    configuration.gracefulShutdown = false;
+                    break;
+
                 case "-cf":
                 case "--cli-file":
                     try {
