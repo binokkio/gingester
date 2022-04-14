@@ -401,6 +401,8 @@ public final class Gingester {
 
     private void start() {
 
+        Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown));
+
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
 
@@ -426,6 +428,27 @@ public final class Gingester {
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
+        }
+    }
+
+    private void onShutdown() {
+
+        LOGGER.warn("Received shutdown signal, gracefully shutting down");
+
+        Controller<?, ?> seedController = controllers.get("__seed__");
+        for (Worker seedWorker : seedController.workers) {
+            seedWorker.interrupt();
+        }
+
+        for (Controller<?, ?> controller : controllers.values()) {
+            for (Worker worker : controller.workers) {
+                try {
+                    LOGGER.info("Waiting for " + worker.getName());
+                    worker.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
