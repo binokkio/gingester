@@ -199,11 +199,9 @@ public final class Controller<I, O> {
     public void accept(Batch<I> batch) {
         lock.lock();
         try {
-            while (queue.size() >= maxQueueSize) queueNotFull.await();
+            while (queue.size() >= maxQueueSize) queueNotFull.awaitUninterruptibly();
             queue.add(() -> transform(batch));
             queueNotEmpty.signal();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
         } finally {
             lock.unlock();
         }
@@ -280,12 +278,12 @@ public final class Controller<I, O> {
             } catch (Exception e) {
                 throw new RuntimeException(e);  // TODO
             }
-            double batchDuration = batchFinished - batchStarted;
+            long batchDuration = batchFinished - batchStarted;
 
             if ((batchDuration < 2_000_000 && batch.getSize() != maxBatchSize) ||
                 (batchDuration > 4_000_000 && batch.getSize() != 1)) {
 
-                double abrupt = 3_000_000 / batchDuration * batch.getSize();
+                double abrupt = 3_000_000d / batchDuration * batch.getSize();
                 double dampened = (abrupt + batch.getSize() * 9) / 10;
                 batchSize = (int) Math.min(maxBatchSize, dampened);
             }

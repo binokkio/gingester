@@ -74,7 +74,7 @@ public final class Reporter {
     }
 
     private String humanize(long nanos) {
-        long asSeconds = nanos / 1_000_000_000;
+        long asSeconds = Math.round(nanos / 1_000_000_000d);
         long days = asSeconds / 86400;
         long hours = asSeconds % 86400 / 3600;
         long minutes = asSeconds % 86400 % 3600 / 60;

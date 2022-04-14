@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Phaser;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -37,10 +38,11 @@ public final class Gingester {
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Map<String, Phaser> phasers = new HashMap<>();
     private final Phaser phaser = new Phaser();
+    private final CountDownLatch running = new CountDownLatch(1);
+    private boolean stopping;
 
     private final Set<String> excepts;
     private final int reportingIntervalSeconds;
-    private final boolean gracefulShutdown;
     private final String defaultAttachTarget;
 
     /**
@@ -102,7 +104,6 @@ public final class Gingester {
 
         excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
         reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
-        gracefulShutdown = configuration.gracefulShutdown == null || configuration.gracefulShutdown;
 
         String lastId = null;
         for (TransformerConfiguration transformer : configuration.transformers) {
@@ -209,6 +210,30 @@ public final class Gingester {
         align();
         initialize();
         start();
+    }
+
+    public void stop() throws InterruptedException {
+
+        running.await();
+        stopping = true;
+
+        Controller<?, ?> seedController = controllers.get("__seed__");
+        for (Worker worker : seedController.workers) {
+            worker.interrupt();
+        }
+
+        // TODO
+//        for (Controller<?, ?> controller : seedController.links.values()) {
+//            for (Worker worker : controller.workers) {
+//                worker.interrupt();
+//            }
+//        }
+
+        for (Controller<?, ?> controller : controllers.values()) {
+            for (Worker worker : controller.workers) {
+                worker.join();
+            }
+        }
     }
 
     private void configure() {
@@ -403,11 +428,9 @@ public final class Gingester {
 
     private void start() {
 
-        Thread shutdownHook = new Thread(this::onShutdown);
-        if (gracefulShutdown) Runtime.getRuntime().addShutdownHook(shutdownHook);
-
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
+        running.countDown();
 
         Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
         if (reportingIntervalSeconds > 0) reporter.start();
@@ -431,29 +454,6 @@ public final class Gingester {
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
-        }
-
-        if (gracefulShutdown) Runtime.getRuntime().removeShutdownHook(shutdownHook);
-    }
-
-    private void onShutdown() {
-
-        LOGGER.warn("Received shutdown signal, gracefully shutting down");
-
-        Controller<?, ?> seedController = controllers.get("__seed__");
-        for (Worker seedWorker : seedController.workers) {
-            seedWorker.interrupt();
-        }
-
-        for (Controller<?, ?> controller : controllers.values()) {
-            for (Worker worker : controller.workers) {
-                try {
-                    LOGGER.info("Waiting for " + worker.getName());
-                    worker.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -518,6 +518,10 @@ public final class Gingester {
         public boolean isExceptionHandler() {
             return excepts.contains(controllerId) ||
                     configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
+        }
+
+        public boolean isStopping() {
+            return stopping;
         }
     }
 }

@@ -165,6 +165,10 @@ public final class CliParser {
                 case "--fetch":
                 case "-fa":
                 case "--fetch-all":
+                case "-fg":
+                case "--finish-gate":
+                case "-sfg":
+                case "--seed-finish-gate":
                 case "-s":
                 case "--stash":
                 case "-w":
@@ -178,6 +182,10 @@ public final class CliParser {
 
                     if (fsw) {
                         if (args[i].matches(".*f.*a")) name = "FetchAll";
+                        else if (args[i].matches(".*f.*g")) {
+                            name = "FinishGate";
+                            syncTo = !args[i].contains("s");
+                        }
                         else if (args[i].contains("f")) name = "Fetch";
                         else if (args[i].contains("w")) name = "Swap";
                         else name = "Stash";
