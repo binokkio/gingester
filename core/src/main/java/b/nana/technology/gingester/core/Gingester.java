@@ -403,9 +403,8 @@ public final class Gingester {
 
     private void start() {
 
-        if (gracefulShutdown) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown));
-        }
+        Thread shutdownHook = new Thread(this::onShutdown);
+        if (gracefulShutdown) Runtime.getRuntime().addShutdownHook(shutdownHook);
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
@@ -433,6 +432,8 @@ public final class Gingester {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);  // TODO
         }
+
+        if (gracefulShutdown) Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
 
     private void onShutdown() {
