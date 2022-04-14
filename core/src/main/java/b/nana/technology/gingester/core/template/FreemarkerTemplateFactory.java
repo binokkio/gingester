@@ -27,6 +27,8 @@ public final class FreemarkerTemplateFactory {
         configuration.setLogTemplateExceptions(false);
         configuration.setTagSyntax(tagSyntax);
         configuration.setInterpolationSyntax(interpolationSyntax);
+        configuration.setNumberFormat("computer");
+        configuration.setBooleanFormat("c");
         configuration.setObjectWrapper(objectWrapperFunction.apply(FREEMARKER_VERSION));
         try {
             return new FreemarkerTemplateWrapper(new Template(name, templateString, configuration));

@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.string;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.core.template.TemplateParameters;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,5 +42,37 @@ class CreateTest {
 
         assertEquals(1, result.size());
         assertEquals("Hello, World!", result.remove());
+    }
+
+    @Test
+    void testStringCreateTemplatingNumberFormat() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t JsonCreate '123456' " +
+                "-t JsonAsLong " +
+                "-s number " +
+                "-t StringCreate 'Hello, ${number}!'")
+                .attach(result::set)
+                .run();
+
+        assertEquals("Hello, 123456!", result.get());
+    }
+
+    @Test
+    void testStringCreateTemplatingBooleanFormat() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t JsonCreate 'true' " +
+                "-t JsonAsBoolean " +
+                "-s value " +
+                "-t StringCreate 'Hello, ${value}!'")
+                .attach(result::set)
+                .run();
+
+        assertEquals("Hello, true!", result.get());
     }
 }
