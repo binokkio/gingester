@@ -232,7 +232,7 @@ public final class Gingester {
                     .flatMap(Collection::stream)
                     .map(c -> c.workers)
                     .flatMap(Collection::stream)
-                    .forEach(Worker::interrupt);
+                    .forEach(Worker::interrupt);  // TODO instead of always interrupting allow transformers to override a callback and only interrupt if it returns false
         }
 
         phaser.awaitAdvance(1);
