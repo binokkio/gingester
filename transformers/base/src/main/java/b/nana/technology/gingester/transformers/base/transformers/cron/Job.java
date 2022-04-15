@@ -24,7 +24,7 @@ public final class Job implements Transformer<Object, ZonedDateTime> {
     public Job(Parameters parameters) {
         schedules = parameters.schedules.stream().map(CronExpression::create).collect(Collectors.toList());
         skips = parameters.skips;
-        zoneId = parameters.zone == null ? ZoneId.systemDefault() : ZoneId.of(parameters.zone);
+        zoneId = parameters.zone != null ? ZoneId.of(parameters.zone) : ZoneId.systemDefault();
     }
 
     @Override
