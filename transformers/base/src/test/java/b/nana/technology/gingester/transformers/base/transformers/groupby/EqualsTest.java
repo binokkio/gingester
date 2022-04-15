@@ -36,10 +36,10 @@ class EqualsTest {
 
         new Gingester("" +
                 "-t StringCreate 'Hello, World!' " +
-                "-sft GroupByEquals " +  // groupKey is type String
+                "-sft GroupByEquals customKey " +  // customKey is type String
                 "-stt InputStreamJoin " +
                 "-t InputStreamDrain " +
-                "-f groupKey " +
+                "-f customKey " +
                 "-t BytesToString")  // Pure StringToBytes must be inserted
                 .attach(result::set)
                 .run();
