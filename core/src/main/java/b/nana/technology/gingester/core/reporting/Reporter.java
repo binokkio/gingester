@@ -47,6 +47,7 @@ public final class Reporter {
 
     public void stop() {
         executorService.shutdown();
+        report();
     }
 
     private void report() {

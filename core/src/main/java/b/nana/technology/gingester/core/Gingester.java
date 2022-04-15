@@ -19,8 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -38,11 +38,11 @@ public final class Gingester {
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Map<String, Phaser> phasers = new HashMap<>();
     private final Phaser phaser = new Phaser();
-    private final CountDownLatch running = new CountDownLatch(1);
-    private boolean stopping;
+    private final AtomicBoolean stopping = new AtomicBoolean();
 
     private final Set<String> excepts;
     private final int reportingIntervalSeconds;
+    private final boolean shutdownHook;
     private final String defaultAttachTarget;
 
     /**
@@ -104,6 +104,7 @@ public final class Gingester {
 
         excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
         reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
+        shutdownHook = configuration.shutdownHook != null && configuration.shutdownHook;
 
         String lastId = null;
         for (TransformerConfiguration transformer : configuration.transformers) {
@@ -212,28 +213,39 @@ public final class Gingester {
         start();
     }
 
-    public void stop() throws InterruptedException {
+    /**
+     * Attempt to gracefully stop the running flow.
+     * <p>
+     * This will interrupt the seed worker and all workers belonging to transformations that are directly
+     * linked by the seed transformer (i.e. those with no configured incoming links).
+     * <p>
+     * For graceful stopping to work properly transformers that must not be interrupted must be running
+     * asynchronously from the aforementioned workers.
+     */
+    public void stop() {
 
-        running.await();
-        stopping = true;
+        phaser.awaitAdvance(0);
 
-        Controller<?, ?> seedController = controllers.get("__seed__");
-        for (Worker worker : seedController.workers) {
-            worker.interrupt();
+        if (!stopping.getAndSet(true)) {
+            Controller<?, ?> seedController = controllers.get("__seed__");
+            Stream.of(List.of(seedController), seedController.links.values())
+                    .flatMap(Collection::stream)
+                    .map(c -> c.workers)
+                    .flatMap(Collection::stream)
+                    .forEach(Worker::interrupt);
         }
 
-        // TODO
-//        for (Controller<?, ?> controller : seedController.links.values()) {
-//            for (Worker worker : controller.workers) {
-//                worker.interrupt();
-//            }
-//        }
+        phaser.awaitAdvance(1);
+        phaser.awaitAdvance(2);
+    }
 
-        for (Controller<?, ?> controller : controllers.values()) {
-            for (Worker worker : controller.workers) {
-                worker.join();
-            }
+    private void shutdownHook() {
+
+        if (!stopping.get()) {
+            LOGGER.warn("Shutdown requested, attempting graceful shutdown");
         }
+
+        stop();
     }
 
     private void configure() {
@@ -430,7 +442,10 @@ public final class Gingester {
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
-        running.countDown();
+
+        if (shutdownHook) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+        }
 
         Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
         if (reportingIntervalSeconds > 0) reporter.start();
@@ -440,21 +455,12 @@ public final class Gingester {
         seedController.accept(new Batch<>(seed, "seed signal"));
         seedController.finish(null, seed);
 
-        try {
+        phaser.awaitAdvance(1);
+        phaser.awaitAdvance(2);
 
-            for (Controller<?, ?> controller : controllers.values()) {
-                for (Worker worker : controller.workers) {
-                    worker.join();
-                }
-            }
+        if (reportingIntervalSeconds > 0) reporter.stop();
 
-            if (reportingIntervalSeconds > 0) {
-                reporter.stop();
-            }
-
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);  // TODO
-        }
+        stopping.set(true);  // set stopping true, flow stopped naturally
     }
 
     private String getId(TransformerConfiguration configuration) {
@@ -521,7 +527,7 @@ public final class Gingester {
         }
 
         public boolean isStopping() {
-            return stopping;
+            return stopping.get();
         }
     }
 }

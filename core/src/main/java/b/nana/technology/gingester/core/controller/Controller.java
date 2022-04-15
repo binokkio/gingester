@@ -239,11 +239,13 @@ public final class Controller<I, O> {
 
     public void transform(Batch<I> batch) {
 
+        Context peek = batch.peek().getContext();
+
         if (maxBatchSize == 1 || batch.getSize() != batchSize) {
             try {
-                transformer.beforeBatch(batch.peek().getContext());
+                transformer.beforeBatch(peek);
             } catch (Exception e) {
-                throw new RuntimeException(e);  // TODO
+                receiver.except("beforeBatch", peek, e);
             }
             for (Item<I> item : batch) {
                 try {
@@ -253,16 +255,16 @@ public final class Controller<I, O> {
                 }
             }
             try {
-                transformer.afterBatch(batch.peek().getContext());
+                transformer.afterBatch(peek);
             } catch (Exception e) {
-                throw new RuntimeException(e);  // TODO
+                receiver.except("afterBatch", peek, e);
             }
         } else {
 
             try {
                 transformer.beforeBatch(batch.peek().getContext());
             } catch (Exception e) {
-                throw new RuntimeException(e);  // TODO
+                receiver.except("beforeBatch", peek, e);
             }
             long batchStarted = System.nanoTime();
             for (Item<I> item : batch) {
@@ -276,7 +278,7 @@ public final class Controller<I, O> {
             try {
                 transformer.afterBatch(batch.peek().getContext());
             } catch (Exception e) {
-                throw new RuntimeException(e);  // TODO
+                receiver.except("afterBatch", peek, e);
             }
             long batchDuration = batchFinished - batchStarted;
 
@@ -306,7 +308,7 @@ public final class Controller<I, O> {
         try {
             transformer.beforeBatch(context);
         } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO
+            receiver.except("beforeBatch", context, in, e);
         }
         try {
             transformer.transform(context, in, receiver);
@@ -316,7 +318,7 @@ public final class Controller<I, O> {
         try {
             transformer.afterBatch(context);
         } catch (Exception e) {
-            throw new RuntimeException(e);  // TODO
+            receiver.except("afterBatch", context, in, e);
         }
         if (report) dealt.count();
     }
