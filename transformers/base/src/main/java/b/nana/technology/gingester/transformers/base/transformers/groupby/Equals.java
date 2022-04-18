@@ -14,13 +14,16 @@ import java.util.Map;
 @Passthrough
 public final class Equals implements Transformer<Object, Object>, InputStasher {
 
-    private final static String GROUP_KEY_STASH_NAME = "groupKey";
-
     private final ContextMap<State> contextMap = new ContextMap<>();
+    private final String stash;
+
+    public Equals(Parameters parameters) {
+        stash = parameters.stash;
+    }
 
     @Override
     public String getInputStashName() {
-        return GROUP_KEY_STASH_NAME;
+        return stash;
     }
 
     @Override
@@ -41,18 +44,17 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
 
     public static class Parameters {
 
-        public long limit;
+        public String stash = "groupKey";
 
-        @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(long limit) {
-            this.limit = limit;
+        public Parameters(String stash) {
+            this.stash = stash;
         }
     }
 
-    private static class State {
+    private class State {
 
         private final Context groupParent;
         private final Receiver<Object> out;
@@ -64,7 +66,7 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
         }
 
         private Context getGroup(Object object) {
-            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.stash(GROUP_KEY_STASH_NAME, o)));
+            return groups.computeIfAbsent(object, o -> out.acceptGroup(groupParent.stash(stash, o)));
         }
 
         private void close() {

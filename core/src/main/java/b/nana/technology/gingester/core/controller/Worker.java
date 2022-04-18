@@ -49,15 +49,15 @@ public final class Worker extends Thread {
                     }
                     job = controller.queue.removeFirst();
                     controller.queueNotFull.signal();
-                    if (job instanceof SyncJob) perform(job);
+                    if (job instanceof SyncJob) job.perform();
                     else break;
                 }
             } catch (InterruptedException e) {
-                break;
+                continue;  // the seed finish signal should arrive soon, continue, so we can pass it on
             } finally {
                 controller.lock.unlock();
             }
-            perform(job);
+            job.perform();
         }
 
         flush();
@@ -72,14 +72,6 @@ public final class Worker extends Thread {
         }
 
         controller.phaser.arriveAndAwaitAdvance();
-    }
-
-    private void perform(Job job) {
-        try {
-            job.perform();
-        } catch (Exception e) {
-            e.printStackTrace();  // TODO pass `e` to `controller.excepts`
-        }
     }
 
     private void handleFinishingContexts() throws InterruptedException {
@@ -140,7 +132,7 @@ public final class Worker extends Thread {
     }
 
     interface Job {
-        void perform() throws Exception;
+        void perform();
     }
 
     interface SyncJob extends Job {}

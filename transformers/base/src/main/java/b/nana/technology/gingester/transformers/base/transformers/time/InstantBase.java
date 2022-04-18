@@ -11,7 +11,7 @@ public abstract class InstantBase<I> implements Transformer<I, TemporalAccessor>
     private final ZoneId zoneId;
 
     public InstantBase(Parameters parameters) {
-        zoneId = ZoneId.of(parameters.zone);
+        zoneId = parameters.zone != null ? ZoneId.of(parameters.zone) : ZoneId.systemDefault();
     }
 
     protected final ZoneId getZoneId() {
@@ -20,7 +20,7 @@ public abstract class InstantBase<I> implements Transformer<I, TemporalAccessor>
 
     public static class Parameters {
 
-        public String zone = "UTC";
+        public String zone;
 
         @JsonCreator
         public Parameters() {}
