@@ -22,6 +22,9 @@ General usage:
     -fa/--fetch-all [<name>]
         fetch all values from stash by name
 
+    -gs/--graceful-sigint
+        enable graceful handling of sigint
+
     -h/--help
         print this help and exit
 
