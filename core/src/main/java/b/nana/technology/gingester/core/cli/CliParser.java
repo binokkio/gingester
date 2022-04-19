@@ -76,9 +76,11 @@ public final class CliParser {
                     i++;
                     break;
 
-                case "-b":
-                case "--break":
-                    return configuration;
+                case "++":
+                    // ignore all args until the next occurrence of "++"
+                    // noinspection StatementWithEmptyBody
+                    while (++i < args.length && !args[i].equals("++"));
+                    break;
 
                 case "-r":
                 case "--report":

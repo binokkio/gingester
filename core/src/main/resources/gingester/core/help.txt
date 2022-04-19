@@ -4,9 +4,6 @@ General usage:
 
     <> mark placeholders, [] mark optionals
 
-    -b/--break
-        ignore all following instructions
-
     -cf/--cli-file <path/to/file> [<parameters>]
         add cli from file, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
         provide [<parameters>] in JSON syntax to be used as template data
@@ -69,7 +66,10 @@ General usage:
         prevent the previous transformer from automatically being linked to the next transformer
 
     + <comment>
-        has no effect
+        has no effect, <comment> must be a single argument
+
+    ++ <comment> ++
+        has no effect, <comment> may be multiple arguments
 
 
 Terminology:
