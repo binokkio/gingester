@@ -86,15 +86,15 @@ Terminology:
 
         Some transformers can synchronize with the output of an upstream transformer.
 
-        Given the instructions `-t PathSearch '*.csv' -t DsvToJson -t Join -t PathWrite all.ndjson` surmise that
+        Given the instructions `-t PathSearch '*.csv' -t DsvToJson -t Join -t PathWrite all.ndjson` assume that
         PathSearch finds 3 CSV files, each containing a header and 100 records. DsvToJson will output 300 JSON
         objects which will all be joined together and written to the file `all.ndjson`.
 
         To get an output file for each input file, Join needs to be in sync with the output of PathSearch, like
-        so: `-sft PathSearch '*.csv' -t DsvToJson -stt Join -t PathWrite ${path.tail}.ndjson`. Now the synced-to
-        Join will create a separate output for each output of the synced-from PathSearch. Because Join is in
-        sync with PathSearch its downstream has access to the PathSearch context, which is used in the PathWrite
-        filename.
+        so: `-sft PathSearch '*.csv' -t DsvToJson -stt Join -t PathWrite '${path.tail}.ndjson'`. Now the
+        synced-to Join will create a separate output for each output of the synced-from PathSearch. Because Join
+        is in sync with PathSearch its downstream has access to the PathSearch context, which is used in the
+        PathWrite filename.
 
         When a transformer requires synchronization but is not instructed to be in sync with anything, as in the
         second paragraph of this section, it is synced with the seed (see previous section).
