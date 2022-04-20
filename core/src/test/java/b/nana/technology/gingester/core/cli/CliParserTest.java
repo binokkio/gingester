@@ -18,8 +18,16 @@ class CliParserTest {
     }
 
     @Test
-    void testBreak() {
-        GingesterConfiguration configuration = CliParser.parse(CliSplitter.split("-t Stash -b -t Fetch"));
+    void testClosedCommentBlock() {
+        GingesterConfiguration configuration = CliParser.parse(CliSplitter.split("-t Stash ++ -t Fetch -foo -bar ++ -t Passthrough"));
+        assertEquals(2, configuration.transformers.size());
+        assertEquals("Stash", configuration.transformers.get(0).getName().orElseThrow());
+        assertEquals("Passthrough", configuration.transformers.get(1).getName().orElseThrow());
+    }
+
+    @Test
+    void testUnclosedCommentBlock() {
+        GingesterConfiguration configuration = CliParser.parse(CliSplitter.split("-t Stash ++ -t Fetch"));
         assertEquals(1, configuration.transformers.size());
         assertEquals("Stash", configuration.transformers.get(0).getName().orElseThrow());
     }
