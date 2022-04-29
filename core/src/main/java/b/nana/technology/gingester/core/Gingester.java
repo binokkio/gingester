@@ -43,6 +43,7 @@ public final class Gingester {
 
     private final Set<String> excepts;
     private final int reportingIntervalSeconds;
+    private final boolean debugMode;
     private final boolean shutdownHook;
     private final String defaultAttachTarget;
 
@@ -105,6 +106,7 @@ public final class Gingester {
 
         excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
         reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
+        debugMode = configuration.debugMode != null && configuration.debugMode;
         shutdownHook = configuration.shutdownHook != null && configuration.shutdownHook;
 
         String lastId = null;
@@ -496,6 +498,10 @@ public final class Gingester {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
             return Optional.of(controller);
+        }
+
+        public boolean isDebugModeEnabled() {
+            return debugMode;
         }
 
         public boolean isExceptionHandler() {

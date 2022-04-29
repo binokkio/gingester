@@ -33,10 +33,10 @@ public final class ELog implements Transformer<Exception, Exception> {
                         .append(description);
             }
 
-            String at = context.streamReverse().skip(1).map(Context::getTransformerId).collect(Collectors.joining(" .. "));
+            String at = context.streamReverse().skip(1).map(Context::getTransformerId).collect(Collectors.joining(" > "));
             if (!at.isEmpty()) {
                 message
-                        .append("\nAt ~ ")
+                        .append("\nAt ")
                         .append(at);
             }
 
