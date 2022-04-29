@@ -12,6 +12,7 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import b.nana.technology.gingester.core.transformers.ELog;
 import b.nana.technology.gingester.core.transformers.Passthrough;
 import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
@@ -207,7 +208,7 @@ public final class Gingester {
         configure();
         setupSeed();
         setupExceptionLogger();
-        explore("__seed__", "__seed__", new ArrayDeque<>());
+        explore("__seed__", "__seed__", new ArrayDeque<>(), false);
         align();
         initialize();
         start();
@@ -293,33 +294,9 @@ public final class Gingester {
     }
 
     private void setupExceptionLogger() {
-        configurations.put("__elog__", new ControllerConfiguration<>(new ControllerConfigurationInterface())
+        configurations.put("__elog__", new ControllerConfiguration<Exception, Exception>(new ControllerConfigurationInterface())
                 .id("__elog__")
-                .transformer((context, exception, out) -> {
-                    if (LOGGER.isWarnEnabled()) {
-                        String description = context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "));
-                        if (description.isEmpty()) {
-                            LOGGER.warn(
-                                    String.format(
-                                            "%s during %s::%s",
-                                            ((Exception) exception).getClass().getSimpleName(),
-                                            context.fetch("transformer").findFirst().orElseThrow(),
-                                            context.fetch("method").findFirst().orElseThrow())
-                                    , (Throwable) exception
-                            );
-                        } else {
-                            LOGGER.warn(
-                                    String.format(
-                                            "%s during %s::%s of '%s'",
-                                            ((Exception) exception).getClass().getSimpleName(),
-                                            context.fetch("transformer").findFirst().orElseThrow(),
-                                            context.fetch("method").findFirst().orElseThrow(),
-                                            description)
-                                    , (Throwable) exception
-                            );
-                        }
-                    }
-                }));
+                .transformer(new ELog()));
 
         configurations.values()
                 .stream().flatMap(c -> c.getExcepts().stream())
@@ -329,15 +306,15 @@ public final class Gingester {
                 .forEach(c -> c.excepts(Collections.singletonList("__elog__")));
     }
 
-    private void explore(String nextName, String nextId, ArrayDeque<String> route) {
+    private void explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge) {
         if (route.contains(nextId)) {
             Iterator<String> iterator = route.iterator();
             while (!iterator.next().equals(nextId)) iterator.remove();
             throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + nextId);
         } else {
-            if (!route.isEmpty()) maybeBridge(route.getLast(), nextName, nextId);
+            if (maybeBridge) maybeBridge(route.getLast(), nextName, nextId);
             route.add(nextId);
-            configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route)));
+            configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route), true));
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
@@ -347,7 +324,7 @@ public final class Gingester {
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
                     for (String exceptionHandler : controller.getExcepts()) {
-                        explore(exceptionHandler, exceptionHandler, new ArrayDeque<>(route));
+                        explore(exceptionHandler, exceptionHandler, new ArrayDeque<>(route), false);
                     }
                 }
             }

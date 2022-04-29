@@ -10,6 +10,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private final Controller<I, O> controller;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
+    // private final boolean ensureExtended; TODO
 
     private boolean controllerHasSyncs;
     private boolean controllerHasSyncsOrExcepts;

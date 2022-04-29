@@ -67,6 +67,10 @@ public final class Context implements Iterable<Context> {
         this(builder.parent, builder.group, builder.synced, builder.controller, builder.stash);
     }
 
+    public String getTransformerId() {
+        return controller.id;
+    }
+
     public boolean isSeed() {
         return parent == null;
     }
@@ -197,6 +201,12 @@ public final class Context implements Iterable<Context> {
 
     public Stream<Context> stream() {
         return StreamSupport.stream(spliterator(), false);
+    }
+
+    public Stream<Context> streamReverse() {
+        List<Context> contexts = stream().collect(Collectors.toList());
+        Collections.reverse(contexts);
+        return contexts.stream();
     }
 
     public String prettyStash() {
