@@ -314,6 +314,7 @@ public final class Gingester {
             while (!iterator.next().equals(nextId)) iterator.remove();
             throw new IllegalStateException("Circular route detected: " + String.join(" -> ", route) + " -> " + nextId);
         } else {
+            if (!configurations.containsKey(nextId)) throw new IllegalStateException(route.getLast() + " links to " + nextId + " which does not exist");
             if (maybeBridge) maybeBridge(route.getLast(), nextName, nextId);
             route.add(nextId);
             configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route), true));
