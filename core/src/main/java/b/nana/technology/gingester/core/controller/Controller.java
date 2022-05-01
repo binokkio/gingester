@@ -44,7 +44,7 @@ public final class Controller<I, O> {
     final ArrayDeque<Worker.Job> queue = new ArrayDeque<>();
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
-    final ControllerReceiver<I, O> receiver = new ControllerReceiver<>(this);
+    final ControllerReceiver<I, O> receiver;
 
     public final boolean report;
     public final Counter dealt;
@@ -57,6 +57,7 @@ public final class Controller<I, O> {
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
+        receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
         async = configuration.getMaxWorkers().orElse(0) > 0;
         maxWorkers = configuration.getMaxWorkers().orElse(1);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
@@ -338,6 +339,7 @@ public final class Controller<I, O> {
         gingester = null;
         id = controllerId;
         transformer = null;
+        receiver = null;
         phaser = null;
         async = false;
         maxWorkers = 0;

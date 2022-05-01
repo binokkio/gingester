@@ -8,6 +8,7 @@ public final class OutputStreamWrapper extends OutputStream implements OutputStr
 
     private final AtomicBoolean closed = new AtomicBoolean();
     private OutputStream destination;
+    private Runnable onClose;
 
     public void wrap(OutputStream outputStream) {
         destination = outputStream;
@@ -46,9 +47,10 @@ public final class OutputStreamWrapper extends OutputStream implements OutputStr
 
     @Override
     public void close() throws IOException {
-        if (destination != null) {
-            destination.close();
-        }
+
+        if (destination != null) destination.close();
+        if (onClose != null) onClose.run();
+
         synchronized (closed) {
             closed.set(true);
             closed.notifyAll();
@@ -67,5 +69,10 @@ public final class OutputStreamWrapper extends OutputStream implements OutputStr
                 closed.wait(millis);
             }
         }
+    }
+
+    public void onClose(Runnable onClose) {
+        if (this.onClose != null) throw new IllegalStateException("onClose already set");
+        this.onClose = onClose;
     }
 }

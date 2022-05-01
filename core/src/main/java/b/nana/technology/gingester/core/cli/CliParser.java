@@ -87,6 +87,11 @@ public final class CliParser {
                     configuration.report = Integer.parseInt(args[++i]);
                     break;
 
+                case "-d":
+                case "--debug":
+                    configuration.debugMode = true;
+                    break;
+
                 case "-gs":
                 case "--graceful-sigint":
                     configuration.shutdownHook = true;

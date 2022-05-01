@@ -8,6 +8,8 @@ import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.NoSuchElementException;
+
 @Names(1)
 public final class Swap implements Transformer<Object, Object>, InputStasher, OutputFetcher {
 
@@ -31,7 +33,7 @@ public final class Swap implements Transformer<Object, Object>, InputStasher, Ou
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
                 context.stash(name, in),
-                context.fetch(name).findFirst().orElseThrow()
+                context.fetch(name).findFirst().orElseThrow(() -> new NoSuchElementException("Nothing stashed as \"" + String.join(".", name) + "\""))
         );
     }
 

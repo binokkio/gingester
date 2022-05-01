@@ -10,12 +10,14 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private final Controller<I, O> controller;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
+    private final boolean debugMode;
 
     private boolean controllerHasSyncs;
     private boolean controllerHasSyncsOrExcepts;
 
-    ControllerReceiver(Controller<I, O> controller) {
+    ControllerReceiver(Controller<I, O> controller, boolean debugMode) {
         this.controller = controller;
+        this.debugMode = debugMode;
     }
 
     public void examineController() {
@@ -78,7 +80,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private Context maybeExtend(Context context) {
-        if (context.controller != controller && controllerHasSyncsOrExcepts) {
+        if (context.controller != controller && (controllerHasSyncsOrExcepts || debugMode)) {
             return context.extend().synced(controllerHasSyncs).build(controller);
         } else {
             return context;
