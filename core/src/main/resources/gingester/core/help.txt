@@ -12,6 +12,9 @@ General usage:
         add cli from resource, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
         provide [<parameters>] in JSON syntax to be used as template data
 
+    -d/--debug
+        get more detailed exception information at the cost of performance
+
     -e/--excepts <link1> [<link2> [...]]
         send exceptions from the previous transformer (if any) and
         uncaught downstream exceptions to the given links

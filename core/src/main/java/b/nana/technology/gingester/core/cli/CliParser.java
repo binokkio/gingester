@@ -88,7 +88,7 @@ public final class CliParser {
                     break;
 
                 case "-d":
-                case "--debug-mode":
+                case "--debug":
                     configuration.debugMode = true;
                     break;
 
