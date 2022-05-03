@@ -13,7 +13,7 @@
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
-    <artifactId>redis</artifactId>
+    <artifactId>hadoop</artifactId>
 
     <dependencies>
 
@@ -23,19 +23,14 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>3.6.0</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>3.3.2</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <version>3.3.2</version>
         </dependency>
 
     </dependencies>
