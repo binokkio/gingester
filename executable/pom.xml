@@ -39,11 +39,6 @@
         </dependency>
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
-            <artifactId>hadoop</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>jetty</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
