@@ -128,7 +128,7 @@ public class Search implements Transformer<Object, Path> {
             for (PathMatcher pathMatcher : pathMatchers) {
                 if (pathMatcher.matches(relative)) {
                     Map<String, Object> stash = new HashMap<>();
-                    stash.put("description", relative.toString());
+                    stash.put("description", relative);
                     Map<String, Object> pathStash = new HashMap<>();
                     stash.put("path", pathStash);
                     pathStash.put("tail", path.getFileName());

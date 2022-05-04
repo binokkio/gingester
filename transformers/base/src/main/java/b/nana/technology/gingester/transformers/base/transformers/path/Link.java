@@ -34,7 +34,7 @@ public final class Link implements Transformer<Path, Path> {
         Files.createLink(target, in);
         out.accept(
                 context.stash(Map.of(
-                        "description", target.toString(),
+                        "description", target,
                         "path", Map.of(
                                 "absolute", target.toAbsolutePath(),
                                 "tail", target.getFileName()

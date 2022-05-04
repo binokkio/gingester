@@ -34,7 +34,7 @@ public final class Move implements Transformer<Path, Path> {
         Files.move(in, target);
         out.accept(
                 context.stash(Map.of(
-                        "description", target.toString(),
+                        "description", target,
                         "path", Map.of(
                                 "tail", target.getFileName(),
                                 "absolute", target.toAbsolutePath()
