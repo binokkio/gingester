@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.15.0</version>
+        <version>0.15.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>executable</artifactId>
@@ -35,11 +35,6 @@
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>jdbc</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>b.nana.technology.gingester.transformers</groupId>
-            <artifactId>hadoop</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
