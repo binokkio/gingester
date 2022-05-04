@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.hadoop.transformers.hdfs;
 
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -13,7 +14,7 @@ import org.apache.hadoop.fs.RemoteIterator;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class Search implements Transformer<Object, InputStream> {
+public final class Search implements Transformer<Object, InputStream> {
 
     private final String hdfs;
     private final String root;
@@ -21,6 +22,11 @@ public class Search implements Transformer<Object, InputStream> {
     public Search(Parameters parameters) {
         hdfs = parameters.hdfs;
         root = parameters.root;
+    }
+
+    @Override
+    public void setup(SetupControls controls) {
+        controls.requireOutgoingSync();
     }
 
     @Override
@@ -34,10 +40,12 @@ public class Search implements Transformer<Object, InputStream> {
         RemoteIterator<LocatedFileStatus> remoteIterator = fileSystem.listFiles(new Path(root), true);
         while (remoteIterator.hasNext()) {
             Path file = remoteIterator.next().getPath();
-            out.accept(
-                    context.stash("description", file.toString()),
-                    fileSystem.open(file)
-            );
+            try (InputStream inputStream = fileSystem.open(file)) {
+                out.accept(
+                        context.stash("description", file.toString()),
+                        inputStream
+                );
+            }
         }
     }
 
