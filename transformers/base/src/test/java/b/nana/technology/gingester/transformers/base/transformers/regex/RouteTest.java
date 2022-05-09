@@ -44,13 +44,13 @@ class RouteTest {
 
             @Override
             public void accept(Context context, Object output, String targetId) {
-                target.set(targetId);
-                routedValue.set(output);
+                throw new IllegalStateException("Should not be called");
             }
 
             @Override
             public void accept(Context.Builder contextBuilder, Object output, String targetId) {
-                throw new IllegalStateException("Should not be called");
+                target.set(targetId);
+                routedValue.set(output);
             }
         });
 
