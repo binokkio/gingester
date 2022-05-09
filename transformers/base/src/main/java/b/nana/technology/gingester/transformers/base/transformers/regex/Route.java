@@ -13,6 +13,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -48,8 +49,8 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
             if (route.getKey().matcher(in).find()) {
                 out.accept(
-                        context,
-                        context.fetch(fetch).findFirst().orElseThrow(() -> new IllegalStateException("RegexRoute empty fetch")),
+                        context.stash("route", route.getKey().pattern()),
+                        context.fetch(fetch).findFirst().orElseThrow(() -> new NoSuchElementException("RegexRoute empty fetch")),
                         route.getValue()
                 );
                 break;  // TODO parameterize

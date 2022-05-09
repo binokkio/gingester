@@ -24,7 +24,7 @@ public final class Create implements Transformer<Object, Path> {
         Path path = Paths.get(pathTemplate.render(context));
         out.accept(
                 context.stash(Map.of(
-                        "description", path.toString(),
+                        "description", path,
                         "path", Map.of(
                                 "absolute", path.toAbsolutePath(),
                                 "tail", path.getFileName()

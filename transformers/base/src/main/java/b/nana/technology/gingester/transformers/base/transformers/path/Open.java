@@ -39,7 +39,7 @@ public final class Open implements Transformer<Path, InputStream> {
 
         private final OutputStreamMonitor monitor;
 
-        protected InputStreamWrapper(InputStream inputStream, OutputStreamMonitor monitor) {
+        private InputStreamWrapper(InputStream inputStream, OutputStreamMonitor monitor) {
             super(inputStream);
             this.monitor = monitor;
         }
