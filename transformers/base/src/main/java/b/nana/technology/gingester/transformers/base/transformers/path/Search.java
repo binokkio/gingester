@@ -63,6 +63,7 @@ public class Search implements Transformer<Object, Path> {
     @Override
     public final void transform(Context context, Object in, Receiver<Path> out) throws Exception {
         Path root = Path.of(rootTemplate.render(context)).toAbsolutePath();
+        if (!Files.isDirectory(root)) LOGGER.warn("PathSearch root is not a directory: " + root);
         List<String> globs = globTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
         List<String> regexes = regexTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
         Files.walkFileTree(root, new Visitor(root, globs, regexes, context, out));
