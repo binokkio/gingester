@@ -27,6 +27,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToInputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.collect.Count.class,
                 b.nana.technology.gingester.transformers.base.transformers.cron.Job.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.FromJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.dsv.ToJson.class,
