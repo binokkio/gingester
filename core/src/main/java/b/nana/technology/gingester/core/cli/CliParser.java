@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
@@ -219,15 +220,20 @@ public final class CliParser {
                         }
                     }
 
-                    if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
+                    ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
+                    while (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
                         i++;
-                        JsonNode parameters;
                         try {
-                            parameters = OBJECT_READER.readTree(args[i]);
+                            parameters.add(OBJECT_READER.readTree(args[i]));
                         } catch (JsonProcessingException e) {
-                            parameters = JsonNodeFactory.instance.textNode(args[i]);
+                            parameters.add(JsonNodeFactory.instance.textNode(args[i]));
                         }
+                    }
+
+                    if (parameters.size() > 1) {
                         transformer.transformer(name, TransformerFactory.instance(name, parameters));
+                    } else if (!parameters.isEmpty()) {
+                        transformer.transformer(name, TransformerFactory.instance(name, parameters.get(0)));
                     } else {
                         transformer.transformer(name, TransformerFactory.instance(name));
                     }
