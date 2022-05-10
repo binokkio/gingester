@@ -1,18 +1,43 @@
-package b.nana.technology.gingester.transformers.base;
+package b.nana.technology.gingester.transformers.base.transformers.map;
 
 import b.nana.technology.gingester.core.Gingester;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
+import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class IndexLookupTest {
+class CollectAndGetTest {
 
     @Test
     void test() {
+
+        AtomicReference<Map<?, ?>> map = new AtomicReference<>();
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t Repeat 3 " +
+                "-t StringCreate 'Hello, World ${description}!' " +
+                "-s " +
+                "-f description " +
+                "-t MapCollect " +
+                "-s map " +
+                "-t IntCreate 1 " +
+                "-t MapGet")
+                .attach(map::set, "MapCollect")
+                .attach(result::set)
+                .run();
+
+        assertEquals(3, map.get().size());
+        assertEquals("Hello, World 1!", result.get());
+    }
+
+    @Test
+    void testJson() {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
@@ -20,15 +45,16 @@ public class IndexLookupTest {
                 "-t ResourceOpen /data/json/array-wrapped-objects.json " +
                 "-t JsonStream $.array[*] " +
                 "-s " +
-                "-t JsonPath $.id " +
+                "-t 3 JsonPath $.id " +
                 "-t JsonAsLong " +
-                "-t Index " +
+                "-t MapCollect " +
+                "-s map " +
                 "-t ResourceOpen /data/dsv/with-external-references.csv " +
                 "-t DsvToJson " +
                 "-s " +
                 "-t JsonPath $.reference " +
                 "-t JsonAsLong " +
-                "-t Lookup " +
+                "-t MapGet map " +
                 "-w " +
                 "-t JsonSet lookup");
 

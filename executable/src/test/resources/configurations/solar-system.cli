@@ -13,7 +13,7 @@
 -t JsonPath $.name -s planetName
 -f
 -t JsonPath $.index
--t Index planetName
+-t MapCollect planetName -s planetMap
 
 + 'When the index is complete, iterate through the moons'
 -t PathSearch '{root:"[=workDir]", globs:"*/*-moons.ndjson"}'
@@ -24,7 +24,7 @@
 + 'Replace the planet index with the planet name'
 -s
 -t JsonPath $.planet
--t Lookup
+-t MapGet planetMap
 -w
 -t JsonSet planet
 
