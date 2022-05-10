@@ -45,12 +45,14 @@ public class Search implements Transformer<Object, Path> {
     private final List<Template> globTemplates;
     private final List<Template> regexTemplates;
     private final boolean findDirs;
+    private final boolean checkRootIsDir;
 
     public Search(Parameters parameters) {
         rootTemplate = Context.newTemplate(parameters.root);
         globTemplates = parameters.globs.stream().map(Context::newTemplate).collect(Collectors.toList());
         regexTemplates = parameters.regexes.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
+        checkRootIsDir = parameters.checkRootIsDir;
 
         for (TemplateParameters globTemplateParameters : parameters.globs) {
             String glob = globTemplateParameters.getTemplateString();
@@ -63,7 +65,7 @@ public class Search implements Transformer<Object, Path> {
     @Override
     public final void transform(Context context, Object in, Receiver<Path> out) throws Exception {
         Path root = Path.of(rootTemplate.render(context)).toAbsolutePath();
-        if (!Files.isDirectory(root)) LOGGER.warn("PathSearch root is not a directory: " + root);
+        if (checkRootIsDir && !Files.isDirectory(root)) LOGGER.warn("PathSearch root is not a directory: " + root);
         List<String> globs = globTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
         List<String> regexes = regexTemplates.stream().map(t -> t.render(context)).collect(Collectors.toList());
         Files.walkFileTree(root, new Visitor(root, globs, regexes, context, out));
@@ -175,5 +177,6 @@ public class Search implements Transformer<Object, Path> {
         public List<TemplateParameters> globs = Collections.emptyList();
         public List<TemplateParameters> regexes = Collections.emptyList();
         public boolean findDirs;
+        public boolean checkRootIsDir = true;
     }
 }
