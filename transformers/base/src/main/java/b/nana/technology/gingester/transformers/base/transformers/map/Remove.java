@@ -9,14 +9,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public final class Get implements Transformer<Object, Object> {
+public final class Remove implements Transformer<Object, Object> {
 
     private final String[] map;
-    private final boolean throwOnEmptyGet;
+    private final boolean throwOnEmptyRemove;
 
-    public Get(Parameters parameters) {
+    public Remove(Parameters parameters) {
         map = Fetch.parseStashName(parameters.map);
-        throwOnEmptyGet = parameters.throwOnEmptyGet;
+        throwOnEmptyRemove = parameters.throwOnEmptyRemove;
     }
 
     @Override
@@ -25,9 +25,9 @@ public final class Get implements Transformer<Object, Object> {
         Map<?, ?> map = (Map<?, ?>) context.fetch(this.map).findFirst()
                 .orElseThrow(() -> new NoSuchElementException(String.join(".", this.map)));
 
-        Object result = map.get(in);
+        Object result = map.remove(in);
 
-        if (throwOnEmptyGet && result == null) {
+        if (throwOnEmptyRemove && result == null) {
             throw new NoSuchElementException(String.join(".", this.map) + " :: " + in);
         }
 
@@ -37,7 +37,7 @@ public final class Get implements Transformer<Object, Object> {
     public static class Parameters {
 
         public String map = "";
-        public boolean throwOnEmptyGet = false;
+        public boolean throwOnEmptyRemove = false;
 
         @JsonCreator
         public Parameters() {}

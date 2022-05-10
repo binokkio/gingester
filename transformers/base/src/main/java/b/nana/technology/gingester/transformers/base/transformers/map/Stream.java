@@ -11,7 +11,7 @@ public final class Stream implements Transformer<Map<?, ?>, Object> {
     @Override
     public void transform(Context context, Map<?, ?> in, Receiver<Object> out) throws Exception {
         for (Map.Entry<?, ?> entry : in.entrySet()) {
-            out.accept(context.stash("key", entry.getKey()), entry.getValue());
+            out.accept(context.stash("description", entry.getKey()), entry.getValue());
         }
     }
 }

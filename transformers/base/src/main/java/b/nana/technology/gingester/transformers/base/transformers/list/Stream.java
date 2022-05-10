@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.List;
 
-public class Stream implements Transformer<List<?>, Object> {
+public final class Stream implements Transformer<List<?>, Object> {
 
     @Override
     public void transform(Context context, List<?> in, Receiver<Object> out) throws Exception {
