@@ -13,7 +13,7 @@
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
-    <artifactId>base</artifactId>
+    <artifactId>groovy</artifactId>
 
     <dependencies>
 
@@ -23,34 +23,10 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.jsurfer</groupId>
-            <artifactId>jsurfer-jackson</artifactId>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>3.0.10</version>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jdk8</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-csv</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-xml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.jayway.jsonpath</groupId>
-            <artifactId>json-path</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-        </dependency>
-
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -60,6 +36,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>base</artifactId>
+            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
 

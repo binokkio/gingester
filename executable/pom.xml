@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.15.6</version>
+        <version>0.15.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>executable</artifactId>
@@ -30,6 +30,11 @@
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>elasticsearch7</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>groovy</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
