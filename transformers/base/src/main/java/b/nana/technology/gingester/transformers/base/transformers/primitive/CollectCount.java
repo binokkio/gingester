@@ -1,11 +1,13 @@
-package b.nana.technology.gingester.transformers.base.transformers.collect;
+package b.nana.technology.gingester.transformers.base.transformers.primitive;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-public final class Count implements Transformer<Object, Long> {
+@Names(1)
+public final class CollectCount implements Transformer<Object, Long> {
 
     private final ContextMap<long[]> counters = new ContextMap<>();
 

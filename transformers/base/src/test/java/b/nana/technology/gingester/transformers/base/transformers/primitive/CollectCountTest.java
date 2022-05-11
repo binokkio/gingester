@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.collect;
+package b.nana.technology.gingester.transformers.base.transformers.primitive;
 
 import b.nana.technology.gingester.core.Gingester;
 import org.junit.jupiter.api.Test;
@@ -7,7 +7,7 @@ import java.util.ArrayDeque;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class CountTest {
+class CollectCountTest {
 
     @Test
     void test() {

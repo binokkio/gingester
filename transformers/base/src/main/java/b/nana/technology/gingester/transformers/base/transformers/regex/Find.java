@@ -15,7 +15,7 @@ public final class Find implements Transformer<String, Matcher> {
     private final TemplateMapper<Pattern> pattern;
 
     public Find(Parameters parameters) {
-        this.pattern = Context.newTemplateMapper(parameters.regexes, Pattern::compile);
+        pattern = Context.newTemplateMapper(parameters.regex, Pattern::compile);
     }
 
     @Override
@@ -28,14 +28,14 @@ public final class Find implements Transformer<String, Matcher> {
 
     public static class Parameters {
 
-        public TemplateParameters regexes;
+        public TemplateParameters regex;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(TemplateParameters regexes) {
-            this.regexes = regexes;
+        public Parameters(TemplateParameters regex) {
+            this.regex = regex;
         }
     }
 }
