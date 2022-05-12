@@ -2,12 +2,15 @@ package b.nana.technology.gingester.transformers.jetty.http;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Passthrough
 public final class SetStatus implements Transformer<Object, Object> {
+
+    private final FetchKey fetchHttpResponse = new FetchKey("http.response");
 
     private final int status;
 
@@ -18,7 +21,7 @@ public final class SetStatus implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch("http", "response").findFirst()
+        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
 
         response.setStatus(status);

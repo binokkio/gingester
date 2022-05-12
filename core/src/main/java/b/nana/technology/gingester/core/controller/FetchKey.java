@@ -9,7 +9,7 @@ public final class FetchKey {
     private final int ordinal;
     private final String[] names;
 
-    @JsonCreator
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public FetchKey(String fetch) {
         if (fetch.charAt(0) == '^') {
             isOrdinal = true;

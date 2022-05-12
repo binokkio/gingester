@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.unpack;
 
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.BiReceiver;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +31,7 @@ class UnpackTest {
                 getClass().getResourceAsStream("/test.tar.gz"),
                 (BiReceiver<InputStream>) (c, o) -> {
                     try {
-                        results.add(c.fetchReverse("description").map(s ->
+                        results.add(c.fetchReverse(new FetchKey("description")).map(s ->
                                 (String) s).collect(Collectors.joining(" :: ")) + " -> " + new String(o.readAllBytes()).trim());
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
@@ -61,7 +62,7 @@ class UnpackTest {
                 getClass().getResourceAsStream("/test.rar"),
                 (BiReceiver<InputStream>) (c, o) -> {
                     try {
-                        results.add(c.fetchReverse("description").map(s ->
+                        results.add(c.fetchReverse(new FetchKey("description")).map(s ->
                                 (String) s).collect(Collectors.joining(" :: ")) + " -> " + new String(o.readAllBytes()).trim());
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
