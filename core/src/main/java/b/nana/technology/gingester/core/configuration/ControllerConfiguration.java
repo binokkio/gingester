@@ -188,13 +188,12 @@ public final class ControllerConfiguration<I, O> {
                 fetchKey = fetchKey.decrement();
             }
         } else {
-            String[] names = fetchKey.getNames();
-            if (names.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
-            if (transformer instanceof InputStasher && (
-                    (names.length == 1 && ((InputStasher) transformer).getInputStashName().equals(names[0])) ||
-                    (names[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(names[1]))
-            )) {
-                return getActualInputType();
+            if (fetchKey.getNames().length == 0) return Map.class;
+            if (fetchKey.getNames().length > 1) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
+            if (!fetchKey.hasTarget() || fetchKey.getTarget().equals(id)) {
+                if (transformer instanceof InputStasher && ((InputStasher) transformer).getInputStashName().equals(fetchKey.getNames()[0])) {
+                    return getActualInputType();
+                }
             }
         }
 

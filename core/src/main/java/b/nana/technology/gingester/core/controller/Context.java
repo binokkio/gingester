@@ -95,9 +95,9 @@ public final class Context implements Iterable<Context> {
      * Fetch object(s) from stash.
      * <p>
      * Iterates through the transformers that contributed to this context, from last to first. Checks the stash each
-     * transformer provided for an object that matches the given name.
+     * transformer provided for an object that matches the given fetch key.
      * <p>
-     * The name is used to step through the layers of the stash. If a transformer stashed the following:
+     * The fetch key is used to step through the layers of the stash. If a transformer stashed the following:
      * <pre>
      * context.stash(Map.of(
      *     "foo", Map.of(
@@ -106,13 +106,15 @@ public final class Context implements Iterable<Context> {
      * ))
      * </pre>
      * <p>
-     * Then {@code context.fetch("foo", "bar").findFirst().orElseThrow()} would return 123.
+     * Then {@code context.fetch(new FetchKey("foo.bar")).findFirst().orElseThrow()} would return 123.
      * <p>
      * Fetch will step through instances of Map, List, and JsonNode.
      * <p>
-     * To steer fetch towards a specific transformer, the transformer id should be given as the first name.
+     * To steer fetch towards a specific transformer, the transformer id should be given as the first fetch key
+     * part, e.g. new FetchKey("Transformer.foo.bar").
      * <p>
-     * Passing 0 names will fetch all explicitly stashed values.
+     * Alternatively an ordinal fetch can be performed, using e.g. new FetchKey("^2"), which will fetch not the
+     * most recently stashed value but the one before that.
      *
      * @param fetchKey the stash to fetch
      * @return stream of stashes matching the given name
@@ -122,39 +124,34 @@ public final class Context implements Iterable<Context> {
             return stream()
                     .filter(c -> c.controller.transformer instanceof InputStasher)
                     .flatMap(c -> c.stash.values().stream())  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
-                    .skip(fetchKey.ordinal() - 1);
+                    .skip(fetchKey.ordinal() - 1);  // should actually have a .limit(1) here as well but assuming it will only be used with findFirst() for now
         } else {
-            return stream().flatMap(context -> {
-                        if (context.stash == null) {
-                            return Stream.empty();
-                        } else {
-                            // TODO require stash names to begin lowercase and controller ids uppercase, then this stream can be split in 2
-                            return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
-                                    .map(s -> {
-                                        Object result = s;
-                                        for (String n : fetchKey.getNames()) {
-                                            if (result instanceof Map) {
-                                                result = ((Map<?, ?>) result).get(n);
-                                            } else if (result instanceof List) {
-                                                result = ((List<?>) result).get(Integer.parseInt(n));
-                                            } else if (result instanceof JsonNode) {
-                                                JsonNode jsonNode = (JsonNode) result;
-                                                if (jsonNode.isObject()) {
-                                                    result = jsonNode.get(n);
-                                                } else if (jsonNode.isArray()) {
-                                                    result = jsonNode.get(Integer.parseInt(n));
-                                                } else {
-                                                    result = null;
-                                                }
-                                            } else {
-                                                return null;
-                                            }
-                                        }
-                                        return result;
-                                    })
-                                    .filter(Objects::nonNull);
+            return (fetchKey.hasTarget() ? stream().filter(c -> c.controller.id.equals(fetchKey.getTarget())) : stream())
+                    .map(c -> c.stash)
+                    .filter(Objects::nonNull)
+                    .map(s -> {
+                        Object result = s;
+                        for (String n : fetchKey.getNames()) {
+                            if (result instanceof Map) {
+                                result = ((Map<?, ?>) result).get(n);
+                            } else if (result instanceof List) {
+                                result = ((List<?>) result).get(Integer.parseInt(n));
+                            } else if (result instanceof JsonNode) {
+                                JsonNode jsonNode = (JsonNode) result;
+                                if (jsonNode.isObject()) {
+                                    result = jsonNode.get(n);
+                                } else if (jsonNode.isArray()) {
+                                    result = jsonNode.get(Integer.parseInt(n));
+                                } else {
+                                    result = null;
+                                }
+                            } else {
+                                return null;
+                            }
                         }
-                    });
+                        return result;
+                    })
+                    .filter(Objects::nonNull);
         }
     }
 
