@@ -22,16 +22,33 @@ public final class FetchKey {
         }
     }
 
-    boolean isOrdinal() {
+    public FetchKey(String fetch, boolean isSingleName) {
+        isOrdinal = false;
+        ordinal = 0;
+        names = new String[] { fetch };
+    }
+
+    public boolean isOrdinal() {
         return isOrdinal;
     }
 
-    int ordinal() {
+    public int ordinal() {
         return ordinal;
     }
 
-    String[] getNames() {
+    public FetchKey decrement() {
         if (!isOrdinal) {
+            throw new IllegalStateException("decrement() called on non-ordinal fetch key");
+        }
+        return new FetchKey("^" + (ordinal - 1));
+    }
+
+    public boolean hasNames() {
+        return !isOrdinal;
+    }
+
+    public String[] getNames() {
+        if (isOrdinal) {
             throw new IllegalStateException("getNames() called on ordinal fetch key");
         }
         return names;

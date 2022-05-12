@@ -24,7 +24,7 @@ class ContextTest {
                 .stash("stash", stash)
                 .buildForTesting();
 
-        String result = ((JsonNode) context.fetch("stash", "array", "0").findFirst().orElseThrow()).asText();
+        String result = ((JsonNode) context.fetch(new FetchKey("stash.array.0")).findFirst().orElseThrow()).asText();
         assertEquals("Hello, World!", result);
     }
 }

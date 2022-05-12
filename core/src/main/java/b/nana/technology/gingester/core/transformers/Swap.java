@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.core.transformer.OutputFetcher;
@@ -14,9 +15,16 @@ import java.util.NoSuchElementException;
 public final class Swap implements Transformer<Object, Object>, InputStasher, OutputFetcher {
 
     private final String name;
+    private final FetchKey fetchKey;
 
     public Swap(Parameters parameters) {
         name = parameters.name;
+        fetchKey = new FetchKey(name);
+        if (fetchKey.isOrdinal()) {
+            throw new IllegalArgumentException("Can't swap ordinal stash");
+        } else if (fetchKey.getNames().length > 1) {
+            throw new IllegalArgumentException("Can't swap nested stash");
+        }
     }
 
     @Override
@@ -25,15 +33,16 @@ public final class Swap implements Transformer<Object, Object>, InputStasher, Ou
     }
 
     @Override
-    public String[] getOutputStashName() {
-        return new String[] { name };
+    public FetchKey getOutputStashName() {
+        return fetchKey;
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
                 context.stash(name, in),
-                context.fetch(name).findFirst().orElseThrow(() -> new NoSuchElementException("Nothing stashed as \"" + String.join(".", name) + "\""))
+                context.fetch(fetchKey).findFirst()
+                        .orElseThrow(() -> new NoSuchElementException("Empty fetch for \"" + fetchKey + "\""))
         );
     }
 

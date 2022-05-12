@@ -25,9 +25,10 @@ public final class Merge implements Transformer<Object, Object> {
         this.parameters = parameters;
         for (Instruction instruction : parameters) {
             requireNonNull(instruction.fetch);
-            if (instruction.stash == null) instruction.stash = instruction.fetch.toString();
-            if (instruction.list && instruction.fetch.toString().equals(instruction.stash)) {
-                throw new IllegalStateException("`stash` must not be null or equal to `fetch` when `list` is true");
+            if (instruction.fetch.isOrdinal()) {
+                requireNonNull(instruction.stash);
+            } else if (instruction.stash == null) {
+                instruction.stash = instruction.fetch.toString();
             }
         }
     }
