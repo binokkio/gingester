@@ -128,6 +128,7 @@ public final class Context implements Iterable<Context> {
                         if (context.stash == null) {
                             return Stream.empty();
                         } else {
+                            // TODO require stash names to begin lowercase and controller ids uppercase, then this stream can be split in 2
                             return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
                                     .map(s -> {
                                         Object result = s;
