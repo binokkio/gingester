@@ -114,14 +114,15 @@ public final class Context implements Iterable<Context> {
      * <p>
      * Passing 0 names will fetch all explicitly stashed values.
      *
-     * @param name the stash name, e.g. {@code fetch("Path.Search", "description")};
+     * @param fetchKey the stash to fetch
      * @return stream of stashes matching the given name
      */
-    public Stream<Object> fetch(String... name) {
+    public Stream<Object> fetch(FetchKey fetchKey) {
+
         return stream().flatMap(context -> {
                     if (context.stash == null) {
                         return Stream.empty();
-                    } else if (name.length == 0) {
+                    } else if (fetchKey.getNames().length == 0) {
                         if (context.controller.transformer instanceof InputStasher) {
                             return context.stash.values().stream();  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
                         } else {
@@ -131,7 +132,7 @@ public final class Context implements Iterable<Context> {
                         return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
                                 .map(s -> {
                                     Object result = s;
-                                    for (String n : name) {
+                                    for (String n : fetchKey.getNames()) {
                                         if (result instanceof Map) {
                                             result = ((Map<?, ?>) result).get(n);
                                         } else if (result instanceof List) {
@@ -159,13 +160,13 @@ public final class Context implements Iterable<Context> {
     /**
      * Fetch object(s) from stash, reversed.
      *
-     * See {@link #fetch(String...)} for details.
+     * See {@link #fetch(FetchKey)} for details.
      *
-     * @param name the stash name, e.g. {@code fetch("Path.Search", "description")};
-     * @return the same as {@link #fetch(String...)}, but reversed.
+     * @param fetchKey the stash to fetch
+     * @return the same as {@link #fetch(FetchKey)}, but reversed.
      */
-    public Stream<Object> fetchReverse(String... name) {
-        List<Object> results = fetch(name).collect(Collectors.toCollection(ArrayList::new));
+    public Stream<Object> fetchReverse(FetchKey fetchKey) {
+        List<Object> results = fetch(fetchKey).collect(Collectors.toCollection(ArrayList::new));
         Collections.reverse(results);
         return results.stream();
     }

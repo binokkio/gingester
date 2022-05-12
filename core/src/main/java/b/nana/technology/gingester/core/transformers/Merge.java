@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.transformers;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -24,8 +25,8 @@ public final class Merge implements Transformer<Object, Object> {
         this.parameters = parameters;
         for (Instruction instruction : parameters) {
             requireNonNull(instruction.fetch);
-            if (instruction.stash == null) instruction.stash = instruction.fetch;
-            if (instruction.list && instruction.fetch.equals(instruction.stash)) {
+            if (instruction.stash == null) instruction.stash = instruction.fetch.toString();
+            if (instruction.list && instruction.fetch.toString().equals(instruction.stash)) {
                 throw new IllegalStateException("`stash` must not be null or equal to `fetch` when `list` is true");
             }
         }
@@ -78,7 +79,7 @@ public final class Merge implements Transformer<Object, Object> {
 
     public static class Instruction {
 
-        public String fetch;
+        public FetchKey fetch;
         public String stash;
         public boolean list;
 
@@ -86,7 +87,7 @@ public final class Merge implements Transformer<Object, Object> {
         public Instruction() {}
 
         @JsonCreator
-        public Instruction(String fetch) {
+        public Instruction(FetchKey fetch) {
             this.fetch = fetch;
         }
     }
