@@ -158,6 +158,13 @@ public final class Context implements Iterable<Context> {
     }
 
     /**
+     * Convenient but slower version of {@link #fetch(FetchKey)}.
+     */
+    public Stream<Object> fetch(String... fetchKey) {
+        return fetch(new FetchKey(String.join(".", fetchKey)));
+    }
+
+    /**
      * Fetch object(s) from stash, reversed.
      *
      * See {@link #fetch(FetchKey)} for details.
@@ -169,6 +176,13 @@ public final class Context implements Iterable<Context> {
         List<Object> results = fetch(fetchKey).collect(Collectors.toCollection(ArrayList::new));
         Collections.reverse(results);
         return results.stream();
+    }
+
+    /**
+     * Convenient but slower version of {@link #fetchReverse(FetchKey)}.
+     */
+    public Stream<Object> fetchReverse(String... fetchKey) {
+        return fetchReverse(new FetchKey(String.join(".", fetchKey)));
     }
 
     @Override
