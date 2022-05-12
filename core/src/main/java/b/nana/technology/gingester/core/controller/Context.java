@@ -118,43 +118,43 @@ public final class Context implements Iterable<Context> {
      * @return stream of stashes matching the given name
      */
     public Stream<Object> fetch(FetchKey fetchKey) {
-
-        return stream().flatMap(context -> {
-                    if (context.stash == null) {
-                        return Stream.empty();
-                    } else if (fetchKey.getNames().length == 0) {
-                        if (context.controller.transformer instanceof InputStasher) {
-                            return context.stash.values().stream();  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
-                        } else {
+        if (fetchKey.isOrdinal()) {
+            return stream()
+                    .filter(c -> c.controller.transformer instanceof InputStasher)
+                    .flatMap(c -> c.stash.values().stream())  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
+                    .skip(fetchKey.ordinal() - 1);
+        } else {
+            return stream().flatMap(context -> {
+                        if (context.stash == null) {
                             return Stream.empty();
-                        }
-                    } else {
-                        return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
-                                .map(s -> {
-                                    Object result = s;
-                                    for (String n : fetchKey.getNames()) {
-                                        if (result instanceof Map) {
-                                            result = ((Map<?, ?>) result).get(n);
-                                        } else if (result instanceof List) {
-                                            result = ((List<?>) result).get(Integer.parseInt(n));
-                                        } else if (result instanceof JsonNode) {
-                                            JsonNode jsonNode = (JsonNode) result;
-                                            if (jsonNode.isObject()) {
-                                                result = jsonNode.get(n);
-                                            } else if (jsonNode.isArray()) {
-                                                result = jsonNode.get(Integer.parseInt(n));
+                        } else {
+                            return Stream.of(context.stash, Map.of(context.controller.id, context.stash))
+                                    .map(s -> {
+                                        Object result = s;
+                                        for (String n : fetchKey.getNames()) {
+                                            if (result instanceof Map) {
+                                                result = ((Map<?, ?>) result).get(n);
+                                            } else if (result instanceof List) {
+                                                result = ((List<?>) result).get(Integer.parseInt(n));
+                                            } else if (result instanceof JsonNode) {
+                                                JsonNode jsonNode = (JsonNode) result;
+                                                if (jsonNode.isObject()) {
+                                                    result = jsonNode.get(n);
+                                                } else if (jsonNode.isArray()) {
+                                                    result = jsonNode.get(Integer.parseInt(n));
+                                                } else {
+                                                    result = null;
+                                                }
                                             } else {
-                                                result = null;
+                                                return null;
                                             }
-                                        } else {
-                                            return null;
                                         }
-                                    }
-                                    return result;
-                                })
-                                .filter(Objects::nonNull);
-                    }
-                });
+                                        return result;
+                                    })
+                                    .filter(Objects::nonNull);
+                        }
+                    });
+        }
     }
 
     /**

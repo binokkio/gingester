@@ -2,9 +2,9 @@ package b.nana.technology.gingester.transformers.base.transformers.map;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMapReduce;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformers.Fetch;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.HashMap;
@@ -16,11 +16,11 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
     private final ContextMapReduce<Map<Object, Object>> maps = new ContextMapReduce<>();
 
-    private final String[] valueStashName;
+    private final FetchKey fetchValue;
     private final boolean throwOnCollision;
 
     public Collect(Parameters parameters) {
-        valueStashName = Fetch.parseStashName(parameters.value);
+        fetchValue = parameters.value;
         throwOnCollision = parameters.throwOnCollision;
     }
 
@@ -31,7 +31,7 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Map<Object, Object>> out) throws Exception {
-        Optional<Object> value = context.fetch(valueStashName).findFirst();
+        Optional<Object> value = context.fetch(fetchValue).findFirst();
         if (value.isPresent()) {
             Map<Object, Object> map = maps.get(context);
             Object collision = map.put(in, value.get());
@@ -39,7 +39,7 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
                 throw new IllegalStateException("Key already present: " + in);
             }
         } else {
-            throw new NoSuchElementException("Empty value fetch: " + String.join(".", valueStashName));
+            throw new NoSuchElementException("Empty value fetch: " + fetchValue);
         }
     }
 
@@ -60,14 +60,14 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
     public static class Parameters {
 
-        public String value = "";
+        public FetchKey value = new FetchKey(1);
         public boolean throwOnCollision = false;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String value) {
+        public Parameters(FetchKey value) {
             this.value = value;
         }
     }

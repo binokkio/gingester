@@ -22,10 +22,20 @@ public final class FetchKey {
         }
     }
 
+    public FetchKey(int ordinal) {
+        this.isOrdinal = true;
+        this.ordinal = ordinal;
+        this.names = null;
+    }
+
     public FetchKey(String fetch, boolean isSingleName) {
-        isOrdinal = false;
-        ordinal = 0;
-        names = new String[] { fetch };
+        if (isSingleName) {
+            isOrdinal = false;
+            ordinal = 0;
+            names = new String[] { fetch };
+        } else {
+            throw new IllegalArgumentException("Use FetchKey(String) constructor instead");
+        }
     }
 
     public boolean isOrdinal() {

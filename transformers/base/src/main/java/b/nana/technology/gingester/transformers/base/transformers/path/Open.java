@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers.path;
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamMonitor;
@@ -18,6 +19,8 @@ import java.util.Optional;
 @Pure
 public final class Open implements Transformer<Path, InputStream> {
 
+    private final FetchKey fetchMonitor = new FetchKey("monitor");
+
     @Override
     public void setup(SetupControls controls) {
         controls.requireOutgoingSync();
@@ -26,7 +29,7 @@ public final class Open implements Transformer<Path, InputStream> {
     @Override
     public void transform(Context context, Path in, Receiver<InputStream> out) throws Exception {
         try (InputStream inputStream = Files.newInputStream(in)) {
-            Optional<Object> monitor = context.fetch("monitor").findFirst();
+            Optional<Object> monitor = context.fetch(fetchMonitor).findFirst();
             if (monitor.isPresent()) {
                 out.accept(context, new InputStreamWrapper(inputStream, (OutputStreamMonitor) monitor.get()));
             } else {
