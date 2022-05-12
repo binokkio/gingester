@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.jetty.http;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.auth0.jwt.JWT;
@@ -30,6 +31,11 @@ public final class Keycloak implements Transformer<Object, Object> {
 
     private final Map<UUID, Map<String, JsonNode>> sessions = new ConcurrentHashMap<>();
 
+    private final FetchKey fetchHttpResponse = new FetchKey("http.response");
+    private final FetchKey fetchHttpRequestPath = new FetchKey("http.request.path");
+    private final FetchKey fetchHttpQueryCode = new FetchKey("http.query.code");
+    private final FetchKey fetchHttpRequestCookiesCookieName;
+
     private final String authUrl;
     private final String tokenUrl;
     private final String redirectUrl;
@@ -43,15 +49,17 @@ public final class Keycloak implements Transformer<Object, Object> {
         clientId = parameters.clientId;
         redirectUrl = stripTrailingSlash(parameters.redirectUrl);
         cookieName = parameters.cookieName;
+
+        fetchHttpRequestCookiesCookieName = new FetchKey("http.request.cookies." + cookieName);
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch("http", "response").findFirst()
+        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
 
-        Cookie cookie = (Cookie) context.fetch("http", "request", "cookies", cookieName)
+        Cookie cookie = (Cookie) context.fetch(fetchHttpRequestCookiesCookieName)
                 .findFirst()
                 .orElseGet(() -> new Cookie(cookieName, UUID.randomUUID().toString()));
 
@@ -60,7 +68,7 @@ public final class Keycloak implements Transformer<Object, Object> {
 
         UUID sessionId = UUID.fromString(cookie.getValue());
 
-        Optional<Object> optionalCode = context.fetch("http", "request", "query", "code").findFirst();
+        Optional<Object> optionalCode = context.fetch(fetchHttpQueryCode).findFirst();
         if (optionalCode.isPresent()) {
 
             String tokenRequestBody = String.format(
@@ -94,7 +102,7 @@ public final class Keycloak implements Transformer<Object, Object> {
     }
 
     private String getRedirectUrl(Context context) {
-        return redirectUrl + context.fetch("http", "request", "path").findFirst().orElseThrow();
+        return redirectUrl + context.fetch(fetchHttpRequestPath).findFirst().orElseThrow();
     }
 
     private static String stripTrailingSlash(String input) {

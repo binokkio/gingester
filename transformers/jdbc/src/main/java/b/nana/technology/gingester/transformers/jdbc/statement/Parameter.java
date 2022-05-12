@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.transformers.jdbc.statement;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.transformers.Fetch;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.transformers.jdbc.JdbcTransformer;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,20 +18,20 @@ public final class Parameter {
     private final PreparedStatement preparedStatement;
 
     private final int index;
-    private final String[] stash;
+    private final FetchKey fetchValue;
 //    private final String type;
 //    private final JsonNode instructions;
 
     public Parameter(PreparedStatement preparedStatement, int index, JdbcTransformer.Parameters.Statement.Parameter parameter) throws SQLException {
         this.preparedStatement = preparedStatement;
         this.index = index;
-        this.stash = Fetch.parseStashName(parameter.stash);
+        this.fetchValue = new FetchKey(parameter.stash);
 //        this.type = preparedStatement.getParameterMetaData().getParameterTypeName(index);
 //        this.instructions = parameter.instructions;
     }
 
     void update(Context context) throws SQLException {
-        Object value = context.fetch(stash).findFirst().orElseThrow();
+        Object value = context.fetch(fetchValue).findFirst().orElseThrow();
         if (value instanceof JsonNode) {
             preparedStatement.setObject(index, OBJECT_MAPPER.convertValue(value, OBJECT_TYPE));
         } else {

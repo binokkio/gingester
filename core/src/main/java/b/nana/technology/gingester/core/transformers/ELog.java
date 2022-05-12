@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import org.slf4j.Logger;
@@ -14,6 +15,9 @@ public final class ELog implements Transformer<Exception, Exception> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
 
+    private final FetchKey fetchMethod = new FetchKey("method");
+    private final FetchKey fetchDescription = new FetchKey("description");
+
     @Override
     public void transform(Context context, Exception in, Receiver<Exception> out) {
 
@@ -24,9 +28,9 @@ public final class ELog implements Transformer<Exception, Exception> {
                     .append(" during ")
                     .append(context.getTransformerId())
                     .append("::")
-                    .append(context.fetch("method").findFirst().orElseThrow());
+                    .append(context.fetch(fetchMethod).findFirst().orElseThrow());
 
-            String description = context.fetchReverse("description").map(Object::toString).collect(Collectors.joining(" :: "));
+            String description = context.fetchReverse(fetchDescription).map(Object::toString).collect(Collectors.joining(" :: "));
             if (!description.isEmpty()) {
                 message
                         .append(" of ")

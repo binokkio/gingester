@@ -2,37 +2,36 @@ package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import static java.util.Objects.requireNonNull;
+
 @Names(1)
 public final class FetchAll implements Transformer<Object, Object> {  // TODO implement OutputFetcher and support @Pure bridges
 
-    public static String[] parseStashName(String name) {
-        return name.split("\\.");  // TODO support escape sequence
-    }
-
-    private final String[] name;
+    private final FetchKey fetchKey;
 
     public FetchAll(Parameters parameters) {
-        name = parseStashName(parameters.stash);
+        fetchKey = requireNonNull(parameters.stash);
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-        context.fetch(name).forEach(item -> out.accept(context, item));
+        context.fetch(fetchKey).forEach(item -> out.accept(context, item));
     }
 
     public static class Parameters {
 
-        public String stash = "stash";
+        public FetchKey stash = new FetchKey("stash");
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String stash) {
+        public Parameters(FetchKey stash) {
             this.stash = stash;
         }
     }

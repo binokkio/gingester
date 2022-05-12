@@ -3,10 +3,10 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformers.Fetch;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.AbstractMap;
@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 
 public final class Route implements Transformer<String, Object>, OutputFetcher {
 
-    private final String[] fetch;
+    private final FetchKey fetch;
     private final LinkedHashMap<Pattern, String> routes;
 
     public Route(Parameters parameters) {
-        fetch = Fetch.parseStashName(parameters.fetch);
+        fetch = parameters.fetch;
         routes = parameters.routes.entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(Pattern.compile(e.getKey()), e.getValue()))
                 .collect(Collectors.toMap(
@@ -35,7 +35,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
     }
 
     @Override
-    public String[] getOutputStashName() {
+    public FetchKey getOutputStashName() {
         return fetch;
     }
 
@@ -68,7 +68,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
             }
         }
 
-        public String fetch = "";
+        public FetchKey fetch = new FetchKey(1);
         public LinkedHashMap<String, String> routes;
     }
 }

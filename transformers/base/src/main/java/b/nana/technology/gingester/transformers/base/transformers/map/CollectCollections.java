@@ -2,9 +2,9 @@ package b.nana.technology.gingester.transformers.base.transformers.map;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMapReduce;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformers.Fetch;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.Collection;
@@ -18,10 +18,10 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
 
     private final ContextMapReduce<Map<Object, T>> maps = new ContextMapReduce<>();
 
-    private final String[] valueStashName;
+    private final FetchKey fetchValue;
 
     public CollectCollections(Parameters parameters) {
-        valueStashName = Fetch.parseStashName(parameters.value);
+        fetchValue = parameters.value;
     }
 
     protected abstract T supply();
@@ -35,14 +35,14 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
 
     @Override
     public void transform(Context context, Object in, Receiver<Map<Object, T>> out) throws Exception {
-        Optional<Object> value = context.fetch(valueStashName).findFirst();
+        Optional<Object> value = context.fetch(fetchValue).findFirst();
         if (value.isPresent()) {
             add(
                     maps.get(context).computeIfAbsent(in, x -> supply()),
                     value.get()
             );
         } else {
-            throw new NoSuchElementException("Empty value fetch: " + String.join(".", valueStashName));
+            throw new NoSuchElementException("Empty value fetch: " + fetchValue);
         }
     }
 
@@ -60,13 +60,13 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
 
     public static class Parameters {
 
-        public String value = "";
+        public FetchKey value = new FetchKey(1);
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String value) {
+        public Parameters(FetchKey value) {
             this.value = value;
         }
     }

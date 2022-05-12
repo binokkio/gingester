@@ -2,13 +2,19 @@ package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.annotations.Passthrough;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import net.jodah.typetools.TypeResolver;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -174,20 +180,29 @@ public final class ControllerConfiguration<I, O> {
         return getCommonSuperClass(inputTypes);
     }
 
-    private Class<?> getStashType(String[] name) {
-        if (name.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
-        if (transformer instanceof InputStasher && (
-                name.length == 0 ||
-                (name.length == 1 && ((InputStasher) transformer).getInputStashName().equals(name[0])) ||
-                (name[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(name[1]))
-        )) {
-            return getActualInputType();
+    private Class<?> getStashType(FetchKey fetchKey) {
+
+        if (fetchKey.isOrdinal()) {
+            if (transformer instanceof InputStasher) {
+                if (fetchKey.ordinal() == 1) return getActualInputType();
+                fetchKey = fetchKey.decrement();
+            }
         } else {
-            return getCommonSuperClass(gingester.getControllers().values().stream()
-                    .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
-                    .map(c -> c.getStashType(name))
-                    .collect(Collectors.toList()));
+            String[] names = fetchKey.getNames();
+            if (names.length > 2) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
+            if (transformer instanceof InputStasher && (
+                    (names.length == 1 && ((InputStasher) transformer).getInputStashName().equals(names[0])) ||
+                    (names[0].equals(id) && ((InputStasher) transformer).getInputStashName().equals(names[1]))
+            )) {
+                return getActualInputType();
+            }
         }
+
+        FetchKey localFetchKey = fetchKey;
+        return getCommonSuperClass(gingester.getControllers().values().stream()
+                .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
+                .map(c -> c.getStashType(localFetchKey))
+                .collect(Collectors.toList()));
     }
 
     static Class<?> getCommonSuperClass(List<Class<?>> classes) {
