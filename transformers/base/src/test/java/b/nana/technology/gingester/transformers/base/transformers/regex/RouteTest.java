@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ class RouteTest {
         routes.put(".*", "catch-all");
 
         Route.Parameters parameters = new Route.Parameters();
-        parameters.fetch = "value";
+        parameters.fetch = new FetchKey("value");
         parameters.routes = routes;
 
         Context context = Context.newTestContext().stash("value", "routed value").buildForTesting();

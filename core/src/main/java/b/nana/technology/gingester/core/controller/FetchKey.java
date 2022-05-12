@@ -1,0 +1,72 @@
+package b.nana.technology.gingester.core.controller;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+public final class FetchKey {
+
+    private final boolean isOrdinal;
+    private final int ordinal;
+    private final String[] names;
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public FetchKey(String fetch) {
+        if (fetch.charAt(0) == '^') {
+            isOrdinal = true;
+            ordinal = Integer.parseInt(fetch.substring(1));
+            names = null;
+        } else {
+            names = fetch.split("\\.");
+            isOrdinal = false;
+            ordinal = 0;
+        }
+    }
+
+    public FetchKey(int ordinal) {
+        this.isOrdinal = true;
+        this.ordinal = ordinal;
+        this.names = null;
+    }
+
+    public FetchKey(String fetch, boolean isSingleName) {
+        if (isSingleName) {
+            isOrdinal = false;
+            ordinal = 0;
+            names = new String[] { fetch };
+        } else {
+            throw new IllegalArgumentException("Use FetchKey(String) constructor instead");
+        }
+    }
+
+    public boolean isOrdinal() {
+        return isOrdinal;
+    }
+
+    public int ordinal() {
+        return ordinal;
+    }
+
+    public FetchKey decrement() {
+        if (!isOrdinal) {
+            throw new IllegalStateException("decrement() called on non-ordinal fetch key");
+        }
+        return new FetchKey("^" + (ordinal - 1));
+    }
+
+    public boolean hasNames() {
+        return !isOrdinal;
+    }
+
+    public String[] getNames() {
+        if (isOrdinal) {
+            throw new IllegalStateException("getNames() called on ordinal fetch key");
+        }
+        return names;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return isOrdinal ? "^" + ordinal : String.join(".", names);
+    }
+}

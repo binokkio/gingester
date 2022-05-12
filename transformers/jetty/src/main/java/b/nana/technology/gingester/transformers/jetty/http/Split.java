@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.jetty.http;
 
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.PrefixInputStream;
@@ -22,10 +23,12 @@ public final class Split implements Transformer<InputStream, InputStream> {
     private static final Pattern NAME_PATTERN = Pattern.compile("[; ]name=\"(.*?)\"");
     private static final Pattern FILENAME_PATTERN = Pattern.compile("[; ]filename=\"(.*?)\"");
 
+    private final FetchKey fetchHttpRequestHeadersContentType = new FetchKey("http.request.headers.Content-Type");
+
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
 
-        String contentType = (String) context.fetch("http", "request", "headers", "Content-Type").findFirst().orElseThrow(
+        String contentType = (String) context.fetch(fetchHttpRequestHeadersContentType).findFirst().orElseThrow(
                 () -> new IllegalStateException("Can't split stream without Content-Type header"));
 
         Matcher boundaryMatcher = BOUNDARY_PATTERN.matcher(contentType);
