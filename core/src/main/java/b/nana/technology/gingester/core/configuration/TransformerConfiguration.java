@@ -22,6 +22,10 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
 
 
     public TransformerConfiguration id(String id) {
+
+        if (!Character.isUpperCase(id.charAt(0)))
+            throw new IllegalArgumentException("Transformer id must start with an uppercase character: " + id);
+
         this.id = id;
         return this;
     }

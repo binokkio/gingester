@@ -15,6 +15,10 @@ public final class Stash implements Transformer<Object, Object>, InputStasher {
     private final String name;
 
     public Stash(Parameters parameters) {
+
+        if (!Character.isLowerCase(parameters.name.charAt(0)))
+            throw new IllegalArgumentException("Stash name must start with lowercase character: " + parameters.name);
+
         name = parameters.name;
     }
 
