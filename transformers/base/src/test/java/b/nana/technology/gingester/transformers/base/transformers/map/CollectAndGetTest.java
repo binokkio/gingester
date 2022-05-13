@@ -55,7 +55,6 @@ class CollectAndGetTest {
                 "-t JsonPath $.reference " +
                 "-t JsonAsLong " +
                 "-t MapGet map " +
-                "-w " +
                 "-t JsonSet lookup");
 
         gingester.attach(results::add);
