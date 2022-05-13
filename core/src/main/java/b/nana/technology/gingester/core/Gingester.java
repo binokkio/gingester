@@ -444,6 +444,7 @@ public final class Gingester {
     }
 
     private String getId(TransformerConfiguration configuration) {
+        // TODO consolidate this id getter with the one in the CliParser
         if (configuration.getId().isPresent()) {
             String id = configuration.getId().get();
             if (transformerConfigurations.containsKey(id)) {

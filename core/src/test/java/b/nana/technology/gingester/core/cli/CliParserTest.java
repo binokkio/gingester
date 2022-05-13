@@ -1,11 +1,13 @@
 package b.nana.technology.gingester.core.cli;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -116,5 +118,25 @@ class CliParserTest {
     void testMissingCliTemplateParameterThrowsVariant2() {
         Exception e = assertThrows(Exception.class, () -> CliParser.parse(CliSplitter.split("-cr hello-target.cli '{}'")));
         assertTrue(e.getMessage().startsWith("The following has evaluated to null or missing:"));
+    }
+
+    @Test
+    void testSyncUsesIds() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester("" +
+                "-t Generate one " +
+                "-s s1 " +
+                "-t Generate two " +
+                "-s s2 " +
+                "-t Generate three " +
+                "-sft Stash s3 " +
+                "-stt OnFinish " +
+                "-f s2")
+                .attach(result::set)
+                .run();
+
+        assertEquals("two", result.get());
     }
 }

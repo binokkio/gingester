@@ -22,7 +22,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.createCliTemplate;
@@ -61,6 +63,7 @@ public final class CliParser {
     public static GingesterConfiguration parse(String[] args) {
 
         GingesterConfiguration configuration = new GingesterConfiguration();
+        Set<String> ids = new HashSet<>();
 
         List<String> syncFrom = List.of("__seed__");
         TransformerConfiguration previous = null;
@@ -215,9 +218,25 @@ public final class CliParser {
                         if (parts.length == 1) {
                             name = parts[0];
                         } else {
-                            transformer.id(parts[0]);
-                            name = parts[1];
+                            String id = parts[0];
+                            if (ids.contains(id)) {
+                                throw new IllegalStateException("Id already in use: " + id);
+                            } else {
+                                ids.add(id);
+                                transformer.id(id);
+                                name = parts[1];
+                            }
                         }
+                    }
+
+                    if (transformer.getId().isEmpty()) {
+                        String id = name;
+                        int counter = 1;
+                        while (ids.contains(id)) {
+                            id = name + '_' + counter++;
+                        }
+                        ids.add(id);
+                        transformer.id(id);
                     }
 
                     ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
@@ -239,7 +258,7 @@ public final class CliParser {
                     }
 
                     if (syncTo) transformer.syncs(syncFrom);
-                    if (markSyncFrom) syncFrom = List.of(transformer.getId().orElseGet(() -> transformer.getName().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given"))));
+                    if (markSyncFrom) syncFrom = List.of(transformer.getId().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given")));
 
                     previous = transformer;
 
