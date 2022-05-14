@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.cli.CliParser;
+import b.nana.technology.gingester.core.cli.Target;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
@@ -40,16 +41,24 @@ public final class Gingester {
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    private Integer reportingIntervalSeconds;
-    private boolean debugMode;
-    private boolean shutdownHook;
     private TransformerConfiguration last;
     private List<String> syncFrom = List.of("__seed__");
 
+    private int reportIntervalSeconds;
+    private boolean debugMode;
+    private boolean shutdownHook;
+
     /**
-     * Construct an empty Gingester.
+     * Construct Gingester.
      */
     public Gingester() {
+
+        TransformerConfiguration elog = new TransformerConfiguration();
+        elog.id("__elog__");
+        elog.transformer(new ELog());
+        elog.links(Collections.emptyList());
+        add(elog);
+
         TransformerConfiguration seed = new TransformerConfiguration();
         seed.id("__seed__");
         seed.transformer(new Passthrough());
@@ -60,9 +69,20 @@ public final class Gingester {
 
     /**
      * Add cli instructions.
+     *
+     * @param cli cli instructions template
+     * @return this gingester
+     */
+    public Gingester cli(String[] cli) {
+        CliParser.parse(Target.create(this), cli);
+        return this;
+    }
+
+    /**
+     * Add cli instructions.
      * <p>
-     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
-     * and square-bracket-interpolation syntax.
+     * The given cli string will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
      * @return this gingester
@@ -75,23 +95,23 @@ public final class Gingester {
     /**
      * Add cli instructions.
      * <p>
-     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
-     * and square-bracket-interpolation syntax.
+     * The given cli string will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
      * @param parameters the parameters for the template, e.g. a Java Map
      * @return this gingester
      */
     public Gingester cli(String cli, Object parameters) {
-        CliParser.parse(this, cli, parameters);
+        CliParser.parse(Target.create(this), cli, parameters);
         return this;
     }
 
     /**
      * Add cli instructions.
      * <p>
-     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
-     * square-bracket-tag and square-bracket-interpolation syntax.
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using
+     * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
      * @return this gingester
@@ -104,15 +124,15 @@ public final class Gingester {
     /**
      * Add cli instructions.
      * <p>
-     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
-     * square-bracket-tag and square-bracket-interpolation syntax.
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using
+     * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
      * @param parameters the parameters for the template, e.g. a Java Map
      * @return this gingester
      */
     public Gingester cli(URL cli, Object parameters) {
-        CliParser.parse(this, cli, parameters);
+        CliParser.parse(Target.create(this), cli, parameters);
         return this;
     }
 
@@ -135,8 +155,21 @@ public final class Gingester {
     }
 
     /**
+     * Get the "last" transformer configuration.
+     *
+     * The last transformer configuration is the last one that resulted from the most recent call to `add` or
+     * `cli`.
+     *
+     * @return the "last" transformer configuration
+     */
+    public TransformerConfiguration getLastTransformer() {
+        return last;
+    }
+
+    /**
      * Attach consumer to the "last" transformer.
      *
+     * @see #getLastTransformer()
      * @param <T> the consumer type
      * @param consumer the consumer
      * @return this gingester
@@ -161,6 +194,7 @@ public final class Gingester {
     /**
      * Attach bi-consumer to the "last" transformer.
      *
+     * @see #getLastTransformer()
      * @param <T> the bi-consumer type
      * @param biConsumer the bi-consumer
      * @return this gingester
@@ -190,7 +224,7 @@ public final class Gingester {
                 .isNeverMaybeNext(true)
                 .links(Collections.emptyList());
 
-        String id = add(attach);
+        String id = add(attach, false);
 
         TransformerConfiguration target = transformerConfigurations.get(targetId);
         List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
@@ -200,40 +234,65 @@ public final class Gingester {
         return this;
     }
 
-
-
-
-
-
-
-    public void setReportingIntervalSeconds(Integer reportingIntervalSeconds) {
-        this.reportingIntervalSeconds = reportingIntervalSeconds;
+    /**
+     * Set report interval in seconds.
+     *
+     * When set Gingester will report flow details at the given interval.
+     * Set 0 to disable reporting.
+     *
+     * @param reportIntervalSeconds the interval at which to report, or 0 to disable reporting
+     * @return this gingester
+     */
+    public Gingester setReportIntervalSeconds(int reportIntervalSeconds) {
+        this.reportIntervalSeconds = reportIntervalSeconds;
+        return this;
     }
 
-    public boolean hasReportingInterval() {
-        return reportingIntervalSeconds != null;
-    }
-
-    public void enableDebugMode() {
+    /**
+     * Enable debug mode.
+     *
+     * When enabled Gingester will not optimize transformers out of the context stack and will therefore
+     * produce more detailed transform traces.
+     *
+     * @return this gingester
+     */
+    public Gingester enableDebugMode() {
         debugMode = true;
+        return this;
     }
 
-    public void enableShutdownHook() {
+    /**
+     * Enable the shutdown hook.
+     *
+     * When enabled Gingester will register a virtual-machine shutdown hook. When the hook is triggered
+     * Gingester will attempt to stop the flow gracefully.
+     *
+     * @return this gingester
+     */
+    public Gingester enableShutdownHook() {
         shutdownHook = true;
+        return this;
     }
 
-    public List<TransformerConfiguration> getTransformers() {
-        return transformerConfigurations.values().stream().filter(c -> !c.getId().orElseThrow().startsWith("__")).collect(Collectors.toList());
-    }
-
-    public TransformerConfiguration getLast() {
-        return last;
-    }
-
+    /**
+     * Get the most recently set sync-from ids.
+     *
+     * Available to conveniently allow this build state to persist across `cli` calls.
+     *
+     * @return the most recently set sync from marks
+     */
     public List<String> getSyncFrom() {
         return syncFrom;
     }
 
+    /**
+     * Set new sync-from ids.
+     *
+     * Available to conveniently allow this build state to persist across `cli` calls.
+     *
+     * @param syncFrom sync-from ids
+     * @return this gingester
+     */
     public Gingester setSyncFrom(List<String> syncFrom) {
         this.syncFrom = syncFrom;
         return this;
@@ -246,7 +305,7 @@ public final class Gingester {
      * <ul>
      * <li>call {@link Transformer#setup(SetupControls)} on all transformers
      * <li>consolidate the transformer setup controls with the transformer configurations
-     * <li>create a seed transformer with id __seed__ and link it to all transformers with no incoming links
+     * <li>link the seed transformer to all transformers with no incoming links
      * <li>start the workers for each transformer
      * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
      * <li>give the seed controller a single input, which it will pass through to its links
@@ -257,8 +316,8 @@ public final class Gingester {
      */
     public void run() {
         configure();
+        setupElog();
         setupSeed();
-        setupExceptionLogger();
         explore("__seed__", "__seed__", new ArrayDeque<>(), false);
         align();
         initialize();
@@ -302,7 +361,7 @@ public final class Gingester {
 
     private void configure() {
 
-        if (transformerConfigurations.isEmpty()) {
+        if (transformerConfigurations.keySet().stream().filter(id -> !id.startsWith("__")).findAny().isEmpty()) {
             throw new IllegalStateException("No transformers configured");
         }
 
@@ -326,9 +385,19 @@ public final class Gingester {
 
         if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
             configurations.values().stream()
+                    .filter(c -> !c.getId().startsWith("__"))
                     .filter(c -> c.getLinks().isEmpty())
                     .forEach(c -> c.report(true));
         }
+    }
+
+    private void setupElog() {
+        configurations.values()
+                .stream().flatMap(c -> c.getExcepts().stream())
+                .map(configurations::get)
+                .filter(c -> !c.getId().equals("__elog__"))
+                .filter(c -> c.getExcepts().isEmpty())
+                .forEach(c -> c.excepts(Collections.singletonList("__elog__")));
     }
 
     private void setupSeed() {
@@ -339,22 +408,9 @@ public final class Gingester {
                 .forEach(noIncoming::remove);
         ControllerConfiguration<?, ?> seedConfiguration = configurations.get("__seed__");
         List<String> seedLinks = new ArrayList<>(seedConfiguration.getLinks().values());
-        seedLinks.addAll(noIncoming.isEmpty() ? configurations.keySet() : noIncoming);
+        seedLinks.addAll(noIncoming.isEmpty() ? configurations.keySet() : noIncoming);  // link seed with everything if noIncoming is empty for circular route detection
         seedLinks.remove("__seed__");
         seedConfiguration.links(seedLinks);
-    }
-
-    private void setupExceptionLogger() {
-        configurations.put("__elog__", new ControllerConfiguration<Exception, Exception>(new ControllerConfigurationInterface())
-                .id("__elog__")
-                .transformer(new ELog()));
-
-        configurations.values()
-                .stream().flatMap(c -> c.getExcepts().stream())
-                .map(configurations::get)
-                .filter(c -> !c.getId().equals("__elog__"))
-                .filter(c -> c.getExcepts().isEmpty())
-                .forEach(c -> c.excepts(Collections.singletonList("__elog__")));
     }
 
     private void explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge) {
@@ -476,8 +532,8 @@ public final class Gingester {
         }
 
         Reporter reporter = null;
-        if (reportingIntervalSeconds != null && reportingIntervalSeconds > 0) {
-            reporter = new Reporter(reportingIntervalSeconds, controllers.values());
+        if (reportIntervalSeconds > 0) {
+            reporter = new Reporter(reportIntervalSeconds, controllers.values());
             reporter.start();
         }
 
@@ -495,7 +551,6 @@ public final class Gingester {
     }
 
     private String getId(TransformerConfiguration configuration) {
-        // TODO consolidate this id getter with the one in the CliParser
         if (configuration.getId().isPresent()) {
             String id = configuration.getId().get();
             if (transformerConfigurations.containsKey(id)) {

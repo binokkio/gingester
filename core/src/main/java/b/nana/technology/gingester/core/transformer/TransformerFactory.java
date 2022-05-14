@@ -1,12 +1,12 @@
 package b.nana.technology.gingester.core.transformer;
 
-import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.cli.CliSplitter;
+import b.nana.technology.gingester.core.cli.Target;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
@@ -270,7 +270,7 @@ public final class TransformerFactory {
         if (example.test()) {
             String cli = getExampleCli(uniqueName, example);
             try {
-                CliParser.parse(new Gingester(), CliSplitter.split("-t " + uniqueName + " " + example.example()));
+                CliParser.parse(Target.createDummy(), CliSplitter.split("-t " + uniqueName + " " + example.example()));
             } catch (Exception e) {
                 return Optional.of(new CheckExampleException(cli, e));
             }

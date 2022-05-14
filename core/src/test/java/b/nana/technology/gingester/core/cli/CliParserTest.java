@@ -14,110 +14,116 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CliParserTest {
 
+    private DummyTarget parse(String cli) {
+        DummyTarget dummyTarget = new DummyTarget();
+        CliParser.parse(dummyTarget, CliSplitter.split(cli));
+        return dummyTarget;
+    }
+
     @Test
     void testTransformer() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-t Stash"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
+        DummyTarget result = parse("-t Stash");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
     }
 
     @Test
     void testClosedCommentBlock() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-t Stash ++ -t Fetch -foo -bar ++ -t Passthrough"));
-        assertEquals(2, gingester.getTransformers().size());
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals("Passthrough", gingester.getTransformers().get(1).getName().orElseThrow());
+        DummyTarget result = parse("-t Stash ++ -t Fetch -foo -bar ++ -t Passthrough");
+        assertEquals(2, result.getTransformers().size());
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals("Passthrough", result.getTransformers().get(1).getName().orElseThrow());
     }
 
     @Test
     void testUnclosedCommentBlock() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-t Stash ++ -t Fetch"));
-        assertEquals(1, gingester.getTransformers().size());
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
+        DummyTarget result = parse("-t Stash ++ -t Fetch");
+        assertEquals(1, result.getTransformers().size());
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
     }
 
     @Test
     void testTransformerWithId() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-t StashId:Stash"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals("StashId", gingester.getTransformers().get(0).getId().orElseThrow());
+        DummyTarget result = parse("-t StashId:Stash");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals("StashId", result.getTransformers().get(0).getId().orElseThrow());
     }
 
     @Test
     void testTerminalTransformer() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-t Stash --"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals(Optional.of(Collections.emptyList()), gingester.getTransformers().get(0).getLinks());
+        DummyTarget result = parse("-t Stash --");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals(Optional.of(Collections.emptyList()), result.getTransformers().get(0).getLinks());
     }
 
     @Test
     void testSyncToTransformer() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-stt Stash"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals(Collections.singletonList("__seed__"), gingester.getTransformers().get(0).getSyncs().orElseThrow());
+        DummyTarget result = parse("-stt Stash");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals(Collections.singletonList("__seed__"), result.getTransformers().get(0).getSyncs().orElseThrow());
     }
 
     @Test
     void testSyncFromTransformer() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-sft Stash -stt Fetch"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals(Optional.empty(), gingester.getTransformers().get(0).getSyncs());
-        assertEquals("Fetch", gingester.getTransformers().get(1).getName().orElseThrow());
-        assertEquals(Collections.singletonList("Stash"), gingester.getTransformers().get(1).getSyncs().orElseThrow());
+        DummyTarget result = parse("-sft Stash -stt Fetch");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals(Optional.empty(), result.getTransformers().get(0).getSyncs());
+        assertEquals("Fetch", result.getTransformers().get(1).getName().orElseThrow());
+        assertEquals(Collections.singletonList("Stash"), result.getTransformers().get(1).getSyncs().orElseThrow());
     }
 
     @Test
     void testSyncFromTransformerWithId() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-sft StashId:Stash -stt Fetch"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals("StashId", gingester.getTransformers().get(0).getId().orElseThrow());
-        assertEquals(Optional.empty(), gingester.getTransformers().get(0).getSyncs());
-        assertEquals("Fetch", gingester.getTransformers().get(1).getName().orElseThrow());
-        assertEquals(Collections.singletonList("StashId"), gingester.getTransformers().get(1).getSyncs().orElseThrow());
+        DummyTarget result = parse("-sft StashId:Stash -stt Fetch");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals("StashId", result.getTransformers().get(0).getId().orElseThrow());
+        assertEquals(Optional.empty(), result.getTransformers().get(0).getSyncs());
+        assertEquals("Fetch", result.getTransformers().get(1).getName().orElseThrow());
+        assertEquals(Collections.singletonList("StashId"), result.getTransformers().get(1).getSyncs().orElseThrow());
     }
 
     @Test
     void testLinks() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-t Stash -l A B C"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals(Arrays.asList("A", "B", "C"), gingester.getTransformers().get(0).getLinks().orElseThrow());
+        DummyTarget result = parse("-t Stash -l A B C");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals(Arrays.asList("A", "B", "C"), result.getTransformers().get(0).getLinks().orElseThrow());
     }
 
     @Test
     void testFetch() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-f"));
-        assertEquals("Fetch", gingester.getTransformers().get(0).getName().orElseThrow());
+        DummyTarget result = parse("-f");
+        assertEquals("Fetch", result.getTransformers().get(0).getName().orElseThrow());
     }
 
     @Test
     void testStash() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-s"));
-        assertEquals("Stash", gingester.getTransformers().get(0).getName().orElseThrow());
+        DummyTarget result = parse("-s");
+        assertEquals("Stash", result.getTransformers().get(0).getName().orElseThrow());
     }
 
     @Test
     void testSwap() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-w"));
-        assertEquals("Swap", gingester.getTransformers().get(0).getName().orElseThrow());
+        DummyTarget result = parse("-w");
+        assertEquals("Swap", result.getTransformers().get(0).getName().orElseThrow());
     }
 
     @Test
     void testExceptionLinking() {
-        Gingester gingester = CliParser.parse(CliSplitter.split("-e Stash -t Monkey 1 -- -t Stash"));
-        assertEquals(2, gingester.getTransformers().size());
-        assertEquals("Monkey", gingester.getTransformers().get(0).getName().orElseThrow());
-        assertEquals("Stash", gingester.getTransformers().get(1).getName().orElseThrow());
+        DummyTarget result = parse("-e Stash -t Monkey 1 -- -t Stash");
+        assertEquals(2, result.getTransformers().size());
+        assertEquals("Monkey", result.getTransformers().get(0).getName().orElseThrow());
+        assertEquals("Stash", result.getTransformers().get(1).getName().orElseThrow());
 //        assertEquals(Collections.singletonList("Stash"), configuration.excepts);  TODO
     }
 
     @Test
     void testMissingCliTemplateParameterThrowsVariant1() {
-        Exception e = assertThrows(Exception.class, () -> CliParser.parse(CliSplitter.split("-cr hello-target.cli")));
+        Exception e = assertThrows(Exception.class, () -> parse("-cr hello-target.cli"));
         assertTrue(e.getMessage().startsWith("The following has evaluated to null or missing:"));
     }
 
     @Test
     void testMissingCliTemplateParameterThrowsVariant2() {
-        Exception e = assertThrows(Exception.class, () -> CliParser.parse(CliSplitter.split("-cr hello-target.cli '{}'")));
+        Exception e = assertThrows(Exception.class, () -> parse("-cr hello-target.cli '{}'"));
         assertTrue(e.getMessage().startsWith("The following has evaluated to null or missing:"));
     }
 

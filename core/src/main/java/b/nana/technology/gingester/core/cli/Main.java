@@ -15,10 +15,10 @@ public final class Main {
 
     public static void main(String[] args) {
         if (args.length > 0 && Arrays.stream(args).noneMatch(s -> s.equals("-h") || s.equals("--help"))) {
-            Gingester gingester = new Gingester();
-            CliParser.parse(gingester, args);
-            if (!gingester.hasReportingInterval()) gingester.setReportingIntervalSeconds(2);
-            gingester.run();
+            new Gingester()
+                    .setReportIntervalSeconds(2)
+                    .cli(args)
+                    .run();
         } else {
             printHelp();
         }

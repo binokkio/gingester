@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.core.cli;
 
-import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
@@ -41,19 +40,12 @@ public final class CliParser {
 
     private CliParser() {}
 
-    public static Gingester parse(String template, Object parameters) {
-        String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
-        Gingester gingester = new Gingester();
-        parse(gingester, CliSplitter.split(cli));
-        return gingester;
-    }
-
-    public static void parse(Gingester target, String template, Object parameters) {
+    public static void parse(Target target, String template, Object parameters) {
         String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
         parse(target, CliSplitter.split(cli));
     }
 
-    public static void parse(Gingester target, URL template, Object parameters) {
+    public static void parse(Target target, URL template, Object parameters) {
         try {
             String templateName = template.toString();
             String templateSource = new String(template.openStream().readAllBytes(), StandardCharsets.UTF_8);
@@ -64,13 +56,7 @@ public final class CliParser {
         }
     }
 
-    public static Gingester parse(String[] args) {
-        Gingester gingester = new Gingester();
-        parse(gingester, args);
-        return gingester;
-    }
-
-    public static void parse(Gingester target, String[] args) {
+    public static void parse(Target target, String[] args) {
 
         for (int i = 0; i < args.length; i++) {
 
@@ -92,7 +78,7 @@ public final class CliParser {
 
                 case "-r":
                 case "--report":
-                    target.setReportingIntervalSeconds(Integer.parseInt(args[++i]));
+                    target.setReportIntervalSeconds(Integer.parseInt(args[++i]));
                     break;
 
                 case "-d":
@@ -138,7 +124,7 @@ public final class CliParser {
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         links.add(args[++i]);
                     }
-                    target.getLast().links(links);
+                    target.getLastTransformer().links(links);
                     break;
 
                 case "-e":
@@ -147,11 +133,11 @@ public final class CliParser {
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         excepts.add(args[++i]);
                     }
-                    target.getLast().excepts(excepts);
+                    target.getLastTransformer().excepts(excepts);
                     break;
 
                 case "--":
-                    target.getLast().links(Collections.emptyList());
+                    target.getLastTransformer().links(Collections.emptyList());
                     break;
 
                 case "-sf":
@@ -273,4 +259,5 @@ public final class CliParser {
         System.arraycopy(target, index + lose, result, index + items.length, target.length - index - lose);
         return result;
     }
+
 }
