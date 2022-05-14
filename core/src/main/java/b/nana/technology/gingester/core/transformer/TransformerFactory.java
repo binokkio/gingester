@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
@@ -269,7 +270,7 @@ public final class TransformerFactory {
         if (example.test()) {
             String cli = getExampleCli(uniqueName, example);
             try {
-                CliParser.parse(CliSplitter.split("-t " + uniqueName + " " + example.example()));
+                CliParser.parse(new Gingester(), CliSplitter.split("-t " + uniqueName + " " + example.example()));
             } catch (Exception e) {
                 return Optional.of(new CheckExampleException(cli, e));
             }

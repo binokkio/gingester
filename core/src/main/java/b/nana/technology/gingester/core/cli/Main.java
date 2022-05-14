@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.Gingester;
-import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.io.IOException;
@@ -16,9 +15,10 @@ public final class Main {
 
     public static void main(String[] args) {
         if (args.length > 0 && Arrays.stream(args).noneMatch(s -> s.equals("-h") || s.equals("--help"))) {
-            GingesterConfiguration configuration = CliParser.parse(args);
-            if (configuration.report == null) configuration.report = 2;
-            new Gingester(configuration).run();
+            Gingester gingester = new Gingester();
+            CliParser.parse(gingester, args);
+            if (!gingester.hasReportingInterval()) gingester.setReportingIntervalSeconds(2);
+            gingester.run();
         } else {
             printHelp();
         }

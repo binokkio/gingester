@@ -12,6 +12,7 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
     private String name;
     private Transformer<?, ?> transformer;
     private Boolean report;
+    private boolean isNeverMaybeNext;
 
 
 
@@ -23,7 +24,7 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
 
     public TransformerConfiguration id(String id) {
 
-        if (!Character.isUpperCase(id.charAt(0)))
+        if (!Character.isUpperCase(id.charAt(0)) && !id.startsWith("__"))
             throw new IllegalArgumentException("Transformer id must start with an uppercase character: " + id);
 
         this.id = id;
@@ -51,12 +52,18 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
         return this;
     }
 
+    public TransformerConfiguration isNeverMaybeNext(boolean isNeverMaybeNext) {
+        this.isNeverMaybeNext = isNeverMaybeNext;
+        return this;
+    }
 
 
+    // TODO make not optional (with a requireNonNull and hasId() helper)
     public Optional<String> getId() {
         return Optional.ofNullable(id);
     }
 
+    // TODO make not optional
     public Optional<String> getName() {
         if (name != null) {
             return Optional.of(name);
@@ -71,5 +78,9 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
 
     public Optional<Boolean> getReport() {
         return Optional.ofNullable(report);
+    }
+
+    public boolean isNeverMaybeNext() {
+        return isNeverMaybeNext;
     }
 }

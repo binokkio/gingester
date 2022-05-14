@@ -28,8 +28,8 @@ class RemoveTest {
                 "-t StringCreate B " +
                 "-t MapRemove " +
                 "-f")
-                .attach(mapRemoveResult::set, "MapRemove")
                 .attach(result::set)
+                .attach(mapRemoveResult::set, "MapRemove")
                 .run();
 
         assertEquals("Hello, World!", result.get().get("A"));

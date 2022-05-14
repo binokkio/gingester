@@ -28,8 +28,8 @@ class CollectAndGetTest {
                 "-s map " +
                 "-t IntCreate 1 " +
                 "-t MapGet")
-                .attach(map::set, "MapCollect")
                 .attach(result::set)
+                .attach(map::set, "MapCollect")
                 .run();
 
         assertEquals(3, map.get().size());

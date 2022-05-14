@@ -3,7 +3,6 @@ package b.nana.technology.gingester.core;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
-import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.controller.Context;
@@ -41,11 +40,25 @@ public final class Gingester {
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    private final Set<String> excepts;
-    private final int reportingIntervalSeconds;
-    private final boolean debugMode;
-    private final boolean shutdownHook;
-    private final String defaultAttachTarget;
+//    private final Set<String> excepts;  TODO set on __seed__ directly
+
+    private Integer reportingIntervalSeconds;
+    private boolean debugMode;
+    private boolean shutdownHook;
+    private TransformerConfiguration last;
+    private List<String> syncFrom = List.of("__seed__");
+
+    /**
+     * Construct an empty Gingester.
+     */
+    public Gingester() {
+        TransformerConfiguration seed = new TransformerConfiguration();
+        seed.id("__seed__");
+        seed.transformer(new Passthrough());
+        seed.links(Collections.emptyList());
+        seed.excepts(Collections.singletonList("__elog__"));
+        add(seed);
+    }
 
     /**
      * Construct Gingester with cli instructions.
@@ -69,7 +82,8 @@ public final class Gingester {
      * @param parameters the parameters for the template, e.g. a Java Map
      */
     public Gingester(String cli, Object parameters) {
-        this(CliParser.parse(cli, parameters));
+        this();
+        CliParser.parse(this, cli, parameters);
     }
 
     /**
@@ -94,33 +108,24 @@ public final class Gingester {
      * @param parameters the parameters for the template, e.g. a Java Map
      */
     public Gingester(URL cli, Object parameters) {
-        this(CliParser.parse(cli, parameters));
+        this();
+        CliParser.parse(this, cli, parameters);
     }
 
-    /**
-     * Construct Gingester with the given configuration.
-     *
-     * @param configuration the configuration to execute
-     */
-    public Gingester(GingesterConfiguration configuration) {
+    public void setReportingIntervalSeconds(Integer reportingIntervalSeconds) {
+        this.reportingIntervalSeconds = reportingIntervalSeconds;
+    }
 
-        excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
-        reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
-        debugMode = configuration.debugMode != null && configuration.debugMode;
-        shutdownHook = configuration.shutdownHook != null && configuration.shutdownHook;
+    public boolean hasReportingInterval() {
+        return reportingIntervalSeconds != null;
+    }
 
-        String lastId = null;
-        for (TransformerConfiguration transformer : configuration.transformers) {
-            lastId = add(transformer);
-        }
-        defaultAttachTarget = lastId;
+    public void enableDebugMode() {
+        debugMode = true;
+    }
 
-        TransformerConfiguration last = transformerConfigurations.get(lastId);
-        if (last.getLinks().isPresent()) {
-            List<String> newLinks = new ArrayList<>(last.getLinks().get());
-            newLinks.remove("__maybe_next__");
-            last.links(newLinks);
-        }
+    public void enableShutdownHook() {
+        shutdownHook = true;
     }
 
     /**
@@ -131,7 +136,7 @@ public final class Gingester {
      * @return this gingester
      */
     public <T> Gingester attach(Consumer<T> consumer) {
-        attach(consumer, defaultAttachTarget);
+        attach(consumer, last.getId().orElseThrow());
         return this;
     }
 
@@ -145,7 +150,7 @@ public final class Gingester {
      */
     public <T> Gingester attach(Consumer<T> consumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).isNeverMaybeNext(true).links(Collections.emptyList()));
         attach(id, targetId);
         return this;
     }
@@ -158,7 +163,7 @@ public final class Gingester {
      * @return this gingester
      */
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
-        attach(biConsumer, defaultAttachTarget);
+        attach(biConsumer, last.getId().orElseThrow());
         return this;
     }
 
@@ -172,14 +177,33 @@ public final class Gingester {
      */
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
+        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).isNeverMaybeNext(true).links(Collections.emptyList()));
         attach(id, targetId);
         return this;
     }
 
-    private String add(TransformerConfiguration configuration) {
+    public List<TransformerConfiguration> getTransformers() {
+        return transformerConfigurations.values().stream().filter(c -> !c.getId().orElseThrow().startsWith("__")).collect(Collectors.toList());
+    }
+
+    public TransformerConfiguration getLast() {
+        return last;
+    }
+
+    public List<String> getSyncFrom() {
+        return syncFrom;
+    }
+
+    public Gingester setSyncFrom(List<String> syncFrom) {
+        this.syncFrom = syncFrom;
+        return this;
+    }
+
+    public String add(TransformerConfiguration configuration) {
         String id = getId(configuration);
+        configuration.id(id);
         transformerConfigurations.put(id, configuration);
+        last = configuration;
         return id;
     }
 
@@ -283,16 +307,16 @@ public final class Gingester {
     }
 
     private void setupSeed() {
-        Set<String> noIncoming = new HashSet<>(configurations.keySet());
-        noIncoming.removeAll(excepts);
+        List<String> noIncoming = new ArrayList<>(configurations.keySet());
+        noIncoming.remove("__seed__");
         configurations.values().stream()
                 .flatMap(c -> Stream.concat(c.getLinks().values().stream(), c.getExcepts().stream()))
                 .forEach(noIncoming::remove);
-        configurations.put("__seed__", new ControllerConfiguration<>(new ControllerConfigurationInterface())
-                .id("__seed__")
-                .transformer(new Passthrough())
-                .links(new ArrayList<>(noIncoming.isEmpty() ? configurations.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
-                .excepts(new ArrayList<>(excepts)));
+        ControllerConfiguration<?, ?> seedConfiguration = configurations.get("__seed__");
+        List<String> seedLinks = new ArrayList<>(seedConfiguration.getLinks().values());
+        seedLinks.addAll(noIncoming.isEmpty() ? configurations.keySet() : noIncoming);
+        seedLinks.remove("__seed__");
+        seedConfiguration.links(seedLinks);
     }
 
     private void setupExceptionLogger() {
@@ -321,8 +345,7 @@ public final class Gingester {
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
-                boolean isExceptionHandler = excepts.contains(id) ||
-                        configurations.values().stream().anyMatch(c -> c.getExcepts().contains(id));
+                boolean isExceptionHandler = configurations.values().stream().anyMatch(c -> c.getExcepts().contains(id));
                 if (isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
@@ -427,8 +450,11 @@ public final class Gingester {
             Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
         }
 
-        Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
-        if (reportingIntervalSeconds > 0) reporter.start();
+        Reporter reporter = null;
+        if (reportingIntervalSeconds != null && reportingIntervalSeconds > 0) {
+            reporter = new Reporter(reportingIntervalSeconds, controllers.values());
+            reporter.start();
+        }
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
         Context seed = Context.newSeedContext(seedController);
@@ -438,7 +464,7 @@ public final class Gingester {
         phaser.awaitAdvance(1);
         phaser.awaitAdvance(2);
 
-        if (reportingIntervalSeconds > 0) reporter.stop();
+        if (reporter != null) reporter.stop();
 
         stopping.set(true);  // set stopping true, flow stopped naturally
     }
@@ -464,9 +490,13 @@ public final class Gingester {
 
     private Optional<String> resolveMaybeNext(String from) {
         boolean next = false;
-        for (String id : transformerConfigurations.keySet()) {
+        for (var entry : transformerConfigurations.entrySet()) {
+            String id = entry.getKey();
+            TransformerConfiguration configuration = entry.getValue();
             if (next) {
-                return Optional.of(id);
+                if (!configuration.isNeverMaybeNext()) {
+                    return Optional.of(id);
+                }
             } else if (id.equals(from)) {
                 next = true;
             }
@@ -507,8 +537,7 @@ public final class Gingester {
         }
 
         public boolean isExceptionHandler() {
-            return excepts.contains(controllerId) ||
-                    configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
+            return configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
         }
 
         public boolean isStopping() {
