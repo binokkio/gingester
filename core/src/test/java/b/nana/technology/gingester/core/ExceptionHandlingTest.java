@@ -18,7 +18,8 @@ class ExceptionHandlingTest {
 
         Gingester gingester = new Gingester().cli("" +
                 "-e ExceptionHandler " +
-                "-t Generate \"{string:'Hello, World!',count:2}\" " +
+                "-t Generate 'Hello, World!' " +
+                "-t Repeat 2 " +
                 "-t Monkey -- " +
                 "-t ExceptionHandler:Passthrough");
 

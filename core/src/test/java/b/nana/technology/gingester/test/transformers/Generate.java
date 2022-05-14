@@ -2,35 +2,32 @@ package b.nana.technology.gingester.test.transformers;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public final class Generate implements Transformer<Object, String> {
 
-    private final String string;
-    private final int count;
+    private final Template string;
 
     public Generate(Parameters parameters) {
-        string = parameters.string;
-        count = parameters.count;
+        string = Context.newTemplate(parameters.string);
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<String> out) {
-        for (int i = 0; i < count; i++) {
-            out.accept(context, string);
-        }
+        out.accept(context, string.render(context));
     }
 
     private static class Parameters {
-        public String string;
-        public int count = 1;
+        public TemplateParameters string;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String string) {
+        public Parameters(TemplateParameters string) {
             this.string = string;
         }
     }

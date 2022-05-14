@@ -24,19 +24,17 @@ public final class OnFinish implements Transformer<Object, Object> {
         flawless = parameters.flawless;
         flawed = parameters.flawed;
 
-        if (flawless != null && flawed != null && (flawless.isEmpty() || flawed.isEmpty())) {
+        if ((flawless != null && !flawless.isEmpty()) || (flawed != null && !flawed.isEmpty())) {
             throw new IllegalStateException("Explicit empty list not allowed for OnFinish parameter");
         }
     }
 
     @Override
     public void setup(SetupControls controls) {
-        if (flawless != null || flawed != null) {
-            List<String> links = new ArrayList<>();
-            if (flawless != null) links.addAll(flawless);
-            if (flawed != null) links.addAll(flawed);
-            if (!links.isEmpty()) controls.links(links);
-        }
+        List<String> links = new ArrayList<>();
+        if (flawless != null) links.addAll(flawless);
+        if (flawed != null) links.addAll(flawed);
+        if (!links.isEmpty()) controls.links(links);
     }
 
     @Override
@@ -48,12 +46,14 @@ public final class OnFinish implements Transformer<Object, Object> {
     public void finish(Context context, Receiver<Object> out) throws Exception {
         if (flawless == null && flawed == null) {
             out.accept(context, FINISH_SIGNAL);
-        } else if (context.isFlawless() && flawless != null) {
-            if (flawless.isEmpty()) {
-                out.accept(context, FINISH_SIGNAL);
-            } else {
-                for (String target : flawless) {
-                    out.accept(context, FINISH_SIGNAL, target);
+        } else if (context.isFlawless()) {
+            if (flawless != null) {
+                if (flawless.isEmpty()) {
+                    out.accept(context, FINISH_SIGNAL);
+                } else {
+                    for (String target : flawless) {
+                        out.accept(context, FINISH_SIGNAL, target);
+                    }
                 }
             }
         } else if (flawed != null) {

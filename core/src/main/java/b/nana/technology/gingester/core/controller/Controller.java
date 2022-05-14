@@ -31,7 +31,7 @@ public final class Controller<I, O> {
     public final Map<String, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
-    final Set<Controller<?, ?>> indicates = new HashSet<>();
+    final Set<Controller<?, ?>> indicates = new HashSet<>();  // TODO should this be a LinkedHashSet?
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
     int downstreamLeaves;

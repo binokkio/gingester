@@ -163,23 +163,15 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     private void except(Context context, Exception cause) {
-
-        boolean handled = false;
-
         for (Context c : context) {
-            c.markFlawed();  // TODO decide what the expected behavior here is, mark the entire context chain as flawed or only up to the exception handling controller
-            if (!handled) {
-                if (!c.controller.excepts.isEmpty()) {
-                    c.controller.excepts.values().forEach(target -> accept(context, cause, target));
-                    handled = true;
-                } else if (c.controller.isExceptionHandler) {
-                    throw new IllegalStateException(c.controller.id + " is an exception handler without `excepts`");
-                }
+            c.markFlawed();
+            if (!c.controller.excepts.isEmpty()) {
+                c.controller.excepts.values().forEach(target -> accept(context, cause, target));
+                return;
+            } else if (c.controller.isExceptionHandler) {
+                throw new IllegalStateException(c.controller.id + " is an exception handler with empty `excepts`");
             }
         }
-
-        if (!handled) {
-            throw new IllegalStateException("No exception handlers for exception", cause);
-        }
+        throw new IllegalStateException("No exception handlers for exception", cause);
     }
 }
