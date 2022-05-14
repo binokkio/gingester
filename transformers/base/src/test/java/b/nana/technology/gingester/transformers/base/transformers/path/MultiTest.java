@@ -21,7 +21,7 @@ class MultiTest {
         Path tempDir = Files.createTempDirectory("gingester-");
         ArrayDeque<Path> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-t Dir:Repeat 6 " +
                 "-t File:Repeat 6 " +

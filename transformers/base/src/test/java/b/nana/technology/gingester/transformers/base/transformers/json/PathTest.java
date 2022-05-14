@@ -45,7 +45,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-e Exceptions " +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.throw' " +
@@ -62,7 +62,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-e Exceptions " +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.not.throw' optional " +
@@ -79,7 +79,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-e Exceptions " +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t JsonPath '$.**.missing.path.should.throw' " +
@@ -96,7 +96,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-e Exceptions " +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t JsonPath '$.**.missing.path.should.not.throw' optional " +

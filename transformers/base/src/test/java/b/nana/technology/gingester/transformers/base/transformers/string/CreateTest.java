@@ -49,7 +49,7 @@ class CreateTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate '123456' " +
                 "-t JsonAsLong " +
                 "-s number " +
@@ -65,7 +65,7 @@ class CreateTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate 'true' " +
                 "-t JsonAsBoolean " +
                 "-s value " +

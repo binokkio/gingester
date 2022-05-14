@@ -25,7 +25,7 @@ class SolarSystemTest {
         AtomicReference<Path> planetsPath = new AtomicReference<>();
         AtomicReference<Path> resultsPath = new AtomicReference<>();
 
-        Gingester gingester = new Gingester(getClass().getResource("/configurations/solar-system.cli"), Map.of(
+        Gingester gingester = new Gingester().cli(getClass().getResource("/configurations/solar-system.cli"), Map.of(
                 "resource", "/data/solar-system.tar.gz",
                 "workDir", tempDir
         ));

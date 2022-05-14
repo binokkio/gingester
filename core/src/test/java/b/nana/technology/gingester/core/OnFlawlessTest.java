@@ -11,7 +11,7 @@ class OnFlawlessTest {
     @Test
     void testTwoOutOfThree() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-e Void -t Void -- " +
                 "-t Repeat 3 " +
                 "-sft Generate 'Hello, World!' " +

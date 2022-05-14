@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.core.cli;
 
-import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
@@ -22,13 +21,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.createCliTemplate;
-import static java.util.Objects.requireNonNull;
 
 public final class CliParser {
 
@@ -44,29 +40,23 @@ public final class CliParser {
 
     private CliParser() {}
 
-    public static GingesterConfiguration parse(String template, Object parameters) {
+    public static void parse(Target target, String template, Object parameters) {
         String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
-        return parse(CliSplitter.split(cli));
+        parse(target, CliSplitter.split(cli));
     }
 
-    public static GingesterConfiguration parse(URL template, Object parameters) {
+    public static void parse(Target target, URL template, Object parameters) {
         try {
             String templateName = template.toString();
             String templateSource = new String(template.openStream().readAllBytes(), StandardCharsets.UTF_8);
             String cli = FreemarkerTemplateFactory.createCliTemplate(templateName, templateSource).render(parameters);
-            return parse(CliSplitter.split(cli));
+            parse(target, CliSplitter.split(cli));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static GingesterConfiguration parse(String[] args) {
-
-        GingesterConfiguration configuration = new GingesterConfiguration();
-        Set<String> ids = new HashSet<>();
-
-        List<String> syncFrom = List.of("__seed__");
-        TransformerConfiguration previous = null;
+    public static void parse(Target target, String[] args) {
 
         for (int i = 0; i < args.length; i++) {
 
@@ -88,17 +78,17 @@ public final class CliParser {
 
                 case "-r":
                 case "--report":
-                    configuration.report = Integer.parseInt(args[++i]);
+                    target.setReportIntervalSeconds(Integer.parseInt(args[++i]));
                     break;
 
                 case "-d":
                 case "--debug":
-                    configuration.debugMode = true;
+                    target.enableDebugMode();
                     break;
 
                 case "-gs":
                 case "--graceful-sigint":
-                    configuration.shutdownHook = true;
+                    target.enableShutdownHook();
                     break;
 
                 case "-cf":
@@ -130,12 +120,11 @@ public final class CliParser {
 
                 case "-l":
                 case "--links":
-                    requireNonNull(previous, "Found -l/--links before first transformer");
                     List<String> links = new ArrayList<>();
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         links.add(args[++i]);
                     }
-                    previous.links(links);
+                    target.getLastTransformer().links(links);
                     break;
 
                 case "-e":
@@ -144,21 +133,20 @@ public final class CliParser {
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         excepts.add(args[++i]);
                     }
-                    if (previous != null) previous.excepts(excepts);
-                    else configuration.excepts = excepts;
+                    target.getLastTransformer().excepts(excepts);
                     break;
 
                 case "--":
-                    requireNonNull(previous, "Found -- before first transformer");
-                    previous.links(Collections.emptyList());
+                    target.getLastTransformer().links(Collections.emptyList());
                     break;
 
                 case "-sf":
                 case "--sync-from":
-                    syncFrom = new ArrayList<>();
+                    List<String> syncFrom = new ArrayList<>();
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         syncFrom.add(args[++i]);
                     }
+                    target.setSyncFrom(syncFrom);
                     break;
 
                 case "-sft":
@@ -196,7 +184,7 @@ public final class CliParser {
                         if (args[i].matches(".*f.*a")) name = "FetchAll";
                         else if (args[i].matches(".*f.*g")) {
                             name = "FinishGate";
-                            syncTo = !args[i].contains("s");
+                            syncTo = !args[i].contains("s");  // TODO this is broken right? --finish-gate contains "s"
                         }
                         else if (args[i].contains("f")) name = "Fetch";
                         else if (args[i].contains("w")) name = "Swap";
@@ -218,25 +206,9 @@ public final class CliParser {
                         if (parts.length == 1) {
                             name = parts[0];
                         } else {
-                            String id = parts[0];
-                            if (ids.contains(id)) {
-                                throw new IllegalStateException("Id already in use: " + id);
-                            } else {
-                                ids.add(id);
-                                transformer.id(id);
-                                name = parts[1];
-                            }
+                            transformer.id(parts[0]);
+                            name = parts[1];
                         }
-                    }
-
-                    if (transformer.getId().isEmpty()) {
-                        String id = name;
-                        int counter = 1;
-                        while (ids.contains(id)) {
-                            id = name + '_' + counter++;
-                        }
-                        ids.add(id);
-                        transformer.id(id);
                     }
 
                     ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
@@ -257,20 +229,15 @@ public final class CliParser {
                         transformer.transformer(name, TransformerFactory.instance(name));
                     }
 
-                    if (syncTo) transformer.syncs(syncFrom);
-                    if (markSyncFrom) syncFrom = List.of(transformer.getId().orElseThrow(() -> new IllegalStateException("Neither transformer name nor id were given")));
-
-                    previous = transformer;
-
-                    configuration.transformers.add(transformer);
+                    if (syncTo) transformer.syncs(target.getSyncFrom());
+                    String id = target.add(transformer);
+                    if (markSyncFrom) target.setSyncFrom(List.of(id));
 
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
             }
         }
-
-        return configuration;
     }
 
     private static String[] splice(String templateName, String templateSource, String[] args, int i) throws JsonProcessingException {

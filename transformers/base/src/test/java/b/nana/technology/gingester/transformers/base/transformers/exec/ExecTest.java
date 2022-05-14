@@ -12,7 +12,7 @@ class ExecTest {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-t Exec '/bin/cat' " +
                 "-t InputStreamToString");

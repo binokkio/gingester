@@ -16,7 +16,7 @@ class StreamTest {
 
         Set<String> results = new HashSet<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Repeat 3 " +
                 "-t StringCreate 'Hello, World ${description}!' " +
                 "-s -f description " +

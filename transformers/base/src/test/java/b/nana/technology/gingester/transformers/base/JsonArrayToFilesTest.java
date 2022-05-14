@@ -18,7 +18,7 @@ class JsonArrayToFilesTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester(
+        Gingester gingester = new Gingester().cli(
                 getClass().getResource("/configurations/json-array-to-files.cli"),
                 Map.of("tempDir", tempDir)
         );
