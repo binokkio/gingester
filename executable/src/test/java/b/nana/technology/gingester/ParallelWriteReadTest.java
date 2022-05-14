@@ -59,4 +59,49 @@ public class ParallelWriteReadTest {
 
         Files.delete(tempDir);
     }
+
+    @Test
+    void testParallelWriteReadConfiguredLineByLine() throws IOException {
+
+        Path tempDir = Files.createTempDirectory("gingester-");
+
+        ArrayDeque<String> results = new ArrayDeque<>();
+
+        new Gingester()
+                .cli("-t Repeat 2")
+                .cli("-t Cycle '[\"Hello, World!\", \"Bye, World!\"]'")
+                .cli("-t ObjectToString")
+                .cli("-s message")
+                .cli("-t Repeat 1000")
+                .cli("-t StringCreate '${description}'")
+                .cli("-sft GroupByEquals")
+                .cli("-f message")
+                .cli("-stt InputStreamJoin")
+                .cli("-t Compress")
+                .cli("-t PathWrite '[=tempDir]/result-${groupKey}.txt.gz'", Map.of("tempDir", tempDir))
+                .cli("-fg")
+                .cli("-s description")
+                .cli("-t Unpack")
+                .cli("-t InputStreamToString")
+                .attach(results::add)
+                .run();
+
+        assertEquals(1000, results.size());
+
+        String expectedContent = "Hello, World!\nBye, World!";
+
+        for (int i = 0; i < 1000; i++) {
+
+            String flowContent = results.remove();
+            assertEquals(expectedContent, flowContent);
+
+            Path file = tempDir.resolve("result-" + i + ".txt.gz");
+            String fileContent = new String(new GZIPInputStream(Files.newInputStream(file)).readAllBytes());
+            assertEquals(expectedContent, fileContent);
+
+            Files.delete(file);
+        }
+
+        Files.delete(tempDir);
+    }
 }
