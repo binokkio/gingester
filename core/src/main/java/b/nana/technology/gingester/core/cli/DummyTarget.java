@@ -42,6 +42,10 @@ final class DummyTarget implements Target {
         return transformers.stream().filter(t -> t.getId().filter("__seed__"::equals).isEmpty()).collect(Collectors.toList());
     }
 
+    public TransformerConfiguration getSeedTransformer() {
+        return transformers.get(0);
+    }
+
     // ignore the rest
     @Override public void setReportIntervalSeconds(int reportIntervalSeconds) {}
     @Override public void enableDebugMode() {}

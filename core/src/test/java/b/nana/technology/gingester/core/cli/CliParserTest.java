@@ -112,7 +112,7 @@ class CliParserTest {
         assertEquals(2, result.getTransformers().size());
         assertEquals("Monkey", result.getTransformers().get(0).getName().orElseThrow());
         assertEquals("Stash", result.getTransformers().get(1).getName().orElseThrow());
-//        assertEquals(Collections.singletonList("Stash"), configuration.excepts);  TODO
+        assertEquals(Collections.singletonList("Stash"), result.getSeedTransformer().getExcepts().orElseThrow());
     }
 
     @Test

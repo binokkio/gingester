@@ -259,5 +259,4 @@ public final class CliParser {
         System.arraycopy(target, index + lose, result, index + items.length, target.length - index - lose);
         return result;
     }
-
 }

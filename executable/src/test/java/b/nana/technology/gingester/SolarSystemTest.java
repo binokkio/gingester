@@ -29,9 +29,9 @@ class SolarSystemTest {
                 "resource", "/data/solar-system.tar.gz",
                 "workDir", tempDir
         ));
-        gingester.attach(resultsPath::set);
         gingester.attach(paths::add, "UnpackedPaths");
         gingester.attach(planetsPath::set, "PathSearch");
+        gingester.attach(resultsPath::set);
         gingester.run();
 
         assertEquals(tempDir.resolve("solar-system.tar/planets.csv"), planetsPath.get());
