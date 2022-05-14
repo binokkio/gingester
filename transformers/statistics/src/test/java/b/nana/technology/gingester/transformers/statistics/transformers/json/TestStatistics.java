@@ -15,7 +15,7 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t ResourceOpen /basic.csv " +
                 "-t DsvToJson " +
                 "-t JsonStatistics");
@@ -67,7 +67,7 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-sft ResourceOpen /basic.ndjson " +
                 "-t InputStreamSplit " +
                 "-t InputStreamToJson " +
@@ -85,7 +85,7 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t ResourceOpen /basic.ndjson " +
                 "-t InputStreamSplit " +
                 "-t InputStreamToJson " +
@@ -104,7 +104,7 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t ResourceOpen /nulls.ndjson " +
                 "-t InputStreamSplit " +  // \"s are unnecessary but here to add some variation to the tests
                 "-t InputStreamToJson " +

@@ -16,7 +16,7 @@ class RemoveTest {
         AtomicReference<String> mapRemoveResult = new AtomicReference<>();
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +

@@ -19,7 +19,7 @@ class CollectAndGetTest {
         AtomicReference<Map<?, ?>> map = new AtomicReference<>();
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Repeat 3 " +
                 "-t StringCreate 'Hello, World ${description}!' " +
                 "-s " +
@@ -41,7 +41,7 @@ class CollectAndGetTest {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t ResourceOpen /data/json/array-wrapped-objects.json " +
                 "-t JsonStream $.array[*] " +
                 "-s " +

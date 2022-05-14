@@ -126,7 +126,7 @@ class CliParserTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Generate one " +
                 "-s s1 " +
                 "-t Generate two " +

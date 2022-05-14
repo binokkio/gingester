@@ -14,7 +14,7 @@ class CollectCountTest {
 
         ArrayDeque<Long> result = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-sft Repeat 2 " +
                 "-t Repeat 1000 " +
                 "-stt CollectCount")

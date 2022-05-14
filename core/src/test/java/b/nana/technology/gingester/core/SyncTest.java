@@ -13,7 +13,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-t Generate 'Message from OnPrepare'");
@@ -30,7 +30,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnFinish " +
                 "-t Generate 'Message from OnFinish'");
@@ -47,7 +47,7 @@ class SyncTest {
 
         AtomicReference<Integer> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-stt SyncCounter");
@@ -64,7 +64,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
                 "-t Throw 'Exception!' -- " +
@@ -83,7 +83,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -106,7 +106,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -129,7 +129,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -152,7 +152,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -175,7 +175,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-t Generate \"Hello, World!\" " +
@@ -198,7 +198,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-l A B " +
                 "-t A:Stash -l C " +
@@ -218,7 +218,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-e C " +
                 "-sft Generate \"Hello, World!\" " +
                 "-l A B " +

@@ -21,7 +21,7 @@ public class ParallelWriteReadTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Repeat 2 " +
                 "-t Cycle '[\"Hello, World!\", \"Bye, World!\"]' " +
                 "-t ObjectToString " +

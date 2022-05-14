@@ -12,7 +12,7 @@ class FetchOutputTypeTest {
     @Test
     void testBasic() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World' " +
                 "-t StringToBytes " +
                 "-s -f " +
@@ -29,7 +29,7 @@ class FetchOutputTypeTest {
     @Test
     void testWithStashName() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World' -t StringToBytes -s hello " +
                 "-t StringCreate 'Bye, World' -t StringToBytes -s bye " +
                 "-f hello " +
@@ -46,7 +46,7 @@ class FetchOutputTypeTest {
     @Test
     void testWithInputStasherId() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World' -t StringToBytes -t Target:Stash " +
                 "-t StringCreate 'Bye, World' -t StringToBytes -t Distraction:Stash " +
                 "-f Target.stash " +
@@ -63,7 +63,7 @@ class FetchOutputTypeTest {
     @Test
     void testWithStashNameAndInputStasherId() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World' -t StringToBytes -t Target:Stash hello " +
                 "-t StringCreate 'Bye, World' -t StringToBytes -t Distraction:Stash bye " +
                 "-f Target.hello " +

@@ -40,8 +40,6 @@ public final class Gingester {
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-//    private final Set<String> excepts;  TODO set on __seed__ directly
-
     private Integer reportingIntervalSeconds;
     private boolean debugMode;
     private boolean shutdownHook;
@@ -61,71 +59,79 @@ public final class Gingester {
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
      * <p>
      * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
      * and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
+     * @return this gingester
      */
-    public Gingester(String cli) {
-        this(cli, Collections.emptyMap());
+    public Gingester cli(String cli) {
+        cli(cli, Collections.emptyMap());
+        return this;
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
      * <p>
      * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
      * and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
      * @param parameters the parameters for the template, e.g. a Java Map
+     * @return this gingester
      */
-    public Gingester(String cli, Object parameters) {
-        this();
+    public Gingester cli(String cli, Object parameters) {
         CliParser.parse(this, cli, parameters);
+        return this;
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
      * <p>
      * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
      * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
+     * @return this gingester
      */
-    public Gingester(URL cli) {
-        this(cli, Collections.emptyMap());
+    public Gingester cli(URL cli) {
+        cli(cli, Collections.emptyMap());
+        return this;
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
      * <p>
      * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
      * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
      * @param parameters the parameters for the template, e.g. a Java Map
+     * @return this gingester
      */
-    public Gingester(URL cli, Object parameters) {
-        this();
+    public Gingester cli(URL cli, Object parameters) {
         CliParser.parse(this, cli, parameters);
+        return this;
     }
 
-    public void setReportingIntervalSeconds(Integer reportingIntervalSeconds) {
-        this.reportingIntervalSeconds = reportingIntervalSeconds;
+    /**
+     * Add transformer configuration.
+     *
+     * @param configuration transformer configuration to add
+     * @return this gingester
+     */
+    public String add(TransformerConfiguration configuration) {
+        return add(configuration, true);
     }
 
-    public boolean hasReportingInterval() {
-        return reportingIntervalSeconds != null;
-    }
-
-    public void enableDebugMode() {
-        debugMode = true;
-    }
-
-    public void enableShutdownHook() {
-        shutdownHook = true;
+    private String add(TransformerConfiguration configuration, boolean updateLast) {
+        String id = getId(configuration);
+        configuration.id(id);
+        transformerConfigurations.put(id, configuration);
+        if (updateLast) last = configuration;
+        return id;
     }
 
     /**
@@ -136,8 +142,7 @@ public final class Gingester {
      * @return this gingester
      */
     public <T> Gingester attach(Consumer<T> consumer) {
-        attach(consumer, last.getId().orElseThrow());
-        return this;
+        return attach(consumer, last.getId().orElseThrow());
     }
 
     /**
@@ -150,9 +155,7 @@ public final class Gingester {
      */
     public <T> Gingester attach(Consumer<T> consumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).isNeverMaybeNext(true).links(Collections.emptyList()));
-        attach(id, targetId);
-        return this;
+        return attach("Consumer", transformer, targetId);
     }
 
     /**
@@ -177,9 +180,46 @@ public final class Gingester {
      */
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).isNeverMaybeNext(true).links(Collections.emptyList()));
-        attach(id, targetId);
+        return attach("BiConsumer", transformer, targetId);
+    }
+
+    private <T> Gingester attach(String name, Transformer<T,T> transformer, String targetId) {
+
+        TransformerConfiguration attach = new TransformerConfiguration()
+                .transformer(name, transformer)
+                .isNeverMaybeNext(true)
+                .links(Collections.emptyList());
+
+        String id = add(attach);
+
+        TransformerConfiguration target = transformerConfigurations.get(targetId);
+        List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
+        links.add(id);
+        target.links(links);
+
         return this;
+    }
+
+
+
+
+
+
+
+    public void setReportingIntervalSeconds(Integer reportingIntervalSeconds) {
+        this.reportingIntervalSeconds = reportingIntervalSeconds;
+    }
+
+    public boolean hasReportingInterval() {
+        return reportingIntervalSeconds != null;
+    }
+
+    public void enableDebugMode() {
+        debugMode = true;
+    }
+
+    public void enableShutdownHook() {
+        shutdownHook = true;
     }
 
     public List<TransformerConfiguration> getTransformers() {
@@ -197,21 +237,6 @@ public final class Gingester {
     public Gingester setSyncFrom(List<String> syncFrom) {
         this.syncFrom = syncFrom;
         return this;
-    }
-
-    public String add(TransformerConfiguration configuration) {
-        String id = getId(configuration);
-        configuration.id(id);
-        transformerConfigurations.put(id, configuration);
-        last = configuration;
-        return id;
-    }
-
-    private void attach(String id, String targetId) {
-        TransformerConfiguration target = transformerConfigurations.get(targetId);
-        List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
-        links.add(id);
-        target.links(links);
     }
 
     /**

@@ -15,7 +15,7 @@ class SetTest {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate '{}' " +
                 "-s record " +
                 "-t JsonCreate '{hello:123}' " +
@@ -35,7 +35,7 @@ class SetTest {
         AtomicReference<JsonNode> resultA = new AtomicReference<>();
         AtomicReference<JsonNode> resultB = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate '{}' " +
                 "-s a " +
                 "-t JsonCreate '{}' " +

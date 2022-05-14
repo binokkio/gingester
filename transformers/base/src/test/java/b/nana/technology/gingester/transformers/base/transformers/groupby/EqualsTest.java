@@ -13,7 +13,7 @@ class EqualsTest {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 25 " +
                 "-t StringCreate 'Hello, World ${description?string.computer[0..0]}!' " +
                 "-sft GroupByEquals " +
@@ -34,7 +34,7 @@ class EqualsTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-sft GroupByEquals customKey " +  // customKey is type String
                 "-stt InputStreamJoin " +

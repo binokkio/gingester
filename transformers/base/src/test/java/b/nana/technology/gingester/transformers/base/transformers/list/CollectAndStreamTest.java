@@ -14,7 +14,7 @@ class CollectAndStreamTest {
 
         ArrayDeque<String> result = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Repeat 9 " +
                 "-t Cycle A B C " +
                 "-s letter " +

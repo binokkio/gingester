@@ -70,18 +70,18 @@ class SearchTest {
 
     @Test
     void testCliVariations() {
-        new Gingester("-t PathSearch '*'");
-        new Gingester("-t PathSearch '\"*\"'");
-        new Gingester("-t PathSearch \"'*'\"");
-        new Gingester("-t PathSearch ['hello']");
-        new Gingester("-t PathSearch [hello','world']");
-        new Gingester("-t PathSearch \"['hello', 'world']\"");
-        new Gingester("-t PathSearch '[\"hello\", \"world\"]'");
-        new Gingester("-t PathSearch {globs:'*'}");
-        new Gingester("-t PathSearch {globs:['hello','world']}");
-        new Gingester("-t PathSearch {globs:['hello',{template:'world'}]}");
-        new Gingester("-t PathSearch {globs:[{template:'*'}]}");
-        new Gingester("-t PathSearch {template:'*'}");
-        new Gingester("-t PathSearch ['hello',{template:'world'}]");
+        new Gingester().cli("-t PathSearch '*'");
+        new Gingester().cli("-t PathSearch '\"*\"'");
+        new Gingester().cli("-t PathSearch \"'*'\"");
+        new Gingester().cli("-t PathSearch ['hello']");
+        new Gingester().cli("-t PathSearch [hello','world']");
+        new Gingester().cli("-t PathSearch \"['hello', 'world']\"");
+        new Gingester().cli("-t PathSearch '[\"hello\", \"world\"]'");
+        new Gingester().cli("-t PathSearch {globs:'*'}");
+        new Gingester().cli("-t PathSearch {globs:['hello','world']}");
+        new Gingester().cli("-t PathSearch {globs:['hello',{template:'world'}]}");
+        new Gingester().cli("-t PathSearch {globs:[{template:'*'}]}");
+        new Gingester().cli("-t PathSearch {template:'*'}");
+        new Gingester().cli("-t PathSearch ['hello',{template:'world'}]");
     }
 }

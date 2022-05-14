@@ -52,7 +52,7 @@ class FetchTest {
         AtomicReference<String> resultUp1 = new AtomicReference<>();
         AtomicReference<String> resultUp2 = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Generate hello " +
                 "-s " +
                 "-t Generate world " +

@@ -13,7 +13,7 @@ class FilterTest {
     @Test
     void testFilterIn() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 11 " +
                 "-t StringCreate 'Hello, World ${description}!' " +
                 "-t RegexFilterIn '.*1.*'");
@@ -29,7 +29,7 @@ class FilterTest {
     @Test
     void testFilterOut() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 11 " +
                 "-t StringCreate 'Hello, World ${description}!' " +
                 "-t RegexFilterOut '.*1.*'");
@@ -58,7 +58,7 @@ class FilterTest {
     @Test
     void testFilterInWithTemplatedRegex() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 11 " +
                 "-t StringCreate 'Hello, World ${description}!' " +
                 "-s " +

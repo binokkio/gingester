@@ -16,7 +16,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate one,two,three " +
                 "-t StringSplit ,")
                 .attach(results::add)
@@ -30,7 +30,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate ,one,two,,three, " +
                 "-t StringSplit ,")
                 .attach(results::add)
@@ -44,7 +44,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate , " +
                 "-t StringSplit ,")
                 .attach(results::add)
@@ -58,7 +58,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate ,, " +
                 "-t StringSplit ,")
                 .attach(results::add)
