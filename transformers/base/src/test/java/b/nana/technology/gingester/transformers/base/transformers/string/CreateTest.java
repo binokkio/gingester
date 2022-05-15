@@ -10,7 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CreateTest {
 
@@ -49,7 +49,7 @@ class CreateTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate '123456' " +
                 "-t JsonAsLong " +
                 "-s number " +
@@ -65,7 +65,7 @@ class CreateTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate 'true' " +
                 "-t JsonAsBoolean " +
                 "-s value " +

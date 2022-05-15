@@ -15,9 +15,10 @@ General usage:
     -d/--debug
         get more detailed exception information at the cost of performance
 
-    -e/--excepts <link1> [<link2> [...]]
-        send exceptions from the previous transformer (if any) and
-        uncaught downstream exceptions to the given links
+    -e/--excepts [<link1> [<link2> [...]]]
+        catch uncaught exceptions from the previous transformer and downstream
+        exceptions are routed to the builtin error logging transformer if no links are provided
+        provide [<link1> [<link2> [...]]] to route the exceptions to those links
 
     -f/--fetch [<name>]
         fetch value from stash by name

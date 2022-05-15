@@ -9,11 +9,7 @@ import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 

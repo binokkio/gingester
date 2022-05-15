@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DiamondRouteTest {
 
@@ -13,7 +13,7 @@ class DiamondRouteTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester("-cr hello-world-diamond.cli");
+        Gingester gingester = new Gingester().cli("-cr hello-world-diamond.cli");
         gingester.attach(results::add);
         gingester.run();
 
@@ -27,7 +27,7 @@ class DiamondRouteTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester("-cr hello-world-diamond.cli");
+        Gingester gingester = new Gingester().cli("-cr hello-world-diamond.cli");
         gingester.attach(results::add, "Emphasize");
         gingester.run();
 
@@ -41,7 +41,7 @@ class DiamondRouteTest {
         ArrayDeque<String> emphasizeResults = new ArrayDeque<>();
         ArrayDeque<String> questionResults = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester("-cr hello-world-diamond.cli");
+        Gingester gingester = new Gingester().cli("-cr hello-world-diamond.cli");
         gingester.attach(emphasizeResults::add, "Emphasize");
         gingester.attach(questionResults::add, "Question");
         gingester.run();

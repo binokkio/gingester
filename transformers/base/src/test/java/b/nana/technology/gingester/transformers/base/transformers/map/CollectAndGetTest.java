@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CollectAndGetTest {
 
@@ -19,7 +19,7 @@ class CollectAndGetTest {
         AtomicReference<Map<?, ?>> map = new AtomicReference<>();
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Repeat 3 " +
                 "-t StringCreate 'Hello, World ${description}!' " +
                 "-s " +
@@ -41,7 +41,7 @@ class CollectAndGetTest {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t ResourceOpen /data/json/array-wrapped-objects.json " +
                 "-t JsonStream $.array[*] " +
                 "-s " +
@@ -55,7 +55,6 @@ class CollectAndGetTest {
                 "-t JsonPath $.reference " +
                 "-t JsonAsLong " +
                 "-t MapGet map " +
-                "-w " +
                 "-t JsonSet lookup");
 
         gingester.attach(results::add);

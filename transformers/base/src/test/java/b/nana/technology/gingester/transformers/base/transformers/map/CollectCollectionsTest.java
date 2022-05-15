@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CollectCollectionsTest {
 
@@ -15,7 +15,7 @@ class CollectCollectionsTest {
         AtomicReference<String> resultA = new AtomicReference<>();
         AtomicReference<String> resultB = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t A:Repeat 3 " +
                 "-t B:Repeat 3 " +
                 "-t StringCreate '${A.description}.${B.description}' " +
@@ -43,7 +43,7 @@ class CollectCollectionsTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t A:Repeat 3 " +
                 "-t Repeat 3 " +
                 "-t Repeat 3 " +

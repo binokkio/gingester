@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.cli.CliSplitter;
+import b.nana.technology.gingester.core.cli.Target;
 import b.nana.technology.gingester.core.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
@@ -102,7 +103,11 @@ public final class TransformerFactory {
             try {
                 parameters = OBJECT_MAPPER.treeToValue(jsonParameters, parameterClass);
             } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Failed to map json parameters to " + parameterClass, e);
+                if (jsonParameters.isTextual()) {
+                    throw new IllegalArgumentException("Failed to map parameters string to " + parameterClass, e);
+                } else {
+                    throw new IllegalArgumentException("Failed to map json parameters to " + parameterClass, e);
+                }
             }
         } else {
             try {
@@ -269,7 +274,7 @@ public final class TransformerFactory {
         if (example.test()) {
             String cli = getExampleCli(uniqueName, example);
             try {
-                CliParser.parse(CliSplitter.split("-t " + uniqueName + " " + example.example()));
+                CliParser.parse(Target.createDummy(), CliSplitter.split("-t " + uniqueName + " " + example.example()));
             } catch (Exception e) {
                 return Optional.of(new CheckExampleException(cli, e));
             }

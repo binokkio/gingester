@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MergeTest {
 
     @Test
     void testBasic() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Passthrough " +
                 "-l A B " +
                 "-t A:StringCreate HelloWorld -s hello -l Merge " +
@@ -31,7 +31,7 @@ class MergeTest {
     @Test
     void testList() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Passthrough " +
                 "-l A B " +
                 "-t A:StringCreate HelloWorld -s message -l Merge " +

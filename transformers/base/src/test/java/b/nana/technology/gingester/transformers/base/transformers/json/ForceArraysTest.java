@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ForceArraysTest {
 
@@ -17,7 +16,7 @@ class ForceArraysTest {
 
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t ResourceOpen /data/xml/arrays-issue.xml " +
                 "-t XmlToJson " +
                 "-t JsonPath $.record[*] " +
@@ -36,7 +35,7 @@ class ForceArraysTest {
     @Test
     void testForceArraysOnRoot() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate {hello:123} " +
                 "-t JsonForceArrays $");
 

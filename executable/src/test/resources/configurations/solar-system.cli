@@ -25,7 +25,6 @@
 -s
 -t JsonPath $.planet
 -t MapGet planetMap
--w
 -t JsonSet planet
 
 + 'Join the results together in a new .ndjson.gz'

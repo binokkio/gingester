@@ -9,14 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class NdjsonTest {
 
     @Test
     void test() throws IOException {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
                 "-t InputStreamJoin " +

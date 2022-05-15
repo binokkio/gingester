@@ -8,8 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JsonArrayToFilesTest {
 
@@ -18,7 +17,7 @@ class JsonArrayToFilesTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester(
+        Gingester gingester = new Gingester().cli(
                 getClass().getResource("/configurations/json-array-to-files.cli"),
                 Map.of("tempDir", tempDir)
         );

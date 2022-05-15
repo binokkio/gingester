@@ -2,8 +2,8 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.cli.CliParser;
+import b.nana.technology.gingester.core.cli.Target;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
-import b.nana.technology.gingester.core.configuration.GingesterConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.controller.Context;
@@ -41,98 +41,141 @@ public final class Gingester {
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    private final Set<String> excepts;
-    private final int reportingIntervalSeconds;
-    private final boolean debugMode;
-    private final boolean shutdownHook;
-    private final String defaultAttachTarget;
+    private TransformerConfiguration last;
+    private List<String> syncFrom = List.of("__seed__");
+
+    private int reportIntervalSeconds;
+    private boolean debugMode;
+    private boolean shutdownHook;
 
     /**
-     * Construct Gingester with cli instructions.
-     * <p>
-     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
-     * and square-bracket-interpolation syntax.
-     *
-     * @param cli cli instructions template
+     * Construct Gingester.
      */
-    public Gingester(String cli) {
-        this(cli, Collections.emptyMap());
+    public Gingester() {
+
+        TransformerConfiguration elog = new TransformerConfiguration();
+        elog.id("__elog__");
+        elog.transformer(new ELog());
+        elog.links(Collections.emptyList());
+        add(elog);
+
+        TransformerConfiguration seed = new TransformerConfiguration();
+        seed.id("__seed__");
+        seed.transformer(new Passthrough());
+        seed.links(Collections.emptyList());
+        seed.excepts(Collections.singletonList("__elog__"));
+        add(seed);
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
+     *
+     * @param cli cli instructions template
+     * @return this gingester
+     */
+    public Gingester cli(String[] cli) {
+        CliParser.parse(Target.create(this), cli);
+        return this;
+    }
+
+    /**
+     * Add cli instructions.
      * <p>
-     * The given cli string will be rendered using the Apache Freemarker template engine using the square-bracket-tag
-     * and square-bracket-interpolation syntax.
+     * The given cli string will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
+     *
+     * @param cli cli instructions template
+     * @return this gingester
+     */
+    public Gingester cli(String cli) {
+        cli(cli, Collections.emptyMap());
+        return this;
+    }
+
+    /**
+     * Add cli instructions.
+     * <p>
+     * The given cli string will be rendered using the Apache Freemarker template engine using the
+     * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
      * @param parameters the parameters for the template, e.g. a Java Map
+     * @return this gingester
      */
-    public Gingester(String cli, Object parameters) {
-        this(CliParser.parse(cli, parameters));
+    public Gingester cli(String cli, Object parameters) {
+        CliParser.parse(Target.create(this), cli, parameters);
+        return this;
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
      * <p>
-     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
-     * square-bracket-tag and square-bracket-interpolation syntax.
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using
+     * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
+     * @return this gingester
      */
-    public Gingester(URL cli) {
-        this(cli, Collections.emptyMap());
+    public Gingester cli(URL cli) {
+        cli(cli, Collections.emptyMap());
+        return this;
     }
 
     /**
-     * Construct Gingester with cli instructions.
+     * Add cli instructions.
      * <p>
-     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using the
-     * square-bracket-tag and square-bracket-interpolation syntax.
+     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using
+     * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
      * @param parameters the parameters for the template, e.g. a Java Map
+     * @return this gingester
      */
-    public Gingester(URL cli, Object parameters) {
-        this(CliParser.parse(cli, parameters));
+    public Gingester cli(URL cli, Object parameters) {
+        CliParser.parse(Target.create(this), cli, parameters);
+        return this;
     }
 
     /**
-     * Construct Gingester with the given configuration.
+     * Add transformer configuration.
      *
-     * @param configuration the configuration to execute
+     * @param configuration transformer configuration to add
+     * @return this gingester
      */
-    public Gingester(GingesterConfiguration configuration) {
+    public String add(TransformerConfiguration configuration) {
+        return add(configuration, true);
+    }
 
-        excepts = configuration.excepts.isEmpty() ? Collections.singleton("__elog__") : new HashSet<>(configuration.excepts);
-        reportingIntervalSeconds = configuration.report == null ? 0 : configuration.report;
-        debugMode = configuration.debugMode != null && configuration.debugMode;
-        shutdownHook = configuration.shutdownHook != null && configuration.shutdownHook;
+    private String add(TransformerConfiguration configuration, boolean updateLast) {
+        String id = getId(configuration);
+        configuration.id(id);
+        transformerConfigurations.put(id, configuration);
+        if (updateLast) last = configuration;
+        return id;
+    }
 
-        String lastId = null;
-        for (TransformerConfiguration transformer : configuration.transformers) {
-            lastId = add(transformer);
-        }
-        defaultAttachTarget = lastId;
-
-        TransformerConfiguration last = transformerConfigurations.get(lastId);
-        if (last.getLinks().isPresent()) {
-            List<String> newLinks = new ArrayList<>(last.getLinks().get());
-            newLinks.remove("__maybe_next__");
-            last.links(newLinks);
-        }
+    /**
+     * Get the "last" transformer configuration.
+     *
+     * The last transformer configuration is the last one that resulted from the most recent call to `add` or
+     * `cli`.
+     *
+     * @return the "last" transformer configuration
+     */
+    public TransformerConfiguration getLastTransformer() {
+        return last;
     }
 
     /**
      * Attach consumer to the "last" transformer.
      *
+     * @see #getLastTransformer()
      * @param <T> the consumer type
      * @param consumer the consumer
      * @return this gingester
      */
     public <T> Gingester attach(Consumer<T> consumer) {
-        attach(consumer, defaultAttachTarget);
-        return this;
+        return attach(consumer, last.getId().orElseThrow());
     }
 
     /**
@@ -145,20 +188,19 @@ public final class Gingester {
      */
     public <T> Gingester attach(Consumer<T> consumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
-        attach(id, targetId);
-        return this;
+        return attach("Consumer", transformer, targetId);
     }
 
     /**
      * Attach bi-consumer to the "last" transformer.
      *
+     * @see #getLastTransformer()
      * @param <T> the bi-consumer type
      * @param biConsumer the bi-consumer
      * @return this gingester
      */
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
-        attach(biConsumer, defaultAttachTarget);
+        attach(biConsumer, last.getId().orElseThrow());
         return this;
     }
 
@@ -172,22 +214,88 @@ public final class Gingester {
      */
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String targetId) {
         Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
-        String id = add(new TransformerConfiguration().transformer("Consumer", transformer).links(Collections.emptyList()));
-        attach(id, targetId);
-        return this;
+        return attach("BiConsumer", transformer, targetId);
     }
 
-    private String add(TransformerConfiguration configuration) {
-        String id = getId(configuration);
-        transformerConfigurations.put(id, configuration);
-        return id;
-    }
+    private <T> Gingester attach(String name, Transformer<T,T> transformer, String targetId) {
 
-    private void attach(String id, String targetId) {
+        TransformerConfiguration attach = new TransformerConfiguration()
+                .transformer(name, transformer)
+                .isNeverMaybeNext(true)
+                .links(Collections.emptyList());
+
+        String id = add(attach, false);
+
         TransformerConfiguration target = transformerConfigurations.get(targetId);
         List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
         links.add(id);
         target.links(links);
+
+        return this;
+    }
+
+    /**
+     * Set report interval in seconds.
+     *
+     * When set Gingester will report flow details at the given interval.
+     * Set 0 to disable reporting.
+     *
+     * @param reportIntervalSeconds the interval at which to report, or 0 to disable reporting
+     * @return this gingester
+     */
+    public Gingester setReportIntervalSeconds(int reportIntervalSeconds) {
+        this.reportIntervalSeconds = reportIntervalSeconds;
+        return this;
+    }
+
+    /**
+     * Enable debug mode.
+     *
+     * When enabled Gingester will not optimize transformers out of the context stack and will therefore
+     * produce more detailed transform traces.
+     *
+     * @return this gingester
+     */
+    public Gingester enableDebugMode() {
+        debugMode = true;
+        return this;
+    }
+
+    /**
+     * Enable the shutdown hook.
+     *
+     * When enabled Gingester will register a virtual-machine shutdown hook. When the hook is triggered
+     * Gingester will attempt to stop the flow gracefully.
+     *
+     * @return this gingester
+     */
+    public Gingester enableShutdownHook() {
+        shutdownHook = true;
+        return this;
+    }
+
+    /**
+     * Get the most recently set sync-from ids.
+     *
+     * Available to conveniently allow this build state to persist across `cli` calls.
+     *
+     * @return the most recently set sync from marks
+     */
+    public List<String> getSyncFrom() {
+        return syncFrom;
+    }
+
+    /**
+     * Set new sync-from ids.
+     *
+     * Available to conveniently allow this build state to persist across `cli` calls.
+     *
+     * @param syncFrom sync-from ids
+     * @return this gingester
+     */
+    public Gingester setSyncFrom(List<String> syncFrom) {
+        this.syncFrom = syncFrom;
+        return this;
     }
 
     /**
@@ -197,7 +305,7 @@ public final class Gingester {
      * <ul>
      * <li>call {@link Transformer#setup(SetupControls)} on all transformers
      * <li>consolidate the transformer setup controls with the transformer configurations
-     * <li>create a seed transformer with id __seed__ and link it to all transformers with no incoming links
+     * <li>link the seed transformer to all transformers with no incoming links
      * <li>start the workers for each transformer
      * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
      * <li>give the seed controller a single input, which it will pass through to its links
@@ -208,8 +316,8 @@ public final class Gingester {
      */
     public void run() {
         configure();
+        setupElog();
         setupSeed();
-        setupExceptionLogger();
         explore("__seed__", "__seed__", new ArrayDeque<>(), false);
         align();
         initialize();
@@ -253,7 +361,7 @@ public final class Gingester {
 
     private void configure() {
 
-        if (transformerConfigurations.isEmpty()) {
+        if (transformerConfigurations.keySet().stream().filter(id -> !id.startsWith("__")).findAny().isEmpty()) {
             throw new IllegalStateException("No transformers configured");
         }
 
@@ -277,35 +385,32 @@ public final class Gingester {
 
         if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
             configurations.values().stream()
+                    .filter(c -> !c.getId().startsWith("__"))
                     .filter(c -> c.getLinks().isEmpty())
                     .forEach(c -> c.report(true));
         }
     }
 
-    private void setupSeed() {
-        Set<String> noIncoming = new HashSet<>(configurations.keySet());
-        noIncoming.removeAll(excepts);
-        configurations.values().stream()
-                .flatMap(c -> Stream.concat(c.getLinks().values().stream(), c.getExcepts().stream()))
-                .forEach(noIncoming::remove);
-        configurations.put("__seed__", new ControllerConfiguration<>(new ControllerConfigurationInterface())
-                .id("__seed__")
-                .transformer(new Passthrough())
-                .links(new ArrayList<>(noIncoming.isEmpty() ? configurations.keySet() : noIncoming))  // if noIncoming is empty, link seed to everything for circular route detection
-                .excepts(new ArrayList<>(excepts)));
-    }
-
-    private void setupExceptionLogger() {
-        configurations.put("__elog__", new ControllerConfiguration<Exception, Exception>(new ControllerConfigurationInterface())
-                .id("__elog__")
-                .transformer(new ELog()));
-
+    private void setupElog() {
         configurations.values()
                 .stream().flatMap(c -> c.getExcepts().stream())
                 .map(configurations::get)
                 .filter(c -> !c.getId().equals("__elog__"))
                 .filter(c -> c.getExcepts().isEmpty())
                 .forEach(c -> c.excepts(Collections.singletonList("__elog__")));
+    }
+
+    private void setupSeed() {
+        List<String> noIncoming = new ArrayList<>(configurations.keySet());
+        noIncoming.remove("__seed__");
+        configurations.values().stream()
+                .flatMap(c -> Stream.concat(c.getLinks().values().stream(), c.getExcepts().stream()))
+                .forEach(noIncoming::remove);
+        ControllerConfiguration<?, ?> seedConfiguration = configurations.get("__seed__");
+        List<String> seedLinks = new ArrayList<>(seedConfiguration.getLinks().values());
+        seedLinks.addAll(noIncoming.isEmpty() ? configurations.keySet() : noIncoming);  // link seed with everything if noIncoming is empty for circular route detection
+        seedLinks.remove("__seed__");
+        seedConfiguration.links(seedLinks);
     }
 
     private void explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge) {
@@ -321,8 +426,7 @@ public final class Gingester {
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
-                boolean isExceptionHandler = excepts.contains(id) ||
-                        configurations.values().stream().anyMatch(c -> c.getExcepts().contains(id));
+                boolean isExceptionHandler = configurations.values().stream().anyMatch(c -> c.getExcepts().contains(id));
                 if (isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
@@ -427,8 +531,11 @@ public final class Gingester {
             Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
         }
 
-        Reporter reporter = new Reporter(reportingIntervalSeconds, controllers.values());
-        if (reportingIntervalSeconds > 0) reporter.start();
+        Reporter reporter = null;
+        if (reportIntervalSeconds > 0) {
+            reporter = new Reporter(reportIntervalSeconds, controllers.values());
+            reporter.start();
+        }
 
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
         Context seed = Context.newSeedContext(seedController);
@@ -438,7 +545,7 @@ public final class Gingester {
         phaser.awaitAdvance(1);
         phaser.awaitAdvance(2);
 
-        if (reportingIntervalSeconds > 0) reporter.stop();
+        if (reporter != null) reporter.stop();
 
         stopping.set(true);  // set stopping true, flow stopped naturally
     }
@@ -463,9 +570,13 @@ public final class Gingester {
 
     private Optional<String> resolveMaybeNext(String from) {
         boolean next = false;
-        for (String id : transformerConfigurations.keySet()) {
+        for (var entry : transformerConfigurations.entrySet()) {
+            String id = entry.getKey();
+            TransformerConfiguration configuration = entry.getValue();
             if (next) {
-                return Optional.of(id);
+                if (!configuration.isNeverMaybeNext()) {
+                    return Optional.of(id);
+                }
             } else if (id.equals(from)) {
                 next = true;
             }
@@ -506,8 +617,7 @@ public final class Gingester {
         }
 
         public boolean isExceptionHandler() {
-            return excepts.contains(controllerId) ||
-                    configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
+            return configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
         }
 
         public boolean isStopping() {

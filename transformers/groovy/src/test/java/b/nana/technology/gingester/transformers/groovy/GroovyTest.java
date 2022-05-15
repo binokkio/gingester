@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class GroovyTest {
 
@@ -14,7 +14,7 @@ class GroovyTest {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
-        new Gingester("-t Groovy 'yield(3 * 3)'")
+        new Gingester().cli("-t Groovy 'yield(3 * 3)'")
                 .attach(result::set)
                 .run();
 
@@ -26,7 +26,7 @@ class GroovyTest {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
-        new Gingester("-t Groovy 'out.accept(context, 3 * 3)'")
+        new Gingester().cli("-t Groovy 'out.accept(context, 3 * 3)'")
                 .attach(result::set)
                 .run();
 

@@ -17,6 +17,7 @@ public final class ELog implements Transformer<Exception, Exception> {
 
     private final FetchKey fetchMethod = new FetchKey("method");
     private final FetchKey fetchDescription = new FetchKey("description");
+    private final FetchKey fetchCaughtBy = new FetchKey("caughtBy");
 
     @Override
     public void transform(Context context, Exception in, Receiver<Exception> out) {
@@ -38,10 +39,15 @@ public final class ELog implements Transformer<Exception, Exception> {
             }
 
             String at = context.streamReverse().skip(1).map(Context::getTransformerId).collect(Collectors.joining(" > "));
-            if (!at.isEmpty()) {
+            message
+                    .append("\nAt ")
+                    .append(at);
+
+            String caughtBy = (String) context.fetch(fetchCaughtBy).findFirst().orElseThrow();
+            if (!caughtBy.equals("__seed__")) {
                 message
-                        .append("\nAt ")
-                        .append(at);
+                    .append(", caught by ")
+                    .append(caughtBy);
             }
 
             in.setStackTrace(Arrays.stream(in.getStackTrace())

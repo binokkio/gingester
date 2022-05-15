@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 @Names(1)
-public final class CollectCount implements Transformer<Object, Long> {
+public final class CountCollect implements Transformer<Object, Long> {
 
     private final ContextMap<long[]> counters = new ContextMap<>();
 

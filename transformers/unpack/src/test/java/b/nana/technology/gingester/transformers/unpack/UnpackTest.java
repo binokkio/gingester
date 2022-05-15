@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UnpackTest {
 

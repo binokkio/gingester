@@ -10,15 +10,14 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BridgeTest {
 
     @Test
     void testShortBridge() throws IOException {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-t Pack greeting.txt -t Compress " +
                 "-t InputStreamToBytes");
@@ -38,7 +37,7 @@ class BridgeTest {
     @Test
     void testShortBridgeWithPassthroughs() throws IOException {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-s -t Passthrough " +
                 "-t Pack greeting.txt -t Compress " +
@@ -59,7 +58,7 @@ class BridgeTest {
     @Test
     void testLongBridge() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate '{hello:1,world:2}' " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");
@@ -75,7 +74,7 @@ class BridgeTest {
     @Test
     void testLongBridgeWithPassthroughs() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate '{hello:1,world:2}' " +
                 "-s -t Passthrough " +
                 "-t InputStreamAppend '!!!' " +
@@ -92,7 +91,7 @@ class BridgeTest {
     @Test
     void testNoBridgingSolutionFoundThrows() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t TimeNow " +
                 "-t PathSize");
 

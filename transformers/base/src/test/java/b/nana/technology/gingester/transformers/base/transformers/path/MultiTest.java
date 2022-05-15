@@ -9,9 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MultiTest {
 
@@ -21,7 +19,7 @@ class MultiTest {
         Path tempDir = Files.createTempDirectory("gingester-");
         ArrayDeque<Path> results = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-t Dir:Repeat 6 " +
                 "-t File:Repeat 6 " +

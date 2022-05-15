@@ -12,8 +12,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SolarSystemTest {
 
@@ -25,7 +24,7 @@ class SolarSystemTest {
         AtomicReference<Path> planetsPath = new AtomicReference<>();
         AtomicReference<Path> resultsPath = new AtomicReference<>();
 
-        Gingester gingester = new Gingester(getClass().getResource("/configurations/solar-system.cli"), Map.of(
+        Gingester gingester = new Gingester().cli(getClass().getResource("/configurations/solar-system.cli"), Map.of(
                 "resource", "/data/solar-system.tar.gz",
                 "workDir", tempDir
         ));

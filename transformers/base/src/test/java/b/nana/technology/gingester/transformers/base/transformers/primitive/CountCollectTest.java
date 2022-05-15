@@ -5,19 +5,19 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-class CollectCountTest {
+class CountCollectTest {
 
     @Test
     void test() {
 
         ArrayDeque<Long> result = new ArrayDeque<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-sft Repeat 2 " +
                 "-t Repeat 1000 " +
-                "-stt CollectCount")
+                "-stt CountCollect")
                 .attach(result::add)
                 .run();
 

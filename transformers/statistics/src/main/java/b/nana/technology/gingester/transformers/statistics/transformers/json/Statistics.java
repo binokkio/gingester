@@ -210,9 +210,11 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
         }
 
         private void handleNumericalValue(double numericalValue) {
-            numerical.addValue(numericalValue);
-            if (!nodeConfiguration.histogramConfiguration.disabled) {
-                histogram.addValue(numericalValue);
+            if (!Double.isNaN(numericalValue)) {
+                numerical.addValue(numericalValue);
+                if (!nodeConfiguration.histogramConfiguration.disabled) {
+                    histogram.addValue(numericalValue);
+                }
             }
         }
 

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RouteTest {
 
@@ -62,7 +62,7 @@ class RouteTest {
     @Test
     void testInFlow() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-s " +
                 "-t RegexRoute \"{'.ello.*': 'Hello', '.*': 'Other'}\" " +
@@ -81,7 +81,7 @@ class RouteTest {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +
@@ -98,7 +98,7 @@ class RouteTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t JsonCreate '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +

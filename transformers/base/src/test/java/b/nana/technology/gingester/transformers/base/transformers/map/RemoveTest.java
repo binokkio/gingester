@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RemoveTest {
 
@@ -16,7 +16,7 @@ class RemoveTest {
         AtomicReference<String> mapRemoveResult = new AtomicReference<>();
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t StringCreate 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +

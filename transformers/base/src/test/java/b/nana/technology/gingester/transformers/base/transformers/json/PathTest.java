@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
+import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,19 +10,22 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PathTest {
 
     @Test
-    void testJsonPath() throws IOException {
+    void testJsonPath() throws IOException, NoSuchMethodException {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
         JsonNode jsonNode = new ObjectMapper().readTree(getClass().getResourceAsStream("/data/json/array-wrapped-objects.json"));
 
-        Path path = new Path(new Path.Parameters("$..message"));
+        Path.Parameters pathParameters = new Path.Parameters();
+        pathParameters.path = "$..message";
+        Path path = new Path(pathParameters);
         path.transform(
                 Context.newTestContext(),
                 jsonNode,
@@ -32,5 +36,73 @@ class PathTest {
         assertEquals("Hello, World 1!", results.remove().textValue());
         assertEquals("Hello, World 2!", results.remove().textValue());
         assertEquals("Hello, World 3!", results.remove().textValue());
+    }
+
+    @Test
+    void testMissingDefinitePathThrows() {
+
+        AtomicReference<Exception> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e Exceptions " +
+                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonPath '$.missing.path.should.throw' " +
+                "-- " +
+                "-t Exceptions:Passthrough")
+                .attach(result::set)
+                .run();
+
+        assertNotNull(result.get());
+    }
+
+    @Test
+    void testMissingOptionalDefinitePathDoesNotThrow() {
+
+        AtomicReference<Exception> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e Exceptions " +
+                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonPath '$.missing.path.should.not.throw' optional " +
+                "-- " +
+                "-t Exceptions:Passthrough")
+                .attach(result::set)
+                .run();
+
+        assertNull(result.get());
+    }
+
+    @Test
+    void testMissingIndefinitePathThrows() {
+
+        AtomicReference<Exception> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e Exceptions " +
+                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonPath '$.**.missing.path.should.throw' " +
+                "-- " +
+                "-t Exceptions:Passthrough")
+                .attach(result::set)
+                .run();
+
+        assertNotNull(result.get());
+    }
+
+    @Test
+    void testMissingOptionalIndefinitePathDoesNotThrow() {
+
+        AtomicReference<Exception> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e Exceptions " +
+                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonPath '$.**.missing.path.should.not.throw' optional " +
+                "-- " +
+                "-t Exceptions:Passthrough")
+                .attach(result::set)
+                .run();
+
+        assertNull(result.get());
     }
 }

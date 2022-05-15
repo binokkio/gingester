@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FetchTest {
 
@@ -52,7 +52,7 @@ class FetchTest {
         AtomicReference<String> resultUp1 = new AtomicReference<>();
         AtomicReference<String> resultUp2 = new AtomicReference<>();
 
-        new Gingester("" +
+        new Gingester().cli("" +
                 "-t Generate hello " +
                 "-s " +
                 "-t Generate world " +

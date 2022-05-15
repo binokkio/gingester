@@ -13,7 +13,7 @@ class RemoveTest {
     @Test
     void testJsonRemoveOutputsRemovedJsonNode() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate \"{hello:'world a',bye:'world b'}\" " +
                 "-t JsonRemove $.bye");
 
@@ -27,7 +27,7 @@ class RemoveTest {
     @Test
     void testRemoveModifiesStashedInput() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate {hello:'world',bye:'world'} " +
                 "-s -t JsonRemove $.bye -f");
 
@@ -42,7 +42,7 @@ class RemoveTest {
     @Test
     void testNested() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate \"{hello:'world',bye:'world',nested:{foo:123,bar:234}}\" " +
                 "-s -t JsonRemove $.nested.bar -f");
 

@@ -8,16 +8,17 @@ import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ExceptionHandlingTest {
 
     @Test
     void test() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-e ExceptionHandler " +
-                "-t Generate \"{string:'Hello, World!',count:2}\" " +
+                "-t Generate 'Hello, World!' " +
+                "-t Repeat 2 " +
                 "-t Monkey -- " +
                 "-t ExceptionHandler:Passthrough");
 
@@ -39,7 +40,7 @@ class ExceptionHandlingTest {
     @Test
     void testExceptionInExceptionHandler() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-e ExceptionHandler " +
                 "-t Monkey 1 -- " +
                 "-t ExceptionHandler:Monkey 1 -- " +
@@ -55,5 +56,21 @@ class ExceptionHandlingTest {
                 "Monkey, ExceptionHandler",
                 result.get().fetchReverse("transformer").map(o -> (String) o).collect(Collectors.joining(", "))
         );
+    }
+
+    @Test
+    void testExceptionBubblesToSeed() {
+
+        AtomicReference<Context> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e ExceptionHandler " +
+                "-t Generate hello " +
+                "-t Monkey 1 -- " +
+                "-t ExceptionHandler:Void")
+                .attach((context, object) -> result.set(context), "__seed__")
+                .run();
+
+        assertFalse(result.get().isFlawless());
     }
 }

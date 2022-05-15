@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CycleTest {
 

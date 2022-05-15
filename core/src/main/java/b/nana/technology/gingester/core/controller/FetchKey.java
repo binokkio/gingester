@@ -90,8 +90,16 @@ public final class FetchKey {
     @Override
     @JsonValue
     public String toString() {
-        return isOrdinal ?
-                ordinal == 1 ? "^" : "^" + ordinal :
-                String.join(".", names);
+        if (isOrdinal) {
+            return ordinal == 1 ? "^" : "^" + ordinal;
+        } else if (target == null) {
+            return String.join(".", names);
+        } else {
+            if (names.length == 0) {
+                return target;
+            } else {
+                return target + '.' + String.join(".", names);
+            }
+        }
     }
 }

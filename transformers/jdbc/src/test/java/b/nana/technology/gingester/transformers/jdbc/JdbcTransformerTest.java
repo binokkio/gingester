@@ -11,8 +11,7 @@ import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JdbcTransformerTest {
 
@@ -20,10 +19,10 @@ class JdbcTransformerTest {
     void test() throws IOException {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
-        new Gingester("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+        new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
-        Gingester reader = new Gingester("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
+        Gingester reader = new Gingester().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
         reader.attach(result::set);
         reader.run();
 
@@ -40,7 +39,7 @@ class JdbcTransformerTest {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JsonCreate \"{a:123,b:true,c:'Hello, World!'}\" " +
                 "-s in " +
                 "-t JdbcDml \"{" +
@@ -64,7 +63,7 @@ class JdbcTransformerTest {
     @Test
     void testJdbcTables() {
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t JdbcTables \"{ddl:['CREATE TABLE hello (one INT)','CREATE TABLE world (two INT)']}\"");
 
         ArrayDeque<String> tableNames = new ArrayDeque<>();
@@ -79,9 +78,9 @@ class JdbcTransformerTest {
     void testTemplating() throws IOException {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
-        new Gingester("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+        new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
-        Gingester gingester = new Gingester("" +
+        Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 3 " +
                 "-t JdbcTables {url:'[=url]'} " +
                 "-t JdbcDql {url:'[=url]',dql:{template:'/test.sql',is:'RESOURCE'}} " +
