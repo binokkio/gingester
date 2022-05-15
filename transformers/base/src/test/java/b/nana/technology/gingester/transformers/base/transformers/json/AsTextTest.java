@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AsTextTest {
 

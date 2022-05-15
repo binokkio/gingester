@@ -13,7 +13,7 @@ import org.jfree.chart.plot.RingPlot;
 import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.general.DefaultPieDataset;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Comparator;

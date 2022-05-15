@@ -10,7 +10,7 @@ import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ParallelWriteReadTest {
 

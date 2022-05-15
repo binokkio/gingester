@@ -7,11 +7,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class CollectCollections<T extends Collection<?>> implements Transformer<Object, Map<Object, T>> {
