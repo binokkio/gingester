@@ -103,7 +103,11 @@ public final class TransformerFactory {
             try {
                 parameters = OBJECT_MAPPER.treeToValue(jsonParameters, parameterClass);
             } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Failed to map json parameters to " + parameterClass, e);
+                if (jsonParameters.isTextual()) {
+                    throw new IllegalArgumentException("Failed to map parameters string to " + parameterClass, e);
+                } else {
+                    throw new IllegalArgumentException("Failed to map json parameters to " + parameterClass, e);
+                }
             }
         } else {
             try {
