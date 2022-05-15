@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class OnFlawlessTest {
 
@@ -31,7 +33,28 @@ class OnFlawlessTest {
     }
 
     @Test
-    void test() {
+    void testBubblingWithoutCatcher() {
+
+        AtomicReference<String> seedFlawlessResult = new AtomicReference<>();
+        AtomicReference<String> seedFlawedResult = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e Void -t Void -- " +
+                "-t Repeat 3 " +
+                "-t Monkey 2 " +
+                "-l SeedFlawless SeedFlawed " +
+                "-t SeedFlawless:OnFinish flawless -- " +
+                "-t SeedFlawed:OnFinish flawed -- ")
+                .attach(seedFlawlessResult::set, "SeedFlawless")
+                .attach(seedFlawedResult::set, "SeedFlawed")
+                .run();
+
+        assertNull(seedFlawlessResult.get());
+        assertEquals("finish signal", seedFlawedResult.get());
+    }
+
+    @Test
+    void testBubblingWithCatcher() {
 
         Deque<String> seedFlawlessResults = new ConcurrentLinkedDeque<>();
         Deque<String> seedFlawedResults = new ConcurrentLinkedDeque<>();

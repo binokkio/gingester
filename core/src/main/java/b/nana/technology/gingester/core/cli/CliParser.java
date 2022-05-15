@@ -133,6 +133,7 @@ public final class CliParser {
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
                         excepts.add(args[++i]);
                     }
+                    if (excepts.isEmpty()) excepts.add("__elog__");
                     target.getLastTransformer().excepts(excepts);
                     break;
 

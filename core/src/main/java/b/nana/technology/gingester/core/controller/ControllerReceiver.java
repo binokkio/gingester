@@ -146,30 +146,39 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     }
 
     public void except(String method, Context context, Exception cause) {
-        except(context.stash(Map.of(
-                "transformer", controller.id,
-                "method", method,
-                "exception", cause
-        )).build(controller), cause);
-    }
-
-    public void except(String method, Context context, I in, Exception cause) {
-        except(context.stash(Map.of(
+        Controller<?, ?> catcher = except(context, cause);
+        Context next = context.stash(Map.of(
                 "transformer", controller.id,
                 "method", method,
                 "exception", cause,
-                "stash", in
-        )).build(controller), cause);
+                "caughtBy", catcher.id
+        )).build(controller);
+        catcher.excepts.values().forEach(target -> accept(next, cause, target));
     }
 
-    private void except(Context context, Exception cause) {
-        for (Context c : context) {
-            c.markFlawed();
-            if (!c.controller.excepts.isEmpty()) {
-                c.controller.excepts.values().forEach(target -> accept(context, cause, target));
-                return;
-            } else if (c.controller.isExceptionHandler) {
-                throw new IllegalStateException(c.controller.id + " is an exception handler with empty `excepts`");
+    public void except(String method, Context context, I in, Exception cause) {
+        Controller<?, ?> catcher = except(context, cause);
+        Context next = context.stash(Map.of(
+                "transformer", controller.id,
+                "method", method,
+                "in", in,
+                "exception", cause,
+                "caughtBy", catcher.id
+        )).build(controller);
+        catcher.excepts.values().forEach(target -> accept(next, cause, target));
+    }
+
+    private Controller<?, ?> except(Context context, Exception cause) {
+        if (!controller.excepts.isEmpty()) {
+            return controller;
+        } else {
+            for (Context c : context) {
+                c.markFlawed();
+                if (!c.controller.excepts.isEmpty()) {
+                    return c.controller;
+                } else if (c.controller.isExceptionHandler) {
+                    throw new IllegalStateException(c.controller.id + " is an exception handler with empty `excepts`");
+                }
             }
         }
         throw new IllegalStateException("No exception handlers for exception", cause);
