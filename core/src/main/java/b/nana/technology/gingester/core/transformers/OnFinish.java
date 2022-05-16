@@ -24,7 +24,7 @@ public final class OnFinish implements Transformer<Object, Object> {
         flawless = parameters.flawless;
         flawed = parameters.flawed;
 
-        if ((flawless != null && !flawless.isEmpty()) || (flawed != null && !flawed.isEmpty())) {
+        if (flawless != null && flawed != null && (flawless.isEmpty() || flawed.isEmpty())) {
             throw new IllegalStateException("Explicit empty list not allowed for OnFinish parameter");
         }
     }
