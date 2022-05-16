@@ -15,9 +15,10 @@ class OnFlawlessTest {
     void testTwoOutOfThree() {
 
         Gingester gingester = new Gingester().cli("" +
-                "-e Void -t Void -- " +
+                "-t Void -- " +
                 "-t Repeat 3 " +
                 "-sft Generate 'Hello, World!' " +
+                "-e Void " +
                 "-t Monkey " +
                 "-stt OnFinish flawless " +
                 "-f description");
