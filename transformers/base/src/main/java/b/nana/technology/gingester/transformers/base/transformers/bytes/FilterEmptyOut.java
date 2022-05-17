@@ -4,7 +4,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-public final class NotEmpty implements Transformer<byte[], byte[]> {
+public final class FilterEmptyOut implements Transformer<byte[], byte[]> {
 
     @Override
     public void transform(Context context, byte[] in, Receiver<byte[]> out) throws Exception {

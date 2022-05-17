@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.groovy;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.TemplateMapper;
@@ -11,6 +12,7 @@ import groovy.lang.Closure;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
+@Names(1)
 public final class Groovy implements Transformer<Object, Object> {
 
     private final ThreadLocal<TemplateMapper<ScriptWithYield>> scripts;

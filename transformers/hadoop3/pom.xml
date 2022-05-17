@@ -9,11 +9,11 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.17.1</version>
+        <version>0.17.2-SNAPSHOT</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
-    <artifactId>hadoop</artifactId>
+    <artifactId>hadoop3</artifactId>
 
     <dependencies>
 
@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
+            <artifactId>hadoop-common</artifactId>
             <version>3.3.2</version>
         </dependency>
         <dependency>

@@ -15,14 +15,14 @@ public abstract class ToJsonTransformer<I> implements Transformer<I, JsonNode> {
 
     private final ObjectReader objectReader;
 
-    public ToJsonTransformer(Parameters parameters) {
+    protected ToJsonTransformer(Parameters parameters) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
         parameters.features.forEach(feature -> objectMapper.enable(feature.mappedFeature()));
-        objectReader = objectMapper.reader();
+        objectReader = objectMapper.reader().forType(JsonNode.class);
     }
 
-    public ObjectReader getObjectReader() {
+    protected ObjectReader getObjectReader() {
         return objectReader;
     }
 
