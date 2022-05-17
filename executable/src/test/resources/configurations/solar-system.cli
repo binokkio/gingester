@@ -18,7 +18,7 @@
 + 'When the index is complete, iterate through the moons'
 -t PathSearch '{root:"[=workDir]", globs:"*/*-moons.ndjson"}'
 -t InputStreamSplit
--t BytesNotEmpty  + '(Filter out empty lines)'
+-t BytesFilterEmptyOut  + '(Filter out empty lines)'
 -t 4 BytesToJson '["ALLOW_UNQUOTED_FIELD_NAMES"]'
 
 + 'Replace the planet index with the planet name'
