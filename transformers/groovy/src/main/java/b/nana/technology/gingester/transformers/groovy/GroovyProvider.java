@@ -11,6 +11,7 @@ public final class GroovyProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                Eval.class,
                 Groovy.class
         );
     }
