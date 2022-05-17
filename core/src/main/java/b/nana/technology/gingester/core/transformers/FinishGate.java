@@ -17,7 +17,7 @@ public final class FinishGate implements Transformer<Object, Object> {
     private final ContextMap<List<Object>> contextMap = new ContextMap<>();
 
     @Override
-    public void prepare(Context context, Receiver<Object> out) throws Exception {
+    public void prepare(Context context, Receiver<Object> out) {
         contextMap.put(context, new ArrayList<>());
     }
 
@@ -27,7 +27,7 @@ public final class FinishGate implements Transformer<Object, Object> {
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<Object> out) {
         for (Object object : contextMap.remove(context)) {
             out.accept(context, object);
         }
