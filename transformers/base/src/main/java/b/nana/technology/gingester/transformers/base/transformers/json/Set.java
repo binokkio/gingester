@@ -26,7 +26,7 @@ public final class Set implements Transformer<JsonNode, JsonNode> {
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
-        ObjectNode objectNode = (ObjectNode) context.fetch(fetchTarget).findFirst().orElseThrow();
+        ObjectNode objectNode = (ObjectNode) context.require(fetchTarget);
         objectNode.set(key, in);
         out.accept(context, objectNode);
     }

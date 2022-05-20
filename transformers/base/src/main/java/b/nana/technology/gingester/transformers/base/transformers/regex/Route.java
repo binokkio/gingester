@@ -9,7 +9,10 @@ import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -46,7 +49,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
             if (route.getKey().matcher(in).find()) {
                 out.accept(
                         context.stash("route", route.getKey().pattern()),
-                        context.fetch(fetch).findFirst().orElseThrow(() -> new NoSuchElementException("RegexRoute empty fetch")),
+                        context.require(fetch),
                         route.getValue()
                 );
                 break;  // TODO parameterize

@@ -7,7 +7,9 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class CollectCollections<T extends Collection<?>> implements Transformer<Object, Map<Object, T>> {
@@ -31,15 +33,10 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
 
     @Override
     public void transform(Context context, Object in, Receiver<Map<Object, T>> out) throws Exception {
-        Optional<Object> value = context.fetch(fetchValue).findFirst();
-        if (value.isPresent()) {
-            add(
-                    maps.get(context).computeIfAbsent(in, x -> supply()),
-                    value.get()
-            );
-        } else {
-            throw new NoSuchElementException("Empty value fetch: " + fetchValue);
-        }
+        add(
+                maps.get(context).computeIfAbsent(in, x -> supply()),
+                context.require(fetchValue)
+        );
     }
 
     @Override

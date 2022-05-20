@@ -40,8 +40,8 @@ class SplitTest {
                 }
         );
 
-        assertEquals("file", result.get().getContext().fetch("name").findFirst().orElseThrow());
-        assertEquals("hello-world.txt", result.get().getContext().fetch("filename").findFirst().orElseThrow());
+        assertEquals("file", result.get().getContext().require("name"));
+        assertEquals("hello-world.txt", result.get().getContext().require("filename"));
         assertEquals("Hello, World!", new String(result.get().getValue(), StandardCharsets.UTF_8));
     }
 
@@ -70,16 +70,16 @@ class SplitTest {
         assertEquals(3, results.size());
 
         Item<byte[]> hello = results.get(0);
-        assertEquals("hello", hello.getContext().fetch("name").findFirst().orElseThrow());
+        assertEquals("hello", hello.getContext().require("name"));
         assertEquals("world", new String(hello.getValue()));
 
         Item<byte[]> bye = results.get(1);
-        assertEquals("bye", bye.getContext().fetch("name").findFirst().orElseThrow());
+        assertEquals("bye", bye.getContext().require("name"));
         assertEquals("world", new String(bye.getValue()));
 
         Item<byte[]> file = results.get(2);
-        assertEquals("file", file.getContext().fetch("name").findFirst().orElseThrow());
-        assertEquals("hello-world.txt", file.getContext().fetch("filename").findFirst().orElseThrow());
+        assertEquals("file", file.getContext().require("name"));
+        assertEquals("hello-world.txt", file.getContext().require("filename"));
         assertEquals("Hello, World!", new String(file.getValue()));
     }
 }

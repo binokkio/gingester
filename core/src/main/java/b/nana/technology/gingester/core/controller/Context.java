@@ -112,8 +112,23 @@ public final class Context implements Iterable<Context> {
         isFlawed = true;
     }
 
+
     /**
-     * Fetch object(s) from stash.
+     * Convenience method for {@link #fetchAll(FetchKey)}.{@link Stream#findFirst()}.
+     */
+    public Optional<Object> fetch(FetchKey fetchKey) {
+        return fetchAll(fetchKey).findFirst();
+    }
+
+    /**
+     * Convenience method for {@link #fetchAll(FetchKey)}.{@link Stream#findFirst()}.{@link Optional#orElseThrow()}}.
+     */
+    public Object require(FetchKey fetchKey) {
+        return fetchAll(fetchKey).findFirst().orElseThrow(() -> new NoSuchElementException("Empty fetch for " + fetchKey));
+    }
+
+    /**
+     * Fetch objects from stash.
      * <p>
      * Iterates through the transformers that contributed to this context, from last to first. Checks the stash each
      * transformer provided for an object that matches the given fetch key.
@@ -127,20 +142,20 @@ public final class Context implements Iterable<Context> {
      * ))
      * </pre>
      * <p>
-     * Then {@code context.fetch(new FetchKey("foo.bar")).findFirst().orElseThrow()} would return 123.
+     * Then {@code context.fetchAll(new FetchKey("foo.bar"))} will return a stream containing only 123.
      * <p>
      * Fetch will step through instances of Map, List, and JsonNode.
      * <p>
-     * To steer fetch towards a specific transformer, the transformer id should be given as the first fetch key
+     * To steer fetch towards a specific transformer, the transformer id must be given as the first fetch key
      * part, e.g. new FetchKey("Transformer.foo.bar").
      * <p>
      * Alternatively an ordinal fetch can be performed, using e.g. new FetchKey("^2"), which will fetch not the
      * most recently stashed value but the one before that.
      *
-     * @param fetchKey the stash to fetch
-     * @return stream of stashes matching the given name
+     * @param fetchKey descriptor of the objects to fetch
+     * @return stream of objects that are stashed at the given fetch key
      */
-    public Stream<Object> fetch(FetchKey fetchKey) {
+    public Stream<Object> fetchAll(FetchKey fetchKey) {
         if (fetchKey.isOrdinal()) {
             return stream()
                     .filter(c -> c.controller.transformer instanceof InputStasher)
@@ -177,24 +192,38 @@ public final class Context implements Iterable<Context> {
     }
 
     /**
+     * Fetch objects from stash, reversed.
+     *
+     * See {@link #fetchAll(FetchKey)} for details.
+     *
+     * @param fetchKey descriptor of the objects to fetch
+     * @return the same as {@link #fetchAll(FetchKey)}, but reversed.
+     */
+    public Stream<Object> fetchReverse(FetchKey fetchKey) {
+        List<Object> results = fetchAll(fetchKey).collect(Collectors.toCollection(ArrayList::new));
+        Collections.reverse(results);
+        return results.stream();
+    }
+
+    /**
      * Convenient but slower version of {@link #fetch(FetchKey)}.
      */
-    public Stream<Object> fetch(String... fetchKey) {
+    public Optional<Object> fetch(String... fetchKey) {
         return fetch(new FetchKey(String.join(".", fetchKey)));
     }
 
     /**
-     * Fetch object(s) from stash, reversed.
-     *
-     * See {@link #fetch(FetchKey)} for details.
-     *
-     * @param fetchKey the stash to fetch
-     * @return the same as {@link #fetch(FetchKey)}, but reversed.
+     * Convenient but slower version of {@link #require(FetchKey)}.
      */
-    public Stream<Object> fetchReverse(FetchKey fetchKey) {
-        List<Object> results = fetch(fetchKey).collect(Collectors.toCollection(ArrayList::new));
-        Collections.reverse(results);
-        return results.stream();
+    public Object require(String... fetchKey) {
+        return require(new FetchKey(String.join(".", fetchKey)));
+    }
+
+    /**
+     * Convenient but slower version of {@link #fetchAll(FetchKey)}.
+     */
+    public Stream<Object> fetchAll(String... fetchKey) {
+        return fetchAll(new FetchKey(String.join(".", fetchKey)));
     }
 
     /**
@@ -203,6 +232,8 @@ public final class Context implements Iterable<Context> {
     public Stream<Object> fetchReverse(String... fetchKey) {
         return fetchReverse(new FetchKey(String.join(".", fetchKey)));
     }
+
+
 
     @Override
     public Iterator<Context> iterator() {

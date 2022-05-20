@@ -20,7 +20,7 @@ public final class FetchAll implements Transformer<Object, Object> {  // TODO im
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
-        context.fetch(fetchKey).forEach(item -> out.accept(context, item));
+        context.fetchAll(fetchKey).forEach(item -> out.accept(context, item));
     }
 
     public static class Parameters {

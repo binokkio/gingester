@@ -8,8 +8,6 @@ import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-import java.util.NoSuchElementException;
-
 @Names(1)
 public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
 
@@ -28,8 +26,7 @@ public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         out.accept(
                 context,
-                context.fetch(fetchKey).findFirst()
-                        .orElseThrow(() -> new NoSuchElementException("Empty fetch for \"" + fetchKey + "\""))
+                context.require(fetchKey)
         );
     }
 

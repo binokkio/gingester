@@ -29,7 +29,7 @@ public final class Open implements Transformer<Path, InputStream> {
     @Override
     public void transform(Context context, Path in, Receiver<InputStream> out) throws Exception {
         try (InputStream inputStream = Files.newInputStream(in)) {
-            Optional<Object> monitor = context.fetch(fetchMonitor).findFirst();
+            Optional<Object> monitor = context.fetch(fetchMonitor);
             if (monitor.isPresent()) {
                 out.accept(context, new InputStreamWrapper(inputStream, (OutputStreamMonitor) monitor.get()));
             } else {

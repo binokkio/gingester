@@ -31,7 +31,7 @@ public final class Parameter {
     }
 
     void update(Context context) throws SQLException {
-        Object value = context.fetch(fetchValue).findFirst().orElseThrow();
+        Object value = context.require(fetchValue);
         if (value instanceof JsonNode) {
             preparedStatement.setObject(index, OBJECT_MAPPER.convertValue(value, OBJECT_TYPE));
         } else {

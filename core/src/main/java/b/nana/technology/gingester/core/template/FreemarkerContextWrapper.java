@@ -27,7 +27,7 @@ public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
         return new TemplateHashModel() {
 
             public TemplateModel get(String name) throws TemplateModelException {
-                return handleUnknownType(context.fetch(new FetchKey(name, true)).findFirst().orElse(null));
+                return handleUnknownType(context.fetch(new FetchKey(name, true)).orElse(null));
             }
 
             public boolean isEmpty() {

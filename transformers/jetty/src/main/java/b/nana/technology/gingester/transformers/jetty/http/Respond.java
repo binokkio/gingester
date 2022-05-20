@@ -14,8 +14,8 @@ public final class Respond implements Transformer<InputStream, Void> {
     @Override
     public void transform(Context context, InputStream in, Receiver<Void> out) throws Exception {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse).findFirst()
-                .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
+        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse)
+                .orElseThrow(() -> new IllegalStateException("Context did not come from HttpServer"));
 
         response.respond(servlet -> in.transferTo(servlet.getOutputStream()));
     }
