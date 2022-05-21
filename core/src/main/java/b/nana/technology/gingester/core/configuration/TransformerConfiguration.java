@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -44,12 +43,6 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
         return this;
     }
 
-    public TransformerConfiguration transformer(String name, Transformer<?, ?> transformer) {
-        this.name = name;
-        this.transformer = transformer;
-        return this;
-    }
-
     public TransformerConfiguration report(boolean report) {
         this.report = report;
         return this;
@@ -61,18 +54,12 @@ public final class TransformerConfiguration extends BaseConfiguration<Transforme
     }
 
 
-    // TODO make not optional (with a requireNonNull and hasId() helper)
     public Optional<String> getId() {
         return Optional.ofNullable(id);
     }
 
-    // TODO make not optional, move name and transformer to constructor?
     public Optional<String> getName() {
-        if (name != null) {
-            return Optional.of(name);
-        } else {
-            return getTransformer().map(TransformerFactory::getUniqueName);
-        }
+        return Optional.ofNullable(name);
     }
 
     public Optional<Transformer<?, ?>> getTransformer() {

@@ -12,6 +12,8 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import b.nana.technology.gingester.core.transformers.BiConsumerPassthrough;
+import b.nana.technology.gingester.core.transformers.ConsumerPassthrough;
 import b.nana.technology.gingester.core.transformers.ELog;
 import b.nana.technology.gingester.core.transformers.Passthrough;
 import net.jodah.typetools.TypeResolver;
@@ -136,6 +138,36 @@ public final class Gingester {
         return this;
     }
 
+    public Gingester add(Transformer<?, ?> transformer) {
+        add(new TransformerConfiguration().transformer(transformer));
+        return this;
+    }
+
+    public Gingester add(String id, Transformer<?, ?> transformer) {
+        add(new TransformerConfiguration().id(id).transformer(transformer));
+        return this;
+    }
+
+    public Gingester add(Consumer<?> consumer) {
+        add(new TransformerConfiguration().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
+        return this;
+    }
+
+    public Gingester add(String id, Consumer<?> consumer) {
+        add(new TransformerConfiguration().id(id).name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
+        return this;
+    }
+
+    public Gingester add(BiConsumer<Context, ?> biConsumer) {
+        add(new TransformerConfiguration().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
+        return this;
+    }
+
+    public Gingester add(String id, BiConsumer<Context, ?> biConsumer) {
+        add(new TransformerConfiguration().id(id).name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
+        return this;
+    }
+
     /**
      * Add transformer configuration.
      *
@@ -220,7 +252,8 @@ public final class Gingester {
     private <T> Gingester attach(String name, Transformer<T,T> transformer, String targetId) {
 
         TransformerConfiguration attach = new TransformerConfiguration()
-                .transformer(name, transformer)
+                .name(name)
+                .transformer(transformer)
                 .isNeverMaybeNext(true)
                 .links(Collections.emptyList());
 
@@ -558,7 +591,8 @@ public final class Gingester {
             }
             return id;
         } else {
-            String name = configuration.getName().orElseThrow();
+            String name = configuration.getName()
+                    .orElseGet(() -> TransformerFactory.getUniqueName(configuration.getTransformer().orElseThrow()));
             String id = name;
             int i = 1;
             while (transformerConfigurations.containsKey(id)) {

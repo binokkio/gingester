@@ -223,11 +223,11 @@ public final class CliParser {
                     }
 
                     if (parameters.size() > 1) {
-                        transformer.transformer(name, TransformerFactory.instance(name, parameters));
+                        transformer.name(name).transformer(TransformerFactory.instance(name, parameters));
                     } else if (!parameters.isEmpty()) {
-                        transformer.transformer(name, TransformerFactory.instance(name, parameters.get(0)));
+                        transformer.name(name).transformer(TransformerFactory.instance(name, parameters.get(0)));
                     } else {
-                        transformer.transformer(name, TransformerFactory.instance(name));
+                        transformer.name(name).transformer(TransformerFactory.instance(name));
                     }
 
                     if (syncTo) transformer.syncs(target.getSyncFrom());

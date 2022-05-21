@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+// TODO instance instead of static and allow providers to be supplied, maybe through Gingester constructor to prevent lazy loading implementation
+
 public final class TransformerFactory {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
@@ -165,6 +167,7 @@ public final class TransformerFactory {
     }
 
     public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
+        if (transformer.getCanonicalName() == null) return "__anonymous__";
         int names = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : 2;
         return getNames(transformer)
                 .skip(names - 1)
