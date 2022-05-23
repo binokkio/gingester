@@ -29,7 +29,7 @@ public final class ELog implements Transformer<Exception, Exception> {
                     .append(" during ")
                     .append(context.getTransformerId())
                     .append("::")
-                    .append(context.fetch(fetchMethod).findFirst().orElseThrow());
+                    .append(context.require(fetchMethod));
 
             String description = context.fetchReverse(fetchDescription).map(Object::toString).collect(Collectors.joining(" :: "));
             if (!description.isEmpty()) {
@@ -43,7 +43,7 @@ public final class ELog implements Transformer<Exception, Exception> {
                     .append("\nAt ")
                     .append(at);
 
-            String caughtBy = (String) context.fetch(fetchCaughtBy).findFirst().orElseThrow();
+            String caughtBy = (String) context.require(fetchCaughtBy);
             if (!caughtBy.equals("__seed__")) {
                 message
                     .append(", caught by ")

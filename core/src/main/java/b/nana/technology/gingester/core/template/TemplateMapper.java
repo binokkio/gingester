@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.template;
 
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.FetchKey;
 
 import java.util.Optional;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
  * Context template mapper.
  * <p>
  * Render strings using the Apache FreeMarker template engine and the Gingester Context as its data model. Template
- * variables are resolved as if they were interpreted by {@link Context#fetch(String...)}. The rendered string is mapped
+ * variables are resolved as if they were interpreted by {@link Context#fetch(FetchKey)}. The rendered string is mapped
  * to T by the given mapper Function.
  * <p>
  * If the template is invariant the mapper function is only called once for an instance of TemplateMapper and the result

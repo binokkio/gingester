@@ -12,11 +12,11 @@ import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 
 @Names(1)
-public final class Eval implements Transformer<Object, Object> {
+public final class Filter implements Transformer<Object, Object> {
 
     private final ThreadLocal<TemplateMapper<Script>> scripts;
 
-    public Eval(Parameters parameters) {
+    public Filter(Parameters parameters) {
         scripts = ThreadLocal.withInitial(() -> Context.newTemplateMapper(
                 parameters.script,
                 script -> new GroovyShell().parse(script)
@@ -35,7 +35,14 @@ public final class Eval implements Transformer<Object, Object> {
         Object result = script.run();
         script.setBinding(null);
 
-        out.accept(context, result);
+        try {
+            boolean asBoolean = (boolean) result;
+            if (asBoolean) {
+                out.accept(context, in);
+            }
+        } catch (ClassCastException e) {
+            throw new IllegalStateException("Filter did not return a boolean but returned \"" + result + "\"");
+        }
     }
 
     public static class Parameters {

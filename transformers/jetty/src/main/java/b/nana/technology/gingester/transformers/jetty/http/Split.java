@@ -28,7 +28,7 @@ public final class Split implements Transformer<InputStream, InputStream> {
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
 
-        String contentType = (String) context.fetch(fetchHttpRequestHeadersContentType).findFirst().orElseThrow(
+        String contentType = (String) context.fetch(fetchHttpRequestHeadersContentType).orElseThrow(
                 () -> new IllegalStateException("Can't split stream without Content-Type header"));
 
         Matcher boundaryMatcher = BOUNDARY_PATTERN.matcher(contentType);

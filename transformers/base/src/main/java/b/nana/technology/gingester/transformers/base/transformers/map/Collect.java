@@ -9,8 +9,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
@@ -31,15 +29,11 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Map<Object, Object>> out) throws Exception {
-        Optional<Object> value = context.fetch(fetchValue).findFirst();
-        if (value.isPresent()) {
-            Map<Object, Object> map = maps.get(context);
-            Object collision = map.put(in, value.get());
-            if (collision != null && throwOnCollision) {
-                throw new IllegalStateException("Key already present: " + in);
-            }
-        } else {
-            throw new NoSuchElementException("Empty value fetch: " + fetchValue);
+        Object value = context.require(fetchValue);
+        Map<Object, Object> map = maps.get(context);
+        Object collision = map.put(in, value);
+        if (collision != null && throwOnCollision) {
+            throw new IllegalStateException("Key already present: " + in);
         }
     }
 

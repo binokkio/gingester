@@ -12,6 +12,7 @@ public final class GroovyProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 Eval.class,
+                Filter.class,
                 Groovy.class
         );
     }

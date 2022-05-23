@@ -48,7 +48,7 @@ public final class Merge implements Transformer<Object, Object> {
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         state.act(context, merged -> {
             for (Instruction instruction : instructions) {
-                context.fetch(instruction.fetch).findFirst().ifPresent(
+                context.fetch(instruction.fetch).ifPresent(
                         object -> merged.get(instruction.stash).add(object));
             }
         });

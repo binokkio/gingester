@@ -56,11 +56,10 @@ public final class Keycloak implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse).findFirst()
-                .orElseThrow(() -> new IllegalStateException("Context did not come from Http.Server"));
+        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse)
+                .orElseThrow(() -> new IllegalStateException("Context did not come from HttpServer"));
 
         Cookie cookie = (Cookie) context.fetch(fetchHttpRequestCookiesCookieName)
-                .findFirst()
                 .orElseGet(() -> new Cookie(cookieName, UUID.randomUUID().toString()));
 
         cookie.setMaxAge(2592000);
@@ -68,7 +67,7 @@ public final class Keycloak implements Transformer<Object, Object> {
 
         UUID sessionId = UUID.fromString(cookie.getValue());
 
-        Optional<Object> optionalCode = context.fetch(fetchHttpQueryCode).findFirst();
+        Optional<Object> optionalCode = context.fetch(fetchHttpQueryCode);
         if (optionalCode.isPresent()) {
 
             String tokenRequestBody = String.format(
@@ -102,7 +101,7 @@ public final class Keycloak implements Transformer<Object, Object> {
     }
 
     private String getRedirectUrl(Context context) {
-        return redirectUrl + context.fetch(fetchHttpRequestPath).findFirst().orElseThrow();
+        return redirectUrl + context.require(fetchHttpRequestPath);
     }
 
     private static String stripTrailingSlash(String input) {
