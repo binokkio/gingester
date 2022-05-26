@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.base;
 import b.nana.technology.gingester.core.Gingester;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,5 +50,75 @@ class MergeTest {
         gingester.run();
 
         assertEquals("HelloWorld,ByeWorld", result.get());
+    }
+
+    @Test
+    void testShortListSyntax() {
+
+        AtomicReference<List<String>> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-t Repeat 3 " +
+                "-t StringCreate hello " +
+                "-s greeting " +
+                "-t Merge 'greeting > greetings[]' " +
+                "-f greetings")
+                .attach(result::set)
+                .run();
+
+        assertEquals(result.get(), List.of("hello", "hello", "hello"));
+    }
+
+    @Test
+    void testOptionalList() {
+
+        AtomicReference<List<String>> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-t Repeat 3 " +
+                "-t StringCreate hello " +
+                "-s greeting " +
+                "-t Merge 'notStashed > greetings[]?' " +
+                "-f greetings")
+                .attach(result::set)
+                .run();
+
+        assertEquals(result.get(), List.of());
+    }
+
+    @Test
+    void testNonOptionalListThrowsOnEmpty() {
+
+        AtomicReference<IllegalStateException> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-e ExceptionHandler " +
+                "-t Repeat 3 " +
+                "-t StringCreate hello " +
+                "-s greeting " +
+                "-t Merge 'notStashed > greetings[]' " +
+                "-- " +
+                "-t ExceptionHandler:Passthrough")
+                .attach(result::set)
+                .run();
+
+        assertEquals("No values for \"notStashed > greetings[]\"", result.get().getMessage());
+    }
+
+    @Test
+    void testSameObjectDoesNotTriggerMultipleValues() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-t StringCreate hello " +
+                "-t Repeat 3 " +
+                "-s greeting " +
+                "-t Merge 'greeting' " +
+                "-f greeting")
+                .attach(result::set)
+                .run();
+
+        assertEquals("hello", result.get());
     }
 }
