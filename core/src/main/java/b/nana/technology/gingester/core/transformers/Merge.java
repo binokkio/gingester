@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
+import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
@@ -20,9 +21,10 @@ import java.util.regex.Pattern;
 import static java.util.Objects.requireNonNull;
 
 @Names(1)
-@Example(example = "hello world", description = "Collect `hello` and `world` stashes and stash them on finish")
-@Example(example = "hello world?", description = "Same as first example but `world` is optional")
-@Example(example = "hello 'world > worlds[]'", description = "Same as first example but stashing a list of `world` as `worlds`")
+@Description("Collect stashed values from all in-sync transforms and stash them on finish")
+@Example(example = "hello world", description = "Collect `hello` and `world` stashes")
+@Example(example = "hello world?", description = "Same as example 1 but `world` is optional")
+@Example(example = "hello 'world > worlds[]'", description = "Same as example 1 but place all `world` stashes in a list `worlds`")
 @Example(example = "hello 'world > worlds[]?'", description = "Same as above but without an exception if `worlds` ends up empty")
 @Example(example = "'hello > world'", description = "Collect `hello` and stash it as `world` on finish")
 public final class Merge implements Transformer<Object, Object> {
