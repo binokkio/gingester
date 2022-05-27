@@ -1,5 +1,8 @@
 package b.nana.technology.gingester.core.transformers;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
@@ -10,14 +13,23 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.util.ArrayList;
 import java.util.List;
 
+@Names(1)
 @Passthrough
-public final class OrdinalRoute implements Transformer<Object, Object> {
+@Description("Route items based on their ordinality within the sync context")
+@Example(example = "A B", description = "Route the first item to A, the second to B, throw if there is a third")
+public class OrdinalRoute implements Transformer<Object, Object> {
 
     private final ContextMap<Counter> counters = new ContextMap<>();
     private final List<String> routes;
+    private final boolean cycle;
 
     public OrdinalRoute(Parameters parameters) {
-        routes = parameters;
+        this(parameters, false);
+    }
+
+    public OrdinalRoute(List<String> routes, boolean cycle) {
+        this.routes = routes;
+        this.cycle = cycle;
     }
 
     @Override
@@ -33,8 +45,14 @@ public final class OrdinalRoute implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         int count = counters.apply(context, Counter::getAndIncrement);
-        if (count >= routes.size()) throw new IllegalStateException("No route for ordinal " + count);
-        out.accept(context, in, routes.get(count));
+        String link;
+        if (cycle) {
+            link = routes.get(count % routes.size());
+        } else {
+            if (count >= routes.size()) throw new IllegalStateException("No route for ordinal " + count);
+            link = routes.get(count);
+        }
+        out.accept(context, in, link);
     }
 
     @Override
