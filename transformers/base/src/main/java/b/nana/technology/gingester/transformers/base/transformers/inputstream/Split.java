@@ -1,5 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
+import b.nana.technology.gingester.core.annotations.Description;
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
@@ -13,6 +15,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+@Description("Split InputStream on given delimiter")
+@Example(example = "", description = "Split InputStream on default newline delimiter")
+@Example(example = "DELIM", description = "Split InputStream on \"DELIM\"")
+@Example(example = "1", description = "Split InputStream at most once on default newline delimiter")
+@Example(example = "DELIM 2", description = "Split InputStream at most twice on \"DELIM\"")
 public final class Split implements Transformer<InputStream, InputStream> {
 
     private final byte[] delimiter;
