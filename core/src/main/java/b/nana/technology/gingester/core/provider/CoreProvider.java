@@ -21,6 +21,7 @@ public final class CoreProvider implements Provider {
                 Monkey.class,
                 OnFinish.class,
                 OnPrepare.class,
+                OrdinalRoute.class,
                 Passthrough.class,
                 Repeat.class,
                 Stash.class,
