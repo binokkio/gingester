@@ -12,6 +12,7 @@ public final class CoreProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                CycleRoute.class,
                 Fetch.class,
                 FetchAll.class,
                 FetchObject.class,
@@ -21,6 +22,7 @@ public final class CoreProvider implements Provider {
                 Monkey.class,
                 OnFinish.class,
                 OnPrepare.class,
+                OrdinalRoute.class,
                 Passthrough.class,
                 Repeat.class,
                 Stash.class,
