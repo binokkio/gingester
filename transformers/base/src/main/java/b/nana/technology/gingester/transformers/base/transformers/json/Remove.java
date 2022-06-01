@@ -1,45 +1,12 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
-import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import b.nana.technology.gingester.core.annotations.Example;
 
-public final class Remove implements Transformer<JsonNode, JsonNode> {
-
-    private static final Configuration CONFIGURATION = Configuration.builder()
-            .jsonProvider(new JacksonJsonNodeJsonProvider())
-            .build();
-
-    private final JsonPath jsonPath;
+@Example(example = "$.hello", description = "Remove and yield the JsonNode at key \"hello\", throw if missing")
+@Example(example = "$.hello optional", description = "Remove and yield the JsonNode at key \"hello\", ignore if missing")
+public final class Remove extends Path {
 
     public Remove(Parameters parameters) {
-        jsonPath = JsonPath.compile(parameters.path);
-    }
-
-    @Override
-    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
-        DocumentContext documentContext = JsonPath.parse(in, CONFIGURATION);
-        JsonNode result = documentContext.read(jsonPath);
-        documentContext.delete(jsonPath);
-        out.accept(context, result);
-    }
-
-    public static class Parameters {
-
-        public String path;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(String path) {
-            this.path = path;
-        }
+        super(parameters, true);
     }
 }
