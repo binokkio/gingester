@@ -71,7 +71,7 @@ class RemoveTest {
                 .run();
 
         assertEquals(NoSuchElementException.class, result.get().getClass());
-        assertEquals("$['bye']", result.get().getMessage());
+        assertEquals("$.bye", result.get().getMessage());
     }
 
     @Test
