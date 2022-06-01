@@ -138,32 +138,32 @@ public final class Gingester {
         return this;
     }
 
-    public Gingester add(Transformer<?, ?> transformer) {
+    public <T> Gingester add(Transformer<T, ?> transformer) {
         add(new TransformerConfiguration().transformer(transformer));
         return this;
     }
 
-    public Gingester add(String id, Transformer<?, ?> transformer) {
+    public <T> Gingester add(String id, Transformer<T, ?> transformer) {
         add(new TransformerConfiguration().id(id).transformer(transformer));
         return this;
     }
 
-    public Gingester add(Consumer<?> consumer) {
+    public <T> Gingester add(Consumer<T> consumer) {
         add(new TransformerConfiguration().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
         return this;
     }
 
-    public Gingester add(String id, Consumer<?> consumer) {
+    public <T> Gingester add(String id, Consumer<T> consumer) {
         add(new TransformerConfiguration().id(id).name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
         return this;
     }
 
-    public Gingester add(BiConsumer<Context, ?> biConsumer) {
+    public <T> Gingester add(BiConsumer<Context, T> biConsumer) {
         add(new TransformerConfiguration().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
         return this;
     }
 
-    public Gingester add(String id, BiConsumer<Context, ?> biConsumer) {
+    public <T> Gingester add(String id, BiConsumer<Context, T> biConsumer) {
         add(new TransformerConfiguration().id(id).name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
         return this;
     }
