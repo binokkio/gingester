@@ -114,7 +114,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
             if (Thread.currentThread() instanceof Worker) {
                 ((Worker) Thread.currentThread()).flush();
             }
-            for (Controller<?, ?> target : controller.indicates) {
+            for (Controller<?, ?> target : controller.indicates.get(controller)) {
                 target.finish(controller, context);
             }
         }
@@ -133,11 +133,11 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         }
     }
 
-    void onFinishSignalReachedLeave(Context context) {
+    void onFinishSignalReachedTarget(Context context) {
         if (context.isSeed()) return;
         synchronized (activeSyncs) {
             int count = activeSyncs.remove(context);
-            if (++count == controller.downstreamLeaves) {
+            if (++count == controller.syncs.size()) {
                 activeSyncs.notify();
             } else {
                 activeSyncs.put(context, count);

@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public final class Controller<I, O> {
 
@@ -31,11 +32,10 @@ public final class Controller<I, O> {
     public final Map<String, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
-    final Set<Controller<?, ?>> indicates = new HashSet<>();  // TODO should this be a LinkedHashSet?
+    final Set<Controller<?, ?>> indicatesCoarse = new HashSet<>();
+    final Map<Controller<?, ?>, Set<Controller<?, ?>>> indicates = new HashMap<>();
     public final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
-    int downstreamLeaves;
-    final boolean isLeave;
     public final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
@@ -65,7 +65,6 @@ public final class Controller<I, O> {
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         dealt = new SimpleCounter(acks != null || report);
-        isLeave = configuration.getLinks().isEmpty() && configuration.getExcepts().isEmpty();
         isExceptionHandler = gingester.isExceptionHandler();
 
         phaser = gingester.getPhaser();
@@ -83,12 +82,12 @@ public final class Controller<I, O> {
         for (Controller<?, ?> controller : gingester.getControllers()) {
             if (controller.links.containsValue(this)) {
                 incoming.add(controller);
-                controller.indicates.add(this);
+                controller.indicatesCoarse.add(this);
             }
             if (controller.excepts.containsValue(this)) {
                 Set<Controller<?, ?>> elbbub = elbbub(controller);
                 incoming.addAll(elbbub);
-                elbbub.forEach(c -> c.indicates.add(this));
+                elbbub.forEach(c -> c.indicatesCoarse.add(this));
             }
         }
     }
@@ -108,8 +107,6 @@ public final class Controller<I, O> {
             }
             found = next;
         }
-
-        downstreamLeaves = (int) downstream.stream().filter(c -> c.isLeave).count();
     }
 
     public void discoverSyncs() {
@@ -138,6 +135,19 @@ public final class Controller<I, O> {
                 }
             }
         }
+
+        // refine `indicatesCoarse`
+        for (Controller<?, ?> controller : gingester.getControllers()) {
+            if (!controller.syncs.isEmpty() && (controller == this || controller.downstream.contains(this))) {
+                Set<Controller<?, ?>> targets = indicatesCoarse.stream()
+                        .filter(c -> controller.syncs.contains(c) || c.downstream.stream().anyMatch(controller.syncs::contains))
+                        .collect(Collectors.toSet());
+                if (!targets.isEmpty()) indicates.put(controller, targets);
+            }
+        }
+
+        // seed finish signal is always propagated to whole `indicatesCoarse`
+        indicates.put(gingester.getController("__seed__").orElseThrow(), indicatesCoarse);
 
         receiver.examineController();
     }
@@ -348,7 +358,6 @@ public final class Controller<I, O> {
         report = false;
         dealt = null;
         acks = null;
-        isLeave = false;
         isExceptionHandler = false;
     }
 }
