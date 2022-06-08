@@ -14,11 +14,11 @@ public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
     }
 
     @Override
-    protected TemplateModel handleUnknownType(Object object) throws TemplateModelException {
+    public TemplateModel wrap(Object object) throws TemplateModelException {
         if (object instanceof Context) {
             return handleContext((Context) object);
         } else {
-            return super.handleUnknownType(object);
+            return super.wrap(object);
         }
     }
 
@@ -27,7 +27,7 @@ public class FreemarkerContextWrapper extends FreemarkerJacksonWrapper {
         return new TemplateHashModel() {
 
             public TemplateModel get(String name) throws TemplateModelException {
-                return handleUnknownType(context.fetch(new FetchKey(name, true)).orElse(null));
+                return wrap(context.fetch(new FetchKey(name, true)).orElse(null));
             }
 
             public boolean isEmpty() {
