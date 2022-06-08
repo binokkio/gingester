@@ -425,12 +425,13 @@ public final class Gingester {
     }
 
     private void setupElog() {
-        configurations.values()
-                .stream().flatMap(c -> c.getExcepts().stream())
-                .map(configurations::get)
-                .filter(c -> !c.getId().equals("__elog__"))
-                .filter(c -> c.getExcepts().isEmpty())
-                .forEach(c -> c.excepts(Collections.singletonList("__elog__")));
+        for (ControllerConfiguration<?, ?> catcher : configurations.values()) {
+            for (String handlerId : catcher.getExcepts()) {
+                ControllerConfiguration<?, ?> handler = configurations.get(handlerId);
+                if (handler == null) throw new IllegalStateException(catcher.getId() + " excepts to " + handlerId + " which does not exist");
+                if (!handlerId.equals("__elog__") && handler.getExcepts().isEmpty()) handler.excepts(Collections.singletonList("__elog__"));
+            }
+        }
     }
 
     private void setupSeed() {
