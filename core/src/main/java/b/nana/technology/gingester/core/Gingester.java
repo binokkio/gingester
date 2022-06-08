@@ -429,9 +429,7 @@ public final class Gingester {
             for (String handlerId : catcher.getExcepts()) {
                 ControllerConfiguration<?, ?> handler = configurations.get(handlerId);
                 if (handler == null) throw new IllegalStateException(catcher.getId() + " excepts to " + handlerId + " which does not exist");
-                if (!handlerId.equals("__elog__") && handler.getExcepts().isEmpty()) {
-                    handler.excepts(Collections.singletonList("__elog__"));
-                }
+                if (!handlerId.equals("__elog__") && handler.getExcepts().isEmpty()) handler.excepts(Collections.singletonList("__elog__"));
             }
         }
     }
