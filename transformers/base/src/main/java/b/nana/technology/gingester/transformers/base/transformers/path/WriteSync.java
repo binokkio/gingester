@@ -41,6 +41,9 @@ public class WriteSync implements Transformer<InputStream, Path> {
         }
 
         try (OutputStream output = Files.newOutputStream(path, openOptions)) {
+
+            // TODO optionally wrap `output` in one or more DigestOutputStreams if instructed by Parameters
+
             write(in, output);
         }
 
