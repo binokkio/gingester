@@ -21,6 +21,8 @@ public final class BaseProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                b.nana.technology.gingester.transformers.base.transformers.base16.Encode.class,
+                b.nana.technology.gingester.transformers.base.transformers.base64.Encode.class,
                 b.nana.technology.gingester.transformers.base.transformers.bigdecimal.Multiply.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.FilterEmptyOut.class,
                 b.nana.technology.gingester.transformers.base.transformers.bytes.FromOutputStream.class,
@@ -36,6 +38,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.groupby.CountModulo.class,
                 b.nana.technology.gingester.transformers.base.transformers.groupby.Equals.class,
                 b.nana.technology.gingester.transformers.base.transformers.groupby.TimeInterval.class,
+                b.nana.technology.gingester.transformers.base.transformers.hash.Sha1.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.ElementsContainingOwnText.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.ElementsContainingText.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.FromString.class,
