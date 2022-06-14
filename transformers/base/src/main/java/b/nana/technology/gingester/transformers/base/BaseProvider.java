@@ -122,6 +122,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.std.Out.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Append.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.AsBigDecimal.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.AsJsonNode.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Create.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.FilterEmptyIn.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.FilterEmptyOut.class,
