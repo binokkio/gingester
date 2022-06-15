@@ -1,0 +1,14 @@
+-t HttpServer
+-t Keycloak '{
+        authUrl: "[=keycloak.authUrl]",
+        realm: "[=keycloak.realm]",
+        clientId: "[=keycloak.clientId]",
+        redirectUrl: "[=keycloak.redirectUrl]"
+    }'
+-t HttpGet '{
+        uri: "[=proxyUrl]${http.request.path}",
+        headers: {
+            Authorization: "Bearer ${accessToken}"
+        }
+    }'
+-t HttpRespond

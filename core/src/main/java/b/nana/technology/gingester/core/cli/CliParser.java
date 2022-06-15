@@ -138,7 +138,8 @@ public final class CliParser {
                     break;
 
                 case "--":
-                    target.getLastTransformer().links(Collections.emptyList());
+                    if (target.getLastTransformer().getLinks().filter(List.of("__maybe_next__")::equals).isPresent())
+                        target.getLastTransformer().links(Collections.emptyList());
                     break;
 
                 case "-sf":

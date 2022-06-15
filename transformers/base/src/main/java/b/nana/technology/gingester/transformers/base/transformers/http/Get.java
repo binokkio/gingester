@@ -1,12 +1,13 @@
 package b.nana.technology.gingester.transformers.base.transformers.http;
 
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -15,17 +16,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class Get implements Transformer<Object, InputStream> {
 
     private final Template uriTemplate;
     private final HttpClient.Redirect followRedirects;
-    private final Map<String, String> headers;
+    private final Map<String, Template> headers;
 
     public Get(Parameters parameters) {
         uriTemplate = Context.newTemplate(parameters.uri);
         followRedirects = parameters.followRedirects;
-        headers = parameters.headers;
+        headers = parameters.headers.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> Context.newTemplate(e.getValue())
+                ));
     }
 
     @Override
@@ -38,7 +44,7 @@ public final class Get implements Transformer<Object, InputStream> {
         HttpClient client = HttpClient.newBuilder().followRedirects(followRedirects).build();
         URI uri = URI.create(uriTemplate.render(context));
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri);
-        headers.forEach(requestBuilder::header);
+        headers.forEach((name, template) -> requestBuilder.header(name, template.render(context)));
         HttpResponse<InputStream> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
         Context.Builder contextBuilder = context.stash(Map.of(
                 "description", uri.toString(),
@@ -49,16 +55,15 @@ public final class Get implements Transformer<Object, InputStream> {
 
     public static class Parameters {
 
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, uri -> o("uri", uri));
+            }
+        }
+
         public TemplateParameters uri;
         public HttpClient.Redirect followRedirects = HttpClient.Redirect.NORMAL;
-        public Map<String, String> headers = Collections.emptyMap();
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(TemplateParameters uri) {
-            this.uri = uri;
-        }
+        public Map<String, TemplateParameters> headers = Collections.emptyMap();
     }
 }
