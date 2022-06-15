@@ -38,4 +38,32 @@ class RemoveTest {
         assertEquals(2, result.get().size());
     }
 
+    @Test
+    void testEmptyRemove() {
+
+        AtomicReference<String> mapRemoveResult = new AtomicReference<>();
+        AtomicReference<Map<?, ?>> result = new AtomicReference<>();
+
+        new Gingester().cli("" +
+                "-t StringCreate 'Hello, World!' " +
+                "-s " +
+                "-l A B C " +
+                "-t A:StringCreate A -l MapCollect " +
+                "-t B:StringCreate B -l MapCollect " +
+                "-t C:StringCreate C -l MapCollect " +
+                "-t MapCollect " +
+                "-s " +
+                "-t StringCreate D " +
+                "-t MapRemove " +
+                "-f")
+                .attach(mapRemoveResult::set, "MapRemove")
+                .attach(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get().get("A"));
+        assertEquals("Hello, World!", result.get().get("B"));
+        assertEquals("Hello, World!", result.get().get("C"));
+        assertEquals(3, result.get().size());
+        assertNull(mapRemoveResult.get());
+    }
 }

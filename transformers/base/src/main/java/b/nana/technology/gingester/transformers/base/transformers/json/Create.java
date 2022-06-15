@@ -16,7 +16,7 @@ public final class Create implements Transformer<Object, JsonNode> {
 
     @Override
     public void transform(Context context, Object in, Receiver<JsonNode> out) throws Exception {
-        out.accept(context, payload);
+        out.accept(context, payload.deepCopy());
     }
 
     public static class Parameters {
