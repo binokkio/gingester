@@ -105,6 +105,7 @@ public final class Server implements Transformer<Object, InputStream> {
                     jettyRequest.getParameterMap();  // trigger query parameter initialization, TODO check proper solution
                     jettyRequest.getQueryParameters().forEach(
                             (queryParameterName, value) -> query.put(queryParameterName, value.get(value.size() - 1)));
+                    httpRequestStash.put("queryString", jettyRequest.getQueryString());
                     httpRequestStash.put("query", query);
                 }
 
