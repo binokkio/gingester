@@ -122,7 +122,7 @@ public final class TransformerFactory {
         try {
             return constructor.newInstance(parameters);
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-            throw new IllegalStateException("Calling parameter-rich constructor on " + parameterClass.getCanonicalName() + " failed", e);
+            throw new IllegalStateException("Calling parameter-rich constructor on " + transformerClass.getCanonicalName() + " failed", e);
         }
     }
 
