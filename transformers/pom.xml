@@ -9,13 +9,14 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.17.10</version>
+        <version>0.17.11-SNAPSHOT</version>
     </parent>
 
     <artifactId>transformers</artifactId>
     <packaging>pom</packaging>
 
     <modules>
+        <module>audio</module>
         <module>base</module>
         <module>elasticsearch7</module>
         <module>groovy</module>

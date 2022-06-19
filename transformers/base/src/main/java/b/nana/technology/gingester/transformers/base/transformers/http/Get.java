@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -53,6 +54,7 @@ public final class Get implements Transformer<Object, InputStream> {
         out.accept(contextBuilder, response.body());
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
 
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
