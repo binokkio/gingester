@@ -22,6 +22,7 @@ public class OrdinalRoute implements Transformer<Object, Object> {
     private final ContextMap<Counter> counters = new ContextMap<>();
     private final List<String> routes;
     private final boolean cycle;
+    // TODO add latch, meaning to keep using the last route if count > routes.size()
 
     public OrdinalRoute(Parameters parameters) {
         this(parameters, false);

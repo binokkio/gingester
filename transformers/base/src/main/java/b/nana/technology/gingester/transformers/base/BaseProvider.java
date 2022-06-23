@@ -62,6 +62,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToJson.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToOutputStream.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.join.OuterJoin.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Add.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsBigDecimal.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.AsBoolean.class,

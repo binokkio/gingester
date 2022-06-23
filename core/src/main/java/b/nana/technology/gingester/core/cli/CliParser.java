@@ -118,6 +118,13 @@ public final class CliParser {
                     }
                     break;
 
+                case "-ss":
+                case "--stash-string":
+                    String stashName = args[++i];
+                    String string = args[++i];
+                    args = splice(args, new String[] { "-t", "StringCreate", string, "-s", stashName }, i + 1, 0);
+                    break;
+
                 case "-l":
                 case "--links":
                     List<String> links = new ArrayList<>();
