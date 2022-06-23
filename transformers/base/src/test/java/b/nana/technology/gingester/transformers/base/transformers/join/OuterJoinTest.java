@@ -127,4 +127,39 @@ class OuterJoinTest {
         assertEquals("CCC", sorted.get(2).get("upper").get("value").asText());
         assertEquals("ccc", sorted.get(2).get("lower").get("value").asText());
     }
+
+    @Test
+    void testOneToOneJoinWithNulls() {
+
+        Deque<Map<String, JsonNode>> result = new ArrayDeque<>();
+
+        new Gingester().cli("" +
+                "-ss joinAs numbers -t JsonCreate [{id:1,value:11111},{id:2,value:22222}] -l JsonStream " +
+                "-ss joinAs letters -t JsonCreate [{id:2,value:'bbb'},{id:3,value:'ccc'}] -l JsonStream " +
+                "-t JsonStream '$[*]' " +
+                "-s value " +
+                "-t JsonPath '$.id' " +
+                "-t OuterJoin")
+                .attach(result::add)
+                .run();
+
+        List<Map<String, JsonNode>> sorted = result.stream()
+                .sorted(Comparator.comparing(Object::toString))
+                .collect(Collectors.toList());
+
+        assertEquals(1, sorted.get(1).get("numbers").get("id").asInt());
+        assertEquals(11111, sorted.get(1).get("numbers").get("value").asInt());
+        assertTrue(sorted.get(1).containsKey("letters"));
+        assertNull(sorted.get(1).get("letters"));
+
+        assertEquals(2, sorted.get(2).get("numbers").get("id").asInt());
+        assertEquals(2, sorted.get(2).get("letters").get("id").asInt());
+        assertEquals(22222, sorted.get(2).get("numbers").get("value").asInt());
+        assertEquals("bbb", sorted.get(2).get("letters").get("value").asText());
+
+        assertTrue(sorted.get(0).containsKey("numbers"));
+        assertNull(sorted.get(0).get("numbers"));
+        assertEquals(3, sorted.get(0).get("letters").get("id").asInt());
+        assertEquals("ccc", sorted.get(0).get("letters").get("value").asText());
+    }
 }
