@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 final class ControllerReceiver<I, O> implements Receiver<O> {
 
@@ -110,12 +111,15 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void finish(Context context) {
         if (context.controller == controller && context.isSynced()) {
-            startFinishSignal(context);
-            if (Thread.currentThread() instanceof Worker) {
-                ((Worker) Thread.currentThread()).flush();
-            }
-            for (Controller<?, ?> target : controller.indicates.get(controller)) {
-                target.finish(controller, context);
+            Set<Controller<?, ?>> targets = controller.indicates.get(controller);
+            if (targets != null) {
+                startFinishSignal(context);
+                if (Thread.currentThread() instanceof Worker) {
+                    ((Worker) Thread.currentThread()).flush();
+                }
+                for (Controller<?, ?> target : targets) {
+                    target.finish(controller, context);
+                }
             }
         }
     }
