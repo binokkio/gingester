@@ -162,4 +162,38 @@ class OuterJoinTest {
         assertEquals(3, sorted.get(0).get("letters").get("id").asInt());
         assertEquals("ccc", sorted.get(0).get("letters").get("value").asText());
     }
+
+    @Test
+    void testOneToManyJoinList() {
+
+        Deque<Map<String, Object>> result = new ArrayDeque<>();
+
+        new Gingester().cli("" +
+                        "-ss joinAs numbers -t JsonCreate [{id:1,value:11111},{id:2,value:22222}] -l JsonStream " +
+                        "-ss joinAs letters -t JsonCreate [{id:1,value:'aaa'},{id:1,value:'AAA'},{id:2,value:'bbb'},{id:2,value:'BBB'}] -l JsonStream " +
+                        "-t JsonStream '$[*]' " +
+                        "-s value " +
+                        "-t JsonPath '$.id' " +
+                        "-t OuterJoin letters")
+                .attach(result::add)
+                .run();
+
+        List<Map<String, Object>> sorted = result.stream()
+                .sorted(Comparator.comparing(Object::toString))
+                .collect(Collectors.toList());
+
+        assertEquals(1, ((JsonNode) sorted.get(0).get("numbers")).get("id").asInt());
+        assertEquals(1, ((JsonNode) ((List<?>) sorted.get(0).get("letters")).get(0)).get("id").asInt());
+        assertEquals(1, ((JsonNode) ((List<?>) sorted.get(0).get("letters")).get(1)).get("id").asInt());
+        assertEquals(11111, ((JsonNode) sorted.get(0).get("numbers")).get("value").asInt());
+        assertEquals("aaa", ((JsonNode) ((List<?>) sorted.get(0).get("letters")).get(0)).get("value").asText());
+        assertEquals("AAA", ((JsonNode) ((List<?>) sorted.get(0).get("letters")).get(1)).get("value").asText());
+
+        assertEquals(2, ((JsonNode) sorted.get(1).get("numbers")).get("id").asInt());
+        assertEquals(2, ((JsonNode) ((List<?>) sorted.get(1).get("letters")).get(0)).get("id").asInt());
+        assertEquals(2, ((JsonNode) ((List<?>) sorted.get(1).get("letters")).get(1)).get("id").asInt());
+        assertEquals(22222, ((JsonNode) sorted.get(1).get("numbers")).get("value").asInt());
+        assertEquals("bbb", ((JsonNode) ((List<?>) sorted.get(1).get("letters")).get(0)).get("value").asText());
+        assertEquals("BBB", ((JsonNode) ((List<?>) sorted.get(1).get("letters")).get(1)).get("value").asText());
+    }
 }

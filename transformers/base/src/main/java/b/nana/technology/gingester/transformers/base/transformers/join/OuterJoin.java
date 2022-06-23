@@ -18,7 +18,11 @@ public final class OuterJoin implements Transformer<Object, Map<String, Object>>
 
     private final ContextMap<Map<String, Map<Object, List<Object>>>> states = new ContextMap<>();
 
-    private final Set<String> lists = Collections.emptySet();
+    private final Set<String> lists;
+
+    public OuterJoin(Parameters parameters) {
+        lists = new HashSet<>(parameters);
+    }
 
     @Override
     public void prepare(Context context, Receiver<Map<String, Object>> out) throws Exception {
@@ -84,5 +88,9 @@ public final class OuterJoin implements Transformer<Object, Map<String, Object>>
                 }
             }
         }
+    }
+
+    public static class Parameters extends ArrayList<String> {
+
     }
 }
