@@ -25,7 +25,7 @@ public final class OuterJoin implements Transformer<Object, Map<String, Object>>
     }
 
     @Override
-    public void prepare(Context context, Receiver<Map<String, Object>> out) throws Exception {
+    public void prepare(Context context, Receiver<Map<String, Object>> out) {
         states.put(context, new HashMap<>());
     }
 
@@ -42,7 +42,7 @@ public final class OuterJoin implements Transformer<Object, Map<String, Object>>
     }
 
     @Override
-    public void finish(Context context, Receiver<Map<String, Object>> out) throws Exception {
+    public void finish(Context context, Receiver<Map<String, Object>> out) {
 
         Map<String, Map<Object, List<Object>>> state = states.remove(context);
         Set<Object> seen = new HashSet<>();
@@ -72,7 +72,7 @@ public final class OuterJoin implements Transformer<Object, Map<String, Object>>
         List<Object> values = pair.b;
 
         if (lists.contains(joinAs)) {
-            result.put(joinAs, pair.b);
+            result.put(joinAs, values);
             if (atMaxDepth) {
                 out.accept(context, new HashMap<>(result));
             } else {
