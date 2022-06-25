@@ -46,4 +46,40 @@ class EqualsTest {
 
         assertEquals("Hello, World!", result.get());
     }
+
+    @Test
+    void testLimit() {
+
+        // without limit, GroupByEquals does not close a group until its sync-from finish signal (seed in this case)
+        ArrayDeque<String> resultsWithoutLimit = new ArrayDeque<>();
+        new Gingester().cli("" +
+                "-t Repeat 2 -t StringCreate hello -l GroupByEquals " +
+                "-t Delay 50 -t Repeat 2 -t Bye:StringCreate bye -l GroupByEquals " +
+                "-sft GroupByEquals " +
+                "-stt InputStreamJoin ', ' " +
+                "-t StringAppend '!'")
+                .attach(resultsWithoutLimit::add, "Bye")
+                .attach(resultsWithoutLimit::add)
+                .run();
+        assertEquals("bye", resultsWithoutLimit.remove());
+        assertEquals("bye", resultsWithoutLimit.remove());
+        // the order of the remaining 2 is undetermined due to the GroupByEquals HashMap
+
+
+        // with limit, GroupByEquals will close each group as soon as the limit is reached
+        ArrayDeque<String> resultsWithLimit = new ArrayDeque<>();
+        new Gingester().cli("" +
+                "-t Repeat 2 -t StringCreate hello -l GroupByEquals " +
+                "-t Delay 50 -t Repeat 2 -t Bye:StringCreate bye -l GroupByEquals " +
+                "-sft GroupByEquals 2 " +
+                "-stt InputStreamJoin ', ' " +
+                "-t StringAppend '!'")
+                .attach(resultsWithLimit::add, "Bye")
+                .attach(resultsWithLimit::add)
+                .run();
+        assertEquals("hello, hello!", resultsWithLimit.remove());
+        assertEquals("bye", resultsWithLimit.remove());
+        assertEquals("bye", resultsWithLimit.remove());
+        assertEquals("bye, bye!", resultsWithLimit.getFirst());
+    }
 }
