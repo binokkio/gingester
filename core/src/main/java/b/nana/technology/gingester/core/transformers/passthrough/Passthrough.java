@@ -10,7 +10,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 public final class Passthrough implements Transformer<Object, Object> {
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(context, in);
     }
 }

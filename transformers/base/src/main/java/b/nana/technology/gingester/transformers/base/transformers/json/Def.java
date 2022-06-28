@@ -15,7 +15,7 @@ public final class Def implements Transformer<Object, JsonNode> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<JsonNode> out) {
         out.accept(context, payload.deepCopy());
     }
 

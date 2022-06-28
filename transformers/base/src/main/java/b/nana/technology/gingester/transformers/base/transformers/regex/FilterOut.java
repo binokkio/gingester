@@ -22,7 +22,7 @@ public final class FilterOut implements Transformer<String, String> {
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<String> out) throws Exception {
+    public void transform(Context context, String in, Receiver<String> out) {
         if (patterns.stream().noneMatch(pattern -> pattern.render(context).matcher(in).find())) {
             out.accept(context, in);
         }

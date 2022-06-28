@@ -20,7 +20,7 @@ public final class Def implements Transformer<Object, Path> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Path> out) {
         Path path = Paths.get(pathTemplate.render(context));
         out.accept(
                 context.stash(Map.of(

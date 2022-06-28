@@ -18,7 +18,7 @@ public final class BooleanDef implements Transformer<Object, Boolean> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Boolean> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Boolean> out) {
         out.accept(context, value);
     }
 

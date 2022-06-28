@@ -28,7 +28,7 @@ public final class Stash implements Transformer<Object, Object>, InputStasher {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(context.stash(name, in), in);
     }
 

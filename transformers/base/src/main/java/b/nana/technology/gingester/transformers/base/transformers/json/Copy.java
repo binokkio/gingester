@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class Copy implements Transformer<JsonNode, JsonNode> {
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
         out.accept(context, in.deepCopy());
     }
 }

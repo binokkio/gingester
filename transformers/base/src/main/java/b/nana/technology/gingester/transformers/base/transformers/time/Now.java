@@ -13,7 +13,7 @@ public final class Now extends InstantBase<Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<TemporalAccessor> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<TemporalAccessor> out) {
         out.accept(context, Instant.now().atZone(getZoneId()));
     }
 }

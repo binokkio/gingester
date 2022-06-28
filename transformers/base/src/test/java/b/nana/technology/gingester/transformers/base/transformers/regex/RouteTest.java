@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RouteTest {
 
     @Test
-    void test() throws Exception {
+    void test() {
 
         LinkedHashMap<String, String> routes = new LinkedHashMap<>();
         routes.put("h.?llo", "world");

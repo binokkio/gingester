@@ -29,7 +29,7 @@ public final class Join implements Transformer<InputStream, OutputStreamWrapper>
     }
 
     @Override
-    public void prepare(Context context, Receiver<OutputStreamWrapper> out) throws Exception {
+    public void prepare(Context context, Receiver<OutputStreamWrapper> out) {
         OutputStreamWrapper outputStreamWrapper = new OutputStreamWrapper();
         contextMap.put(context, new State(outputStreamWrapper));
         out.accept(context, outputStreamWrapper);

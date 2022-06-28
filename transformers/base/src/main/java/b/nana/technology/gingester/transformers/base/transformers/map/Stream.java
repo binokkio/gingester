@@ -9,7 +9,7 @@ import java.util.Map;
 public final class Stream implements Transformer<Map<?, ?>, Object> {
 
     @Override
-    public void transform(Context context, Map<?, ?> in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Map<?, ?> in, Receiver<Object> out) {
         for (Map.Entry<?, ?> entry : in.entrySet()) {
             out.accept(context.stash("description", entry.getKey()), entry.getValue());
         }

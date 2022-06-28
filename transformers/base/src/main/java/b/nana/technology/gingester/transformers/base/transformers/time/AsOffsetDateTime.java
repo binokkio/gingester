@@ -10,7 +10,7 @@ import java.time.temporal.TemporalAccessor;
 public final class AsOffsetDateTime implements Transformer<TemporalAccessor, OffsetDateTime> {
 
     @Override
-    public void transform(Context context, TemporalAccessor in, Receiver<OffsetDateTime> out) throws Exception {
+    public void transform(Context context, TemporalAccessor in, Receiver<OffsetDateTime> out) {
         out.accept(context, OffsetDateTime.from(in));
     }
 }

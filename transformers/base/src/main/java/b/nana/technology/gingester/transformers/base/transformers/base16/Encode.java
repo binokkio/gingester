@@ -11,7 +11,7 @@ public final class Encode implements Transformer<byte[], String> {
     private static final byte[] LOWER = "0123456789abcdef".getBytes(StandardCharsets.UTF_8);
 
     @Override
-    public void transform(Context context, byte[] in, Receiver<String> out) throws Exception {
+    public void transform(Context context, byte[] in, Receiver<String> out) {
         byte[] result = new byte[in.length * 2];
         for (int i = 0; i < in.length; i++) {
             int v = in[i] & 0xFF;

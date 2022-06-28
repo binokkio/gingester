@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public final class ObjectToArray implements Transformer<ObjectNode, ArrayNode> {
 
     @Override
-    public void transform(Context context, ObjectNode in, Receiver<ArrayNode> out) throws Exception {
+    public void transform(Context context, ObjectNode in, Receiver<ArrayNode> out) {
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode(in.size());
         in.fields().forEachRemaining(entry -> {
             ObjectNode item = arrayNode.addObject();

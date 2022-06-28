@@ -22,7 +22,7 @@ public final class Collect implements Transformer<Object, List<?>> {
     }
 
     @Override
-    public void prepare(Context context, Receiver<List<?>> out) throws Exception {
+    public void prepare(Context context, Receiver<List<?>> out) {
         contextMap.put(context, listSupplier.get());
     }
 
@@ -32,7 +32,7 @@ public final class Collect implements Transformer<Object, List<?>> {
     }
 
     @Override
-    public void finish(Context context, Receiver<List<?>> out) throws Exception {
+    public void finish(Context context, Receiver<List<?>> out) {
         out.accept(context, contextMap.remove(context));
     }
 

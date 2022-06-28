@@ -16,7 +16,7 @@ public final class Group implements Transformer<Matcher, String> {
     }
 
     @Override
-    public void transform(Context context, Matcher in, Receiver<String> out) throws Exception {
+    public void transform(Context context, Matcher in, Receiver<String> out) {
         out.accept(context, in.group(group));
     }
 

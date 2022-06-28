@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class AsInteger implements Transformer<JsonNode, Integer> {
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<Integer> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<Integer> out) {
         out.accept(context, in.asInt());
     }
 }

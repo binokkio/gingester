@@ -38,7 +38,7 @@ public final class FromString extends TimeBase<String, TemporalAccessor> {
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<TemporalAccessor> out) throws Exception {
+    public void transform(Context context, String in, Receiver<TemporalAccessor> out) {
         out.accept(context, formatter.parse(in));
     }
 

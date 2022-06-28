@@ -42,18 +42,18 @@ public final class TimeInterval implements Transformer<Object, Object> {
     }
 
     @Override
-    public void prepare(Context context, Receiver<Object> out) throws Exception {
+    public void prepare(Context context, Receiver<Object> out) {
         contextMap.put(context, new State(context, out));
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         contextMap.get(context).withCurrentGroup(group ->
                 out.accept(context.group(group), in));
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<Object> out) {
         contextMap.remove(context).close();
     }
 

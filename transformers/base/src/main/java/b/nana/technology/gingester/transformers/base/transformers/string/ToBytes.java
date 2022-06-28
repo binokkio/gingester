@@ -13,7 +13,7 @@ public final class ToBytes extends CharsetTransformer<String, byte[]> {
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<byte[]> out) throws Exception {
+    public void transform(Context context, String in, Receiver<byte[]> out) {
         out.accept(context, in.getBytes(getCharset()));
     }
 }

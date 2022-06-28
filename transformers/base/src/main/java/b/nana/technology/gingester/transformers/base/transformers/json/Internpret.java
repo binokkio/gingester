@@ -20,7 +20,7 @@ public final class Internpret extends ToJsonTransformer<JsonNode> {
     }
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
         interpret(in);
         out.accept(context, in);
     }

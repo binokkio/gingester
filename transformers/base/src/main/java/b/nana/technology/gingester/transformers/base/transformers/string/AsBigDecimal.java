@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 public final class AsBigDecimal implements Transformer<String, BigDecimal> {
 
     @Override
-    public void transform(Context context, String in, Receiver<BigDecimal> out) throws Exception {
+    public void transform(Context context, String in, Receiver<BigDecimal> out) {
         out.accept(context, new BigDecimal(in));
     }
 }

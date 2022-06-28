@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FromMillisTest {
 
     @Test
-    void test() throws Exception {
+    void test() {
         new FromMillis(new InstantBase.Parameters()).transform(null, 1630958048123L, (UniReceiver<TemporalAccessor>) i -> {
             // TODO risky testing here, if the receiver does not get called the test will still pass
             assertEquals(2021, i.get(ChronoField.YEAR));

@@ -19,7 +19,7 @@ public final class FetchAll implements Transformer<Object, Object> {  // TODO im
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         context.fetchAll(fetchKey).forEach(item -> out.accept(context, item));
     }
 

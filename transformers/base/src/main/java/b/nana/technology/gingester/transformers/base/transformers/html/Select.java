@@ -16,7 +16,7 @@ public final class Select implements Transformer<Element, Element> {
     }
 
     @Override
-    public void transform(Context context, Element in, Receiver<Element> out) throws Exception {
+    public void transform(Context context, Element in, Receiver<Element> out) {
         Elements elements = in.select(path);
         for (int i = 0; i < elements.size(); i++) {
             out.accept(context.stash("description", path + " :: " + i), elements.get(i));

@@ -11,7 +11,7 @@ import org.jsoup.nodes.Element;
 public final class FromString implements Transformer<String, Element> {
 
     @Override
-    public void transform(Context context, String in, Receiver<Element> out) throws Exception {
+    public void transform(Context context, String in, Receiver<Element> out) {
         out.accept(context, Jsoup.parse(in));
     }
 }

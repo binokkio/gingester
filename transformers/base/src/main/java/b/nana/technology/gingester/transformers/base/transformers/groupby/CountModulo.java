@@ -25,7 +25,7 @@ public final class CountModulo implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
 
         /*
             For CountModulo all groups are created in `prepare` and closed in `finish`

@@ -9,7 +9,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 public final class ToString implements Transformer<Object, String> {
 
     @Override
-    public void transform(Context context, Object in, Receiver<String> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<String> out) {
         out.accept(context, in.toString());
     }
 }

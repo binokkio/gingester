@@ -36,7 +36,7 @@ public final class Swap implements Transformer<Object, Object>, InputStasher, Ou
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(
                 context.stash(name, in),
                 context.require(fetchKey)

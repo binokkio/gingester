@@ -14,7 +14,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +48,7 @@ public final class Merge implements Transformer<Object, Object> {
     }
 
     @Override
-    public void prepare(Context context, Receiver<Object> out) throws Exception {
+    public void prepare(Context context, Receiver<Object> out) {
         State state = new State();
         for (Instruction instruction : instructions) {
             if (instruction.list) {
@@ -76,7 +79,7 @@ public final class Merge implements Transformer<Object, Object> {
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<Object> out) {
 
         State state = states.remove(context);
         Map<String, Object> stash = new HashMap<>(instructions.size());

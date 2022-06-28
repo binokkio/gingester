@@ -23,7 +23,7 @@ public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(
                 context,
                 context.require(fetchKey)
