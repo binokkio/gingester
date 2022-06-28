@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Passthrough
-public class Delay implements Transformer<Object, Object> {
+public final class Delay implements Transformer<Object, Object> {
 
     private final long millis;
 
