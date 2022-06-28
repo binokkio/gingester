@@ -18,7 +18,7 @@ class StashStringTest {
         AtomicReference<String> bye = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-ss bye 'Bye, World!'")
                 .attach(((BiConsumer<Context, String>) (context, value) -> {
                     hello.set(value);

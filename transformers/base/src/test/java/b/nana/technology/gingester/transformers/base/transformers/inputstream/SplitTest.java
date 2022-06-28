@@ -16,7 +16,7 @@ class SplitTest {
         AtomicReference<String> b = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate a,b,c " +
+                "-t StringDef a,b,c " +
                 "-t InputStreamSplit , 1 " +
                 "-t OrdinalRoute A B " +
                 "-t A:InputStreamToString -- " +

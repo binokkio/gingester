@@ -17,7 +17,7 @@ class StreamTest {
 
         new Gingester().cli("" +
                 "-t Repeat 3 " +
-                "-t StringCreate 'Hello, World ${description}!' " +
+                "-t StringDef 'Hello, World ${description}!' " +
                 "-s -f description " +
                 "-t MapCollect " +
                 "-t MapStream")

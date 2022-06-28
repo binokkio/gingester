@@ -17,15 +17,15 @@ class RemoveTest {
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +
-                "-t A:StringCreate A -l MapCollect " +
-                "-t B:StringCreate B -l MapCollect " +
-                "-t C:StringCreate C -l MapCollect " +
+                "-t A:StringDef A -l MapCollect " +
+                "-t B:StringDef B -l MapCollect " +
+                "-t C:StringDef C -l MapCollect " +
                 "-t MapCollect " +
                 "-s " +
-                "-t StringCreate B " +
+                "-t StringDef B " +
                 "-t MapRemove " +
                 "-f")
                 .attach(mapRemoveResult::set, "MapRemove")
@@ -45,15 +45,15 @@ class RemoveTest {
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +
-                "-t A:StringCreate A -l MapCollect " +
-                "-t B:StringCreate B -l MapCollect " +
-                "-t C:StringCreate C -l MapCollect " +
+                "-t A:StringDef A -l MapCollect " +
+                "-t B:StringDef B -l MapCollect " +
+                "-t C:StringDef C -l MapCollect " +
                 "-t MapCollect " +
                 "-s " +
-                "-t StringCreate D " +
+                "-t StringDef D " +
                 "-t MapRemove " +
                 "-f")
                 .attach(mapRemoveResult::set, "MapRemove")

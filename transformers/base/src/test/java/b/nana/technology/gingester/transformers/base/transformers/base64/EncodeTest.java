@@ -15,7 +15,7 @@ class EncodeTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Base64Encode " +
                 "-t BytesToString")
                 .attach(result::set)
@@ -30,7 +30,7 @@ class EncodeTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Base64Encode 8 " +
                 "-t BytesToString")
                 .attach(result::set)

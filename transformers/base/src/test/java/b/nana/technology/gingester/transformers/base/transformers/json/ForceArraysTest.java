@@ -36,7 +36,7 @@ class ForceArraysTest {
     void testForceArraysOnRoot() {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t JsonCreate {hello:123} " +
+                "-t JsonDef {hello:123} " +
                 "-t JsonForceArrays $");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();

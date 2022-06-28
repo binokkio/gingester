@@ -15,7 +15,7 @@ class Sha1Test {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                        "-t StringCreate 'Hello, World!' " +
+                        "-t StringDef 'Hello, World!' " +
                         "-t Sha1 " +
                         "-t Base16Encode " +
                         "-t BytesToString")

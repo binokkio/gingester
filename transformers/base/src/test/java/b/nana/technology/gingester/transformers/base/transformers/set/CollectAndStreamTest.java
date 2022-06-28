@@ -18,7 +18,7 @@ class CollectAndStreamTest {
                 "-t Repeat 9 " +
                 "-t Cycle A B C " +
                 "-s letter " +
-                "-t StringCreate '${letter}-${Repeat.description}' " +
+                "-t StringDef '${letter}-${Repeat.description}' " +
                 "-t SetCollect tree " +
                 "-t SetStream")
                 .attach(result::add)

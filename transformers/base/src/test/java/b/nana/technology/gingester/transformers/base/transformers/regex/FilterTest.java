@@ -15,7 +15,7 @@ class FilterTest {
 
         Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 11 " +
-                "-t StringCreate 'Hello, World ${description}!' " +
+                "-t StringDef 'Hello, World ${description}!' " +
                 "-t RegexFilterIn '.*1.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
@@ -31,7 +31,7 @@ class FilterTest {
 
         Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 11 " +
-                "-t StringCreate 'Hello, World ${description}!' " +
+                "-t StringDef 'Hello, World ${description}!' " +
                 "-t RegexFilterOut '.*1.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
@@ -60,9 +60,9 @@ class FilterTest {
 
         Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 11 " +
-                "-t StringCreate 'Hello, World ${description}!' " +
+                "-t StringDef 'Hello, World ${description}!' " +
                 "-s " +
-                "-t StringCreate '\"1\"' " +
+                "-t StringDef '\"1\"' " +
                 "-s needle " +
                 "-f " +
                 "-t RegexFilterIn '.*${needle}.*'");

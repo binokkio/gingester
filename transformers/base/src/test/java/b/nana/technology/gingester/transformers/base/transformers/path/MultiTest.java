@@ -20,21 +20,21 @@ class MultiTest {
         ArrayDeque<Path> results = new ArrayDeque<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Dir:Repeat 6 " +
                 "-t File:Repeat 6 " +
                 "-t PathWrite [=tempDir]/${Dir.description}/${File.description}.txt " +
                 "-t OnFinish " +
                 "-t Repeat 2 " +
-                "-t PathCreate [=tempDir]/${description} " +
+                "-t PathDef [=tempDir]/${description} " +
                 "-t PathDelete true " +
                 "-t OnFinish " +
                 "-t Repeat 4 " +
-                "-t PathCreate [=tempDir]/${description} " +
+                "-t PathDef [=tempDir]/${description} " +
                 "-t PathFilterExistsIn " +
                 "-t PathDelete true " +
                 "-t OnFinish " +
-                "-t PathCreate [=tempDir] " +
+                "-t PathDef [=tempDir] " +
                 "-t PathDelete true",
                 Map.of("tempDir", tempDir))
                 .attach(results::add, "PathFilterExistsIn")

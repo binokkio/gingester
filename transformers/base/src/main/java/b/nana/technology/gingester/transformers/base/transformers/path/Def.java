@@ -11,12 +11,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-@Deprecated  // use PathDef instead
-public final class Create implements Transformer<Object, Path> {
+public final class Def implements Transformer<Object, Path> {
 
     private final Template pathTemplate;
 
-    public Create(Parameters parameters) {
+    public Def(Parameters parameters) {
         pathTemplate = Context.newTemplate(parameters.path);
     }
 

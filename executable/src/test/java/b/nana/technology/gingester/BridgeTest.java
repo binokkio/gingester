@@ -18,7 +18,7 @@ class BridgeTest {
     void testShortBridge() throws IOException {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Pack greeting.txt -t Compress " +
                 "-t InputStreamToBytes");
 
@@ -38,7 +38,7 @@ class BridgeTest {
     void testShortBridgeWithPassthroughs() throws IOException {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-s -t Passthrough " +
                 "-t Pack greeting.txt -t Compress " +
                 "-t InputStreamToBytes");
@@ -59,7 +59,7 @@ class BridgeTest {
     void testLongBridge() {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t JsonCreate '{hello:1,world:2}' " +
+                "-t JsonDef '{hello:1,world:2}' " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");
 
@@ -75,7 +75,7 @@ class BridgeTest {
     void testLongBridgeWithPassthroughs() {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t JsonCreate '{hello:1,world:2}' " +
+                "-t JsonDef '{hello:1,world:2}' " +
                 "-s -t Passthrough " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");

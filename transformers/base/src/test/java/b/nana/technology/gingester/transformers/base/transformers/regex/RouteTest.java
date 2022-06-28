@@ -63,7 +63,7 @@ class RouteTest {
     void testInFlow() {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-t RegexRoute \"{'.ello.*': 'Hello', '.*': 'Other'}\" " +
                 "-t Other:Passthrough -- " +
@@ -82,7 +82,7 @@ class RouteTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +
                 "-t RegexRoute '{\".\":\"Target\"}' " +
@@ -99,7 +99,7 @@ class RouteTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +
                 "-t RegexRoute '{\".\":\"Target\"}' " +

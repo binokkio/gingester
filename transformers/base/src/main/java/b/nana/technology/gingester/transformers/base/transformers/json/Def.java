@@ -6,12 +6,11 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Deprecated  // use JsonDef instead
-public final class Create implements Transformer<Object, JsonNode> {
+public final class Def implements Transformer<Object, JsonNode> {
 
     private final JsonNode payload;
 
-    public Create(Parameters parameters) {
+    public Def(Parameters parameters) {
         payload = parameters.payload;
     }
 

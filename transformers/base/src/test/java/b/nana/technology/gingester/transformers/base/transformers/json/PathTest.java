@@ -45,7 +45,7 @@ class PathTest {
 
         new Gingester().cli("" +
                 "-e Exceptions " +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -62,7 +62,7 @@ class PathTest {
 
         new Gingester().cli("" +
                 "-e Exceptions " +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -79,7 +79,7 @@ class PathTest {
 
         new Gingester().cli("" +
                 "-e Exceptions " +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.**.missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -96,7 +96,7 @@ class PathTest {
 
         new Gingester().cli("" +
                 "-e Exceptions " +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.**.missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
