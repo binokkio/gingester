@@ -3,6 +3,8 @@ package b.nana.technology.gingester.core.provider;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.Void;
 import b.nana.technology.gingester.core.transformers.*;
+import b.nana.technology.gingester.core.transformers.passthrough.Passthrough;
+import b.nana.technology.gingester.core.transformers.stash.*;
 
 import java.util.Collection;
 import java.util.List;

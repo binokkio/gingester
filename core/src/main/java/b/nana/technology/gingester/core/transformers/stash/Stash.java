@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.transformers;
+package b.nana.technology.gingester.core.transformers.stash;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
