@@ -15,7 +15,7 @@ public abstract class CharsetTransformer<I, O> implements Transformer<I, O> {
 
     private Charset switchCharsetParameter(String charsetParameter) {
         switch (charsetParameter) {
-            case "ISO‑8859‑1": return StandardCharsets.ISO_8859_1;
+            case "ISO-8859-1": return StandardCharsets.ISO_8859_1;
             case "US-ASCII": return StandardCharsets.US_ASCII;
             case "UTF-16": return StandardCharsets.UTF_16;
             case "UTF-16BE": return StandardCharsets.UTF_16BE;
