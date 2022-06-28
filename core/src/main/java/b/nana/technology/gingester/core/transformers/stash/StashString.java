@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.transformers.stash;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
@@ -10,6 +11,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+@Names(1)
 @Passthrough
 public final class StashString implements Transformer<Object, Object>  {
 
