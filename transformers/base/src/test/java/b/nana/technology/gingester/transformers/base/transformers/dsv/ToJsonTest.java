@@ -108,4 +108,24 @@ class ToJsonTest {
         assertEquals("[\"5\"]", results.remove().get("__extras__").toString());
         assertEquals("[\"6\",\"7\"]", results.remove().get("__extras__").toString());
     }
+
+    @Test
+    void testIso8859_1() throws Exception {
+
+        Queue<JsonNode> results = new ArrayDeque<>();
+
+        ToJson.Parameters parameters = new ToJson.Parameters();
+        parameters.charset = "ISO-8859-1";
+
+        ToJson toJson = new ToJson(parameters);
+        toJson.transform(
+                Context.newTestContext(),
+                getClass().getResourceAsStream("/data/dsv/iso-8859-1.csv"),
+                (UniReceiver<JsonNode>) results::add
+        );
+
+        assertEquals("ä", results.remove().get("character").asText());
+        assertEquals("é", results.remove().get("character").asText());
+        assertEquals("ö", results.remove().get("character").asText());
+    }
 }
