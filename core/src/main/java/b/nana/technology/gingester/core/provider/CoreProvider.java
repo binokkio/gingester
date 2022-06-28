@@ -28,6 +28,7 @@ public final class CoreProvider implements Provider {
                 Passthrough.class,
                 Repeat.class,
                 Stash.class,
+                StashString.class,
                 Swap.class,
                 Throw.class,
                 Void.class

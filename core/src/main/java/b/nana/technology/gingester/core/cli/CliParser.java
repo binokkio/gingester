@@ -118,13 +118,6 @@ public final class CliParser {
                     }
                     break;
 
-                case "-ss":
-                case "--stash-string":
-                    String stashName = args[++i];
-                    String string = args[++i];
-                    args = splice(args, new String[] { "-t", "StringCreate", string, "-s", stashName }, i + 1, 0);
-                    break;
-
                 case "-l":
                 case "--links":
                     List<String> links = new ArrayList<>();
@@ -242,6 +235,11 @@ public final class CliParser {
                     String id = target.add(transformer);
                     if (markSyncFrom) target.setSyncFrom(List.of(id));
 
+                    break;
+
+                case "-ss":
+                case "--stash-string":
+                    args = splice(args, new String[] { "-t", "StashString" }, i + 1, 0);
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
