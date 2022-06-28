@@ -9,7 +9,7 @@ class SyncTest {
     void testSyncBeforeJoin() {
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-sft Repeat 100000 " +
                 "-stt Passthrough " +
                 "-t InputStreamJoin " +

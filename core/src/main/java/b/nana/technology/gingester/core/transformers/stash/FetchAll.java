@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.transformers;
+package b.nana.technology.gingester.core.transformers.stash;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
@@ -19,7 +19,7 @@ public final class FetchAll implements Transformer<Object, Object> {  // TODO im
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         context.fetchAll(fetchKey).forEach(item -> out.accept(context, item));
     }
 

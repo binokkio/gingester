@@ -15,7 +15,7 @@ class EqualsTest {
 
         Gingester gingester = new Gingester().cli("" +
                 "-t Repeat 25 " +
-                "-t StringCreate 'Hello, World ${description?string.computer[0..0]}!' " +
+                "-t StringDef 'Hello, World ${description?string.computer[0..0]}!' " +
                 "-sft GroupByEquals " +
                 "-stt InputStreamJoin " +
                 "-t InputStreamToString");
@@ -35,7 +35,7 @@ class EqualsTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-sft GroupByEquals customKey " +  // customKey is type String
                 "-stt InputStreamJoin " +
                 "-t InputStreamDrain " +
@@ -53,8 +53,8 @@ class EqualsTest {
         // without limit, GroupByEquals does not close a group until its sync-from finish signal (seed in this case)
         ArrayDeque<String> resultsWithoutLimit = new ArrayDeque<>();
         new Gingester().cli("" +
-                "-t Repeat 2 -t StringCreate hello -l GroupByEquals " +
-                "-t Delay 50 -t Repeat 2 -t Bye:StringCreate bye -l GroupByEquals " +
+                "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
+                "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals " +
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")
@@ -69,8 +69,8 @@ class EqualsTest {
         // with limit, GroupByEquals will close each group as soon as the limit is reached
         ArrayDeque<String> resultsWithLimit = new ArrayDeque<>();
         new Gingester().cli("" +
-                "-t Repeat 2 -t StringCreate hello -l GroupByEquals " +
-                "-t Delay 50 -t Repeat 2 -t Bye:StringCreate bye -l GroupByEquals " +
+                "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
+                "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals 2 " +
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")

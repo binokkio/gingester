@@ -16,7 +16,7 @@ public final class ToInputStream extends CharsetTransformer<String, InputStream>
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<InputStream> out) throws Exception {
+    public void transform(Context context, String in, Receiver<InputStream> out) {
         out.accept(context, new ByteArrayInputStream(in.getBytes(getCharset())));
     }
 }

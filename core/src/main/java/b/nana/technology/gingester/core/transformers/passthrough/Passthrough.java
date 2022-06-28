@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.transformers;
+package b.nana.technology.gingester.core.transformers.passthrough;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
@@ -10,7 +10,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 public final class Passthrough implements Transformer<Object, Object> {
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(context, in);
     }
 }

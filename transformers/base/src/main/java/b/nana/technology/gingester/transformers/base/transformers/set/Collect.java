@@ -23,7 +23,7 @@ public final class Collect implements Transformer<Object, Set<?>> {
     }
 
     @Override
-    public void prepare(Context context, Receiver<Set<?>> out) throws Exception {
+    public void prepare(Context context, Receiver<Set<?>> out) {
         contextMap.put(context, setSupplier.get());
     }
 
@@ -33,7 +33,7 @@ public final class Collect implements Transformer<Object, Set<?>> {
     }
 
     @Override
-    public void finish(Context context, Receiver<Set<?>> out) throws Exception {
+    public void finish(Context context, Receiver<Set<?>> out) {
         out.accept(context, contextMap.remove(context));
     }
 

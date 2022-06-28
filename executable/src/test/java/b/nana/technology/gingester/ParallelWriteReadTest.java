@@ -27,7 +27,7 @@ public class ParallelWriteReadTest {
                 "-t ObjectToString " +
                 "-s message " +
                 "-t Repeat 1000 " +
-                "-t StringCreate '${description}' " +
+                "-t StringDef '${description}' " +
                 "-sft GroupByEquals " +
                 "-f message " +
                 "-stt InputStreamJoin " +
@@ -73,7 +73,7 @@ public class ParallelWriteReadTest {
                 .cli("-t ObjectToString")
                 .cli("-s message")
                 .cli("-t Repeat 1000")
-                .cli("-t StringCreate '${description}'")
+                .cli("-t StringDef '${description}'")
                 .cli("-sft GroupByEquals")
                 .cli("-f message")
                 .cli("-stt InputStreamJoin")

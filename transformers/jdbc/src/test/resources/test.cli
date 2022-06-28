@@ -1,6 +1,6 @@
 -r 0
 
--t JsonCreate '{
+-t JsonDef '{
     "a": 123,
     "b": "Hello, World!",
     "c": true

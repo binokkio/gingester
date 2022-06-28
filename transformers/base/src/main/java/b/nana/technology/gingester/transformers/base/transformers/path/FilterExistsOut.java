@@ -10,7 +10,7 @@ import java.nio.file.Path;
 public final class FilterExistsOut implements Transformer<Path, Path> {
 
     @Override
-    public void transform(Context context, Path in, Receiver<Path> out) throws Exception {
+    public void transform(Context context, Path in, Receiver<Path> out) {
         if (!Files.exists(in)) {
             out.accept(context, in);
         }

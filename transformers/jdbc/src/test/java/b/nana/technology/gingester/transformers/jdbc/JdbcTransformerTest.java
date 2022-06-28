@@ -40,7 +40,7 @@ class JdbcTransformerTest {
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
 
         Gingester gingester = new Gingester().cli("" +
-                "-t JsonCreate \"{a:123,b:true,c:'Hello, World!'}\" " +
+                "-t JsonDef \"{a:123,b:true,c:'Hello, World!'}\" " +
                 "-s in " +
                 "-t JdbcDml \"{" +
                 "   ddl:'CREATE TABLE test (a INTEGER, b BOOLEAN, c TEXT)'," +

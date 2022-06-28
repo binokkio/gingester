@@ -17,7 +17,7 @@ public final class Wrap implements Transformer<JsonNode, JsonNode> {
     }
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
         ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
         objectNode.set(key, in);
         out.accept(context, objectNode);

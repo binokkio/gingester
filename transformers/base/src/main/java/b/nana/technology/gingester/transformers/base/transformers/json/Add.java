@@ -27,7 +27,7 @@ public final class Add implements Transformer<JsonNode, JsonNode> {
     }
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
         ArrayNode arrayNode = (ArrayNode) context.require(fetchTarget);
         if (index != -1)
             arrayNode.set(index, in);

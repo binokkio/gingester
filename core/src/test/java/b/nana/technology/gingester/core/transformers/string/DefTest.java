@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.string;
+package b.nana.technology.gingester.core.transformers.string;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
@@ -12,17 +12,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CreateTest {
+class DefTest {
 
     @Test
-    void testStringCreate() throws InterruptedException {
+    void testStringDef() throws InterruptedException {
 
         Queue<String> result = new ArrayDeque<>();
 
-        Create.Parameters parameters = new Create.Parameters();
+        Def.Parameters parameters = new Def.Parameters();
         parameters.template = new TemplateParameters("Hello, World!");
 
-        Create create = new Create(parameters);
+        Def create = new Def(parameters);
         create.transform(Context.newTestContext(), null, (UniReceiver<String>) result::add);
 
         assertEquals(1, result.size());
@@ -30,14 +30,14 @@ class CreateTest {
     }
 
     @Test
-    void testStringCreateTemplating() throws InterruptedException {
+    void testStringDefTemplating() throws InterruptedException {
 
         Queue<String> result = new ArrayDeque<>();
 
-        Create.Parameters parameters = new Create.Parameters();
+        Def.Parameters parameters = new Def.Parameters();
         parameters.template = new TemplateParameters("Hello, ${target}!");
 
-        Create create = new Create(parameters);
+        Def create = new Def(parameters);
         create.transform(Context.newTestContext().stash("target", "World").buildForTesting(), null, (UniReceiver<String>) result::add);
 
         assertEquals(1, result.size());
@@ -45,15 +45,14 @@ class CreateTest {
     }
 
     @Test
-    void testStringCreateTemplatingNumberFormat() {
+    void testStringDefTemplatingNumberFormat() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate '123456' " +
-                "-t JsonAsLong " +
+                "-t IntDef 123456 " +
                 "-s number " +
-                "-t StringCreate 'Hello, ${number}!'")
+                "-t StringDef 'Hello, ${number}!'")
                 .attach(result::set)
                 .run();
 
@@ -61,15 +60,14 @@ class CreateTest {
     }
 
     @Test
-    void testStringCreateTemplatingBooleanFormat() {
+    void testStringDefTemplatingBooleanFormat() {
 
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate 'true' " +
-                "-t JsonAsBoolean " +
+                "-t BooleanDef true " +
                 "-s value " +
-                "-t StringCreate 'Hello, ${value}!'")
+                "-t StringDef 'Hello, ${value}!'")
                 .attach(result::set)
                 .run();
 

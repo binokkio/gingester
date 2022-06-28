@@ -44,7 +44,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, String in, Receiver<Object> out) {
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
             if (route.getKey().matcher(in).find()) {
                 out.accept(

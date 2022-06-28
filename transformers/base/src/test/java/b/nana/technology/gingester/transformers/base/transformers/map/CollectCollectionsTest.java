@@ -18,7 +18,7 @@ class CollectCollectionsTest {
         new Gingester().cli("" +
                 "-t A:Repeat 3 " +
                 "-t B:Repeat 3 " +
-                "-t StringCreate '${A.description}.${B.description}' " +
+                "-t StringDef '${A.description}.${B.description}' " +
                 "-s " +
                 "-l OnA OnB " +
                 "-t OnA:Fetch A.description " +

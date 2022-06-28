@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.transformers;
+package b.nana.technology.gingester.core.transformers.stash;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
@@ -28,7 +28,7 @@ public final class Stash implements Transformer<Object, Object>, InputStasher {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(context.stash(name, in), in);
     }
 

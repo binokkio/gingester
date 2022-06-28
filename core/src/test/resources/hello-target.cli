@@ -1,1 +1,1 @@
--t StringCreate 'Hello, [=target]!'
+-t StringDef 'Hello, [=target]!'

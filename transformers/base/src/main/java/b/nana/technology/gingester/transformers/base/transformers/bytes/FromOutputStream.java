@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream;
 public final class FromOutputStream implements Transformer<OutputStreamWrapper, byte[]> {
 
     @Override
-    public void transform(Context context, OutputStreamWrapper in, Receiver<byte[]> out) throws Exception {
+    public void transform(Context context, OutputStreamWrapper in, Receiver<byte[]> out) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         in.wrap(bytes);
         in.onClose(() -> out.accept(context, bytes.toByteArray()));

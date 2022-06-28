@@ -16,7 +16,7 @@ public final class ElementsContainingOwnText implements Transformer<Element, Ele
     }
 
     @Override
-    public void transform(Context context, Element in, Receiver<Element> out) throws Exception {
+    public void transform(Context context, Element in, Receiver<Element> out) {
         Elements elements = in.getElementsContainingOwnText(text);
         for (int i = 0; i < elements.size(); i++) {
             out.accept(context.stash("description", text + " :: " + i), elements.get(i));

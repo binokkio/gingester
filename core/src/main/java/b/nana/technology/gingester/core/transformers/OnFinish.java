@@ -38,12 +38,12 @@ public final class OnFinish implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
 
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<Object> out) {
         if (flawless == null && flawed == null) {
             out.accept(context, FINISH_SIGNAL);
         } else if (context.isFlawless()) {

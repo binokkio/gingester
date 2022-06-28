@@ -16,10 +16,10 @@ class MergeTest {
         Gingester gingester = new Gingester().cli("" +
                 "-t Passthrough " +
                 "-l A B " +
-                "-t A:StringCreate HelloWorld -s hello -l Merge " +
-                "-t B:StringCreate ByeWorld -s bye -l Merge " +
+                "-t A:StringDef HelloWorld -s hello -l Merge " +
+                "-t B:StringDef ByeWorld -s bye -l Merge " +
                 "-t Merge \"['hello', 'bye']\" " +
-                "-t StringCreate '${hello},${bye}'");
+                "-t StringDef '${hello},${bye}'");
 
         AtomicReference<String> result = new AtomicReference<>();
         gingester.attach(result::set);
@@ -35,8 +35,8 @@ class MergeTest {
         Gingester gingester = new Gingester().cli("" +
                 "-t Passthrough " +
                 "-l A B " +
-                "-t A:StringCreate HelloWorld -s message -l Merge " +
-                "-t B:StringCreate ByeWorld -s message -l Merge " +
+                "-t A:StringDef HelloWorld -s message -l Merge " +
+                "-t B:StringDef ByeWorld -s message -l Merge " +
                 "-t Merge [{fetch:'message',stash:'messages',list:true}] " +
                 "-f messages " +
                 "-t ListStream " +
@@ -59,7 +59,7 @@ class MergeTest {
 
         new Gingester().cli("" +
                 "-t Repeat 3 " +
-                "-t StringCreate hello " +
+                "-t StringDef hello " +
                 "-s greeting " +
                 "-t Merge 'greeting > greetings[]' " +
                 "-f greetings")
@@ -76,7 +76,7 @@ class MergeTest {
 
         new Gingester().cli("" +
                 "-t Repeat 3 " +
-                "-t StringCreate hello " +
+                "-t StringDef hello " +
                 "-s greeting " +
                 "-t Merge 'notStashed > greetings[]?' " +
                 "-f greetings")
@@ -94,7 +94,7 @@ class MergeTest {
         new Gingester().cli("" +
                 "-e ExceptionHandler " +
                 "-t Repeat 3 " +
-                "-t StringCreate hello " +
+                "-t StringDef hello " +
                 "-s greeting " +
                 "-t Merge 'notStashed > greetings[]' " +
                 "-- " +
@@ -111,7 +111,7 @@ class MergeTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate hello " +
+                "-t StringDef hello " +
                 "-t Repeat 3 " +
                 "-s greeting " +
                 "-t Merge 'greeting' " +

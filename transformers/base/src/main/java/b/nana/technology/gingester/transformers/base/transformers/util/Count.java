@@ -16,17 +16,17 @@ public final class Count implements Transformer<Object, Object> {
     private final ContextMap<AtomicLong> contextMap = new ContextMap<>();
 
     @Override
-    public void prepare(Context context, Receiver<Object> out) throws Exception {
+    public void prepare(Context context, Receiver<Object> out) {
         contextMap.put(context, new AtomicLong());
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         out.accept(context.stash("count", contextMap.get(context).getAndIncrement()), in);
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<Object> out) {
         contextMap.remove(context);
     }
 }

@@ -28,7 +28,7 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Map<Object, Object>> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Map<Object, Object>> out) {
         Object value = context.require(fetchValue);
         Map<Object, Object> map = maps.get(context);
         Object collision = map.put(in, value);

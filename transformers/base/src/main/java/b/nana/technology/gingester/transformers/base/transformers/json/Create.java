@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 
+@Deprecated  // use JsonDef instead
 public final class Create implements Transformer<Object, JsonNode> {
 
     private final JsonNode payload;
@@ -15,7 +16,7 @@ public final class Create implements Transformer<Object, JsonNode> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<JsonNode> out) {
         out.accept(context, payload.deepCopy());
     }
 

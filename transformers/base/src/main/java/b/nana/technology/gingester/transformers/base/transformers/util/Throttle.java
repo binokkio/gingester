@@ -36,7 +36,7 @@ public final class Throttle implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         semaphore.acquireUninterruptibly();
         out.accept(context, in);
     }

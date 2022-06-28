@@ -39,7 +39,7 @@ public class OrdinalRoute implements Transformer<Object, Object> {
     }
 
     @Override
-    public void prepare(Context context, Receiver<Object> out) throws Exception {
+    public void prepare(Context context, Receiver<Object> out) {
         counters.put(context, new Counter());
     }
 
@@ -57,7 +57,7 @@ public class OrdinalRoute implements Transformer<Object, Object> {
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
+    public void finish(Context context, Receiver<Object> out) {
         counters.remove(context);
     }
 

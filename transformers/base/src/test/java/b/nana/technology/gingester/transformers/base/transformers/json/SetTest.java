@@ -16,11 +16,11 @@ class SetTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate '{}' " +
+                "-t JsonDef '{}' " +
                 "-s record " +
-                "-t JsonCreate '{hello:123}' " +
+                "-t JsonDef '{hello:123}' " +
                 "-t JsonSet greeting " +
-                "-t JsonCreate '{world:234}' " +
+                "-t JsonDef '{world:234}' " +
                 "-t JsonSet greeted")
                 .attach(result::set)
                 .run();
@@ -36,13 +36,13 @@ class SetTest {
         AtomicReference<JsonNode> resultB = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate '{}' " +
+                "-t JsonDef '{}' " +
                 "-s a " +
-                "-t JsonCreate '{}' " +
+                "-t JsonDef '{}' " +
                 "-s b " +
-                "-t JsonCreate '{hello:123}' " +
+                "-t JsonDef '{hello:123}' " +
                 "-t JsonSet greeting a " +
-                "-t JsonCreate '{world:234}' " +
+                "-t JsonDef '{world:234}' " +
                 "-t JsonSet greeted b " +
                 "-t FetchA:Fetch a " +
                 "-t FetchB:Fetch b")

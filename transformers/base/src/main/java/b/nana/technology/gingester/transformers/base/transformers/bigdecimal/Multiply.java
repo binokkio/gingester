@@ -19,7 +19,7 @@ public final class Multiply implements Transformer<BigDecimal, BigDecimal> {
     }
 
     @Override
-    public void transform(Context context, BigDecimal in, Receiver<BigDecimal> out) throws Exception {
+    public void transform(Context context, BigDecimal in, Receiver<BigDecimal> out) {
         out.accept(context.stash("description", description), in.multiply(multiplicand));
     }
 

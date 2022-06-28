@@ -20,7 +20,7 @@ public final class Get implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
 
         Map<?, ?> map = (Map<?, ?>) context.require(fetchMap);
         Object result = map.get(in);

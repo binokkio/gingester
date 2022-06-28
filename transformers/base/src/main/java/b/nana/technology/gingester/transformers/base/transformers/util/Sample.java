@@ -29,7 +29,7 @@ public final class Sample implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Object> out) {
         if (contextMap.get(context).getAndIncrement() % divider == 0) {
             out.accept(context, in);
         }

@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 public final class FilterEmptyOut implements Transformer<byte[], byte[]> {
 
     @Override
-    public void transform(Context context, byte[] in, Receiver<byte[]> out) throws Exception {
+    public void transform(Context context, byte[] in, Receiver<byte[]> out) {
         if (in.length > 0) {
             out.accept(context, in);
         }

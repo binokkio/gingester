@@ -13,7 +13,7 @@ class ExecTest {
     void test() {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Exec '/bin/cat' " +
                 "-t InputStreamToString");
 

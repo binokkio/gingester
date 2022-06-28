@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element;
 public final class ToString implements Transformer<Element, String> {
 
     @Override
-    public void transform(Context context, Element in, Receiver<String> out) throws Exception {
+    public void transform(Context context, Element in, Receiver<String> out) {
         out.accept(context, in.html());
     }
 }

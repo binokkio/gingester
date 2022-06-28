@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers.dsv;
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -15,19 +15,22 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 @Description("Parse input as delimiter-separated values and output a JSON object for each DSV record")
-public final class ToJson implements Transformer<InputStream, JsonNode> {
+public final class ToJson extends CharsetTransformer<InputStream, JsonNode> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ObjectReader objectReader;
     private final String extras;
 
     public ToJson(Parameters parameters) {
+        super(parameters);
 
         CsvMapper csvMapper = new CsvMapper();
         csvMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
@@ -64,7 +67,8 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
     @Override
     public void transform(Context context, InputStream in, Receiver<JsonNode> out) throws Exception {
         long counter = 0;
-        MappingIterator<MultiMap> iterator = objectReader.readValues(in);
+        Reader reader = new InputStreamReader(in, getCharset());
+        MappingIterator<MultiMap> iterator = objectReader.readValues(reader);
         while (iterator.hasNext()) {
             MultiMap multiMap = iterator.next();
             ObjectNode result = objectMapper.valueToTree(multiMap);
@@ -80,7 +84,7 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
         }
     }
 
-    public static class Parameters {
+    public static class Parameters extends CharsetTransformer.Parameters {
         public char delimiter = ',';
         public Character quote = '"';
         public Character escape;

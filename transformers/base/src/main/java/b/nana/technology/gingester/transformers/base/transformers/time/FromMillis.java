@@ -13,7 +13,7 @@ public final class FromMillis extends InstantBase<Long> {
     }
 
     @Override
-    public void transform(Context context, Long in, Receiver<TemporalAccessor> out) throws Exception {
+    public void transform(Context context, Long in, Receiver<TemporalAccessor> out) {
         out.accept(context, Instant.ofEpochMilli(in).atZone(getZoneId()));
     }
 }

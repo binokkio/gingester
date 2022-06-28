@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+@Deprecated  // use PathDef instead
 public final class Create implements Transformer<Object, Path> {
 
     private final Template pathTemplate;
@@ -20,7 +21,7 @@ public final class Create implements Transformer<Object, Path> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Path> out) {
         Path path = Paths.get(pathTemplate.render(context));
         out.accept(
                 context.stash(Map.of(

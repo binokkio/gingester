@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 public final class AsJsonNode implements Transformer<String, JsonNode> {
 
     @Override
-    public void transform(Context context, String in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, String in, Receiver<JsonNode> out) {
         out.accept(context, JsonNodeFactory.instance.textNode(in));
     }
 }

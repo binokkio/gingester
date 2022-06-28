@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class AsDouble implements Transformer<JsonNode, Double> {
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<Double> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<Double> out) {
         out.accept(context, in.asDouble());
     }
 }

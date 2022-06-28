@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CycleTest {
 
     @Test
-    void test() throws Exception {
+    void test() {
 
         Cycle.Parameters parameters = new Cycle.Parameters();
         parameters.add("foo");

@@ -12,7 +12,7 @@ import java.io.InputStream;
 public final class ToInputStream implements Transformer<byte[], InputStream> {
 
     @Override
-    public void transform(Context context, byte[] in, Receiver<InputStream> out) throws Exception {
+    public void transform(Context context, byte[] in, Receiver<InputStream> out) {
         out.accept(context, new ByteArrayInputStream(in));
     }
 }

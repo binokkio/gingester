@@ -32,7 +32,7 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Map<Object, T>> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Map<Object, T>> out) {
         add(
                 maps.get(context).computeIfAbsent(in, x -> supply()),
                 context.require(fetchValue)

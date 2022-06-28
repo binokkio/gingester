@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class AsBoolean implements Transformer<JsonNode, Boolean> {
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<Boolean> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<Boolean> out) {
         out.accept(context, in.asBoolean());
     }
 }

@@ -12,7 +12,7 @@ public final class CountCollect implements Transformer<Object, Long> {
     private final ContextMap<long[]> counters = new ContextMap<>();
 
     @Override
-    public void prepare(Context context, Receiver<Long> out) throws Exception {
+    public void prepare(Context context, Receiver<Long> out) {
         counters.put(context, new long[1]);
     }
 
@@ -22,7 +22,7 @@ public final class CountCollect implements Transformer<Object, Long> {
     }
 
     @Override
-    public void finish(Context context, Receiver<Long> out) throws Exception {
+    public void finish(Context context, Receiver<Long> out) {
         out.accept(context, counters.remove(context)[0]);
     }
 }

@@ -194,6 +194,7 @@ public final class TransformerFactory {
 
     public static <I, O> Stream<String> getTransformerHelps() {
         return TRANSFORMERS.stream()
+                .filter(c -> c.getAnnotation(Deprecated.class) == null)
                 .map(transformer -> {
 
                     // TODO indenting is now spread out over the Main class and here, would be nice to consolidate

@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.transformers;
+package b.nana.technology.gingester.core.transformers.passthrough;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;

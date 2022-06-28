@@ -17,7 +17,7 @@ class NdjsonTest {
     void test() throws IOException {
 
         Gingester gingester = new Gingester().cli("" +
-                "-t JsonCreate '{hello:\"world\"}' " +
+                "-t JsonDef '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
                 "-t InputStreamJoin " +
                 "-t InputStreamAppend " +

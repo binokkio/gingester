@@ -33,8 +33,8 @@ public final class PeekLines extends CharsetTransformer<InputStream, String> {
     @Override
     public void transform(Context context, InputStream in, Receiver<String> out) throws Exception {
 
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(in, bufferSize);
-        bufferedInputStream.mark(bufferSize);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(in, bufferSize * 4);
+        bufferedInputStream.mark(bufferSize * 4);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(bufferedInputStream, getCharset()));
 

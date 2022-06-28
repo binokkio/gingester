@@ -20,7 +20,7 @@ class TemplatingTest {
                 "-f description " +
                 "-t MapCollect " +
                 "-s map " +
-                "-t StringCreate '<#list map as count, value>${count}: ${value}, </#list>'")
+                "-t StringDef '<#list map as count, value>${count}: ${value}, </#list>'")
                 .attach(result::set)
                 .run();
 

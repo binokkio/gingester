@@ -22,7 +22,7 @@ public final class ToString extends TimeBase<TemporalAccessor, String> {
     }
 
     @Override
-    public void transform(Context context, TemporalAccessor in, Receiver<String> out) throws Exception {
+    public void transform(Context context, TemporalAccessor in, Receiver<String> out) {
         out.accept(context, formatter.format(in));
     }
 }

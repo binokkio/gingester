@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public final class AsFloat implements Transformer<JsonNode, Float> {
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<Float> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<Float> out) {
         out.accept(context, (float) in.asDouble());
     }
 }

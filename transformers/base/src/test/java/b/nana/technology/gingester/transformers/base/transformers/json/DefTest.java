@@ -9,7 +9,7 @@ import java.util.Deque;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CreateTest {
+class DefTest {
 
     @Test
     void test() {
@@ -18,9 +18,9 @@ class CreateTest {
 
         new Gingester().cli("" +
                 "-t Repeat 2 " +
-                "-t JsonCreate '[]' " +
+                "-t JsonDef '[]' " +
                 "-s " +
-                "-t StringCreate 'Hello, World ${description}!' " +
+                "-t StringDef 'Hello, World ${description}!' " +
                 "-t StringAsJsonNode " +
                 "-t JsonAdd")
                 .attach(results::add)

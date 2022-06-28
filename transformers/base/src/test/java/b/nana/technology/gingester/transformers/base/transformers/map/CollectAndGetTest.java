@@ -21,12 +21,12 @@ class CollectAndGetTest {
 
         new Gingester().cli("" +
                 "-t Repeat 3 " +
-                "-t StringCreate 'Hello, World ${description}!' " +
+                "-t StringDef 'Hello, World ${description}!' " +
                 "-s " +
                 "-f description " +
                 "-t MapCollect " +
                 "-s map " +
-                "-t IntCreate 1 " +
+                "-t IntDef 1 " +
                 "-t MapGet")
                 .attach(map::set, "MapCollect")
                 .attach(result::set)

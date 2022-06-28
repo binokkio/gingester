@@ -11,13 +11,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class AsTextTest {
 
     @Test
-    void testTextNodeAsText() throws Exception {
+    void testTextNodeAsText() {
         TextNode in = JsonNodeFactory.instance.textNode("Hello, World!");
         new AsText().transform(null, in, (UniReceiver<String>) s -> assertEquals("Hello, World!", s));
     }
 
     @Test
-    void testNumberNodeAsText() throws Exception {
+    void testNumberNodeAsText() {
         NumericNode in = JsonNodeFactory.instance.numberNode(123);
         new AsText().transform(null, in, (UniReceiver<String>) s -> assertEquals("123", s));
     }

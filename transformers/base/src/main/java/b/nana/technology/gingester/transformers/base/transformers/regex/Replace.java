@@ -22,7 +22,7 @@ public final class Replace implements Transformer<String, String> {
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<String> out) throws Exception {
+    public void transform(Context context, String in, Receiver<String> out) {
         Pattern pattern = patternTemplate.render(context);
         String replacement = replacementTemplate.render(context);
         out.accept(context, pattern.matcher(in).replaceAll(replacement));

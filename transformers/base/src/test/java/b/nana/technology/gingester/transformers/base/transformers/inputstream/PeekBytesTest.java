@@ -16,7 +16,7 @@ class PeekBytesTest {
         AtomicReference<String> fullResult = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t PeekBytes 5 " +
                 "-t BytesToString " +
                 "-f " +

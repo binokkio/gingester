@@ -9,7 +9,7 @@ import java.util.List;
 public final class Stream implements Transformer<List<?>, Object> {
 
     @Override
-    public void transform(Context context, List<?> in, Receiver<Object> out) throws Exception {
+    public void transform(Context context, List<?> in, Receiver<Object> out) {
         for (int i = 0; i < in.size(); i++) {
             out.accept(context.stash("description", i), in.get(i));
         }

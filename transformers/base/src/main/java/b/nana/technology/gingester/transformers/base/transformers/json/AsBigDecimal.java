@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 public final class AsBigDecimal implements Transformer<JsonNode, BigDecimal> {
 
     @Override
-    public void transform(Context context, JsonNode in, Receiver<BigDecimal> out) throws Exception {
+    public void transform(Context context, JsonNode in, Receiver<BigDecimal> out) {
         out.accept(context, new BigDecimal(in.asText()));
     }
 }

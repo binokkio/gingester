@@ -15,7 +15,7 @@ class FilterTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in.length() > 3'")
                 .attach(result::set)
                 .run();
@@ -29,7 +29,7 @@ class FilterTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in.length() < 3'")
                 .attach(result::set)
                 .run();
@@ -44,7 +44,7 @@ class FilterTest {
 
         new Gingester().cli("" +
                 "-e ExceptionHandler -t ExceptionHandler:Passthrough -- " +
-                "-t StringCreate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in'")
                 .attach(result::set, "ExceptionHandler")
                 .run();

@@ -8,7 +8,7 @@ import org.jsoup.nodes.Element;
 public final class NextElementSibling implements Transformer<Element, Element> {
 
     @Override
-    public void transform(Context context, Element in, Receiver<Element> out) throws Exception {
+    public void transform(Context context, Element in, Receiver<Element> out) {
         out.accept(context.stash("description", "nextChild"), in.nextElementSibling());
     }
 }

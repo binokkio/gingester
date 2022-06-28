@@ -9,7 +9,7 @@ import java.io.InputStream;
 public final class In implements Transformer<Object, InputStream> {
 
     @Override
-    public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<InputStream> out) {
         out.accept(context.stash("description", "stdin"), System.in);
     }
 }

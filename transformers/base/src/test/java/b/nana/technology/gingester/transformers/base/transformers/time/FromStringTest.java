@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FromStringTest {
 
     @Test
-    void testDefaults() throws Exception {
+    void testDefaults() {
 
         FromString.Parameters parameters = new FromString.Parameters();
         parameters.format = "Q-yyyy";
