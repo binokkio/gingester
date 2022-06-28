@@ -26,7 +26,7 @@ class CollectAndGetTest {
                 "-f description " +
                 "-t MapCollect " +
                 "-s map " +
-                "-t IntCreate 1 " +
+                "-t IntDef 1 " +
                 "-t MapGet")
                 .attach(map::set, "MapCollect")
                 .attach(result::set)

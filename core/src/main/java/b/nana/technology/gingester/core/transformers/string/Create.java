@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.string;
+package b.nana.technology.gingester.core.transformers.string;
 
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
@@ -15,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 @Example(example = "'{template: \"path/to/template.txt\", is: \"FILE\"}'", description = "Read template from file", test = false)
 @Example(example = "'{template: \"path/to/template.txt\", is: \"RESOURCE\"}'", description = "Read template from Java resource", test = false)
 public final class Create implements Transformer<Object, String> {
+
+    // TODO rename Def
 
     private final Template template;
 

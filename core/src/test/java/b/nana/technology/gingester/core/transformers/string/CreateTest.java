@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.string;
+package b.nana.technology.gingester.core.transformers.string;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.controller.Context;
@@ -50,8 +50,7 @@ class CreateTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate '123456' " +
-                "-t JsonAsLong " +
+                "-t IntDef 123456 " +
                 "-s number " +
                 "-t StringCreate 'Hello, ${number}!'")
                 .attach(result::set)
@@ -66,8 +65,7 @@ class CreateTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new Gingester().cli("" +
-                "-t JsonCreate 'true' " +
-                "-t JsonAsBoolean " +
+                "-t BooleanDef true " +
                 "-s value " +
                 "-t StringCreate 'Hello, ${value}!'")
                 .attach(result::set)

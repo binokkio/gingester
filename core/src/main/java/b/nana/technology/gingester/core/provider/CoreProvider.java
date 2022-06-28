@@ -1,10 +1,6 @@
 package b.nana.technology.gingester.core.provider;
 
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.core.transformers.Void;
-import b.nana.technology.gingester.core.transformers.*;
-import b.nana.technology.gingester.core.transformers.passthrough.Passthrough;
-import b.nana.technology.gingester.core.transformers.stash.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,24 +10,30 @@ public final class CoreProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
-                CycleRoute.class,
-                Fetch.class,
-                FetchAll.class,
-                FetchObject.class,
-                FinishGate.class,
-                Log.class,
-                Merge.class,
-                Monkey.class,
-                OnFinish.class,
-                OnPrepare.class,
-                OrdinalRoute.class,
-                Passthrough.class,
-                Repeat.class,
-                Stash.class,
-                StashString.class,
-                Swap.class,
-                Throw.class,
-                Void.class
+                b.nana.technology.gingester.core.transformers.CycleRoute.class,
+                b.nana.technology.gingester.core.transformers.FinishGate.class,
+                b.nana.technology.gingester.core.transformers.Log.class,
+                b.nana.technology.gingester.core.transformers.Merge.class,
+                b.nana.technology.gingester.core.transformers.Monkey.class,
+                b.nana.technology.gingester.core.transformers.OnFinish.class,
+                b.nana.technology.gingester.core.transformers.OnPrepare.class,
+                b.nana.technology.gingester.core.transformers.OrdinalRoute.class,
+                b.nana.technology.gingester.core.transformers.passthrough.Passthrough.class,
+                b.nana.technology.gingester.core.transformers.primitive.BooleanDef.class,
+                b.nana.technology.gingester.core.transformers.primitive.DoubleDef.class,
+                b.nana.technology.gingester.core.transformers.primitive.FloatDef.class,
+                b.nana.technology.gingester.core.transformers.primitive.IntDef.class,
+                b.nana.technology.gingester.core.transformers.primitive.LongDef.class,
+                b.nana.technology.gingester.core.transformers.Repeat.class,
+                b.nana.technology.gingester.core.transformers.stash.FetchAll.class,
+                b.nana.technology.gingester.core.transformers.stash.Fetch.class,
+                b.nana.technology.gingester.core.transformers.stash.FetchObject.class,
+                b.nana.technology.gingester.core.transformers.stash.Stash.class,
+                b.nana.technology.gingester.core.transformers.stash.StashString.class,
+                b.nana.technology.gingester.core.transformers.stash.Swap.class,
+                b.nana.technology.gingester.core.transformers.string.Create.class,
+                b.nana.technology.gingester.core.transformers.Throw.class,
+                b.nana.technology.gingester.core.transformers.Void.class
         );
     }
 }
