@@ -86,6 +86,11 @@ Terminology:
         To start a flow Gingester creates a Seed transformer that outputs a single item and is linked to all
         transformers that do not have any incoming links.
 
+    Upstream/Downstream
+        Given the flow `-t Repeat 3 -t StringDef 'hello' -t StringAppend '!' -t Join -t Speak` the upstream
+        of the StringAppend transformer are the Repeat and StringDef transformers, and the downstream of the
+        StringAppend transformer are the Join and Speak transformers.
+
     Synchronization
 
         Some transformers can synchronize with the output of an upstream transformer.
