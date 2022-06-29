@@ -81,12 +81,47 @@ General usage:
 
 Terminology:
 
-    Seed
+    Flow: the network of transformers through which items flow.
+    Item: a value and associated context in the flow.
+    Seed: a special item used to start the flow by passing it to all transformers without incoming links.
+    Transformer: a node in the flow that operates on items.
+    Yield: the result of a transformer.
 
-        To start a flow Gingester creates a Seed transformer that outputs a single item and is linked to all
-        transformers that do not have any incoming links.
 
-    Synchronization
+    Upstream/Downstream:
+
+        Given the flow `-t Repeat 3 -t StringDef 'hello' -t StringAppend '!' -t Join -t Speak` the upstream
+        of the StringAppend transformer are the Repeat and StringDef transformers, and the downstream of the
+        StringAppend transformer are the Join and Speak transformers.
+
+
+    Context:
+
+        Every item in the flow has an associated context. The context is a chain of maps with string keys and
+        object values. Each map belongs to a specific transformer in the item's upstream. Take for example
+        `-t StringDef hello -t Repeat 3 -t Out`. The StringDef transformer will yield the string "hello". The
+        Repeat transformer will repeat that string 3 times, each time stashing the repetition number under the
+        key "description". The first result from this flow will be:
+
+        ---- 0 ----
+        {
+          Repeat: {
+            description: 0
+          }
+        }
+
+        hello
+        -----------
+
+        In this result "hello" is the item value and the structure above it is its context. Stashed values can
+        be fetched from context, e.g. `-t Repeat 3 -f description -t Out false` would simply write 0, 1, and 2
+        to stdout.
+
+        Stashed values can also be used in templatable transformer arguments using Apache Freemarker templating
+        syntax, e.g. `-t Repeat 3 -t StringDef 'Hello, ${description}!' -t Out`.
+
+
+    Synchronization:
 
         Some transformers can synchronize with the output of an upstream transformer.
 
@@ -102,3 +137,10 @@ Terminology:
 
         When a transformer requires synchronization but is not instructed to be in sync with anything, as in the
         second paragraph of this section, it is synced with the seed (see previous section).
+
+        Grouping is a special form of synchronization where multiple items flowing through a grouping
+        transformer are assigned the same synchronization context. This differs from normal synchronization
+        where each item leaving the synced-from transformer gets its own synchronization context. For example,
+        the GroupByCountLimit transformer counts the items flowing through it and assigns them the same
+        synchronization context until it hits the given limit, at which point it switches to a new
+        synchronization context. A synced-to ListCollect transformer would then output a list for every group.
