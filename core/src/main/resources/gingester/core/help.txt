@@ -81,27 +81,28 @@ General usage:
 
 Terminology:
 
-    Flow: the network of transformers through which items flow.
+    Flow: the network of transformers processing the items.
     Item: a value and associated context in the flow.
     Seed: a special item used to start the flow by passing it to all transformers without incoming links.
-    Transformer: a node in the flow that operates on items.
+    Transformer: a node in the flow that processes items.
     Yield: the result of a transformer.
 
 
     Upstream/Downstream:
 
-        Given the flow `-t Repeat 3 -t StringDef 'hello' -t StringAppend '!' -t Join -t Speak` the upstream
-        of the StringAppend transformer are the Repeat and StringDef transformers, and the downstream of the
+        Given the flow `-t StringDef 'hello' -t Repeat 3 -t StringAppend '!' -t Join -t Speak` the upstream
+        of the StringAppend transformer are the StringDef and Repeat transformers, and the downstream of the
         StringAppend transformer are the Join and Speak transformers.
 
 
     Context:
 
-        Every item in the flow has an associated context. The context is a chain of maps with string keys and
-        object values. Each map belongs to a specific transformer in the item's upstream. Take for example
-        `-t StringDef hello -t Repeat 3 -t Out`. The StringDef transformer will yield the string "hello". The
-        Repeat transformer will repeat that string 3 times, each time stashing the repetition number under the
-        key "description". The first result from this flow will be:
+        Every item in the flow has context. This context contains key-value pairs that were stashed upstream.
+        The values can be fetched and continue as items in the flow, used in transformer argument templates, and
+        used by transformers internally. Take for example `-t StringDef hello -t Repeat 3 -t Out`. StringDef
+        will yield "hello" and Repeat will repeat it 3 times, each time stashing the zero-based repetition
+        number as "description". The Out transformer by default writes the item context followed by the item
+        value to stdout. The first output of the above flow is:
 
         ---- 0 ----
         {
@@ -113,12 +114,16 @@ Terminology:
         hello
         -----------
 
-        In this result "hello" is the item value and the structure above it is its context. Stashed values can
-        be fetched from context, e.g. `-t Repeat 3 -f description -t Out false` would simply write 0, 1, and 2
-        to stdout.
+        The Fetch transformer can be used to fetch a stashed value and use it as an item value in the flow.
+        E.g. `-t Repeat 3 -f description -t Out false` would write 0, 1, and 2 to stdout (the `false` argument
+        configures Out to only write the item value).
 
-        Stashed values can also be used in templatable transformer arguments using Apache Freemarker templating
-        syntax, e.g. `-t Repeat 3 -t StringDef 'Hello, ${description}!' -t Out`.
+        Most string arguments can be templated using the Apache Freemarker templating language.  E.g.
+        `-t Repeat 3 -t StringDef 'Hello, ${description}!' -t Speak`.
+
+        If there are multiple values stashed under the same key, the most recently stashed value will be used.
+        If a different value is needed the transformer that stashed it must be specified, e.g.
+        `-f Repeat.description`.
 
 
     Synchronization:
