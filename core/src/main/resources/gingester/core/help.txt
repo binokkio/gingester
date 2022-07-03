@@ -141,7 +141,7 @@ Terminology:
         PathWrite filename.
 
         When a transformer requires synchronization but is not instructed to be in sync with anything, as in the
-        second paragraph of this section, it is synced with the seed (see previous section).
+        second paragraph of this section, it is synced with the seed.
 
         Grouping is a special form of synchronization where multiple items flowing through a grouping
         transformer are assigned the same synchronization context. This differs from normal synchronization
