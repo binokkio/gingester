@@ -31,12 +31,12 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>11.0.6</version>
+            <version>11.0.10</version>
         </dependency>
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>3.3.0</version>
+            <version>3.19.2</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
