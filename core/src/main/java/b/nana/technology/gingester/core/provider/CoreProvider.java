@@ -18,6 +18,7 @@ public final class CoreProvider implements Provider {
                 b.nana.technology.gingester.core.transformers.OnFinish.class,
                 b.nana.technology.gingester.core.transformers.OnPrepare.class,
                 b.nana.technology.gingester.core.transformers.OrdinalRoute.class,
+                b.nana.technology.gingester.core.transformers.Probe.class,
                 b.nana.technology.gingester.core.transformers.passthrough.Passthrough.class,
                 b.nana.technology.gingester.core.transformers.primitive.BooleanDef.class,
                 b.nana.technology.gingester.core.transformers.primitive.DoubleDef.class,
