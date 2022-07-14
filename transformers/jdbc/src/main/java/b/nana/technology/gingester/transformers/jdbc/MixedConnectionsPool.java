@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -12,17 +11,23 @@ public final class MixedConnectionsPool<T> {
     private final LinkedList<ConnectionWith<T>> idle = new LinkedList<>();
 
     private final int poolSize;
-    private final int numPreparedStatements;
-    private final OnConnectionCreatedListener onConnectionCreated;
+    private final int withSize;
+    private final ConnectionWithConsumer<T> onConnectionCreated;
+    private final ConnectionWithConsumer<T> onConnectionMoribund;
+
     private int used;
 
-    public MixedConnectionsPool(int poolSize, int numPreparedStatements, OnConnectionCreatedListener onConnectionCreated) {
+    public MixedConnectionsPool(int poolSize, int withSize, ConnectionWithConsumer<T> onConnectionCreated, ConnectionWithConsumer<T> onConnectionMoribund) {
         this.poolSize = poolSize;
-        this.numPreparedStatements = numPreparedStatements;
+        this.withSize = withSize;
         this.onConnectionCreated = onConnectionCreated;
+        this.onConnectionMoribund = onConnectionMoribund;
     }
 
     public ConnectionWith<T> acquire(String url) throws InterruptedException, SQLException {
+
+        ConnectionWith<T> moribund = null;
+
         synchronized (lock) {
             while (true) {
 
@@ -47,26 +52,34 @@ public final class MixedConnectionsPool<T> {
 
                 } else {
 
-                    // close the oldest idle connection if the pool would otherwise overflow
+                    // get the oldest idle connection if the pool would otherwise overflow
                     if (used + idle.size() == poolSize) {
-                        idle.removeLast().close();
+                        moribund = idle.removeLast();
                     }
 
+                    used++;
                     break;  // break out of the loop and synchronized block to create a new connection
                 }
             }
+        }
+
+        // TODO handle exceptions from onConnectionMoribund and onConnectionCreated
+
+        // close oldest idle connection if the pool would otherwise overflow
+        if (moribund != null) {
+            onConnectionMoribund.accept(moribund);
+            moribund.close();
         }
 
         // create a new connection
         ConnectionWith<T> connection = new ConnectionWith<>(
                 url,
                 DriverManager.getConnection(url),
-                numPreparedStatements
+                withSize
         );
 
-        onConnectionCreated.onConnectionCreated(connection.getConnection());
+        onConnectionCreated.accept(connection);
 
-        used++;
         return connection;
     }
 
@@ -85,11 +98,12 @@ public final class MixedConnectionsPool<T> {
         }
 
         for (ConnectionWith<T> connection : idle) {
+            onConnectionMoribund.accept(connection);
             connection.close();
         }
     }
 
-    public interface OnConnectionCreatedListener {
-        void onConnectionCreated(Connection connection) throws SQLException;
+    public interface ConnectionWithConsumer<T> {
+        void accept(ConnectionWith<T> connection) throws SQLException;
     }
 }

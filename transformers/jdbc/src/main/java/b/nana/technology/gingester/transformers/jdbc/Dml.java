@@ -19,7 +19,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
     private final CommitMode commitMode;
 
     public Dml(Parameters parameters) {
-        super(parameters, false, parameters.dml.size() * 10);
+        super(parameters, false);
         dml = parameters.dml;
         dmlTemplates = parameters.dml.stream().map(d -> d.statement).map(Context::newTemplate).collect(Collectors.toList());
         commitMode = parameters.commitMode;
@@ -36,27 +36,21 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
                 Template dmlTemplate = dmlTemplates.get(i);
                 DmlStatement dmlStatement;
 
-                if (dmlTemplate.isInvariant()) {
-                    dmlStatement = connection.getSingleton();
-                    if (dmlStatement == null) {
-                        dmlStatement = new DmlStatement(connection.getConnection(), dmlTemplate.requireInvariant(), dml.get(0).parameters);
-                        connection.setSingleton(dmlStatement);
-                    }
-                } else {
-                    String raw = dmlTemplate.render(context);
-                    dmlStatement = connection.getObject(raw);
-                    if (dmlStatement == null) {
-                        dmlStatement = new DmlStatement(connection.getConnection(), raw, dml.get(0).parameters);
-                        DmlStatement removed = connection.setObject(raw, dmlStatement);
-                        if (removed != null) removed.close();
-                    }
+                String raw = dmlTemplate.render(context);
+                dmlStatement = connection.getObject(raw);
+                if (dmlStatement == null) {
+                    dmlStatement = new DmlStatement(connection.getConnection(), raw, dml.get(i).parameters);
+                    DmlStatement removed = connection.setObject(raw, dmlStatement);
+                    if (removed != null) removed.close();
                 }
 
                 dmlStatement.execute(context);
 
                 if (commitMode == CommitMode.PER_STATEMENT) connection.getConnection().commit();
             }
+
             if (commitMode == CommitMode.PER_TRANSFORM) connection.getConnection().commit();
+
         } catch (SQLException e) {
             connection.getConnection().rollback();
             throw e;
@@ -65,6 +59,13 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
         }
 
         out.accept(context, in);
+    }
+
+    @Override
+    protected void onConnectionMoribund(ConnectionWith<DmlStatement> connection) throws SQLException {
+        if (commitMode == CommitMode.PER_CONNECTION) {
+            connection.getConnection().commit();
+        }
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
@@ -86,6 +87,6 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
     public enum CommitMode {
         PER_STATEMENT,
         PER_TRANSFORM,
-        PER_CONNECTION  // TODO
+        PER_CONNECTION
     }
 }

@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
@@ -18,14 +19,23 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
     private final Template urlTemplate;
     private final MixedConnectionsPool<T> mixedConnectionsPool;
 
-    public JdbcTransformer(Parameters parameters, boolean autoCommit, int numPreparedStatements) {
+    public JdbcTransformer(Parameters parameters, boolean autoCommit) {
         urlTemplate = Context.newTemplate(parameters.url);
         mixedConnectionsPool = new MixedConnectionsPool<>(
                 parameters.connectionPoolSize,
-                numPreparedStatements,
-                connection -> {
-                    if (!parameters.ddl.isEmpty()) {
+                parameters.statementPoolSize,
+                connectionWith -> {
+
+                    Connection connection = connectionWith.getConnection();
+
+                    if (parameters.ddl.isEmpty()) {
+                        if (!autoCommit) {
+                            connection.setAutoCommit(false);
+                        }
+                    } else {
+
                         connection.setAutoCommit(false);
+
                         try {
                             for (String statement : parameters.ddl) {
                                 try (Statement s = connection.createStatement()) {
@@ -37,21 +47,25 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
                             connection.rollback();
                             throw e;
                         }
-                        if (!autoCommit) {
-                            connection.setAutoCommit(false);
+
+                        if (autoCommit) {
+                            connection.setAutoCommit(true);
                         }
-                    } else if (autoCommit) {
-                        connection.setAutoCommit(true);
                     }
-                });
+                },
+                this::onConnectionMoribund);
     }
 
-    protected ConnectionWith<T> acquireConnection(Context context) throws SQLException, InterruptedException {
+    protected final ConnectionWith<T> acquireConnection(Context context) throws SQLException, InterruptedException {
         return mixedConnectionsPool.acquire(urlTemplate.render(context));
     }
 
-    protected void releaseConnection(ConnectionWith<T> connection) {
+    protected final void releaseConnection(ConnectionWith<T> connection) {
         mixedConnectionsPool.release(connection);
+    }
+
+    protected void onConnectionMoribund(ConnectionWith<T> connectionWith) throws SQLException {
+
     }
 
     @Override
@@ -64,7 +78,7 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
         public TemplateParameters url = new TemplateParameters("jdbc:sqlite:file::memory:?cache=shared", true);
         public List<String> ddl = Collections.emptyList();
         public int connectionPoolSize = 10;
-        public int statementPoolSize = 10;
+        public int statementPoolSize = 100;
 
         @JsonDeserialize(using = Statement.Deserializer.class)
         public static class Statement {

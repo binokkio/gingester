@@ -19,7 +19,7 @@ public final class Tables extends JdbcTransformer<Object, String, Void> {
     private final List<Template> types;
 
     public Tables(Parameters parameters) {
-        super(parameters, true, 0);
+        super(parameters, true);
         catalog = parameters.catalog != null ? Context.newTemplate(parameters.catalog) : null;
         schemaPattern = parameters.schemaPattern != null ? Context.newTemplate(parameters.schemaPattern) : null;
         tableNamePattern = parameters.tableNamePattern != null ? Context.newTemplate(parameters.tableNamePattern) : null;

@@ -19,7 +19,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
     private final Integer fetchSize;
 
     public Dql(Parameters parameters) {
-        super(parameters, true, 1);
+        super(parameters, true);
         dql = parameters.dql;
         dqlTemplate = Context.newTemplate(dql.statement);
         fetchSize = parameters.fetchSize;
@@ -53,9 +53,9 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
 
             try (ResultSet resultSet = dqlStatement.execute(context)) {
                 for (long i = 0; resultSet.next(); i++) {
-                    Map<String, Map<String, ?>> result = new HashMap<>();
+                    Map<String, Map<String, ?>> result = new HashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
                     dqlStatement.getResultStructure().forEach((tableName, columns) -> {
-                        Map<String, Object> table = new HashMap<>();
+                        Map<String, Object> table = new HashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
                         result.put(tableName, table);
                         columns.forEach((index, name) -> table.put(name, dqlStatement.getColumnValue(resultSet, index)));
                     });
