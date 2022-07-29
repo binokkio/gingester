@@ -4,9 +4,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Plumbing class to allow repeated @Example annotations.
+ * Plumbing class to allow repeated @Stashes annotations.
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Examples {
-    Example[] value();
+public @interface StashesRepeatable {
+    Stashes[] value();
 }

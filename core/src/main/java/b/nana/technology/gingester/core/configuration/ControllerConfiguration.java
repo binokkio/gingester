@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.annotations.Passthrough;
+import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.InputStasher;
@@ -188,6 +189,13 @@ public final class ControllerConfiguration<I, O> {
             if (!fetchKey.hasTarget() || fetchKey.getTarget().equals(id)) {
                 if (transformer instanceof InputStasher && ((InputStasher) transformer).getInputStashName().equals(fetchKey.getNames()[0])) {
                     return getActualInputType();
+                } else {
+                    Stashes[] stashes = transformer.getClass().getAnnotationsByType(Stashes.class);
+                    for (Stashes stash : stashes) {
+                        if (stash.stash().equals(fetchKey.getNames()[0])) {
+                            return stash.type();
+                        }
+                    }
                 }
             }
         }
