@@ -35,6 +35,11 @@ General usage:
     -l/--links <link1> [<link2> [...]]
         link the previous transformer to the given links, it will not automatically link to the next transformer
 
+    -p/--probe [<target>] [<includeContext>]
+        print the items flowing through this point in the flow
+        provide "err" for [<target>] to print to stderr instead of stdout
+        provide "false" for [<includeContext>] to prevent the context from being printed
+
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
 
@@ -99,10 +104,10 @@ Terminology:
 
         Every item in the flow has context. This context contains key-value pairs that were stashed upstream.
         The values can be fetched and continue as items in the flow, used in transformer argument templates, and
-        used by transformers internally. Take for example `-t StringDef hello -t Repeat 3 -t Out`. StringDef
+        used by transformers internally. Take for example `-t StringDef hello -t Repeat 3 --probe`. StringDef
         will yield "hello" and Repeat will repeat it 3 times, each time stashing the zero-based repetition
-        number as "description". The Out transformer by default writes the item context followed by the item
-        value to stdout. The first output of the above flow is:
+        number as "description". The probe by default writes the item context followed by the item value to
+        stdout. The first output of the above flow is:
 
         ---- 0 ----
         {
@@ -115,8 +120,7 @@ Terminology:
         -----------
 
         The Fetch transformer can be used to fetch a stashed value and use it as an item value in the flow.
-        E.g. `-t Repeat 3 -f description -t Out false` would write 0, 1, and 2 to stdout (the `false` argument
-        configures Out to only write the item value).
+        E.g. `-t Repeat 3 -f description -t StdOut` would write 0, 1, and 2 to stdout.
 
         Most string arguments can be templated using the Apache Freemarker templating language.  E.g.
         `-t Repeat 3 -t StringDef 'Hello, ${description}!' -t Speak`.

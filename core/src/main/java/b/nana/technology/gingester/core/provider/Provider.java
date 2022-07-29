@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public interface Provider {
+
     Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses();
 
     default Map<String, String> getCaseHints() {

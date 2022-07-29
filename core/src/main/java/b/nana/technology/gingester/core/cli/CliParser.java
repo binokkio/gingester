@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -46,9 +47,9 @@ public final class CliParser {
     }
 
     public static void parse(Target target, URL template, Object parameters) {
-        try {
+        try (InputStream templateStream = template.openStream()) {
             String templateName = template.toString();
-            String templateSource = new String(template.openStream().readAllBytes(), StandardCharsets.UTF_8);
+            String templateSource = new String(templateStream.readAllBytes(), StandardCharsets.UTF_8);
             String cli = FreemarkerTemplateFactory.createCliTemplate(templateName, templateSource).render(parameters);
             parse(target, CliSplitter.split(cli));
         } catch (IOException e) {
@@ -137,9 +138,9 @@ public final class CliParser {
                     target.getLastTransformer().excepts(excepts);
                     break;
 
-                case "--":
-                    if (target.getLastTransformer().getLinks().filter(List.of("__maybe_next__")::equals).isPresent())
-                        target.getLastTransformer().links(Collections.emptyList());
+                case "-p":
+                case "--probe":
+                    args = splice(args, new String[] { "-t", "Probe" }, i + 1, 0);
                     break;
 
                 case "-sf":
@@ -240,6 +241,11 @@ public final class CliParser {
                 case "-ss":
                 case "--stash-string":
                     args = splice(args, new String[] { "-t", "StashString" }, i + 1, 0);
+                    break;
+
+                case "--":
+                    if (target.getLastTransformer().getLinks().filter(List.of("__maybe_next__")::equals).isPresent())
+                        target.getLastTransformer().links(Collections.emptyList());
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);

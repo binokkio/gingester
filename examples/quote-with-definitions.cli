@@ -1,0 +1,32 @@
+-r 0  + 'Turn off throughput reporting'
+
++ 'Get a random programming quote, interpret the response JSON, and stash it as `quote`'
+-sft HttpGet 'https://programming-quotes-api.herokuapp.com/quotes/random'
+-t InputStreamToJson
+-s quote
+
++ 'Define a string using the quote's author and English text, write it to stdout, and read it out loud'
+-t StringDef '${quote.author}: ${quote.en}'
+-t StdOut
+-t Speak
+
++ 'Find distinct words of 7 or more characters in the quote's English text'
+-t StringDef '${quote.en}'
+-t RegexFind '\\w{7,}'
+-t Lowercase  + 'Lowercase the words to prevent case differences from making otherwise equal words distinct'
+-stt Distinct  + 'Distinct is in-sync with the random quote HttpGet, so it tracks distinction per quote'
+-s word
+
++ 'Get the dictionary definition for `word` iterate through the different meanings'
+-t HttpGet 'https://api.dictionaryapi.dev/api/v2/entries/en/${word}'
+-t JsonPath '$..meanings[*]' 'optional'
+-s meaning
+
++ 'Get the first definition'
+-t JsonPath '$.definitions[0]'
+-s definition
+
++ 'Define a string, write it to stdout, and read it out loud'
+-t StringDef '${word}, ${meaning.partOfSpeech}: ${definition.definition}'
+-t StdOut
+-t Speak

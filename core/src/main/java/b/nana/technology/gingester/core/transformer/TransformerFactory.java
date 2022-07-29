@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.jodah.typetools.TypeResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -25,6 +27,8 @@ import java.util.stream.Stream;
 // TODO instance instead of static and allow providers to be supplied, maybe through Gingester constructor to prevent lazy loading implementation
 
 public final class TransformerFactory {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransformerFactory.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
@@ -84,6 +88,10 @@ public final class TransformerFactory {
     }
 
     public static <I, O> Transformer<I, O> instance(Class<? extends Transformer<I, O>> transformerClass, JsonNode jsonParameters) {
+
+        if (transformerClass.getAnnotation(Deprecated.class) != null) {
+            LOGGER.warn("Instancing deprecated transformer " + getUniqueName(transformerClass));
+        }
 
         if (jsonParameters == null) {
             try {

@@ -86,26 +86,15 @@ public final class Context implements Iterable<Context> {
     /**
      * Check if this context is flawless.
      *
-     * A context is considered flawless if it and its parent contexts up to the nearest exception handler are
-     * not marked flawed.
-     *
      * When a transformer throws an exception in a `prepare`, `transform`, or `finish` call the context of that
-     * call is marked flawed. The exception then traverses the context chain up to the first context from a
+     * call is marked as flawed. The exception then traverses the context chain up to the first context from a
      * transformer that has an exception handler, inclusive, marking all those contexts as flawed. The exception
      * is then passed to the exception handler(s) starting a new flawless context.
      *
-     * This method checks if this context or any of the contexts in its chain up to the first context from a
-     * transformer that has an exception handler has been marked flawed.
+     * @return true if this context was not marked flawed, false if it was
      */
     public boolean isFlawless() {
-        for (Context context : this) {
-            if (context.isFlawed) {
-                return false;
-            } else if (!context.controller.excepts.isEmpty()) {
-                break;
-            }
-        }
-        return true;
+        return !isFlawed;
     }
 
     void markFlawed() {
