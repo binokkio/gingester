@@ -111,7 +111,6 @@ public final class Keycloak implements Transformer<Object, Object> {
             Instant now = Instant.now();
 
             if (session.needsRefresh(now)) {
-
                 session.handleTokenResponse(requestToken(String.format(
                         "%s&grant_type=refresh_token&refresh_token=%s",
                         tokenRequestStart,
