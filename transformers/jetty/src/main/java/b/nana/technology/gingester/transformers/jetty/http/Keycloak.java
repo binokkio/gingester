@@ -46,8 +46,8 @@ public final class Keycloak implements Transformer<Object, Object> {
     private final String authUrl;
     private final String tokenUrl;
     private final String redirectUrl;
-    private final String clientId;
     private final String cookieName;
+    private final String tokenRequestStart;
 
     public Keycloak(Parameters parameters) {
 
@@ -60,11 +60,21 @@ public final class Keycloak implements Transformer<Object, Object> {
         String baseUrl = stripTrailingSlash(parameters.authUrl) + "/realms/" + parameters.realm + "/protocol/openid-connect";
         authUrl = baseUrl + "/auth?client_id=" + parameters.clientId + "&response_type=code";
         tokenUrl = baseUrl + "/token";
-        clientId = parameters.clientId;
         redirectUrl = stripTrailingSlash(parameters.redirectUrl);
         cookieName = parameters.cookieName;
 
         fetchHttpRequestCookiesCookieName = new FetchKey("http.request.cookies." + cookieName);
+
+        StringBuilder tokenRequestStartBuilder = new StringBuilder()
+                .append("client_id=")
+                .append(parameters.clientId);
+
+        if (parameters.clientSecret != null)
+            tokenRequestStartBuilder
+                    .append("&client_secret=")
+                    .append(parameters.clientSecret);
+
+        tokenRequestStart = tokenRequestStartBuilder.toString();
     }
 
     @Override
@@ -86,8 +96,8 @@ public final class Keycloak implements Transformer<Object, Object> {
         if (optionalCode.isPresent()) {
 
             session.handleTokenResponse(requestToken(String.format(
-                    "client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s",
-                    clientId,
+                    "%s&grant_type=authorization_code&code=%s&redirect_uri=%s",
+                    tokenRequestStart,
                     optionalCode.get(),
                     getRedirectUrl(context)
             )));
@@ -101,10 +111,9 @@ public final class Keycloak implements Transformer<Object, Object> {
             Instant now = Instant.now();
 
             if (session.needsRefresh(now)) {
-
                 session.handleTokenResponse(requestToken(String.format(
-                        "client_id=%s&grant_type=refresh_token&refresh_token=%s",
-                        clientId,
+                        "%s&grant_type=refresh_token&refresh_token=%s",
+                        tokenRequestStart,
                         session.refreshToken
                 )));
             }
@@ -145,6 +154,7 @@ public final class Keycloak implements Transformer<Object, Object> {
         public String redirectUrl;
         public String realm;
         public String clientId;
+        public String clientSecret;
         public String cookieName = "gingester-keycloak";
     }
 
