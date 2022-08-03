@@ -32,6 +32,7 @@ import java.util.Deque;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.InflaterInputStream;
 
 @Names(1)
 @Description("Recursively unpack an archive")
@@ -71,6 +72,10 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
             Deque<String> copy = new ArrayDeque<>(descriptions);
             copy.add(trim(descriptions.getLast(), 3));
             unpack(context, new XZCompressorInputStream(in), out, copy);
+        } else if (tailLowerCase.endsWith(".zz")) {
+            Deque<String> copy = new ArrayDeque<>(descriptions);
+            copy.add(trim(descriptions.getLast(), 3));
+            unpack(context, new InflaterInputStream(in), out, copy);
         } else if (tailLowerCase.endsWith(".7z")) {
             byte[] bytes = in.readAllBytes();  // not ideal, should add an alternative Unpack7Z transformer
             SevenZFile sevenZFile = new SevenZFile(new SeekableInMemoryByteChannel(bytes));
