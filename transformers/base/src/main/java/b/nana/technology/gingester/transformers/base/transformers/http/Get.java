@@ -42,16 +42,24 @@ public final class Get implements Transformer<Object, InputStream> {
 
     @Override
     public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
-        HttpClient client = HttpClient.newBuilder().followRedirects(followRedirects).build();
-        URI uri = URI.create(uriTemplate.render(context));
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri);
+
+        String uri = uriTemplate.render(context);
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(uri));
         headers.forEach((name, template) -> requestBuilder.header(name, template.render(context)));
-        HttpResponse<InputStream> response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+
+        // TODO look into HttpClient thread safety
+        HttpClient httpClient = HttpClient.newBuilder().followRedirects(followRedirects).build();
+        HttpResponse<InputStream> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+
         Context.Builder contextBuilder = context.stash(Map.of(
-                "description", uri.toString(),
+                "description", uri,
+                "status", response.statusCode(),
                 "headers", response.headers().map()
         ));
-        out.accept(contextBuilder, response.body());
+
+        try (InputStream body = response.body()) {
+            out.accept(contextBuilder, body);
+        }
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
