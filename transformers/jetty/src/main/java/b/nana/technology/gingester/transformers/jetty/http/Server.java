@@ -129,7 +129,7 @@ public final class Server implements Transformer<Object, InputStream> {
                         "http", httpStash
                 ));
 
-                out.accept(contextBuilder, request.getInputStream());
+                out.accept(contextBuilder, jettyRequest.getInputStream());
                 responseWrapper.awaitResponse();
             }
         });

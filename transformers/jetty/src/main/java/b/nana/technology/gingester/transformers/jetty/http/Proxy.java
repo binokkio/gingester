@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.jetty.http;
 
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -15,30 +16,36 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
-public final class Proxy implements Transformer<InputStream, Void> {
+public final class Proxy implements Transformer<InputStream, InputStream> {
 
     private static final Set<String> RESTRICTED_HEADERS = Set.of("Connection", "Host");
     private static final FetchKey FETCH_HTTP = new FetchKey("http");
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
-
     private final String proxyRoot;
     private final Map<String, Template> extraHeaders;
+    private final boolean prepareProxyResponse;
 
     public Proxy(Parameters parameters) {
         proxyRoot = requireNonNull(parameters.proxyRoot);
         extraHeaders = parameters.extraHeaders.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Context.newTemplate(e.getValue())));
+        prepareProxyResponse = parameters.prepareProxyResponse;
     }
 
     @Override
-    public void transform(Context context, InputStream in, Receiver<Void> out) throws Exception {
+    public void setup(SetupControls controls) {
+        controls.requireOutgoingSync();
+    }
+
+    @Override
+    public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
 
         Map<?, ?> http = (Map<?, ?>) context.require(FETCH_HTTP);
         Map<?, ?> httpRequest = (Map<?, ?>) http.get("request");
@@ -72,16 +79,28 @@ public final class Proxy implements Transformer<InputStream, Void> {
         extraHeaders.forEach(
                 (name, value) -> proxyRequestBuilder.setHeader(name, value.render(context)));
 
-        // proxy the request and transfer proxy response to client
+        // proxy the request, TODO look into HttpClient thread safety
+        HttpClient httpClient = HttpClient.newHttpClient();
         HttpResponse<InputStream> proxyResponse = httpClient.send(proxyRequestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
-        Server.ResponseWrapper response = (Server.ResponseWrapper) http.get("response");
-        response.setStatus(proxyResponse.statusCode());
-        proxyResponse.headers().map().forEach((name, values) -> values.forEach(value -> response.addHeader(name, value)));
-        response.respond(servlet -> {
-            try (InputStream proxyResponseBody = proxyResponse.body()){
-                proxyResponseBody.transferTo(servlet.getOutputStream());
-            }
-        });
+        int proxyResponseStatus = proxyResponse.statusCode();
+        Map<String, List<String>> proxyResponseHeaders = proxyResponse.headers().map();
+
+        if (prepareProxyResponse) {
+            // transfer proxy response status and headers to upstream response
+            Server.ResponseWrapper response = (Server.ResponseWrapper) http.get("response");
+            response.setStatus(proxyResponseStatus);
+            proxyResponseHeaders.forEach((name, values) -> values.forEach(value -> response.addHeader(name, value)));
+        }
+
+        Context.Builder contextBuilder = context.stash(Map.of(
+                "description", proxyRequestUri,
+                "status", proxyResponseStatus,
+                "headers", proxyResponseHeaders
+        ));
+
+        try (InputStream proxyResponseBody = proxyResponse.body()) {
+            out.accept(contextBuilder, proxyResponseBody);
+        }
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
@@ -95,5 +114,6 @@ public final class Proxy implements Transformer<InputStream, Void> {
 
         public String proxyRoot;
         public Map<String, TemplateParameters> extraHeaders = Map.of();
+        public boolean prepareProxyResponse = true;
     }
 }
