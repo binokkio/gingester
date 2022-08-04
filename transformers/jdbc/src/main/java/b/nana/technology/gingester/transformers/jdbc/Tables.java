@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class Tables extends JdbcTransformer<Object, String> {
+public final class Tables extends JdbcTransformer<Object, String, Void> {
 
     private final Template catalog;
     private final Template schemaPattern;
@@ -19,7 +19,7 @@ public final class Tables extends JdbcTransformer<Object, String> {
     private final List<Template> types;
 
     public Tables(Parameters parameters) {
-        super(parameters);
+        super(parameters, true);
         catalog = parameters.catalog != null ? Context.newTemplate(parameters.catalog) : null;
         schemaPattern = parameters.schemaPattern != null ? Context.newTemplate(parameters.schemaPattern) : null;
         tableNamePattern = parameters.tableNamePattern != null ? Context.newTemplate(parameters.tableNamePattern) : null;
@@ -29,28 +29,35 @@ public final class Tables extends JdbcTransformer<Object, String> {
     @Override
     public void transform(Context context, Object in, Receiver<String> out) throws Exception {
 
-        try (ResultSet resultSet = getConnection().getMetaData().getTables(
-                        catalog != null ? catalog.render(context) : null,
-                        schemaPattern != null ? schemaPattern.render(context) : null,
-                        tableNamePattern != null ? tableNamePattern.render(context) : null,
-                        types != null ? types.stream().map(t -> t.render(context)).toArray(String[]::new) : null
-                )) {
+        ConnectionWith<Void> connection = acquireConnection(context);
+        try {
 
-            while (resultSet.next()) {
+            try (ResultSet resultSet = connection.getConnection().getMetaData().getTables(
+                    catalog != null ? catalog.render(context) : null,
+                    schemaPattern != null ? schemaPattern.render(context) : null,
+                    tableNamePattern != null ? tableNamePattern.render(context) : null,
+                    types != null ? types.stream().map(t -> t.render(context)).toArray(String[]::new) : null
+            )) {
 
-                String catalog = resultSet.getString("TABLE_CAT");
-                String schema = resultSet.getString("TABLE_SCHEM");
-                String table = resultSet.getString("TABLE_NAME");
-                String type = resultSet.getString("TABLE_TYPE");
+                while (resultSet.next()) {
 
-                Map<String, Object> stash = new HashMap<>();
-                if (catalog != null) stash.put("catalog", catalog);
-                if (schema != null) stash.put("schema", schema);
-                if (table != null) stash.put("table", table);
-                if (type != null) stash.put("type", type);
+                    String catalog = resultSet.getString("TABLE_CAT");
+                    String schema = resultSet.getString("TABLE_SCHEM");
+                    String table = resultSet.getString("TABLE_NAME");
+                    String type = resultSet.getString("TABLE_TYPE");
 
-                out.accept(context.stash(stash), table);
+                    Map<String, Object> stash = new HashMap<>();
+                    if (catalog != null) stash.put("catalog", catalog);
+                    if (schema != null) stash.put("schema", schema);
+                    if (table != null) stash.put("table", table);
+                    if (type != null) stash.put("type", type);
+
+                    out.accept(context.stash(stash), table);
+                }
             }
+
+        } finally {
+            releaseConnection(connection);
         }
     }
 

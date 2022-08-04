@@ -1,87 +1,84 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
-import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Phaser;
 
-public abstract class JdbcTransformer<I, O> implements Transformer<I, O> {
+public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
 
-    private final String url;
-    private final Properties properties;
-    private final List<String> ddl;
+    private final Template urlTemplate;
+    private final MixedConnectionsPool<T> mixedConnectionsPool;
 
-    private Connection connection;
-    private Phaser ddlExecuted;
+    public JdbcTransformer(Parameters parameters, boolean autoCommit) {
+        urlTemplate = Context.newTemplate(parameters.url);
+        mixedConnectionsPool = new MixedConnectionsPool<>(
+                parameters.connectionPoolSize,
+                parameters.statementPoolSize,
+                connectionWith -> {
 
-    public JdbcTransformer(Parameters parameters) {
-        url = parameters.url;
-        properties = new Properties();
-        properties.putAll(parameters.properties);
-        ddl = parameters.ddl;
-    }
+                    Connection connection = connectionWith.getConnection();
 
-    @Override
-    public void setup(SetupControls controls) {
-        ddlExecuted = controls.getPhaser("ddl_executed");
-        ddlExecuted.register();
-    }
+                    if (parameters.ddl.isEmpty()) {
+                        if (!autoCommit) {
+                            connection.setAutoCommit(false);
+                        }
+                    } else {
 
-    @Override
-    public void open() throws Exception {
-        connection = DriverManager.getConnection(url, properties);
+                        connection.setAutoCommit(false);
 
-        if (this instanceof Dml || !ddl.isEmpty()) {
-            connection.setAutoCommit(false);
-        }
+                        try {
+                            for (String statement : parameters.ddl) {
+                                try (Statement s = connection.createStatement()) {
+                                    s.execute(statement);
+                                }
+                            }
+                            connection.commit();
+                        } catch (SQLException e) {
+                            connection.rollback();
+                            throw e;
+                        }
 
-        if (!ddl.isEmpty()) {
-            try {
-                for (String statement : ddl) {
-                    try (Statement s = connection.createStatement()) {
-                        s.execute(statement);
+                        if (autoCommit) {
+                            connection.setAutoCommit(true);
+                        }
                     }
-                }
-                connection.commit();
-            } catch (SQLException e) {
-                connection.rollback();
-                throw e;
-            }
-        }
+                },
+                this::onConnectionMoribund);
+    }
 
-        ddlExecuted.arrive();
+    protected final ConnectionWith<T> acquireConnection(Context context) throws SQLException, InterruptedException {
+        return mixedConnectionsPool.acquire(urlTemplate.render(context));
+    }
+
+    protected final void releaseConnection(ConnectionWith<T> connection) {
+        mixedConnectionsPool.release(connection);
+    }
+
+    protected void onConnectionMoribund(ConnectionWith<T> connectionWith) throws SQLException {
+
     }
 
     @Override
     public void close() throws Exception {
-        connection.close();
-    }
-
-    protected Connection getConnection() {
-        return connection;
-    }
-
-    protected Phaser getDdlExecuted() {
-        return ddlExecuted;
+        mixedConnectionsPool.close();
     }
 
     public static class Parameters {
 
-        public String url = "jdbc:sqlite:file::memory:?cache=shared";
-        public Map<String, Object> properties = Collections.emptyMap();
+        public TemplateParameters url = new TemplateParameters("jdbc:sqlite:file::memory:?cache=shared", true);
         public List<String> ddl = Collections.emptyList();
+        public int connectionPoolSize = 10;
+        public int statementPoolSize = 100;
 
         @JsonDeserialize(using = Statement.Deserializer.class)
         public static class Statement {
