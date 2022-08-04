@@ -81,9 +81,11 @@ class JdbcTransformerTest {
         new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
         Gingester gingester = new Gingester().cli("" +
+                "-t StringDef '[=url]' " +
+                "-s jdbcUrl " +
                 "-t Repeat 3 " +
                 "-t JdbcTables {url:'[=url]'} " +
-                "-t JdbcDql {url:'[=url]',dql:{template:'/test.sql',is:'RESOURCE'}} " +
+                "-t JdbcDql {url:'${jdbcUrl}',dql:{template:'/test.sql',is:'RESOURCE'}} " +
                 "-t ObjectToJson",
                 Map.of("url", "jdbc:sqlite:" + tempFile));
 

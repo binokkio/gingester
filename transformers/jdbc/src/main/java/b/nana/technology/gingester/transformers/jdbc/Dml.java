@@ -1,86 +1,70 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.template.TemplateMapper;
+import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.transformers.jdbc.statement.DmlStatement;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public final class Dml extends JdbcTransformer<Object, Object> {
+public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
 
     private final List<JdbcTransformer.Parameters.Statement> dml;
+    private final List<Template> dmlTemplates;
     private final CommitMode commitMode;
 
-    private List<TemplateMapper<DmlStatement>> dmlStatements;
-
     public Dml(Parameters parameters) {
-        super(parameters);
+        super(parameters, false);
         dml = parameters.dml;
+        dmlTemplates = parameters.dml.stream().map(d -> d.statement).map(Context::newTemplate).collect(Collectors.toList());
         commitMode = parameters.commitMode;
     }
 
     @Override
-    public void setup(SetupControls controls) {
-        super.setup(controls);
-        if (commitMode != CommitMode.PER_FINISH) {
-            controls.syncs(Collections.emptyList());
-        }
-    }
+    public void transform(Context context, Object in, Receiver<Object> out) throws InterruptedException, SQLException {
 
-    @Override
-    public void open() throws Exception {
-        super.open();
-        getDdlExecuted().awaitAdvance(0);
-        dmlStatements = new ArrayList<>();
-        for (JdbcTransformer.Parameters.Statement statement : dml) {
-            dmlStatements.add(Context.newTemplateMapper(statement.statement, s -> new DmlStatement(getConnection(), s, statement.parameters)));
-        }
-    }
-
-    @Override
-    public void transform(Context context, Object in, Receiver<Object> out) throws SQLException {
-
+        ConnectionWith<DmlStatement> connection = acquireConnection(context);
         try {
-            for (TemplateMapper<DmlStatement> dmlStatementTemplate : dmlStatements) {
-                DmlStatement dmlStatement = dmlStatementTemplate.render(context);
-                try {
-                    dmlStatement.execute(context);
-                } finally {
-                    if (!dmlStatementTemplate.isInvariant()) {
-                        dmlStatement.close();
-                    }
+
+            for (int i = 0; i < dml.size(); i++) {
+
+                Template dmlTemplate = dmlTemplates.get(i);
+                DmlStatement dmlStatement;
+
+                String raw = dmlTemplate.render(context);
+                dmlStatement = connection.getObject(raw);
+                if (dmlStatement == null) {
+                    dmlStatement = new DmlStatement(connection.getConnection(), raw, dml.get(i).parameters);
+                    DmlStatement removed = connection.setObject(raw, dmlStatement);
+                    if (removed != null) removed.close();
                 }
-                if (commitMode == CommitMode.PER_STATEMENT) getConnection().commit();
+
+                dmlStatement.execute(context);
+
+                if (commitMode == CommitMode.PER_STATEMENT) connection.getConnection().commit();
             }
-            if (commitMode == CommitMode.PER_TRANSFORM) getConnection().commit();
+
+            if (commitMode == CommitMode.PER_TRANSFORM) connection.getConnection().commit();
+
         } catch (SQLException e) {
-            getConnection().rollback();
+            connection.getConnection().rollback();
             throw e;
+        } finally {
+            releaseConnection(connection);
         }
 
         out.accept(context, in);
     }
 
     @Override
-    public void finish(Context context, Receiver<Object> out) throws Exception {
-        getConnection().commit();
-    }
-
-    @Override
-    public void close() throws Exception {
-        super.close();
-        for (TemplateMapper<DmlStatement> dmlStatement : dmlStatements) {
-            if (dmlStatement.isInvariant()) {
-                dmlStatement.requireInvariant().close();
-            }
+    protected void onConnectionMoribund(ConnectionWith<DmlStatement> connection) throws SQLException {
+        if (commitMode == CommitMode.PER_CONNECTION) {
+            connection.getConnection().commit();
         }
     }
 
@@ -103,6 +87,6 @@ public final class Dml extends JdbcTransformer<Object, Object> {
     public enum CommitMode {
         PER_STATEMENT,
         PER_TRANSFORM,
-        PER_FINISH
+        PER_CONNECTION
     }
 }
