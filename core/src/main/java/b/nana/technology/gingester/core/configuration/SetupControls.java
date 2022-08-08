@@ -7,13 +7,9 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Phaser;
 
 public final class SetupControls extends BaseConfiguration<SetupControls> {
-
-    private final Map<String, Phaser> phasers;
 
     private boolean requireOutgoingSync;
     private boolean requireOutgoingAsync;
@@ -21,8 +17,7 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
 
 
-    public SetupControls(Transformer<?, ?> transformer, Map<String, Phaser> phasers) {
-        this.phasers = phasers;
+    public SetupControls(Transformer<?, ?> transformer) {
 
         // if prepare or finish are overridden then preconfigure this SetupControls to sync with __seed__
         try {
@@ -74,9 +69,5 @@ public final class SetupControls extends BaseConfiguration<SetupControls> {
 
     public Optional<Counter> getAcksCounter() {
         return Optional.ofNullable(acksCounter);
-    }
-
-    public Phaser getPhaser(String name) {
-        return phasers.computeIfAbsent(name, x -> new Phaser());
     }
 }

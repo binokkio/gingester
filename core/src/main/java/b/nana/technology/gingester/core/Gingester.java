@@ -39,7 +39,6 @@ public final class Gingester {
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
-    private final Map<String, Phaser> phasers = new HashMap<>();
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
@@ -411,7 +410,7 @@ public final class Gingester {
             Transformer<?, ?> transformer = transformerConfiguration.getTransformer()
                     .orElseThrow(() -> new IllegalStateException("TransformerConfiguration does not contain transformer"));
 
-            SetupControls setupControls = new SetupControls(transformer, phasers);
+            SetupControls setupControls = new SetupControls(transformer);
             transformer.setup(setupControls);
 
             ControllerConfiguration<?, ?> configuration = combine(new ControllerConfigurationInterface(), id, transformer, transformerConfiguration, setupControls);
@@ -504,7 +503,7 @@ public final class Gingester {
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
                     String id = add(new TransformerConfiguration().transformer(transformer));
 
-                    SetupControls setupControls = new SetupControls(transformer, phasers);
+                    SetupControls setupControls = new SetupControls(transformer);
                     transformer.setup(setupControls);
                     this.setupControls.put(id, setupControls);
 
