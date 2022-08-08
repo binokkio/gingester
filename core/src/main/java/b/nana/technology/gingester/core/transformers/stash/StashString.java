@@ -33,6 +33,7 @@ public final class StashString implements Transformer<Object, Object>  {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
+                rule(JsonNode::isTextual, template -> o("stash", "stash", "template", template));
                 rule(JsonNode::isArray, array -> o("stash", array.get(0), "template", array.get(1)));
             }
         }

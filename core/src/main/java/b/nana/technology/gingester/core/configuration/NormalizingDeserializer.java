@@ -88,7 +88,9 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
     }
 
     private static JsonNode v(Object o) {
-        if (o instanceof JsonNode) {
+        if (o == null) {
+            return JsonNodeFactory.instance.nullNode();
+        } else if (o instanceof JsonNode) {
             return (JsonNode) o;
         } else if (o instanceof Boolean) {
             return JsonNodeFactory.instance.booleanNode((Boolean) o);
