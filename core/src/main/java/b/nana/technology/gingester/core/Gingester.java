@@ -357,6 +357,14 @@ public final class Gingester {
         start();
     }
 
+    public void run(Map<String, ControllerConfiguration<?, ?>> configurations) {
+        setupElog();
+        setupSeed();
+        explore("__seed__", "__seed__", new ArrayDeque<>(), false);
+        initialize();
+        start();
+    }
+
     /**
      * Attempt to gracefully stop the running flow.
      * <p>
