@@ -13,7 +13,7 @@
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
-    <artifactId>redis</artifactId>
+    <artifactId>kafka</artifactId>
 
     <dependencies>
 
@@ -23,9 +23,9 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>3.6.0</version>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>3.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
