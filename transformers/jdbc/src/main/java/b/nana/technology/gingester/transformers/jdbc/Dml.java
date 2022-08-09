@@ -55,7 +55,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
             connection.getConnection().rollback();
             throw e;
         } finally {
-            releaseConnection(connection);
+            releaseConnection(context, connection);
         }
 
         out.accept(context, in);
