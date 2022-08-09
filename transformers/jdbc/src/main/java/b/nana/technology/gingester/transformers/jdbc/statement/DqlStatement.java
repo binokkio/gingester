@@ -2,51 +2,36 @@ package b.nana.technology.gingester.transformers.jdbc.statement;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.transformers.jdbc.JdbcTransformer;
+import b.nana.technology.gingester.transformers.jdbc.result.FlatResultStructure;
+import b.nana.technology.gingester.transformers.jdbc.result.ResultStructure;
+import b.nana.technology.gingester.transformers.jdbc.result.TabledResultStructure;
 
 import java.sql.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class DqlStatement extends Statement {
 
-    private final ResultSetMetaData resultSetMetaData;
-    private final Map<String, Map<Integer, String>> resultStructure;
+    private final ResultStructure resultStructure;
+    private final boolean[] booleans;
 
-    public DqlStatement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters) throws SQLException {
-        this(connection, statement, parameters, null);
-    }
-
-    public DqlStatement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters, Integer fetchSize) throws SQLException {
+    public DqlStatement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters, Integer fetchSize, boolean columnsOnly) throws SQLException {
         super(connection, statement, parameters);
 
         PreparedStatement preparedStatement = getPreparedStatement();
-        if (fetchSize != null) {
+        if (fetchSize != null)
             preparedStatement.setFetchSize(fetchSize);
-        }
 
-        resultSetMetaData = preparedStatement.getMetaData();
-        resultStructure = new HashMap<>();
+        ResultSetMetaData resultSetMetaData = preparedStatement.getMetaData();
 
+        resultStructure = columnsOnly ?
+                new FlatResultStructure(this) :
+                new TabledResultStructure(this);
+
+        booleans = new boolean[resultSetMetaData.getColumnCount() + 1];
         for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-
-            String tableName = resultSetMetaData.getTableName(i);
-            String columnName = resultSetMetaData.getColumnName(i);
-
-            if (columnName.indexOf('.') > 0) {
-                String[] parts = columnName.split("\\.", 2);
-                tableName = parts[0];
-                columnName = parts[1];
-            } else if (tableName.isEmpty()) {
-                tableName = "__calculated__";
-            }
-
-            String collision = resultStructure
-                    .computeIfAbsent(tableName, x -> new HashMap<>())
-                    .put(i, columnName);
-
-            if (collision != null) {
-                throw new IllegalArgumentException("Multiple columns map to " + tableName + "." + columnName);
+            if (resultSetMetaData.getColumnTypeName(i).equals("BOOLEAN")) {
+                booleans[i] = true;
             }
         }
     }
@@ -56,13 +41,13 @@ public final class DqlStatement extends Statement {
         return getPreparedStatement().executeQuery();
     }
 
-    public Map<String, Map<Integer, String>> getResultStructure() {
-        return resultStructure;
+    public Map<String, Object> readRow(ResultSet resultSet) {
+        return resultStructure.readRow(resultSet);
     }
 
     public Object getColumnValue(ResultSet resultSet, int i) {
         try {
-            return resultSetMetaData.getColumnTypeName(i).equals("BOOLEAN") ? resultSet.getBoolean(i) : resultSet.getObject(i);
+            return booleans[i] ? resultSet.getBoolean(i) : resultSet.getObject(i);
         } catch (SQLException e) {
             try {
                 return resultSet.getString(i);

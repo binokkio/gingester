@@ -9,24 +9,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.sql.ResultSet;
-import java.util.HashMap;
 import java.util.Map;
 
-public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?>>, DqlStatement> {
+public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlStatement> {
 
     private final JdbcTransformer.Parameters.Statement dql;
     private final Template dqlTemplate;
     private final Integer fetchSize;
+    private final boolean columnsOnly;
 
     public Dql(Parameters parameters) {
         super(parameters, true);
         dql = parameters.dql;
         dqlTemplate = Context.newTemplate(dql.statement);
         fetchSize = parameters.fetchSize;
+        columnsOnly = parameters.columnsOnly;
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Map<String, Map<String, ?>>> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<Map<String, Object>> out) throws Exception {
 
         ConnectionWith<DqlStatement> connection = acquireConnection(context);
         try {
@@ -36,14 +37,14 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
             if (dqlTemplate.isInvariant()) {
                 tempDqlStatement = connection.getSingleton();
                 if (tempDqlStatement == null) {
-                    tempDqlStatement = new DqlStatement(connection.getConnection(), dqlTemplate.requireInvariant(), dql.parameters, fetchSize);
+                    tempDqlStatement = new DqlStatement(connection.getConnection(), dqlTemplate.requireInvariant(), dql.parameters, fetchSize, columnsOnly);
                     connection.setSingleton(tempDqlStatement);
                 }
             } else {
                 String raw = dqlTemplate.render(context);
                 tempDqlStatement = connection.getObject(raw);
                 if (tempDqlStatement == null) {
-                    tempDqlStatement = new DqlStatement(connection.getConnection(), raw, dql.parameters, fetchSize);
+                    tempDqlStatement = new DqlStatement(connection.getConnection(), raw, dql.parameters, fetchSize, columnsOnly);
                     DqlStatement removed = connection.setObject(raw, tempDqlStatement);
                     if (removed != null) removed.close();
                 }
@@ -53,13 +54,10 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
 
             try (ResultSet resultSet = dqlStatement.execute(context)) {
                 for (long i = 0; resultSet.next(); i++) {
-                    Map<String, Map<String, ?>> result = new HashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
-                    dqlStatement.getResultStructure().forEach((tableName, columns) -> {
-                        Map<String, Object> table = new HashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
-                        result.put(tableName, table);
-                        columns.forEach((index, name) -> table.put(name, dqlStatement.getColumnValue(resultSet, index)));
-                    });
-                    out.accept(context.stash("description", dql.statement + " :: " + i), result);
+                    out.accept(
+                            context.stash("description", dql.statement + " :: " + i),
+                            dqlStatement.readRow(resultSet)
+                    );
                 }
             }
 
@@ -70,7 +68,6 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters extends JdbcTransformer.Parameters {
-
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
@@ -80,5 +77,6 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
 
         public Statement dql;
         public Integer fetchSize;
+        public boolean columnsOnly;
     }
 }

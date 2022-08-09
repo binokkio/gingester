@@ -35,6 +35,25 @@ class JdbcTransformerTest {
     }
 
     @Test
+    void testFlat() throws IOException {
+
+        Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
+        new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+
+        AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
+        Gingester reader = new Gingester().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test',columnsOnly:true}\"");
+        reader.attach(result::set);
+        reader.run();
+
+        Map<String, ?> container = result.get();
+        assertEquals(123, container.get("a"));
+        assertEquals("Hello, World!", container.get("b"));
+        assertEquals(true, container.get("c"));
+
+        Files.delete(tempFile);
+    }
+
+    @Test
     void testValueAndColumnNameInterpretation() {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
