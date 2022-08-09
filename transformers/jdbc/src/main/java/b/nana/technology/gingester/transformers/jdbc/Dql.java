@@ -64,7 +64,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Map<String, ?
             }
 
         } finally {
-            releaseConnection(connection);
+            releaseConnection(context, connection);
         }
     }
 

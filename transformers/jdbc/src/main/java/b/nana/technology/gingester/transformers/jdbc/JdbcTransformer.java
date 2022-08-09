@@ -2,6 +2,8 @@ package b.nana.technology.gingester.transformers.jdbc;
 
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.ContextMap;
+import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -16,19 +18,32 @@ import java.util.List;
 
 public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
 
+    private final ContextMap<MixedConnectionsPool<T>> state = new ContextMap<>();
+
     private final Template urlTemplate;
-    private final MixedConnectionsPool<T> mixedConnectionsPool;
+    private final List<String> ddl;
+    private final int connectionPoolSize;
+    private final int statementPoolSize;
+    private final boolean autoCommit;
 
     public JdbcTransformer(Parameters parameters, boolean autoCommit) {
-        urlTemplate = Context.newTemplate(parameters.url);
-        mixedConnectionsPool = new MixedConnectionsPool<>(
-                parameters.connectionPoolSize,
-                parameters.statementPoolSize,
+        this.urlTemplate = Context.newTemplate(parameters.url);
+        this.ddl = parameters.ddl;
+        this.connectionPoolSize = parameters.connectionPoolSize;
+        this.statementPoolSize = parameters.statementPoolSize;
+        this.autoCommit = autoCommit;
+    }
+
+    @Override
+    public void prepare(Context context, Receiver<O> out) {
+        state.put(context, new MixedConnectionsPool<>(
+                connectionPoolSize,
+                statementPoolSize,
                 connectionWith -> {
 
                     Connection connection = connectionWith.getConnection();
 
-                    if (parameters.ddl.isEmpty()) {
+                    if (ddl.isEmpty()) {
                         if (!autoCommit) {
                             connection.setAutoCommit(false);
                         }
@@ -37,7 +52,7 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
                         connection.setAutoCommit(false);
 
                         try {
-                            for (String statement : parameters.ddl) {
+                            for (String statement : ddl) {
                                 try (Statement s = connection.createStatement()) {
                                     s.execute(statement);
                                 }
@@ -53,15 +68,15 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
                         }
                     }
                 },
-                this::onConnectionMoribund);
+                this::onConnectionMoribund));
     }
 
     protected final ConnectionWith<T> acquireConnection(Context context) throws SQLException, InterruptedException {
-        return mixedConnectionsPool.acquire(urlTemplate.render(context));
+        return state.get(context).acquire(urlTemplate.render(context));
     }
 
-    protected final void releaseConnection(ConnectionWith<T> connection) {
-        mixedConnectionsPool.release(connection);
+    protected final void releaseConnection(Context context, ConnectionWith<T> connection) {
+        state.get(context).release(connection);
     }
 
     protected void onConnectionMoribund(ConnectionWith<T> connectionWith) throws SQLException {
@@ -69,8 +84,8 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
     }
 
     @Override
-    public void close() throws Exception {
-        mixedConnectionsPool.close();
+    public void finish(Context context, Receiver<O> out) throws Exception {
+        state.remove(context).close();
     }
 
     public static class Parameters {

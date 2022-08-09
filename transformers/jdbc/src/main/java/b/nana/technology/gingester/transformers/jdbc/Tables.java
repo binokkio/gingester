@@ -57,7 +57,7 @@ public final class Tables extends JdbcTransformer<Object, String, Void> {
             }
 
         } finally {
-            releaseConnection(connection);
+            releaseConnection(context, connection);
         }
     }
 
