@@ -1,8 +1,6 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.cli.CliParser;
-import b.nana.technology.gingester.core.cli.Target;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
@@ -12,28 +10,21 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
-import b.nana.technology.gingester.core.transformers.ELog;
-import b.nana.technology.gingester.core.transformers.passthrough.BiConsumerPassthrough;
-import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
-import b.nana.technology.gingester.core.transformers.passthrough.Passthrough;
 import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static b.nana.technology.gingester.core.configuration.TransformerConfigurationSetupControlsCombiner.combine;
 
-public final class Gingester {
+public final class GingesterNext {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GingesterNext.class);
 
     private final LinkedHashMap<String, TransformerConfiguration> transformerConfigurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
@@ -42,293 +33,9 @@ public final class Gingester {
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    private TransformerConfiguration last;
-    private List<String> syncFrom = List.of("__seed__");
-
     private int reportIntervalSeconds;
     private boolean debugMode;
     private boolean shutdownHook;
-
-    /**
-     * Construct Gingester.
-     */
-    public Gingester() {
-
-        TransformerConfiguration elog = new TransformerConfiguration();
-        elog.id("__elog__");
-        elog.transformer(new ELog());
-        elog.links(Collections.emptyList());
-        add(elog);
-
-        TransformerConfiguration seed = new TransformerConfiguration();
-        seed.id("__seed__");
-        seed.transformer(new Passthrough());
-        seed.links(Collections.emptyList());
-        seed.excepts(Collections.singletonList("__elog__"));
-        add(seed);
-    }
-
-    /**
-     * Add cli instructions.
-     *
-     * @param cli cli instructions template
-     * @return this gingester
-     */
-    public Gingester cli(String[] cli) {
-        CliParser.parse(Target.create(this), cli);
-        return this;
-    }
-
-    /**
-     * Add cli instructions.
-     * <p>
-     * The given cli string will be rendered using the Apache Freemarker template engine using the
-     * square-bracket-tag and square-bracket-interpolation syntax.
-     *
-     * @param cli cli instructions template
-     * @return this gingester
-     */
-    public Gingester cli(String cli) {
-        cli(cli, Collections.emptyMap());
-        return this;
-    }
-
-    /**
-     * Add cli instructions.
-     * <p>
-     * The given cli string will be rendered using the Apache Freemarker template engine using the
-     * square-bracket-tag and square-bracket-interpolation syntax.
-     *
-     * @param cli cli instructions template
-     * @param parameters the parameters for the template, e.g. a Java Map
-     * @return this gingester
-     */
-    public Gingester cli(String cli, Object parameters) {
-        CliParser.parse(Target.create(this), cli, parameters);
-        return this;
-    }
-
-    /**
-     * Add cli instructions.
-     * <p>
-     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using
-     * the square-bracket-tag and square-bracket-interpolation syntax.
-     *
-     * @param cli URL for the cli instructions
-     * @return this gingester
-     */
-    public Gingester cli(URL cli) {
-        cli(cli, Collections.emptyMap());
-        return this;
-    }
-
-    /**
-     * Add cli instructions.
-     * <p>
-     * The string obtained from the given URL will be rendered using the Apache Freemarker template engine using
-     * the square-bracket-tag and square-bracket-interpolation syntax.
-     *
-     * @param cli URL for the cli instructions
-     * @param parameters the parameters for the template, e.g. a Java Map
-     * @return this gingester
-     */
-    public Gingester cli(URL cli, Object parameters) {
-        CliParser.parse(Target.create(this), cli, parameters);
-        return this;
-    }
-
-    public <T> Gingester add(Transformer<T, ?> transformer) {
-        add(new TransformerConfiguration().transformer(transformer));
-        return this;
-    }
-
-    public <T> Gingester add(String id, Transformer<T, ?> transformer) {
-        add(new TransformerConfiguration().id(id).transformer(transformer));
-        return this;
-    }
-
-    public <T> Gingester add(Consumer<T> consumer) {
-        add(new TransformerConfiguration().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
-        return this;
-    }
-
-    public <T> Gingester add(String id, Consumer<T> consumer) {
-        add(new TransformerConfiguration().id(id).name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
-        return this;
-    }
-
-    public <T> Gingester add(BiConsumer<Context, T> biConsumer) {
-        add(new TransformerConfiguration().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
-        return this;
-    }
-
-    public <T> Gingester add(String id, BiConsumer<Context, T> biConsumer) {
-        add(new TransformerConfiguration().id(id).name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
-        return this;
-    }
-
-    /**
-     * Add transformer configuration.
-     *
-     * @param configuration transformer configuration to add
-     * @return this gingester
-     */
-    public String add(TransformerConfiguration configuration) {
-        return add(configuration, true);
-    }
-
-    private String add(TransformerConfiguration configuration, boolean updateLast) {
-        String id = getId(configuration);
-        configuration.id(id);
-        transformerConfigurations.put(id, configuration);
-        if (updateLast) last = configuration;
-        return id;
-    }
-
-    /**
-     * Get the "last" transformer configuration.
-     *
-     * The last transformer configuration is the last one that resulted from the most recent call to `add` or
-     * `cli`.
-     *
-     * @return the "last" transformer configuration
-     */
-    public TransformerConfiguration getLastTransformer() {
-        return last;
-    }
-
-    /**
-     * Attach consumer to the "last" transformer.
-     *
-     * @see #getLastTransformer()
-     * @param <T> the consumer type
-     * @param consumer the consumer
-     * @return this gingester
-     */
-    public <T> Gingester attach(Consumer<T> consumer) {
-        return attach(consumer, last.getId().orElseThrow());
-    }
-
-    /**
-     * Attach consumer to transformer.
-     *
-     * @param <T> the consumer type
-     * @param consumer the consumer
-     * @param targetId the id of the transformer whose output will be consumed
-     * @return this gingester
-     */
-    public <T> Gingester attach(Consumer<T> consumer, String targetId) {
-        Transformer<T, T> transformer = (context, in, out) -> consumer.accept(in);
-        return attach("Consumer", transformer, targetId);
-    }
-
-    /**
-     * Attach bi-consumer to the "last" transformer.
-     *
-     * @see #getLastTransformer()
-     * @param <T> the bi-consumer type
-     * @param biConsumer the bi-consumer
-     * @return this gingester
-     */
-    public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
-        attach(biConsumer, last.getId().orElseThrow());
-        return this;
-    }
-
-    /**
-     * Attach bi-consumer to transformer.
-     *
-     * @param <T> the bi-consumer type
-     * @param biConsumer the bi-consumer
-     * @param targetId the id of the transformer whose output will be consumed
-     * @return this gingester
-     */
-    public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String targetId) {
-        Transformer<T, T> transformer = (context, in, out) -> biConsumer.accept(context, in);
-        return attach("BiConsumer", transformer, targetId);
-    }
-
-    private <T> Gingester attach(String name, Transformer<T,T> transformer, String targetId) {
-
-        TransformerConfiguration attach = new TransformerConfiguration()
-                .name(name)
-                .transformer(transformer)
-                .isNeverMaybeNext(true)
-                .links(Collections.emptyList());
-
-        String id = add(attach, false);
-
-        TransformerConfiguration target = transformerConfigurations.get(targetId);
-        List<String> links = new ArrayList<>(target.getLinks().orElse(Collections.emptyList()));
-        links.add(id);
-        target.links(links);
-
-        return this;
-    }
-
-    /**
-     * Set report interval in seconds.
-     *
-     * When set Gingester will report flow details at the given interval.
-     * Set 0 to disable reporting.
-     *
-     * @param reportIntervalSeconds the interval at which to report, or 0 to disable reporting
-     * @return this gingester
-     */
-    public Gingester setReportIntervalSeconds(int reportIntervalSeconds) {
-        this.reportIntervalSeconds = reportIntervalSeconds;
-        return this;
-    }
-
-    /**
-     * Enable debug mode.
-     *
-     * When enabled Gingester will not optimize transformers out of the context stack and will therefore
-     * produce more detailed transform traces.
-     *
-     * @return this gingester
-     */
-    public Gingester enableDebugMode() {
-        debugMode = true;
-        return this;
-    }
-
-    /**
-     * Enable the shutdown hook.
-     *
-     * When enabled Gingester will register a virtual-machine shutdown hook. When the hook is triggered
-     * Gingester will attempt to stop the flow gracefully.
-     *
-     * @return this gingester
-     */
-    public Gingester enableShutdownHook() {
-        shutdownHook = true;
-        return this;
-    }
-
-    /**
-     * Get the most recently set sync-from ids.
-     *
-     * Available to conveniently allow this build state to persist across `cli` calls.
-     *
-     * @return the most recently set sync from marks
-     */
-    public List<String> getSyncFrom() {
-        return syncFrom;
-    }
-
-    /**
-     * Set new sync-from ids.
-     *
-     * Available to conveniently allow this build state to persist across `cli` calls.
-     *
-     * @param syncFrom sync-from ids
-     * @return this gingester
-     */
-    public Gingester setSyncFrom(List<String> syncFrom) {
-        this.syncFrom = syncFrom;
-        return this;
-    }
 
     /**
      * Run the configured transformations.
@@ -493,7 +200,7 @@ public final class Gingester {
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
-                    String id = add(new TransformerConfiguration().transformer(transformer));
+                    String id = UUID.randomUUID().toString();  // TODO
 
                     SetupControls setupControls = new SetupControls(transformer);
                     transformer.setup(setupControls);
