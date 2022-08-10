@@ -111,8 +111,8 @@ public final class GingesterNext {
                     .transformer((Transformer<I, O>) node.requireTransformer())
 //                    .report(node.getReport().orElse(false))
                     .links(node.getLinks())
-                    .syncs(new ArrayList<>(node.getSyncs().values()))
-                    .excepts(new ArrayList<>(node.getExcepts().values()));
+                    .syncs(node.getSyncs())
+                    .excepts(node.getExcepts());
 
 //            choose(setup::getMaxBatchSize, transformer::getMaxBatchSize).ifPresent(configuration::maxBatchSize);
 //            choose(setup::getMaxQueueSize, transformer::getMaxQueueSize).ifPresent(configuration::maxQueueSize);

@@ -1,21 +1,23 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.flowbuilder.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DiamondRouteTest {
 
     @Test
-    void test() {
+    void testFlowBuilder() {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester().cli("-cr hello-world-diamond.cli");
-        gingester.attach(results::add);
-        gingester.run();
+        FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
+        flowBuilder.add(results::add);
+        flowBuilder.build().run();
 
         assertEquals(2, results.size());
         assertEquals("Hello, World!", results.remove());
@@ -27,9 +29,9 @@ class DiamondRouteTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester().cli("-cr hello-world-diamond.cli");
-        gingester.attach(results::add, "Emphasize");
-        gingester.run();
+        FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
+        flowBuilder.setLinkFrom(List.of("Emphasize")).add(results::add);
+        flowBuilder.build().run();
 
         assertEquals(1, results.size());
         assertEquals("Hello, World!", results.remove());
@@ -41,10 +43,10 @@ class DiamondRouteTest {
         ArrayDeque<String> emphasizeResults = new ArrayDeque<>();
         ArrayDeque<String> questionResults = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester().cli("-cr hello-world-diamond.cli");
-        gingester.attach(emphasizeResults::add, "Emphasize");
-        gingester.attach(questionResults::add, "Question");
-        gingester.run();
+        FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
+        flowBuilder.setLinkFrom(List.of("Emphasize")).add(emphasizeResults::add);
+        flowBuilder.setLinkFrom(List.of("Question")).add(questionResults::add);
+        flowBuilder.build().run();
 
         assertEquals(1, emphasizeResults.size());
         assertEquals("Hello, World!", emphasizeResults.remove());

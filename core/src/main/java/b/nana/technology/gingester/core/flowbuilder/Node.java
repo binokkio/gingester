@@ -3,16 +3,13 @@ package b.nana.technology.gingester.core.flowbuilder;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public final class Node {
 
     private final Map<String, String> links = new LinkedHashMap<>();
-    private final Map<String, String> syncs = new LinkedHashMap<>();
-    private final Map<String, String> excepts = new LinkedHashMap<>();
+    private final List<String> syncs = new ArrayList<>();
+    private final List<String> excepts = new ArrayList<>();
 
     private String id;
     private String name;
@@ -38,8 +35,8 @@ public final class Node {
         this.setupControls = new SetupControls(transformer);
         transformer.setup(setupControls);
         setupControls.getLinks().ifPresent(list -> list.forEach(link -> links.put(link, link)));
-        setupControls.getSyncs().ifPresent(list -> list.forEach(sync -> syncs.put(sync, sync)));
-        setupControls.getExcepts().ifPresent(list -> list.forEach(except -> excepts.put(except, except)));
+        setupControls.getSyncs().ifPresent(syncs::addAll);
+        setupControls.getExcepts().ifPresent(excepts::addAll);
         return this;
     }
 
@@ -65,6 +62,12 @@ public final class Node {
 
 
 
+    public Node setLinks(List<String> links) {
+        this.links.clear();
+        addLinks(links);
+        return this;
+    }
+
     public Node addLink(String link) {
         links.put(link, link);
         return this;
@@ -75,8 +78,39 @@ public final class Node {
         return this;
     }
 
+
+
+    public Node setSyncs(List<String> syncs) {
+        this.syncs.clear();
+        addSyncs(syncs);
+        return this;
+    }
+
+    public Node addSync(String sync) {
+        syncs.add(sync);
+        return this;
+    }
+
+    public Node addSyncs(List<String> syncs) {
+        this.syncs.addAll(syncs);
+        return this;
+    }
+
+
+
+    public Node setExcepts(List<String> excepts) {
+        this.excepts.clear();
+        addExcepts(excepts);
+        return this;
+    }
+
     public Node addExcept(String except) {
-        excepts.put(except, except);
+        excepts.add(except);
+        return this;
+    }
+
+    public Node addExcepts(List<String> excepts) {
+        this.excepts.addAll(excepts);
         return this;
     }
 
@@ -110,11 +144,11 @@ public final class Node {
         return links;
     }
 
-    public Map<String, String> getSyncs() {
+    public List<String> getSyncs() {
         return syncs;
     }
 
-    public Map<String, String> getExcepts() {
+    public List<String> getExcepts() {
         return excepts;
     }
 }
