@@ -9,8 +9,11 @@ class GingesterNextTest {
 
     @Test
     void test() {
+
         FlowBuilder flowBuilder = new FlowBuilder();
         flowBuilder.add(new Node().transformer(new Probe(new Probe.Parameters())));
-        // TODO
+
+        GingesterNext gingesterNext = flowBuilder.build();
+        gingesterNext.run();
     }
 }

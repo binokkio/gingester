@@ -3,10 +3,11 @@ package b.nana.technology.gingester.core;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
-import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
+import b.nana.technology.gingester.core.flowbuilder.FlowBuilder;
+import b.nana.technology.gingester.core.flowbuilder.Node;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -20,22 +21,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static b.nana.technology.gingester.core.configuration.TransformerConfigurationSetupControlsCombiner.combine;
-
 public final class GingesterNext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GingesterNext.class);
 
-    private final LinkedHashMap<String, TransformerConfiguration> transformerConfigurations = new LinkedHashMap<>();
-    private final LinkedHashMap<String, SetupControls> setupControls = new LinkedHashMap<>();
+    private final FlowBuilder flowBuilder;
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    private int reportIntervalSeconds;
-    private boolean debugMode;
+    private int reportIntervalSeconds = 1;
+    private boolean debugMode = true;
     private boolean shutdownHook;
+
+    public GingesterNext(FlowBuilder flowBuilder) {
+        this.flowBuilder = flowBuilder;  // TODO defensive copy?
+    }
 
     /**
      * Run the configured transformations.
@@ -98,31 +100,30 @@ public final class GingesterNext {
         stop();
     }
 
-    private void configure() {
+    private <I, O> void configure() {
 
-        if (transformerConfigurations.keySet().stream().filter(id -> !id.startsWith("__")).findAny().isEmpty()) {
-            throw new IllegalStateException("No transformers configured");
-        }
+        flowBuilder.getNodes().forEach((id, node) -> {
 
-        transformerConfigurations.forEach((id, transformerConfiguration) -> {
+            ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>(new ControllerConfigurationInterface());
 
-            Transformer<?, ?> transformer = transformerConfiguration.getTransformer()
-                    .orElseThrow(() -> new IllegalStateException("TransformerConfiguration does not contain transformer"));
+            configuration
+                    .id(id)
+                    .transformer((Transformer<I, O>) node.requireTransformer())
+//                    .report(node.getReport().orElse(false))
+                    .links(node.getLinks())
+                    .syncs(new ArrayList<>(node.getSyncs().values()))
+                    .excepts(new ArrayList<>(node.getExcepts().values()));
 
-            SetupControls setupControls = new SetupControls(transformer);
-            transformer.setup(setupControls);
+//            choose(setup::getMaxBatchSize, transformer::getMaxBatchSize).ifPresent(configuration::maxBatchSize);
+//            choose(setup::getMaxQueueSize, transformer::getMaxQueueSize).ifPresent(configuration::maxQueueSize);
+//            choose(setup::getMaxWorkers, transformer::getMaxWorkers).ifPresent(configuration::maxWorkers);
 
-            ControllerConfiguration<?, ?> configuration = combine(new ControllerConfigurationInterface(), id, transformer, transformerConfiguration, setupControls);
-            resolveMaybeNext(id).ifPresentOrElse(
-                    configuration::replaceMaybeNextLink,
-                    configuration::removeMaybeNextLink
-            );
+//            setup.getAcksCounter().ifPresent(configuration::acksCounter);
 
-            this.setupControls.put(id, setupControls);
             this.configurations.put(id, configuration);
         });
 
-        if (transformerConfigurations.values().stream().noneMatch(c -> c.getReport().filter(r -> r).isPresent())) {
+        if (configurations.values().stream().noneMatch(ControllerConfiguration::getReport)) {
             configurations.values().stream()
                     .filter(c -> !c.getId().startsWith("__"))
                     .filter(c -> c.getLinks().isEmpty())
@@ -200,11 +201,11 @@ public final class GingesterNext {
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
-                    String id = UUID.randomUUID().toString();  // TODO
 
-                    SetupControls setupControls = new SetupControls(transformer);
-                    transformer.setup(setupControls);
-                    this.setupControls.put(id, setupControls);
+                    flowBuilder.add(new Node()
+                            .transformer(transformer));
+
+                    String id = flowBuilder.getLastId();
 
                     ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>(new ControllerConfigurationInterface())
                             .id(id)
@@ -220,7 +221,8 @@ public final class GingesterNext {
     }
 
     private void align() {
-        setupControls.forEach((id, setupControls) -> {
+        flowBuilder.getNodes().forEach((id, node) -> {
+            SetupControls setupControls = node.getSetupControls();
             if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
                 if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
                     throw new IllegalStateException("SetupControls for " + id + " require outgoing to be both sync and async");
@@ -288,41 +290,6 @@ public final class GingesterNext {
         if (reporter != null) reporter.stop();
 
         stopping.set(true);  // set stopping true, flow stopped naturally
-    }
-
-    private String getId(TransformerConfiguration configuration) {
-        if (configuration.getId().isPresent()) {
-            String id = configuration.getId().get();
-            if (transformerConfigurations.containsKey(id)) {
-                throw new IllegalArgumentException("Transformer id " + id + " already in use");
-            }
-            return id;
-        } else {
-            String name = configuration.getName()
-                    .orElseGet(() -> TransformerFactory.getUniqueName(configuration.getTransformer().orElseThrow()));
-            String id = name;
-            int i = 1;
-            while (transformerConfigurations.containsKey(id)) {
-                id = name + '_' + i++;
-            }
-            return id;
-        }
-    }
-
-    private Optional<String> resolveMaybeNext(String from) {
-        boolean next = false;
-        for (var entry : transformerConfigurations.entrySet()) {
-            String id = entry.getKey();
-            TransformerConfiguration configuration = entry.getValue();
-            if (next) {
-                if (!configuration.isNeverMaybeNext()) {
-                    return Optional.of(id);
-                }
-            } else if (id.equals(from)) {
-                next = true;
-            }
-        }
-        return Optional.empty();
     }
 
     public class ControllerConfigurationInterface implements b.nana.technology.gingester.core.ControllerConfigurationInterface {

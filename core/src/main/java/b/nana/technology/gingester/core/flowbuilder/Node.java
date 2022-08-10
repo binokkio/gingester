@@ -4,7 +4,9 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public final class Node {
 
@@ -59,5 +61,60 @@ public final class Node {
     public Node report(boolean report) {
         this.report = report;
         return this;
+    }
+
+
+
+    public Node addLink(String link) {
+        links.put(link, link);
+        return this;
+    }
+
+    public Node addLinks(List<String> links) {
+        links.forEach(link -> this.links.put(link, link));
+        return this;
+    }
+
+    public Node addExcept(String except) {
+        excepts.put(except, except);
+        return this;
+    }
+
+
+
+    public Optional<String> getId() {
+        return Optional.ofNullable(id);
+    }
+
+    public String requireId() {
+        return getId().orElseThrow();
+    }
+
+    public Optional<String> getName() {
+        return Optional.ofNullable(name);
+    }
+
+    public Optional<Transformer<?, ?>> getTransformer() {
+        return Optional.ofNullable(transformer);
+    }
+
+    public Transformer<?, ?> requireTransformer() {
+        return getTransformer().orElseThrow();
+    }
+
+    public SetupControls getSetupControls() {
+        return setupControls;
+    }
+
+    public Map<String, String> getLinks() {
+        return links;
+    }
+
+    public Map<String, String> getSyncs() {
+        return syncs;
+    }
+
+    public Map<String, String> getExcepts() {
+        return excepts;
     }
 }
