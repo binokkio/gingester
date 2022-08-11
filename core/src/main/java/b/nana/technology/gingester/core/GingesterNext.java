@@ -42,8 +42,6 @@ public final class GingesterNext {
      * <p>
      * This will run through the following steps:
      * <ul>
-     * <li>call {@link Transformer#setup(SetupControls)} on all transformers
-     * <li>consolidate the transformer setup controls with the transformer configurations
      * <li>link the seed transformer to all transformers with no incoming links
      * <li>start the workers for each transformer
      * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open

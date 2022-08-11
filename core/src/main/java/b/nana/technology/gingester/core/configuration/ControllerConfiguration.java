@@ -95,14 +95,6 @@ public final class ControllerConfiguration<I, O> {
         links.replace(linkName, target);
     }
 
-    public void replaceMaybeNextLink(String next) {
-        links.replaceAll((name, target) -> target.equals("__maybe_next__") ? next : target);
-    }
-
-    public void removeMaybeNextLink() {
-        links.remove("__maybe_next__", "__maybe_next__");
-    }
-
 
 
     public String getId() {
