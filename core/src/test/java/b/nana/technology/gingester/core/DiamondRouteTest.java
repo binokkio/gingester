@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DiamondRouteTest {
 
     @Test
-    void testFlowBuilder() {
+    void test() {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
