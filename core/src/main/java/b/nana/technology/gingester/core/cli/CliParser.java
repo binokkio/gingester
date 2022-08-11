@@ -1,8 +1,7 @@
-package b.nana.technology.gingester.core.flowbuilder;
+package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.Node;
-import b.nana.technology.gingester.core.cli.Main;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;

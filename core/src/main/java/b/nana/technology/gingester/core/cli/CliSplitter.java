@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.flowbuilder;
+package b.nana.technology.gingester.core.cli;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.ControllerInterface;
+import b.nana.technology.gingester.core.GingesterNext;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public final class Controller<I, O> {
 
     private final ControllerConfiguration<I, O> configuration;
-    final ControllerInterface gingester;
+    final GingesterNext.ControllerInterface gingester;
     public final String id;
     public final Transformer<I, O> transformer;
     final Phaser phaser;
@@ -50,7 +50,7 @@ public final class Controller<I, O> {
     public final Counter dealt;
     public final Counter acks;
 
-    public Controller(ControllerConfiguration<I, O> configuration, ControllerInterface gingester) {
+    public Controller(ControllerConfiguration<I, O> configuration, GingesterNext.ControllerInterface gingester) {
 
         this.configuration = configuration;
         this.gingester = gingester;

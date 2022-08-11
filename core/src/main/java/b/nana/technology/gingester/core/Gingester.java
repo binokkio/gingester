@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.flowbuilder.CliParser;
+import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.ELog;
@@ -67,35 +67,41 @@ public final class Gingester {
     }
 
     public <T> Gingester add(Consumer<T> consumer) {
-        add(new Node().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
-        return this;
+        return add(new Node().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
     }
 
     public <T> Gingester add(BiConsumer<Context, T> biConsumer) {
-        add(new Node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
-        return this;
+        return add(new Node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
     }
 
+    public <T> Gingester addTo(Consumer<T> consumer, String linkFrom) {
+        linkFrom(linkFrom);
+        return add(consumer);
+    }
+
+    public <T> Gingester addTo(BiConsumer<Context, T> biConsumer, String linkFrom) {
+        linkFrom(linkFrom);
+        return add(biConsumer);
+    }
+
+    @Deprecated
     public <T> Gingester attach(Consumer<T> consumer) {
-        add(new Node().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
-        return this;
+        return add(consumer);
     }
 
+    @Deprecated
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
-        add(new Node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
-        return this;
+        return add(biConsumer);
     }
 
+    @Deprecated
     public <T> Gingester attach(Consumer<T> consumer, String linkFrom) {
-        linkFrom(linkFrom);
-        add(consumer);
-        return this;
+        return addTo(consumer, linkFrom);
     }
 
+    @Deprecated
     public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String linkFrom) {
-        linkFrom(linkFrom);
-        add(biConsumer);
-        return this;
+        return addTo(biConsumer, linkFrom);
     }
 
     public Gingester linkTo(String link) {

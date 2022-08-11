@@ -290,14 +290,13 @@ public final class GingesterNext {
         stopping.set(true);  // set stopping true, flow stopped naturally
     }
 
-    public class ControllerConfigurationInterface implements b.nana.technology.gingester.core.ControllerConfigurationInterface {
-        @Override
+    public class ControllerConfigurationInterface {
         public LinkedHashMap<String, ControllerConfiguration<?, ?>> getControllers() {
             return configurations;
         }
     }
 
-    public class ControllerInterface implements b.nana.technology.gingester.core.ControllerInterface {
+    public class ControllerInterface {
 
         private final String controllerId;
 
@@ -305,34 +304,28 @@ public final class GingesterNext {
             this.controllerId = controllerId;
         }
 
-        @Override
         public Phaser getPhaser() {
             return phaser;
         }
 
-        @Override
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
         }
 
-        @Override
         public Optional<Controller<?, ?>> getController(String id) {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
             return Optional.of(controller);
         }
 
-        @Override
         public boolean isDebugModeEnabled() {
             return debugMode;
         }
 
-        @Override
         public boolean isExceptionHandler() {
             return configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
         }
 
-        @Override
         public boolean isStopping() {
             return stopping.get();
         }
