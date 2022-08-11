@@ -74,36 +74,52 @@ public final class FlowBuilder {
         return this;
     }
 
-    public FlowBuilder setLinks(List<String> links) {
+    public FlowBuilder linkTo(String link) {
+        return linkTo(List.of(link));
+    }
+
+    public FlowBuilder linkTo(List<String> links) {
         last.setLinks(links);
         linkFrom = List.of();
         return this;
     }
 
-    public FlowBuilder setExcepts(List<String> excepts) {
+    public FlowBuilder sync() {
+        last.setSyncs(syncFrom);
+        return this;
+    }
+
+    public FlowBuilder exceptTo(String except) {
+        return exceptTo(List.of(except));
+    }
+
+    public FlowBuilder exceptTo(List<String> excepts) {
         last.setExcepts(excepts);
         return this;
     }
 
-    public FlowBuilder setLinkFrom(List<String> linkFrom) {
+    public FlowBuilder linkFrom(String linkFrom) {
+        return linkFrom(List.of(linkFrom));
+    }
+
+    public FlowBuilder linkFrom(List<String> linkFrom) {
         this.linkFrom = linkFrom;
         return this;
     }
 
-    public FlowBuilder setSyncFrom(List<String> syncFrom) {
-        this.syncFrom = syncFrom;
-        return this;
+    public FlowBuilder syncFrom(String syncFrom) {
+        return syncFrom(List.of(syncFrom));
     }
 
-    public void syncTo() {
-        last.setSyncs(syncFrom);
+    public FlowBuilder syncFrom(List<String> syncFrom) {
+        this.syncFrom = syncFrom;
+        return this;
     }
 
     /**
      * Add cli instructions.
      *
      * @param cli cli instructions template
-     * @return this gingester
      */
     public FlowBuilder cli(String[] cli) {
         CliParser.parse(this, cli);
@@ -117,7 +133,6 @@ public final class FlowBuilder {
      * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
-     * @return this gingester
      */
     public FlowBuilder cli(String cli) {
         cli(cli, Collections.emptyMap());
@@ -132,7 +147,6 @@ public final class FlowBuilder {
      *
      * @param cli cli instructions template
      * @param parameters the parameters for the template, e.g. a Java Map
-     * @return this gingester
      */
     public FlowBuilder cli(String cli, Object parameters) {
         CliParser.parse(this, cli, parameters);
@@ -146,7 +160,6 @@ public final class FlowBuilder {
      * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
-     * @return this gingester
      */
     public FlowBuilder cli(URL cli) {
         cli(cli, Collections.emptyMap());
@@ -161,7 +174,6 @@ public final class FlowBuilder {
      *
      * @param cli URL for the cli instructions
      * @param parameters the parameters for the template, e.g. a Java Map
-     * @return this gingester
      */
     public FlowBuilder cli(URL cli, Object parameters) {
         CliParser.parse(this, cli, parameters);
@@ -175,7 +187,6 @@ public final class FlowBuilder {
      * Set 0 to disable reporting.
      *
      * @param reportIntervalSeconds the interval at which to report, or 0 to disable reporting
-     * @return this gingester
      */
     public FlowBuilder setReportIntervalSeconds(int reportIntervalSeconds) {
         this.reportIntervalSeconds = reportIntervalSeconds;
@@ -187,8 +198,6 @@ public final class FlowBuilder {
      *
      * When enabled Gingester will not optimize transformers out of the context stack and will therefore
      * produce more detailed transform traces.
-     *
-     * @return this gingester
      */
     public FlowBuilder enableDebugMode() {
         debugMode = true;
@@ -200,8 +209,6 @@ public final class FlowBuilder {
      *
      * When enabled Gingester will register a virtual-machine shutdown hook. When the hook is triggered
      * Gingester will attempt to stop the flow gracefully.
-     *
-     * @return this gingester
      */
     public FlowBuilder enableShutdownHook() {
         shutdownHook = true;

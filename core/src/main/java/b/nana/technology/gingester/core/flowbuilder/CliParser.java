@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.flowbuilder;
 
 import b.nana.technology.gingester.core.cli.Main;
-import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -122,10 +121,9 @@ public final class CliParser {
                 case "-l":
                 case "--links":
                     List<String> links = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         links.add(args[++i]);
-                    }
-                    target.setLinks(links);
+                    target.linkTo(links);
                     break;
 
                 case "-e":
@@ -135,7 +133,7 @@ public final class CliParser {
                         excepts.add(args[++i]);
                     }
                     if (excepts.isEmpty()) excepts.add("__elog__");
-                    target.setExcepts(excepts);
+                    target.exceptTo(excepts);
                     break;
 
                 case "-p":
@@ -146,10 +144,9 @@ public final class CliParser {
                 case "-sf":
                 case "--sync-from":
                     List<String> syncFrom = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         syncFrom.add(args[++i]);
-                    }
-                    target.setSyncFrom(syncFrom);
+                    target.syncFrom(syncFrom);
                     break;
 
                 case "-sft":
@@ -233,8 +230,8 @@ public final class CliParser {
                     }
 
                     target.add(transformer);
-                    if (syncTo) target.syncTo();
-                    if (markSyncFrom) target.setSyncFrom(List.of(target.getLastId()));
+                    if (syncTo) target.sync();
+                    if (markSyncFrom) target.syncFrom(target.getLastId());
 
                     break;
 
@@ -244,7 +241,7 @@ public final class CliParser {
                     break;
 
                 case "--":
-                    target.setLinkFrom(List.of());
+                    target.linkFrom(List.of());
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);

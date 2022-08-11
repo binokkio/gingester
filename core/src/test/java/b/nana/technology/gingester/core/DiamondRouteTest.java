@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.flowbuilder.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,7 +29,7 @@ class DiamondRouteTest {
         ArrayDeque<String> results = new ArrayDeque<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.setLinkFrom(List.of("Emphasize")).add(results::add);
+        flowBuilder.linkFrom("Emphasize").add(results::add);
         flowBuilder.build().run();
 
         assertEquals(1, results.size());
@@ -44,8 +43,8 @@ class DiamondRouteTest {
         ArrayDeque<String> questionResults = new ArrayDeque<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.setLinkFrom(List.of("Emphasize")).add(emphasizeResults::add);
-        flowBuilder.setLinkFrom(List.of("Question")).add(questionResults::add);
+        flowBuilder.linkFrom("Emphasize").add(emphasizeResults::add);
+        flowBuilder.linkFrom("Question").add(questionResults::add);
         flowBuilder.build().run();
 
         assertEquals(1, emphasizeResults.size());
