@@ -105,18 +105,17 @@ public final class GingesterNext {
             configuration
                     .id(id)
                     .transformer((Transformer<I, O>) node.requireTransformer())
-//                    .report(node.getReport().orElse(false))
                     .links(node.getLinks())
                     .syncs(node.getSyncs())
                     .excepts(node.getExcepts());
 
-//            choose(setup::getMaxBatchSize, transformer::getMaxBatchSize).ifPresent(configuration::maxBatchSize);
-//            choose(setup::getMaxQueueSize, transformer::getMaxQueueSize).ifPresent(configuration::maxQueueSize);
-//            choose(setup::getMaxWorkers, transformer::getMaxWorkers).ifPresent(configuration::maxWorkers);
+            node.getMaxWorkers().ifPresent(configuration::maxWorkers);
+            node.getMaxQueueSize().ifPresent(configuration::maxQueueSize);
+            node.getMaxBatchSize().ifPresent(configuration::maxBatchSize);
+            node.getReport().ifPresent(configuration::report);
+            node.getSetupControls().getAcksCounter().ifPresent(configuration::acksCounter);
 
-//            setup.getAcksCounter().ifPresent(configuration::acksCounter);
-
-            this.configurations.put(id, configuration);
+            configurations.put(id, configuration);
         });
 
         if (configurations.values().stream().noneMatch(ControllerConfiguration::getReport)) {

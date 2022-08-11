@@ -32,11 +32,8 @@ public final class Node {
 
     public Node transformer(Transformer<?, ?> transformer) {
         this.transformer = transformer;
-        this.setupControls = new SetupControls(transformer);
+        this.setupControls = new SetupControls(transformer, this);
         transformer.setup(setupControls);
-        setupControls.getLinks().ifPresent(list -> list.forEach(link -> links.put(link, link)));
-        setupControls.getSyncs().ifPresent(syncs::addAll);
-        setupControls.getExcepts().ifPresent(excepts::addAll);
         return this;
     }
 
@@ -164,5 +161,21 @@ public final class Node {
 
     public List<String> getExcepts() {
         return excepts;
+    }
+
+    public Optional<Integer> getMaxWorkers() {
+        return Optional.ofNullable(maxWorkers);
+    }
+
+    public Optional<Integer> getMaxQueueSize() {
+        return Optional.ofNullable(maxQueueSize);
+    }
+
+    public Optional<Integer> getMaxBatchSize() {
+        return Optional.ofNullable(maxBatchSize);
+    }
+
+    public Optional<Boolean> getReport() {
+        return Optional.ofNullable(report);
     }
 }
