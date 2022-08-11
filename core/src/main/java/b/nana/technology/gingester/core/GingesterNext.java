@@ -198,11 +198,11 @@ public final class GingesterNext {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
 
-                    flowBuilder.add(new Node()
-                            .transformer(transformer));
+                    String id = flowBuilder
+                            .splice(transformer, pointer.getId(), linkName)
+                            .getLastId();
 
-                    String id = flowBuilder.getLastId();
-
+                    // TODO converge with similar code in configure()
                     ControllerConfiguration<I, O> configuration = new ControllerConfiguration<I, O>(new ControllerConfigurationInterface())
                             .id(id)
                             .transformer(transformer)

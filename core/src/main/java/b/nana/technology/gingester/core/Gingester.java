@@ -84,24 +84,19 @@ public final class Gingester {
         return add(biConsumer);
     }
 
-    @Deprecated
-    public <T> Gingester attach(Consumer<T> consumer) {
-        return add(consumer);
-    }
+    public Gingester splice(Transformer<?, ?> transformer, String targetId, String linkName) {
 
-    @Deprecated
-    public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
-        return add(biConsumer);
-    }
+        Node node = new Node().transformer(transformer);
+        String id = getId(node);
+        node.id(id);
+        nodes.put(id, node);
+        last = node;
 
-    @Deprecated
-    public <T> Gingester attach(Consumer<T> consumer, String linkFrom) {
-        return addTo(consumer, linkFrom);
-    }
+        Node target = nodes.get(targetId);
+        node.addLink(linkName, target.getLink(linkName));
+        target.updateLink(linkName, id);
 
-    @Deprecated
-    public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String linkFrom) {
-        return addTo(biConsumer, linkFrom);
+        return this;
     }
 
     public Gingester linkTo(String link) {
@@ -276,5 +271,27 @@ public final class Gingester {
                 id = name + '_' + i++;
             return id;
         }
+    }
+
+
+
+    @Deprecated
+    public <T> Gingester attach(Consumer<T> consumer) {
+        return add(consumer);
+    }
+
+    @Deprecated
+    public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
+        return add(biConsumer);
+    }
+
+    @Deprecated
+    public <T> Gingester attach(Consumer<T> consumer, String linkFrom) {
+        return addTo(consumer, linkFrom);
+    }
+
+    @Deprecated
+    public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String linkFrom) {
+        return addTo(biConsumer, linkFrom);
     }
 }

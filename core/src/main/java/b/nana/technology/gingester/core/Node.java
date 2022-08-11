@@ -73,8 +73,22 @@ public final class Node {
         return this;
     }
 
+    public Node addLink(String linkName, String link) {
+        links.put(linkName, link);
+        return this;
+    }
+
     public Node addLinks(List<String> links) {
         links.forEach(link -> this.links.put(link, link));
+        return this;
+    }
+
+    public String getLink(String linkName) {
+        return links.get(linkName);
+    }
+
+    public Node updateLink(String linkName, String link) {
+        links.put(linkName, link);
         return this;
     }
 
