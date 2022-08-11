@@ -21,7 +21,7 @@ class PeekLinesTest {
                 "-f " +
                 "-t InputStreamToString")
                 .attach(peekResult::set, "PeekLines")
-                .attach(fullResult::set)
+                .attach(fullResult::set, "InputStreamToString")
                 .run();
 
         assertEquals("a,b,c", peekResult.get());

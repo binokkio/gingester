@@ -29,7 +29,7 @@ class CollectAndGetTest {
                 "-t IntDef 1 " +
                 "-t MapGet")
                 .attach(map::set, "MapCollect")
-                .attach(result::set)
+                .attach(result::set, "MapGet")
                 .run();
 
         assertEquals(3, map.get().size());

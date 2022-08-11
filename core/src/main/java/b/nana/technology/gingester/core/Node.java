@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.flowbuilder;
+package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.transformer.Transformer;

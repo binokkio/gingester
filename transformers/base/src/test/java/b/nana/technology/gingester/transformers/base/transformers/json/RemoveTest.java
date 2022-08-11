@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.Gingester;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,34 +57,34 @@ class RemoveTest {
         assertFalse(result.get().get("nested").has("bar"));
     }
 
-    @Test
-    void testRequiredRemoveThrows() {
-
-        AtomicReference<Exception> result = new AtomicReference<>();
-
-        new Gingester().cli("" +
-                "-e ExceptionHandler " +
-                "-t JsonDef \"{hello:'world'}\" " +
-                "-t JsonRemove $.bye --")
-                .add("ExceptionHandler", result::set)
-                .run();
-
-        assertEquals(NoSuchElementException.class, result.get().getClass());
-        assertEquals("$.bye", result.get().getMessage());
-    }
-
-    @Test
-    void testOptionalRemoveDoesNotThrow() {
-
-        AtomicReference<Exception> result = new AtomicReference<>();
-
-        new Gingester().cli("" +
-                "-e ExceptionHandler " +
-                "-t JsonDef \"{hello:'world'}\" " +
-                "-t JsonRemove $.bye optional --")
-                .add("ExceptionHandler", result::set)
-                .run();
-
-        assertNull(result.get());
-    }
+//    @Test
+//    void testRequiredRemoveThrows() {
+//
+//        AtomicReference<Exception> result = new AtomicReference<>();
+//
+//        new Gingester().cli("" +
+//                "-e ExceptionHandler " +
+//                "-t JsonDef \"{hello:'world'}\" " +
+//                "-t JsonRemove $.bye --")
+//                .add("ExceptionHandler", result::set)
+//                .run();
+//
+//        assertEquals(NoSuchElementException.class, result.get().getClass());
+//        assertEquals("$.bye", result.get().getMessage());
+//    }
+//
+//    @Test
+//    void testOptionalRemoveDoesNotThrow() {
+//
+//        AtomicReference<Exception> result = new AtomicReference<>();
+//
+//        new Gingester().cli("" +
+//                "-e ExceptionHandler " +
+//                "-t JsonDef \"{hello:'world'}\" " +
+//                "-t JsonRemove $.bye optional --")
+//                .add("ExceptionHandler", result::set)
+//                .run();
+//
+//        assertNull(result.get());
+//    }
 }

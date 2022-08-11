@@ -30,7 +30,7 @@ class SolarSystemTest {
         ));
         gingester.attach(paths::add, "UnpackedPaths");
         gingester.attach(planetsPath::set, "PathSearch");
-        gingester.attach(resultsPath::set);
+        gingester.attach(resultsPath::set, "PathWrite");
         gingester.run();
 
         assertEquals(tempDir.resolve("solar-system.tar/planets.csv"), planetsPath.get());

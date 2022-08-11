@@ -18,6 +18,7 @@ public final class Main {
             new Gingester()
                     .setReportIntervalSeconds(2)
                     .cli(args)
+                    .build()
                     .run();
         } else {
             printHelp();

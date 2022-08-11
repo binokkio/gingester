@@ -6,8 +6,6 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.controller.Worker;
-import b.nana.technology.gingester.core.flowbuilder.FlowBuilder;
-import b.nana.technology.gingester.core.flowbuilder.Node;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -25,7 +23,7 @@ public final class GingesterNext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GingesterNext.class);
 
-    private final FlowBuilder flowBuilder;
+    private final Gingester flowBuilder;
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
@@ -35,7 +33,7 @@ public final class GingesterNext {
     private boolean debugMode = true;
     private boolean shutdownHook;
 
-    public GingesterNext(FlowBuilder flowBuilder) {
+    public GingesterNext(Gingester flowBuilder) {
         this.flowBuilder = flowBuilder;  // TODO defensive copy?
     }
 

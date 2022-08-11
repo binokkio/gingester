@@ -22,7 +22,7 @@ class PeekBytesTest {
                 "-f " +
                 "-t InputStreamToString")
                 .attach(peekResult::set, "BytesToString")
-                .attach(fullResult::set)
+                .attach(fullResult::set, "InputStreamToString")
                 .run();
 
         assertEquals("Hello", peekResult.get());

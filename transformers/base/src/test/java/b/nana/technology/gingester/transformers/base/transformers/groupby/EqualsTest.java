@@ -75,7 +75,7 @@ class EqualsTest {
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")
                 .attach(resultsWithLimit::add, "Bye")
-                .attach(resultsWithLimit::add)
+                .attach(resultsWithLimit::add, "StringAppend")
                 .run();
         assertEquals("hello, hello!", resultsWithLimit.remove());
         assertEquals("bye", resultsWithLimit.remove());

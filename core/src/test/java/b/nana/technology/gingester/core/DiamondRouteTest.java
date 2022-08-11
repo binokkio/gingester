@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.flowbuilder.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -14,8 +13,8 @@ class DiamondRouteTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.add(results::add);
+        Gingester flowBuilder = new Gingester().cli("-cr hello-world-diamond.cli");
+        flowBuilder.attach(results::add);
         flowBuilder.build().run();
 
         assertEquals(2, results.size());
@@ -28,8 +27,8 @@ class DiamondRouteTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.linkFrom("Emphasize").add(results::add);
+        Gingester flowBuilder = new Gingester().cli("-cr hello-world-diamond.cli");
+        flowBuilder.linkFrom("Emphasize").attach(results::add);
         flowBuilder.build().run();
 
         assertEquals(1, results.size());
@@ -42,9 +41,9 @@ class DiamondRouteTest {
         ArrayDeque<String> emphasizeResults = new ArrayDeque<>();
         ArrayDeque<String> questionResults = new ArrayDeque<>();
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.linkFrom("Emphasize").add(emphasizeResults::add);
-        flowBuilder.linkFrom("Question").add(questionResults::add);
+        Gingester flowBuilder = new Gingester().cli("-cr hello-world-diamond.cli");
+        flowBuilder.linkFrom("Emphasize").attach(emphasizeResults::add);
+        flowBuilder.linkFrom("Question").attach(questionResults::add);
         flowBuilder.build().run();
 
         assertEquals(1, emphasizeResults.size());
