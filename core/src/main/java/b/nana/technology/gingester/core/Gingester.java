@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.cli.CliParser;
+import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.ELog;
@@ -19,16 +19,15 @@ import java.util.function.Consumer;
 
 public final class Gingester {
 
-    private final Map<String, Node> nodes = new LinkedHashMap<>();
+    final Map<String, Node> nodes = new LinkedHashMap<>();
+    int reportIntervalSeconds;
+    boolean debugMode;
+    boolean shutdownHook;
 
     private Node last;
     private List<String> linkFrom = List.of();
-    private List<String> syncFrom = List.of();
+    private List<String> syncFrom = List.of("__seed__");
     private List<String> divertFrom = List.of();
-
-    private int reportIntervalSeconds;
-    private boolean debugMode;
-    private boolean shutdownHook;
 
     public Gingester() {
 
@@ -240,20 +239,17 @@ public final class Gingester {
         return this;
     }
 
-    public GingesterNext build() {
-        return new GingesterNext(this);
+    /**
+     * Construct a FlowRunner for the current state of this FlowBuilder.
+     *
+     * @return
+     */
+    public FlowRunner build() {
+        return new FlowRunner(this);
     }
 
     public void run() {
         build().run();
-    }
-
-    public Map<String, Node> getNodes() {
-        return nodes;
-    }
-
-    public String getLastId() {
-        return last.requireId();
     }
 
     private String getId(Node node) {
@@ -271,6 +267,10 @@ public final class Gingester {
                 id = name + '_' + i++;
             return id;
         }
+    }
+
+    public String getLastId() {
+        return last.requireId();
     }
 
 

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.reporting;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.controller.Controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public final class Reporter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlowRunner.class);
 
     private final ThreadFactory threadFactory = runnable -> {
         Thread thread = new Thread(runnable);

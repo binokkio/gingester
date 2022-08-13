@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
-import b.nana.technology.gingester.core.GingesterNext;
+import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.controller.FetchKey;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public final class ControllerConfiguration<I, O> {
 
-    private final GingesterNext.ControllerConfigurationInterface gingester;
+    private final FlowRunner.ControllerConfigurationInterface gingester;
 
     private String id;
     private Transformer<I, O> transformer;
@@ -29,7 +29,7 @@ public final class ControllerConfiguration<I, O> {
     private boolean report;
     private Counter acksCounter;
 
-    public ControllerConfiguration(GingesterNext.ControllerConfigurationInterface gingester) {
+    public ControllerConfiguration(FlowRunner.ControllerConfigurationInterface gingester) {
         this.gingester = gingester;
     }
 

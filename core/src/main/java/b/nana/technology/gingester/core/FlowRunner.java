@@ -19,22 +19,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class GingesterNext {
+public final class FlowRunner {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GingesterNext.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlowRunner.class);
 
-    private final Gingester flowBuilder;
+    private final Gingester gingester;
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    private int reportIntervalSeconds = 1;
-    private boolean debugMode = true;
-    private boolean shutdownHook;
-
-    public GingesterNext(Gingester flowBuilder) {
-        this.flowBuilder = flowBuilder;  // TODO defensive copy?
+    public FlowRunner(Gingester gingester) {
+        this.gingester = gingester;
     }
 
     /**
@@ -98,7 +94,7 @@ public final class GingesterNext {
 
     private <I, O> void configure() {
 
-        flowBuilder.getNodes().forEach((id, node) -> {
+        gingester.nodes.forEach((id, node) -> {
 
             ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>(new ControllerConfigurationInterface());
 
@@ -197,7 +193,7 @@ public final class GingesterNext {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
 
-                    String id = flowBuilder
+                    String id = gingester
                             .splice(transformer, pointer.getId(), linkName)
                             .getLastId();
 
@@ -216,7 +212,7 @@ public final class GingesterNext {
     }
 
     private void align() {
-        flowBuilder.getNodes().forEach((id, node) -> {
+        gingester.nodes.forEach((id, node) -> {
             SetupControls setupControls = node.getSetupControls();
             if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
                 if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
@@ -264,13 +260,13 @@ public final class GingesterNext {
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
 
-        if (shutdownHook) {
+        if (gingester.shutdownHook) {
             Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
         }
 
         Reporter reporter = null;
-        if (reportIntervalSeconds > 0) {
-            reporter = new Reporter(reportIntervalSeconds, controllers.values());
+        if (gingester.reportIntervalSeconds > 0) {
+            reporter = new Reporter(gingester.reportIntervalSeconds, controllers.values());
             reporter.start();
         }
 
@@ -316,7 +312,7 @@ public final class GingesterNext {
         }
 
         public boolean isDebugModeEnabled() {
-            return debugMode;
+            return gingester.debugMode;
         }
 
         public boolean isExceptionHandler() {

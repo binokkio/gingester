@@ -122,7 +122,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>b.nana.technology.gingester.core.cli.Main</mainClass>
+                                    <mainClass>b.nana.technology.gingester.core.Main</mainClass>
                                     <manifestEntries>
                                         <Multi-Release>true</Multi-Release><!-- gets rid of "WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance." -->
                                     </manifestEntries>

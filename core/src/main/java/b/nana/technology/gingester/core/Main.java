@@ -1,6 +1,5 @@
-package b.nana.technology.gingester.core.cli;
+package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.io.IOException;
@@ -18,7 +17,6 @@ public final class Main {
             new Gingester()
                     .setReportIntervalSeconds(2)
                     .cli(args)
-                    .build()
                     .run();
         } else {
             printHelp();

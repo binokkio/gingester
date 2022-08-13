@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.Main;
 import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
