@@ -89,6 +89,17 @@ public final class Node {
         return this;
     }
 
+    public Node updateLinks(String newTarget) {
+        links.replaceAll((linkName, currentTarget) -> newTarget);
+        return this;
+    }
+
+    public Node updateLinks(String oldTarget, String newTarget) {
+        links.replaceAll((linkName, currentTarget) ->
+                currentTarget.equals(oldTarget) ? newTarget : currentTarget);
+        return this;
+    }
+
 
 
     public Node setSyncs(List<String> syncs) {

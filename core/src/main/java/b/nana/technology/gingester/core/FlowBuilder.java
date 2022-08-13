@@ -5,17 +5,16 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.ELog;
+import b.nana.technology.gingester.core.transformers.Void;
 import b.nana.technology.gingester.core.transformers.passthrough.BiConsumerPassthrough;
 import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
 import b.nana.technology.gingester.core.transformers.passthrough.Passthrough;
 
 import java.net.URL;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public final class FlowBuilder {
 
@@ -55,7 +54,7 @@ public final class FlowBuilder {
         linkFrom.stream().map(nodes::get).forEach(n -> n.addLink(id));
         linkFrom = List.of(id);
 
-        // TODO handle divert from
+        divertFrom.stream().map(nodes::get).forEach(n -> n.updateLinks(id));
         divertFrom = List.of();
 
         return this;
@@ -81,21 +80,6 @@ public final class FlowBuilder {
     public <T> FlowBuilder addTo(BiConsumer<Context, T> biConsumer, String linkFrom) {
         linkFrom(linkFrom);
         return add(biConsumer);
-    }
-
-    public FlowBuilder splice(Transformer<?, ?> transformer, String targetId, String linkName) {
-
-        Node node = new Node().transformer(transformer);
-        String id = getId(node);
-        node.id(id);
-        nodes.put(id, node);
-        last = node;
-
-        Node target = nodes.get(targetId);
-        node.addLink(linkName, target.getLink(linkName));
-        target.updateLink(linkName, id);
-
-        return this;
     }
 
     public FlowBuilder linkTo(String link) {
@@ -137,6 +121,53 @@ public final class FlowBuilder {
 
     public FlowBuilder syncFrom(List<String> syncFrom) {
         this.syncFrom = syncFrom;
+        return this;
+    }
+
+    public FlowBuilder splice(Transformer<?, ?> transformer, String targetId, String linkName) {
+
+        Node node = new Node().transformer(transformer);
+        String id = getId(node);
+        node.id(id);
+        nodes.put(id, node);
+        last = node;
+
+        Node target = nodes.get(targetId);
+        node.addLink(linkName, target.getLink(linkName));
+        target.updateLink(linkName, id);
+
+        return this;
+    }
+
+    public FlowBuilder divert(String divertFrom) {
+        return divert(List.of(divertFrom));
+    }
+
+    public FlowBuilder divert(List<String> divertFrom) {
+        knife(divertFrom.stream().map(nodes::get).map(Node::getLinks).map(Map::values).flatMap(Collection::stream).collect(Collectors.toSet()));
+        this.last = null;
+        this.linkFrom = List.of();
+        this.divertFrom = divertFrom;
+        return this;
+    }
+
+    public FlowBuilder knife(String targetId) {
+        return knife(Set.of(targetId));
+    }
+
+    public FlowBuilder knife(Set<String> targetIds) {
+
+        Set<String> nextTargetIds = new HashSet<>();
+
+        for (String targetId : targetIds) {
+            Node removed = nodes.remove(targetId);
+            nextTargetIds.addAll(removed.getLinks().values());
+            nodes.forEach((id, node) -> node.updateLinks(targetId, "__void__"));
+        }
+
+        if (!nextTargetIds.isEmpty())
+            knife(nextTargetIds);
+
         return this;
     }
 
@@ -245,6 +276,14 @@ public final class FlowBuilder {
      * Further modification of the FlowBuilder is an error leading to undefined behavior.
      */
     public FlowRunner build() {
+
+        if (nodes.values().stream().map(Node::getLinks).map(Map::values).flatMap(Collection::stream).anyMatch("__void__"::equals)) {
+            Node void_ = new Node();
+            void_.id("__void__");
+            void_.transformer(new Void());
+            nodes.put(void_.requireId(), void_);
+        }
+
         return new FlowRunner(this);
     }
 
