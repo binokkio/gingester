@@ -4,7 +4,7 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -12,15 +12,41 @@ public final class Main {
 
     private Main() {}
 
-    public static void main(String[] args) {
-        if (args.length > 0 && Arrays.stream(args).noneMatch(s -> s.equals("-h") || s.equals("--help"))) {
-            new FlowBuilder()
-                    .setReportIntervalSeconds(2)
-                    .cli(args)
-                    .run();
-        } else {
+    public static void main(String[] arrgs) {
+
+        List<String> args = new LinkedList<>(Arrays.asList(arrgs));
+
+        boolean help = filter(args, Set.of("-h", "--help"));
+
+        if (help) {
             printHelp();
+        } else {
+
+            boolean see = filter(args, Set.of("--see"));
+
+            FlowRunner flowRunner = new FlowBuilder()
+                    .setReportIntervalSeconds(2)
+                    .cli(args.toArray(new String[0]))
+                    .build();
+
+            if (see) {
+                System.out.println(flowRunner);
+            } else {
+                flowRunner.run();
+            }
         }
+    }
+
+    private static boolean filter(List<String> list, Set<String> filters) {
+        Iterator<String> iterator = list.iterator();
+        boolean filtered = false;
+        while (iterator.hasNext()) {
+            if (filters.contains(iterator.next())) {
+                iterator.remove();
+                filtered = true;
+            }
+        }
+        return filtered;
     }
 
     private static void printHelp() {
