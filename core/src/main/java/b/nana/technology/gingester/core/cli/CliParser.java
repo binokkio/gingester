@@ -84,7 +84,17 @@ public final class CliParser {
                     break;
 
                 case "-d":
+                case "--divert":
+                    List<String> from = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
+                        from.add(args[++i]);
+                    if (from.isEmpty()) throw new IllegalArgumentException("-d/--divert must be followed by at least 1 id");
+                    target.divert(from);
+                    break;
+
+                case "-dm":
                 case "--debug":
+                case "--debug-mode":
                     target.enableDebugMode();
                     break;
 
@@ -125,15 +135,15 @@ public final class CliParser {
                     List<String> links = new ArrayList<>();
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         links.add(args[++i]);
+                    if (links.isEmpty()) throw new IllegalArgumentException("-l/--links must be followed by at least 1 id");
                     target.linkTo(links);
                     break;
 
                 case "-e":
                 case "--excepts":
                     List<String> excepts = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         excepts.add(args[++i]);
-                    }
                     if (excepts.isEmpty()) excepts.add("__elog__");
                     target.exceptTo(excepts);
                     break;
