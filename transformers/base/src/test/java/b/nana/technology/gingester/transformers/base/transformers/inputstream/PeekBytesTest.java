@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,14 +15,14 @@ class PeekBytesTest {
         AtomicReference<String> peekResult = new AtomicReference<>();
         AtomicReference<String> fullResult = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t PeekBytes 5 " +
                 "-t BytesToString " +
                 "-f " +
                 "-t InputStreamToString")
                 .attach(peekResult::set, "BytesToString")
-                .attach(fullResult::set)
+                .attach(fullResult::set, "InputStreamToString")
                 .run();
 
         assertEquals("Hello", peekResult.get());

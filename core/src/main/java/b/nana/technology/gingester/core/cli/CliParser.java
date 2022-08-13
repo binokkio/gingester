@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.core.cli;
 
-import b.nana.technology.gingester.core.configuration.TransformerConfiguration;
+import b.nana.technology.gingester.core.FlowBuilder;
+import b.nana.technology.gingester.core.Main;
+import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -21,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,12 +42,12 @@ public final class CliParser {
 
     private CliParser() {}
 
-    public static void parse(Target target, String template, Object parameters) {
+    public static void parse(FlowBuilder target, String template, Object parameters) {
         String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
         parse(target, CliSplitter.split(cli));
     }
 
-    public static void parse(Target target, URL template, Object parameters) {
+    public static void parse(FlowBuilder target, URL template, Object parameters) {
         try (InputStream templateStream = template.openStream()) {
             String templateName = template.toString();
             String templateSource = new String(templateStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -57,7 +58,7 @@ public final class CliParser {
         }
     }
 
-    public static void parse(Target target, String[] args) {
+    public static void parse(FlowBuilder target, String[] args) {
 
         for (int i = 0; i < args.length; i++) {
 
@@ -83,7 +84,17 @@ public final class CliParser {
                     break;
 
                 case "-d":
+                case "--divert":
+                    List<String> from = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
+                        from.add(args[++i]);
+                    if (from.isEmpty()) throw new IllegalArgumentException("-d/--divert must be followed by at least 1 id");
+                    target.divert(from);
+                    break;
+
+                case "-dm":
                 case "--debug":
+                case "--debug-mode":
                     target.enableDebugMode();
                     break;
 
@@ -122,20 +133,19 @@ public final class CliParser {
                 case "-l":
                 case "--links":
                     List<String> links = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         links.add(args[++i]);
-                    }
-                    target.getLastTransformer().links(links);
+                    if (links.isEmpty()) throw new IllegalArgumentException("-l/--links must be followed by at least 1 id");
+                    target.linkTo(links);
                     break;
 
                 case "-e":
                 case "--excepts":
                     List<String> excepts = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         excepts.add(args[++i]);
-                    }
                     if (excepts.isEmpty()) excepts.add("__elog__");
-                    target.getLastTransformer().excepts(excepts);
+                    target.exceptTo(excepts);
                     break;
 
                 case "-p":
@@ -146,10 +156,9 @@ public final class CliParser {
                 case "-sf":
                 case "--sync-from":
                     List<String> syncFrom = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         syncFrom.add(args[++i]);
-                    }
-                    target.setSyncFrom(syncFrom);
+                    target.syncFrom(syncFrom);
                     break;
 
                 case "-sft":
@@ -180,7 +189,7 @@ public final class CliParser {
                 case "-t":
                 case "--transformer":
 
-                    TransformerConfiguration transformer = new TransformerConfiguration();
+                    Node transformer = new Node();
                     String name;
 
                     if (fsw) {
@@ -232,9 +241,9 @@ public final class CliParser {
                         transformer.name(name).transformer(TransformerFactory.instance(name));
                     }
 
-                    if (syncTo) transformer.syncs(target.getSyncFrom());
-                    String id = target.add(transformer);
-                    if (markSyncFrom) target.setSyncFrom(List.of(id));
+                    target.add(transformer);
+                    if (syncTo) target.sync();
+                    if (markSyncFrom) target.syncFrom(target.getLastId());
 
                     break;
 
@@ -244,8 +253,7 @@ public final class CliParser {
                     break;
 
                 case "--":
-                    if (target.getLastTransformer().getLinks().filter(List.of("__maybe_next__")::equals).isPresent())
-                        target.getLastTransformer().links(Collections.emptyList());
+                    target.linkFrom(List.of());
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);

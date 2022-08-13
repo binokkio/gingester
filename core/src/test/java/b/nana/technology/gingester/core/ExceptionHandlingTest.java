@@ -15,7 +15,7 @@ class ExceptionHandlingTest {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
                 "-t Generate 'Hello, World!' " +
                 "-t Repeat 2 " +
@@ -25,10 +25,10 @@ class ExceptionHandlingTest {
         ArrayDeque<String> results = new ArrayDeque<>();
         ArrayDeque<Exception> exceptions = new ArrayDeque<>();
 
-        gingester.attach(results::add, "Monkey");
-        gingester.attach(exceptions::add, "ExceptionHandler");
+        flowBuilder.attach(results::add, "Monkey");
+        flowBuilder.attach(exceptions::add, "ExceptionHandler");
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(1, results.size());
         assertEquals("Hello, World!", results.getFirst());
@@ -40,7 +40,7 @@ class ExceptionHandlingTest {
     @Test
     void testExceptionInExceptionHandler() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
                 "-t Monkey 1 -- " +
                 "-t ExceptionHandler:Monkey 1 -- " +
@@ -48,9 +48,9 @@ class ExceptionHandlingTest {
                 "-t ResultHandler:Passthrough");
 
         AtomicReference<Context> result = new AtomicReference<>();
-        gingester.attach((c, e) -> result.set(c));
+        flowBuilder.attach((c, e) -> result.set(c));
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(
                 "Monkey, ExceptionHandler",
@@ -63,7 +63,7 @@ class ExceptionHandlingTest {
 
         AtomicReference<Context> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
                 "-t Generate hello " +
                 "-t Monkey 1 -- " +

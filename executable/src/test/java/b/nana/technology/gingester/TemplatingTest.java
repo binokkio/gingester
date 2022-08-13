@@ -1,6 +1,6 @@
 package b.nana.technology.gingester;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,7 +13,7 @@ class TemplatingTest {
     void test() {
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
                 "-t Cycle A B C " +
                 "-s " +

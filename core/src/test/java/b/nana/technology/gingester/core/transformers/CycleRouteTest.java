@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -14,7 +14,7 @@ class CycleRouteTest {
     void test() {
         Deque<String> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
                 "-t Generate '${description}' " +
                 "-t CycleRoute A B " +

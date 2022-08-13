@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.base64;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,7 +14,7 @@ class EncodeTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Base64Encode " +
                 "-t BytesToString")
@@ -29,7 +29,7 @@ class EncodeTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Base64Encode 8 " +
                 "-t BytesToString")

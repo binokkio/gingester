@@ -158,7 +158,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/binokkio/gingester</url>
+            <url>https://maven.pkg.github.com/binokkio/flowBuilder</url>
         </repository>
     </distributionManagement>
 

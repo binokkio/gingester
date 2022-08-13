@@ -14,7 +14,7 @@ class OnFlawlessTest {
     @Test
     void testTwoOutOfThree() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Void -- " +
                 "-t Repeat 3 " +
                 "-sft Generate 'Hello, World!' " +
@@ -24,9 +24,9 @@ class OnFlawlessTest {
                 "-f description");
 
         ArrayDeque<Integer> results = new ArrayDeque<>();
-        gingester.attach(results::add);
+        flowBuilder.attach(results::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(0, results.remove());
         assertEquals(2, results.remove());
@@ -38,7 +38,7 @@ class OnFlawlessTest {
         AtomicReference<String> seedFlawlessResult = new AtomicReference<>();
         AtomicReference<String> seedFlawedResult = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e Void -t Void -- " +
                 "-t Repeat 3 " +
                 "-t Monkey 2 " +
@@ -65,7 +65,7 @@ class OnFlawlessTest {
         Deque<String> monkeyFlawlessResults = new ConcurrentLinkedDeque<>();
         Deque<String> monkeyFlawedResults = new ConcurrentLinkedDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Void -- " +
                 "-t Repeat 3 " +
                 "-e Void " +

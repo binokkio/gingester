@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public final class ELog implements Transformer<Exception, Exception> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Gingester.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlowRunner.class);
 
     private final FetchKey fetchMethod = new FetchKey("method");
     private final FetchKey fetchDescription = new FetchKey("description");

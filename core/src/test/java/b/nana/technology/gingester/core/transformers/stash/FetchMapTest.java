@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers.stash;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -15,7 +15,7 @@ class FetchMapTest {
 
         AtomicReference<Map<String, String>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-ss hello hello " +
                 "-ss world world " +
                 "-t FetchMap hello world")
@@ -32,7 +32,7 @@ class FetchMapTest {
 
         AtomicReference<Map<String, String>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef hello -s " +
                 "-t StringDef world -s " +
                 "-t FetchMap '^2 > greeting' '^1 > target'")

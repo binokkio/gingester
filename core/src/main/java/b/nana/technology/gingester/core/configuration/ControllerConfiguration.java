@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.controller.FetchKey;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public final class ControllerConfiguration<I, O> {
 
-    private final Gingester.ControllerConfigurationInterface gingester;
+    private final FlowRunner.ControllerConfigurationInterface gingester;
 
     private String id;
     private Transformer<I, O> transformer;
@@ -29,7 +29,7 @@ public final class ControllerConfiguration<I, O> {
     private boolean report;
     private Counter acksCounter;
 
-    public ControllerConfiguration(Gingester.ControllerConfigurationInterface gingester) {
+    public ControllerConfiguration(FlowRunner.ControllerConfigurationInterface gingester) {
         this.gingester = gingester;
     }
 
@@ -93,14 +93,6 @@ public final class ControllerConfiguration<I, O> {
 
     public void updateLink(String linkName, String target) {
         links.replace(linkName, target);
-    }
-
-    public void replaceMaybeNextLink(String next) {
-        links.replaceAll((name, target) -> target.equals("__maybe_next__") ? next : target);
-    }
-
-    public void removeMaybeNextLink() {
-        links.remove("__maybe_next__", "__maybe_next__");
     }
 
 

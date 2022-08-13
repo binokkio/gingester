@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,7 +15,7 @@ class CollectCollectionsTest {
         AtomicReference<String> resultA = new AtomicReference<>();
         AtomicReference<String> resultB = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t A:Repeat 3 " +
                 "-t B:Repeat 3 " +
                 "-t StringDef '${A.description}.${B.description}' " +
@@ -43,7 +43,7 @@ class CollectCollectionsTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t A:Repeat 3 " +
                 "-t Repeat 3 " +
                 "-t Repeat 3 " +

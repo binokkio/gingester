@@ -1,6 +1,6 @@
 package b.nana.technology.gingester;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ class ExceptionHandlingTest {
         List<Boolean> twoIsFlawless = new ArrayList<>();
         List<Boolean> threeIsFlawless = new ArrayList<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                         "-t ExceptionHandler:Passthrough " +
                         "-t ExceptionHandlerDownstream:Passthrough " +
                         "-- " +
