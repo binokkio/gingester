@@ -35,10 +35,37 @@ public final class FlowRunner {
         configure();
         setupElog();
         setupSeed();
-        Set<String> seen = explore("__seed__", "__seed__", new ArrayDeque<>(), false, new HashSet<>());
-        configurations.keySet().stream().filter(id -> !seen.contains(id)).forEach(id -> explore(id, id, new ArrayDeque<>(), false, new HashSet<>()));
+        explore();
         align();
         initialize();
+    }
+
+    public void run() {
+
+        controllers.values().forEach(Controller::open);
+        phaser.awaitAdvance(0);
+
+        if (flowBuilder.shutdownHook) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+        }
+
+        Reporter reporter = null;
+        if (flowBuilder.reportIntervalSeconds > 0) {
+            reporter = new Reporter(flowBuilder.reportIntervalSeconds, controllers.values());
+            reporter.start();
+        }
+
+        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
+        Context seed = Context.newSeedContext(seedController);
+        seedController.accept(new Batch<>(seed, "seed signal"));
+        seedController.finish(null, seed);
+
+        phaser.awaitAdvance(1);
+        phaser.awaitAdvance(2);
+
+        if (reporter != null) reporter.stop();
+
+        stopping.set(true);  // set stopping true, flow stopped naturally
     }
 
     /**
@@ -129,7 +156,13 @@ public final class FlowRunner {
         seedConfiguration.links(seedLinks);
     }
 
-    private Set<String> explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge, Set<String> seen) {
+    private void explore() {
+        Set<String> seen = new HashSet<>();
+        explore("__seed__", "__seed__", new ArrayDeque<>(), false, seen);
+        configurations.keySet().stream().filter(id -> !seen.contains(id)).forEach(id -> explore(id, id, new ArrayDeque<>(), false, new HashSet<>()));
+    }
+
+    private void explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge, Set<String> seen) {
         seen.add(nextId);
         if (route.contains(nextId)) {
             Iterator<String> iterator = route.iterator();
@@ -153,7 +186,6 @@ public final class FlowRunner {
                 }
             }
         }
-        return seen;
     }
 
     private <I, O> void maybeBridge(String upstreamId, String linkName, String downstreamId) {
@@ -239,34 +271,6 @@ public final class FlowRunner {
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
-    }
-
-    public void run() {
-
-        controllers.values().forEach(Controller::open);
-        phaser.awaitAdvance(0);
-
-        if (flowBuilder.shutdownHook) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
-        }
-
-        Reporter reporter = null;
-        if (flowBuilder.reportIntervalSeconds > 0) {
-            reporter = new Reporter(flowBuilder.reportIntervalSeconds, controllers.values());
-            reporter.start();
-        }
-
-        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
-        Context seed = Context.newSeedContext(seedController);
-        seedController.accept(new Batch<>(seed, "seed signal"));
-        seedController.finish(null, seed);
-
-        phaser.awaitAdvance(1);
-        phaser.awaitAdvance(2);
-
-        if (reporter != null) reporter.stop();
-
-        stopping.set(true);  // set stopping true, flow stopped naturally
     }
 
     public class ControllerConfigurationInterface {
