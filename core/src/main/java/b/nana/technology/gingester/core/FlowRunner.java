@@ -31,30 +31,14 @@ public final class FlowRunner {
 
     public FlowRunner(FlowBuilder flowBuilder) {
         this.flowBuilder = flowBuilder;
-    }
 
-    /**
-     * Run the configured transformations.
-     * <p>
-     * This will run through the following steps:
-     * <ul>
-     * <li>link the seed transformer to all transformers with no incoming links
-     * <li>start the workers for each transformer
-     * <li>call {@link Transformer#open()} on all transformers from their worker threads and wait for all to open
-     * <li>give the seed controller a single input, which it will pass through to its links
-     * <li>start a reporting thread if configured
-     * <li>block until all transformers are done
-     * <li>call {@link Transformer#close()} on all transformers from one of their worker threads and wait for all to close
-     * </ul>
-     */
-    public void run() {
         configure();
         setupElog();
         setupSeed();
-        explore("__seed__", "__seed__", new ArrayDeque<>(), false);
+        Set<String> seen = explore("__seed__", "__seed__", new ArrayDeque<>(), false, new HashSet<>());
+        configurations.keySet().stream().filter(id -> !seen.contains(id)).forEach(id -> explore(id, id, new ArrayDeque<>(), false, new HashSet<>()));
         align();
         initialize();
-        start();
     }
 
     /**
@@ -127,7 +111,7 @@ public final class FlowRunner {
             for (String handlerId : catcher.getExcepts()) {
                 ControllerConfiguration<?, ?> handler = configurations.get(handlerId);
                 if (handler == null) throw new IllegalStateException(catcher.getId() + " excepts to " + handlerId + " which does not exist");
-                if (!handlerId.equals("__elog__") && handler.getExcepts().isEmpty()) handler.excepts(Collections.singletonList("__elog__"));
+                if (!handlerId.equals("__elog__") && handler.getExcepts().isEmpty()) handler.excepts(List.of("__elog__"));
             }
         }
     }
@@ -145,7 +129,8 @@ public final class FlowRunner {
         seedConfiguration.links(seedLinks);
     }
 
-    private void explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge) {
+    private Set<String> explore(String nextName, String nextId, ArrayDeque<String> route, boolean maybeBridge, Set<String> seen) {
+        seen.add(nextId);
         if (route.contains(nextId)) {
             Iterator<String> iterator = route.iterator();
             while (!iterator.next().equals(nextId)) iterator.remove();
@@ -154,7 +139,7 @@ public final class FlowRunner {
             if (!configurations.containsKey(nextId)) throw new IllegalStateException(route.getLast() + " links to " + nextId + " which does not exist");
             if (maybeBridge) maybeBridge(route.getLast(), nextName, nextId);
             route.add(nextId);
-            configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route), true));
+            configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route), true, seen));
             Iterator<String> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 String id = iterator.next();
@@ -163,11 +148,12 @@ public final class FlowRunner {
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
                     for (String exceptionHandler : controller.getExcepts()) {
-                        explore(exceptionHandler, exceptionHandler, new ArrayDeque<>(route), false);
+                        explore(exceptionHandler, exceptionHandler, new ArrayDeque<>(route), false, seen);
                     }
                 }
             }
         }
+        return seen;
     }
 
     private <I, O> void maybeBridge(String upstreamId, String linkName, String downstreamId) {
@@ -255,7 +241,7 @@ public final class FlowRunner {
         controllers.values().forEach(Controller::discoverSyncs);
     }
 
-    private void start() {
+    public void run() {
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);

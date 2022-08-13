@@ -26,4 +26,15 @@ class CircularRouteDetectionTest {
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
         assertEquals("Circular route detected: Generate -> ExceptionHandler -> Generate", e.getMessage());
     }
+
+    @Test
+    void testDetachedIsland() {
+
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
+                "-t StringDef 'Not part of the island.' -- " +
+                "-t Island:StringDef 'Part of the island.' -l Island");
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
+        assertEquals("Circular route detected: Island -> Island", e.getMessage());
+    }
 }
