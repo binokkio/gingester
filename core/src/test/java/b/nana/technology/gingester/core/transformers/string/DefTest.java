@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers.string;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.core.template.TemplateParameters;
@@ -49,7 +49,7 @@ class DefTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t IntDef 123456 " +
                 "-s number " +
                 "-t StringDef 'Hello, ${number}!'")
@@ -64,7 +64,7 @@ class DefTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t BooleanDef true " +
                 "-s value " +
                 "-t StringDef 'Hello, ${value}!'")

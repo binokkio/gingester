@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.list;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -14,7 +14,7 @@ class CollectAndStreamTest {
 
         ArrayDeque<String> result = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 9 " +
                 "-t Cycle A B C " +
                 "-s letter " +

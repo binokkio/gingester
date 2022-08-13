@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.join;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +16,7 @@ class OuterJoinTest {
 
         Deque<Map<String, JsonNode>> result = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-ss joinAs numbers -t JsonDef [{id:1,value:11111},{id:2,value:22222},{id:3,value:33333}] -l JsonStream " +
                 "-ss joinAs letters -t JsonDef [{id:1,value:'aaa'},{id:2,value:'bbb'},{id:3,value:'ccc'}] -l JsonStream " +
                 "-t JsonStream '$[*]' " +
@@ -51,7 +51,7 @@ class OuterJoinTest {
 
         Deque<Map<String, JsonNode>> result = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-ss joinAs numbers -t JsonDef [{id:1,value:11111},{id:2,value:22222}] -l JsonStream " +
                 "-ss joinAs letters -t JsonDef [{id:1,value:'aaa'},{id:1,value:'AAA'},{id:2,value:'bbb'},{id:2,value:'BBB'}] -l JsonStream " +
                 "-t JsonStream '$[*]' " +
@@ -91,7 +91,7 @@ class OuterJoinTest {
 
         Deque<Map<String, JsonNode>> result = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-ss joinAs numbers -t JsonDef [{id:1,value:11111},{id:2,value:22222},{id:3,value:33333}] -l JsonStream " +
                 "-ss joinAs upper -t JsonDef [{id:1,value:'AAA'},{id:2,value:'BBB'},{id:3,value:'CCC'}] -l JsonStream " +
                 "-ss joinAs lower -t JsonDef [{id:1,value:'aaa'},{id:2,value:'bbb'},{id:3,value:'ccc'}] -l JsonStream " +
@@ -133,7 +133,7 @@ class OuterJoinTest {
 
         Deque<Map<String, JsonNode>> result = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-ss joinAs numbers -t JsonDef [{id:1,value:11111},{id:2,value:22222}] -l JsonStream " +
                 "-ss joinAs letters -t JsonDef [{id:2,value:'bbb'},{id:3,value:'ccc'}] -l JsonStream " +
                 "-t JsonStream '$[*]' " +
@@ -168,7 +168,7 @@ class OuterJoinTest {
 
         Deque<Map<String, Object>> result = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-ss joinAs numbers -t JsonDef [{id:1,value:11111},{id:2,value:22222}] -l JsonStream " +
                 "-ss joinAs letters -t JsonDef [{id:1,value:'aaa'},{id:1,value:'AAA'},{id:2,value:'bbb'},{id:2,value:'BBB'}] -l JsonStream " +
                 "-t JsonStream '$[*]' " +

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,7 +15,7 @@ class PeekLinesTest {
         AtomicReference<String> peekResult = new AtomicReference<>();
         AtomicReference<String> fullResult = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/dsv/test.csv " +
                 "-t PeekLines 1 " +
                 "-f " +
@@ -34,7 +34,7 @@ class PeekLinesTest {
         AtomicReference<String> peekResult = new AtomicReference<>();
         AtomicReference<String> fullResult = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/dsv/iso-8859-1.csv " +
                 "-t PeekLines '{lines: 2, bufferSize: 10, charset: \"ISO-8859-1\"}' " +
                 "-f " +

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ class MultiTest {
         Path tempDir = Files.createTempDirectory("gingester-");
         ArrayDeque<Path> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Dir:Repeat 6 " +
                 "-t File:Repeat 6 " +

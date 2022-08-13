@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -62,7 +62,7 @@ class RouteTest {
     @Test
     void testInFlow() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-t RegexRoute \"{'.ello.*': 'Hello', '.*': 'Other'}\" " +
@@ -70,8 +70,8 @@ class RouteTest {
                 "-t Hello:Passthrough");
         
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
         
         assertEquals("Hello, World!", result.get());
     }
@@ -81,7 +81,7 @@ class RouteTest {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +
@@ -98,7 +98,7 @@ class RouteTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +19,7 @@ class CollectAndGetTest {
         AtomicReference<Map<?, ?>> map = new AtomicReference<>();
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-s " +
@@ -41,7 +41,7 @@ class CollectAndGetTest {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/json/array-wrapped-objects.json " +
                 "-t JsonStream $.array[*] " +
                 "-s " +
@@ -57,9 +57,9 @@ class CollectAndGetTest {
                 "-t MapGet map " +
                 "-t JsonSet lookup");
 
-        gingester.attach(results::add);
+        flowBuilder.attach(results::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(3, results.size());
         assertEquals("{\"name\":\"foo\",\"reference\":\"123\",\"lookup\":{\"id\":123,\"message\":\"Hello, World 1!\"}}", results.remove().toString());

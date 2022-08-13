@@ -14,7 +14,7 @@ public final class Main {
 
     public static void main(String[] args) {
         if (args.length > 0 && Arrays.stream(args).noneMatch(s -> s.equals("-h") || s.equals("--help"))) {
-            new Gingester()
+            new FlowBuilder()
                     .setReportIntervalSeconds(2)
                     .cli(args)
                     .run();

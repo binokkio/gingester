@@ -1,6 +1,6 @@
 package b.nana.technology.gingester;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -24,14 +24,14 @@ class SolarSystemTest {
         AtomicReference<Path> planetsPath = new AtomicReference<>();
         AtomicReference<Path> resultsPath = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli(getClass().getResource("/configurations/solar-system.cli"), Map.of(
+        FlowBuilder flowBuilder = new FlowBuilder().cli(getClass().getResource("/configurations/solar-system.cli"), Map.of(
                 "resource", "/data/solar-system.tar.gz",
                 "workDir", tempDir
         ));
-        gingester.attach(paths::add, "UnpackedPaths");
-        gingester.attach(planetsPath::set, "PathSearch");
-        gingester.attach(resultsPath::set, "PathWrite");
-        gingester.run();
+        flowBuilder.attach(paths::add, "UnpackedPaths");
+        flowBuilder.attach(planetsPath::set, "PathSearch");
+        flowBuilder.attach(resultsPath::set, "PathWrite");
+        flowBuilder.run();
 
         assertEquals(tempDir.resolve("solar-system.tar/planets.csv"), planetsPath.get());
 

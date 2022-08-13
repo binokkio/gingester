@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.core.transformers.stash.Fetch;
@@ -53,7 +53,7 @@ class FetchTest {
         AtomicReference<String> resultUp1 = new AtomicReference<>();
         AtomicReference<String> resultUp2 = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Generate hello " +
                 "-s " +
                 "-t Generate world " +

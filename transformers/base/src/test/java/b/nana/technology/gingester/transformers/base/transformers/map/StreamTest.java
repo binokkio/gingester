@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
@@ -15,7 +15,7 @@ class StreamTest {
 
         Set<String> results = new HashSet<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-s -f description " +

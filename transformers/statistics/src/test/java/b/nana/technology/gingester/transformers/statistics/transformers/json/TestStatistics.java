@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.statistics.transformers.json;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +15,13 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t ResourceOpen /basic.csv " +
                 "-t DsvToJson " +
                 "-t JsonStatistics");
 
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
 
         assertEquals(26, result.get().get("index").get("presence").get("count").intValue());
         assertEquals(100, result.get().get("index").get("presence").get("percentage").intValue());
@@ -67,14 +67,14 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-sft ResourceOpen /basic.ndjson " +
                 "-t InputStreamSplit " +
                 "-t InputStreamToJson " +
                 "-stt JsonStatistics");  // -sft and -stt are unnecessary but here to add some variation to the tests
 
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
 
         assertNotNull(result.get().get("array[*]"));
         assertNull(result.get().get("array[0]"));
@@ -85,14 +85,14 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t ResourceOpen /basic.ndjson " +
                 "-t InputStreamSplit " +
                 "-t InputStreamToJson " +
                 "-t JsonStatistics {array:{arrays:'indexed'}}");
 
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
 
         assertNull(result.get().get("array[*]"));
         assertNotNull(result.get().get("array[0]"));
@@ -104,14 +104,14 @@ class TestStatistics {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t ResourceOpen /nulls.ndjson " +
                 "-t InputStreamSplit " +  // \"s are unnecessary but here to add some variation to the tests
                 "-t InputStreamToJson " +
                 "-t JsonStatistics");
 
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
 
         assertEquals(2, result.get().get("foo").get("numerical").get("count").intValue());
         assertEquals(9, result.get().get("foo").get("numerical").size());

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.regex;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -13,15 +13,15 @@ class FilterTest {
     @Test
     void testFilterIn() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Repeat 11 " +
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-t RegexFilterIn '.*1.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        gingester.attach(result::add);
+        flowBuilder.attach(result::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(List.of("Hello, World 1!", "Hello, World 10!"), List.copyOf(result));
     }
@@ -29,15 +29,15 @@ class FilterTest {
     @Test
     void testFilterOut() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Repeat 11 " +
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-t RegexFilterOut '.*1.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        gingester.attach(result::add);
+        flowBuilder.attach(result::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(
                 List.of(
@@ -58,7 +58,7 @@ class FilterTest {
     @Test
     void testFilterInWithTemplatedRegex() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Repeat 11 " +
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-s " +
@@ -68,9 +68,9 @@ class FilterTest {
                 "-t RegexFilterIn '.*${needle}.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        gingester.attach(result::add);
+        flowBuilder.attach(result::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(List.of("Hello, World 1!", "Hello, World 10!"), List.copyOf(result));
     }

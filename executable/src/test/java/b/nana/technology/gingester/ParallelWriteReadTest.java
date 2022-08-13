@@ -1,6 +1,6 @@
 package b.nana.technology.gingester;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class ParallelWriteReadTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 2 " +
                 "-t Cycle '[\"Hello, World!\", \"Bye, World!\"]' " +
                 "-t ObjectToString " +
@@ -67,7 +67,7 @@ public class ParallelWriteReadTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester()
+        new FlowBuilder()
                 .cli("-t Repeat 2")
                 .cli("-t Cycle '[\"Hello, World!\", \"Bye, World!\"]'")
                 .cli("-t ObjectToString")

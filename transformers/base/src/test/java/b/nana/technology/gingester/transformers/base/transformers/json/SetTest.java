@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ class SetTest {
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t JsonDef '{}' " +
                 "-s record " +
                 "-t JsonDef '{hello:123}' " +
@@ -35,7 +35,7 @@ class SetTest {
         AtomicReference<JsonNode> resultA = new AtomicReference<>();
         AtomicReference<JsonNode> resultB = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t JsonDef '{}' " +
                 "-s a " +
                 "-t JsonDef '{}' " +

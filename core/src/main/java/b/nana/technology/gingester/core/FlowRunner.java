@@ -23,14 +23,14 @@ public final class FlowRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FlowRunner.class);
 
-    private final Gingester gingester;
+    private final FlowBuilder flowBuilder;
     private final LinkedHashMap<String, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<String, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    public FlowRunner(Gingester gingester) {
-        this.gingester = gingester;
+    public FlowRunner(FlowBuilder flowBuilder) {
+        this.flowBuilder = flowBuilder;
     }
 
     /**
@@ -94,7 +94,7 @@ public final class FlowRunner {
 
     private <I, O> void configure() {
 
-        gingester.nodes.forEach((id, node) -> {
+        flowBuilder.nodes.forEach((id, node) -> {
 
             ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>(new ControllerConfigurationInterface());
 
@@ -193,7 +193,7 @@ public final class FlowRunner {
 
                     Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
 
-                    String id = gingester
+                    String id = flowBuilder
                             .splice(transformer, pointer.getId(), linkName)
                             .getLastId();
 
@@ -212,7 +212,7 @@ public final class FlowRunner {
     }
 
     private void align() {
-        gingester.nodes.forEach((id, node) -> {
+        flowBuilder.nodes.forEach((id, node) -> {
             SetupControls setupControls = node.getSetupControls();
             if (setupControls.getRequireOutgoingSync() || setupControls.getRequireOutgoingAsync()) {
                 if (setupControls.getRequireOutgoingSync() && setupControls.getRequireOutgoingAsync()) {
@@ -260,13 +260,13 @@ public final class FlowRunner {
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
 
-        if (gingester.shutdownHook) {
+        if (flowBuilder.shutdownHook) {
             Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
         }
 
         Reporter reporter = null;
-        if (gingester.reportIntervalSeconds > 0) {
-            reporter = new Reporter(gingester.reportIntervalSeconds, controllers.values());
+        if (flowBuilder.reportIntervalSeconds > 0) {
+            reporter = new Reporter(flowBuilder.reportIntervalSeconds, controllers.values());
             reporter.start();
         }
 
@@ -312,7 +312,7 @@ public final class FlowRunner {
         }
 
         public boolean isDebugModeEnabled() {
-            return gingester.debugMode;
+            return flowBuilder.debugMode;
         }
 
         public boolean isExceptionHandler() {

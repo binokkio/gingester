@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.cli;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.Main;
 import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
@@ -42,12 +42,12 @@ public final class CliParser {
 
     private CliParser() {}
 
-    public static void parse(Gingester target, String template, Object parameters) {
+    public static void parse(FlowBuilder target, String template, Object parameters) {
         String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
         parse(target, CliSplitter.split(cli));
     }
 
-    public static void parse(Gingester target, URL template, Object parameters) {
+    public static void parse(FlowBuilder target, URL template, Object parameters) {
         try (InputStream templateStream = template.openStream()) {
             String templateName = template.toString();
             String templateSource = new String(templateStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -58,7 +58,7 @@ public final class CliParser {
         }
     }
 
-    public static void parse(Gingester target, String[] args) {
+    public static void parse(FlowBuilder target, String[] args) {
 
         for (int i = 0; i < args.length; i++) {
 

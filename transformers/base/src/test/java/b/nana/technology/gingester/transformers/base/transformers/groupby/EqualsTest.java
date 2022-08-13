@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.groupby;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -13,7 +13,7 @@ class EqualsTest {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Repeat 25 " +
                 "-t StringDef 'Hello, World ${description?string.computer[0..0]}!' " +
                 "-sft GroupByEquals " +
@@ -21,9 +21,9 @@ class EqualsTest {
                 "-t InputStreamToString");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        gingester.attach(result::add);
+        flowBuilder.attach(result::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(10, result.size());
         assertEquals(25, result.stream().mapToInt(s -> s.split("!").length).sum());
@@ -34,7 +34,7 @@ class EqualsTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-sft GroupByEquals customKey " +  // customKey is type String
                 "-stt InputStreamJoin " +
@@ -52,7 +52,7 @@ class EqualsTest {
 
         // without limit, GroupByEquals does not close a group until its sync-from finish signal (seed in this case)
         ArrayDeque<String> resultsWithoutLimit = new ArrayDeque<>();
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals " +
@@ -68,7 +68,7 @@ class EqualsTest {
 
         // with limit, GroupByEquals will close each group as soon as the limit is reached
         ArrayDeque<String> resultsWithLimit = new ArrayDeque<>();
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals 2 " +

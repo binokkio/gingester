@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.core.template.TemplateParameters;
@@ -70,18 +70,18 @@ class SearchTest {
 
     @Test
     void testCliVariations() {
-        new Gingester().cli("-t PathSearch '*'");
-        new Gingester().cli("-t PathSearch '\"*\"'");
-        new Gingester().cli("-t PathSearch \"'*'\"");
-        new Gingester().cli("-t PathSearch ['hello']");
-        new Gingester().cli("-t PathSearch [hello','world']");
-        new Gingester().cli("-t PathSearch \"['hello', 'world']\"");
-        new Gingester().cli("-t PathSearch '[\"hello\", \"world\"]'");
-        new Gingester().cli("-t PathSearch {globs:'*'}");
-        new Gingester().cli("-t PathSearch {globs:['hello','world']}");
-        new Gingester().cli("-t PathSearch {globs:['hello',{template:'world'}]}");
-        new Gingester().cli("-t PathSearch {globs:[{template:'*'}]}");
-        new Gingester().cli("-t PathSearch {template:'*'}");
-        new Gingester().cli("-t PathSearch ['hello',{template:'world'}]");
+        new FlowBuilder().cli("-t PathSearch '*'");
+        new FlowBuilder().cli("-t PathSearch '\"*\"'");
+        new FlowBuilder().cli("-t PathSearch \"'*'\"");
+        new FlowBuilder().cli("-t PathSearch ['hello']");
+        new FlowBuilder().cli("-t PathSearch [hello','world']");
+        new FlowBuilder().cli("-t PathSearch \"['hello', 'world']\"");
+        new FlowBuilder().cli("-t PathSearch '[\"hello\", \"world\"]'");
+        new FlowBuilder().cli("-t PathSearch {globs:'*'}");
+        new FlowBuilder().cli("-t PathSearch {globs:['hello','world']}");
+        new FlowBuilder().cli("-t PathSearch {globs:['hello',{template:'world'}]}");
+        new FlowBuilder().cli("-t PathSearch {globs:[{template:'*'}]}");
+        new FlowBuilder().cli("-t PathSearch {template:'*'}");
+        new FlowBuilder().cli("-t PathSearch ['hello',{template:'world'}]");
     }
 }

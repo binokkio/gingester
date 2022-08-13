@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -15,7 +15,7 @@ class OnFinishTest {
 
         Deque<Integer> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e Void -t Void -- " +
                 "-sft Repeat 3 " +
                 "-t Monkey " +

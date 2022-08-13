@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -16,7 +16,7 @@ class RemoveTest {
         AtomicReference<String> mapRemoveResult = new AtomicReference<>();
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +
@@ -44,7 +44,7 @@ class RemoveTest {
         AtomicReference<String> mapRemoveResult = new AtomicReference<>();
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public final class Gingester {
+public final class FlowBuilder {
 
     final Map<String, Node> nodes = new LinkedHashMap<>();
     int reportIntervalSeconds;
@@ -29,7 +29,7 @@ public final class Gingester {
     private List<String> syncFrom = List.of("__seed__");
     private List<String> divertFrom = List.of();
 
-    public Gingester() {
+    public FlowBuilder() {
 
         Node elog = new Node();
         elog.id("__elog__");
@@ -45,7 +45,7 @@ public final class Gingester {
         last = seed;
     }
 
-    public Gingester add(Node node) {
+    public FlowBuilder add(Node node) {
 
         String id = getId(node);
         node.id(id);
@@ -61,29 +61,29 @@ public final class Gingester {
         return this;
     }
 
-    public Gingester add(Transformer<?, ?> transformer) {
+    public FlowBuilder add(Transformer<?, ?> transformer) {
         return add(new Node().transformer(transformer));
     }
 
-    public <T> Gingester add(Consumer<T> consumer) {
+    public <T> FlowBuilder add(Consumer<T> consumer) {
         return add(new Node().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
     }
 
-    public <T> Gingester add(BiConsumer<Context, T> biConsumer) {
+    public <T> FlowBuilder add(BiConsumer<Context, T> biConsumer) {
         return add(new Node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
     }
 
-    public <T> Gingester addTo(Consumer<T> consumer, String linkFrom) {
+    public <T> FlowBuilder addTo(Consumer<T> consumer, String linkFrom) {
         linkFrom(linkFrom);
         return add(consumer);
     }
 
-    public <T> Gingester addTo(BiConsumer<Context, T> biConsumer, String linkFrom) {
+    public <T> FlowBuilder addTo(BiConsumer<Context, T> biConsumer, String linkFrom) {
         linkFrom(linkFrom);
         return add(biConsumer);
     }
 
-    public Gingester splice(Transformer<?, ?> transformer, String targetId, String linkName) {
+    public FlowBuilder splice(Transformer<?, ?> transformer, String targetId, String linkName) {
 
         Node node = new Node().transformer(transformer);
         String id = getId(node);
@@ -98,44 +98,44 @@ public final class Gingester {
         return this;
     }
 
-    public Gingester linkTo(String link) {
+    public FlowBuilder linkTo(String link) {
         return linkTo(List.of(link));
     }
 
-    public Gingester linkTo(List<String> links) {
+    public FlowBuilder linkTo(List<String> links) {
         last.setLinks(links);
         linkFrom = List.of();
         return this;
     }
 
-    public Gingester sync() {
+    public FlowBuilder sync() {
         last.setSyncs(syncFrom);
         return this;
     }
 
-    public Gingester exceptTo(String except) {
+    public FlowBuilder exceptTo(String except) {
         return exceptTo(List.of(except));
     }
 
-    public Gingester exceptTo(List<String> excepts) {
+    public FlowBuilder exceptTo(List<String> excepts) {
         last.setExcepts(excepts);
         return this;
     }
 
-    public Gingester linkFrom(String linkFrom) {
+    public FlowBuilder linkFrom(String linkFrom) {
         return linkFrom(List.of(linkFrom));
     }
 
-    public Gingester linkFrom(List<String> linkFrom) {
+    public FlowBuilder linkFrom(List<String> linkFrom) {
         this.linkFrom = linkFrom;
         return this;
     }
 
-    public Gingester syncFrom(String syncFrom) {
+    public FlowBuilder syncFrom(String syncFrom) {
         return syncFrom(List.of(syncFrom));
     }
 
-    public Gingester syncFrom(List<String> syncFrom) {
+    public FlowBuilder syncFrom(List<String> syncFrom) {
         this.syncFrom = syncFrom;
         return this;
     }
@@ -145,7 +145,7 @@ public final class Gingester {
      *
      * @param cli cli instructions template
      */
-    public Gingester cli(String[] cli) {
+    public FlowBuilder cli(String[] cli) {
         CliParser.parse(this, cli);
         return this;
     }
@@ -158,7 +158,7 @@ public final class Gingester {
      *
      * @param cli cli instructions template
      */
-    public Gingester cli(String cli) {
+    public FlowBuilder cli(String cli) {
         cli(cli, Collections.emptyMap());
         return this;
     }
@@ -172,7 +172,7 @@ public final class Gingester {
      * @param cli cli instructions template
      * @param parameters the parameters for the template, e.g. a Java Map
      */
-    public Gingester cli(String cli, Object parameters) {
+    public FlowBuilder cli(String cli, Object parameters) {
         CliParser.parse(this, cli, parameters);
         return this;
     }
@@ -185,7 +185,7 @@ public final class Gingester {
      *
      * @param cli URL for the cli instructions
      */
-    public Gingester cli(URL cli) {
+    public FlowBuilder cli(URL cli) {
         cli(cli, Collections.emptyMap());
         return this;
     }
@@ -199,7 +199,7 @@ public final class Gingester {
      * @param cli URL for the cli instructions
      * @param parameters the parameters for the template, e.g. a Java Map
      */
-    public Gingester cli(URL cli, Object parameters) {
+    public FlowBuilder cli(URL cli, Object parameters) {
         CliParser.parse(this, cli, parameters);
         return this;
     }
@@ -207,12 +207,12 @@ public final class Gingester {
     /**
      * Set report interval in seconds.
      *
-     * When set Gingester will report flow details at the given interval.
+     * When set the FlowRunner will report flow details at the given interval.
      * Set 0 to disable reporting.
      *
      * @param reportIntervalSeconds the interval at which to report, or 0 to disable reporting
      */
-    public Gingester setReportIntervalSeconds(int reportIntervalSeconds) {
+    public FlowBuilder setReportIntervalSeconds(int reportIntervalSeconds) {
         this.reportIntervalSeconds = reportIntervalSeconds;
         return this;
     }
@@ -220,10 +220,10 @@ public final class Gingester {
     /**
      * Enable debug mode.
      *
-     * When enabled Gingester will not optimize transformers out of the context stack and will therefore
+     * When enabled the FlowRunner will not optimize transformers out of the context stack and will therefore
      * produce more detailed transform traces.
      */
-    public Gingester enableDebugMode() {
+    public FlowBuilder enableDebugMode() {
         debugMode = true;
         return this;
     }
@@ -231,10 +231,10 @@ public final class Gingester {
     /**
      * Enable the shutdown hook.
      *
-     * When enabled Gingester will register a virtual-machine shutdown hook. When the hook is triggered
-     * Gingester will attempt to stop the flow gracefully.
+     * When enabled the FlowRunner will register a virtual-machine shutdown hook. When the hook is triggered
+     * the FlowRunner will attempt to stop the flow gracefully.
      */
-    public Gingester enableShutdownHook() {
+    public FlowBuilder enableShutdownHook() {
         shutdownHook = true;
         return this;
     }
@@ -242,7 +242,7 @@ public final class Gingester {
     /**
      * Construct a FlowRunner for the current state of this FlowBuilder.
      *
-     * @return
+     * Further modification of the FlowBuilder is an error leading to undefined behavior.
      */
     public FlowRunner build() {
         return new FlowRunner(this);
@@ -276,22 +276,22 @@ public final class Gingester {
 
 
     @Deprecated
-    public <T> Gingester attach(Consumer<T> consumer) {
+    public <T> FlowBuilder attach(Consumer<T> consumer) {
         return add(consumer);
     }
 
     @Deprecated
-    public <T> Gingester attach(BiConsumer<Context, T> biConsumer) {
+    public <T> FlowBuilder attach(BiConsumer<Context, T> biConsumer) {
         return add(biConsumer);
     }
 
     @Deprecated
-    public <T> Gingester attach(Consumer<T> consumer, String linkFrom) {
+    public <T> FlowBuilder attach(Consumer<T> consumer, String linkFrom) {
         return addTo(consumer, linkFrom);
     }
 
     @Deprecated
-    public <T> Gingester attach(BiConsumer<Context, T> biConsumer, String linkFrom) {
+    public <T> FlowBuilder attach(BiConsumer<Context, T> biConsumer, String linkFrom) {
         return addTo(biConsumer, linkFrom);
     }
 }

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,7 +15,7 @@ class SplitTest {
         AtomicReference<String> a = new AtomicReference<>();
         AtomicReference<String> b = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef a,b,c " +
                 "-t InputStreamSplit , 1 " +
                 "-t OrdinalRoute A B " +

@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.groovy;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,7 +14,7 @@ class FilterTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in.length() > 3'")
                 .attach(result::set)
@@ -28,7 +28,7 @@ class FilterTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in.length() < 3'")
                 .attach(result::set)
@@ -42,7 +42,7 @@ class FilterTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e ExceptionHandler -t ExceptionHandler:Passthrough -- " +
                 "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in'")
