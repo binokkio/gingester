@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.groovy;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,7 +14,7 @@ class EvalTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef Hello " +
                 "-t Eval 'in + \", World!\"'")
                 .attach(result::set)

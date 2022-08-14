@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -16,15 +16,15 @@ class ForceArraysTest {
 
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/xml/arrays-issue.xml " +
                 "-t XmlToJson " +
                 "-t JsonPath $.record[*] " +
                 "-t JsonForceArrays [\"$.container.list.item\"]");
 
-        gingester.attach(results::add);
+        flowBuilder.attach(results::add);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(results.size(), 3);
         assertTrue(results.remove().get("container").get("list").get("item").isArray());
@@ -35,13 +35,13 @@ class ForceArraysTest {
     @Test
     void testForceArraysOnRoot() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t JsonDef {hello:123} " +
                 "-t JsonForceArrays $");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
 
         assertEquals(123, result.get().get(0).get("hello").intValue());
     }

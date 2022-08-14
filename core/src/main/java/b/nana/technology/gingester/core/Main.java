@@ -1,11 +1,9 @@
-package b.nana.technology.gingester.core.cli;
+package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.Gingester;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Arrays;
 
 import static java.util.Objects.requireNonNull;
 
@@ -14,13 +12,13 @@ public final class Main {
     private Main() {}
 
     public static void main(String[] args) {
-        if (args.length > 0 && Arrays.stream(args).noneMatch(s -> s.equals("-h") || s.equals("--help"))) {
-            new Gingester()
+        if (args.length == 0) {
+            printHelp();
+        } else {
+            new FlowBuilder()
                     .setReportIntervalSeconds(2)
                     .cli(args)
                     .run();
-        } else {
-            printHelp();
         }
     }
 

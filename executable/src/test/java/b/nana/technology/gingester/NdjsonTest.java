@@ -1,6 +1,6 @@
 package b.nana.technology.gingester;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -16,7 +16,7 @@ class NdjsonTest {
     @Test
     void test() throws IOException {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
                 "-t InputStreamJoin " +
@@ -25,8 +25,8 @@ class NdjsonTest {
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        gingester.attach(result::set);
-        gingester.run();
+        flowBuilder.attach(result::set);
+        flowBuilder.run();
 
         String test = new String(new GZIPInputStream(new ByteArrayInputStream(result.get())).readAllBytes(), StandardCharsets.UTF_8);
         assertEquals("{\"hello\":\"world\"}\n{\"hello\":\"world\"}\n{\"hello\":\"world\"}\n", test);

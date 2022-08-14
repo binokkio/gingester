@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ class ToJsonTest {
 
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/json/multi-line-objects.jsons " +
                 "-t InputStreamToJson")
                 .attach(results::add)

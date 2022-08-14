@@ -12,7 +12,11 @@ General usage:
         add cli from resource, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
         provide [<parameters>] in JSON syntax to be used as template data
 
-    -d/--debug
+    -d/--divert <id1> [<id2> [...]]
+        remove all transformers downstream of the given ids and have the next transformer added to the flow
+        take their place
+
+    -dm/--debug/--debug-mode
         get more detailed exception information at the cost of performance
 
     -e/--excepts [<link1> [<link2> [...]]]
@@ -28,9 +32,6 @@ General usage:
 
     -gs/--graceful-sigint
         enable graceful handling of sigint
-
-    -h/--help
-        print this help and exit
 
     -l/--links <link1> [<link2> [...]]
         link the previous transformer to the given links, it will not automatically link to the next transformer
@@ -63,7 +64,7 @@ General usage:
         ingest-seed if there are no marks
 
     -t/--transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
-        add transformer to the pipeline
+        add transformer to the flow
         provide [<workers>] to enable async execution for the transformer by the provided number of workers
         provide [<queueSize>] to set the queue size for this transformer
         provide [<maxBatchSize>] to limit the maximum batch size for this transformer

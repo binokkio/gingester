@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.exec;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -12,15 +12,15 @@ class ExecTest {
     @Test
     void test() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Exec '/bin/cat' " +
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Hello, World!", result.get());
     }

@@ -8,7 +8,7 @@
 
     <groupId>b.nana.technology.gingester</groupId>
     <artifactId>gingester</artifactId>
-    <version>0.18.5</version>
+    <version>0.18.6-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -158,7 +158,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/binokkio/gingester</url>
+            <url>https://maven.pkg.github.com/binokkio/flowBuilder</url>
         </repository>
     </distributionManagement>
 

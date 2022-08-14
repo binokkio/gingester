@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.transformers.stash;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +17,7 @@ class StashStringTest {
         AtomicReference<String> hello = new AtomicReference<>();
         AtomicReference<String> bye = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-ss bye 'Bye, World!'")
                 .attach(((BiConsumer<Context, String>) (context, value) -> {

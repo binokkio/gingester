@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -16,7 +16,7 @@ class RemoveTest {
         AtomicReference<String> mapRemoveResult = new AtomicReference<>();
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +
@@ -28,8 +28,8 @@ class RemoveTest {
                 "-t StringDef B " +
                 "-t MapRemove " +
                 "-f")
-                .attach(mapRemoveResult::set, "MapRemove")
                 .attach(result::set)
+                .attach(mapRemoveResult::set, "MapRemove")
                 .run();
 
         assertEquals("Hello, World!", result.get().get("A"));
@@ -44,7 +44,7 @@ class RemoveTest {
         AtomicReference<String> mapRemoveResult = new AtomicReference<>();
         AtomicReference<Map<?, ?>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-s " +
                 "-l A B C " +
@@ -56,8 +56,8 @@ class RemoveTest {
                 "-t StringDef D " +
                 "-t MapRemove " +
                 "-f")
-                .attach(mapRemoveResult::set, "MapRemove")
                 .attach(result::set)
+                .attach(mapRemoveResult::set, "MapRemove")
                 .run();
 
         assertEquals("Hello, World!", result.get().get("A"));

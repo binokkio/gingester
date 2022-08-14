@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.string;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -16,7 +16,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef one,two,three " +
                 "-t StringSplit ,")
                 .attach(results::add)
@@ -30,7 +30,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef ,one,two,,three, " +
                 "-t StringSplit ,")
                 .attach(results::add)
@@ -44,7 +44,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef , " +
                 "-t StringSplit ,")
                 .attach(results::add)
@@ -58,7 +58,7 @@ class SplitTest {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef ,, " +
                 "-t StringSplit ,")
                 .attach(results::add)

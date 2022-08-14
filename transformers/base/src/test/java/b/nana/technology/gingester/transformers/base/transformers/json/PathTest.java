@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,7 +43,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.throw' " +
@@ -60,7 +60,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.not.throw' optional " +
@@ -77,7 +77,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.**.missing.path.should.throw' " +
@@ -94,7 +94,7 @@ class PathTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t JsonDef '{hello:\"world\"}' " +
                 "-t JsonPath '$.**.missing.path.should.not.throw' optional " +

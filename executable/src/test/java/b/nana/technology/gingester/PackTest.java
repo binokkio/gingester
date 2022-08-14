@@ -1,6 +1,6 @@
 package b.nana.technology.gingester;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
@@ -20,14 +20,14 @@ class PackTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-sft Repeat 1000 " +
                 "-t StringToBytes " +
                 "-stt Pack hello.txt -t Compress " +
                 "-t PathWrite " + tempDir.resolve("result-${description}.tar.gz"));
 
-        gingester.run();
+        flowBuilder.run();
 
         for (int i = 0; i < 1000; i++) {
 
@@ -53,14 +53,14 @@ class PackTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-sft StringDef 'Hello, World!' " +
                 "-t Repeat 1000 " +
                 "-t StringToBytes " +
                 "-stt Pack hello-${description}.txt -t Compress " +
                 "-t PathWrite " + tempDir.resolve("result.tar.gz"));
 
-        gingester.run();
+        flowBuilder.run();
 
         Path result = tempDir.resolve("result.tar.gz");
         assertTrue(Files.exists(result));
@@ -86,14 +86,14 @@ class PackTest {
 
         Path tempDir = Files.createTempDirectory("gingester-");
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Repeat 1000 " +
                 "-t StringToBytes " +
                 "-t Pack hello-${description}.txt -t Compress " +
                 "-t PathWrite " + tempDir.resolve("result.tar.gz"));
 
-        gingester.run();
+        flowBuilder.run();
 
         Path result = tempDir.resolve("result.tar.gz");
         assertTrue(Files.exists(result));

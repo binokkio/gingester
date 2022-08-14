@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.base;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,7 +13,7 @@ class MergeTest {
     @Test
     void testBasic() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Passthrough " +
                 "-l A B " +
                 "-t A:StringDef HelloWorld -s hello -l Merge " +
@@ -22,9 +22,9 @@ class MergeTest {
                 "-t StringDef '${hello},${bye}'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("HelloWorld,ByeWorld", result.get());
     }
@@ -32,7 +32,7 @@ class MergeTest {
     @Test
     void testList() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Passthrough " +
                 "-l A B " +
                 "-t A:StringDef HelloWorld -s message -l Merge " +
@@ -45,9 +45,9 @@ class MergeTest {
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("HelloWorld,ByeWorld", result.get());
     }
@@ -57,7 +57,7 @@ class MergeTest {
 
         AtomicReference<List<String>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
                 "-t StringDef hello " +
                 "-s greeting " +
@@ -74,7 +74,7 @@ class MergeTest {
 
         AtomicReference<List<String>> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
                 "-t StringDef hello " +
                 "-s greeting " +
@@ -91,7 +91,7 @@ class MergeTest {
 
         AtomicReference<IllegalStateException> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
                 "-t Repeat 3 " +
                 "-t StringDef hello " +
@@ -110,7 +110,7 @@ class MergeTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new Gingester().cli("" +
+        new FlowBuilder().cli("" +
                 "-t StringDef hello " +
                 "-t Repeat 3 " +
                 "-s greeting " +

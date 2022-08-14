@@ -13,14 +13,14 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-t Generate 'Message from OnPrepare'");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnPrepare", result.get());
     }
@@ -30,14 +30,14 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -47,14 +47,14 @@ class SyncTest {
 
         AtomicReference<Integer> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-stt SyncCounter");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(1, result.get());
     }
@@ -64,16 +64,16 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
                 "-t Throw 'Exception!' -- " +
                 "-stt ExceptionHandler:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -83,7 +83,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -94,9 +94,9 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -106,7 +106,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -117,9 +117,9 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -129,7 +129,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -140,9 +140,9 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -152,7 +152,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-sft Generate \"Hello, World!\" " +
@@ -163,9 +163,9 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -175,7 +175,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
                 "-t Generate \"Hello, World!\" " +
@@ -186,9 +186,9 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -198,7 +198,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-sft Generate \"Hello, World!\" " +
                 "-l A B " +
                 "-t A:Stash -l C " +
@@ -206,9 +206,9 @@ class SyncTest {
                 "-stt C:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }
@@ -218,7 +218,7 @@ class SyncTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e C " +
                 "-sft Generate \"Hello, World!\" " +
                 "-l A B " +
@@ -227,9 +227,9 @@ class SyncTest {
                 "-stt C:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
     }

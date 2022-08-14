@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -19,10 +19,10 @@ class JdbcTransformerTest {
     void test() throws IOException {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
-        new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+        new FlowBuilder().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
-        Gingester reader = new Gingester().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
+        FlowBuilder reader = new FlowBuilder().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
         reader.attach(result::set);
         reader.run();
 
@@ -38,10 +38,10 @@ class JdbcTransformerTest {
     void testFlat() throws IOException {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
-        new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+        new FlowBuilder().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
-        Gingester reader = new Gingester().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test',columnsOnly:true}\"");
+        FlowBuilder reader = new FlowBuilder().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test',columnsOnly:true}\"");
         reader.attach(result::set);
         reader.run();
 
@@ -58,7 +58,7 @@ class JdbcTransformerTest {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t JsonDef \"{a:123,b:true,c:'Hello, World!'}\" " +
                 "-s in " +
                 "-t JdbcDml \"{" +
@@ -68,9 +68,9 @@ class JdbcTransformerTest {
                 "-t Repeat 3 " +
                 "-t JdbcDql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
-        gingester.attach(result::set);
+        flowBuilder.attach(result::set);
 
-        gingester.run();
+        flowBuilder.run();
 
         assertEquals(246, result.get().get("__calculated__").get("a2"));
         assertEquals(123, result.get().get("test").get("a"));
@@ -82,11 +82,11 @@ class JdbcTransformerTest {
     @Test
     void testJdbcTables() {
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t JdbcTables \"{ddl:['CREATE TABLE hello (one INT)','CREATE TABLE world (two INT)']}\"");
 
         ArrayDeque<String> tableNames = new ArrayDeque<>();
-        gingester.attach(tableNames::add).run();
+        flowBuilder.attach(tableNames::add).run();
 
         assertEquals(2, tableNames.size());
         assertTrue(tableNames.contains("hello"));
@@ -97,9 +97,9 @@ class JdbcTransformerTest {
     void testTemplating() throws IOException {
 
         Path tempFile = Files.createTempFile("gingester-", ".sqlite3");
-        new Gingester().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
+        new FlowBuilder().cli("-cr /test.cli {url:'jdbc:sqlite:" + tempFile + "'}").run();
 
-        Gingester gingester = new Gingester().cli("" +
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t StringDef '[=url]' " +
                 "-s jdbcUrl " +
                 "-t Repeat 3 " +
@@ -109,7 +109,7 @@ class JdbcTransformerTest {
                 Map.of("url", "jdbc:sqlite:" + tempFile));
 
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
-        gingester.attach(results::add).run();
+        flowBuilder.attach(results::add).run();
 
         assertEquals(3, results.size());
         assertEquals("{\"test\":{\"a\":123,\"b\":\"Hello, World!\",\"c\":true}}", results.remove().toString());

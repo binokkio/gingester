@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.groovy;
 
-import b.nana.technology.gingester.core.Gingester;
+import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,7 +14,7 @@ class GroovyTest {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
-        new Gingester().cli("-t Groovy 'yield(3 * 3)'")
+        new FlowBuilder().cli("-t Groovy 'yield(3 * 3)'")
                 .attach(result::set)
                 .run();
 
@@ -26,7 +26,7 @@ class GroovyTest {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
-        new Gingester().cli("-t Groovy 'out.accept(context, 3 * 3)'")
+        new FlowBuilder().cli("-t Groovy 'out.accept(context, 3 * 3)'")
                 .attach(result::set)
                 .run();
 
