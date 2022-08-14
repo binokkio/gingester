@@ -32,6 +32,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>b.nana.technology.graphtxt</groupId>
+            <artifactId>graphtxt</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -20,6 +20,7 @@ public final class FlowBuilder {
 
     final Map<String, Node> nodes = new LinkedHashMap<>();
     int reportIntervalSeconds;
+    Boolean seeMode;
     boolean debugMode;
     boolean shutdownHook;
 
@@ -249,6 +250,16 @@ public final class FlowBuilder {
     }
 
     /**
+     * Enable see mode, experimental.
+     *
+     * When enabled the FlowRunner will actually run the flow but print a textual representation of it instead.
+     */
+    public FlowBuilder enableSeeMode(boolean withBridges) {
+        seeMode = withBridges;
+        return this;
+    }
+
+    /**
      * Enable debug mode.
      *
      * When enabled the FlowRunner will not optimize transformers out of the context stack and will therefore
@@ -271,11 +282,11 @@ public final class FlowBuilder {
     }
 
     /**
-     * Construct a FlowRunner for the current state of this FlowBuilder.
+     * Construct a FlowRunner for the current state of this FlowBuilder and run it.
      *
      * Further modification of the FlowBuilder is an error leading to undefined behavior.
      */
-    public FlowRunner build() {
+    public void run() {
 
         if (nodes.values().stream().map(Node::getLinks).map(Map::values).flatMap(Collection::stream).anyMatch("__void__"::equals)) {
             Node void_ = new Node();
@@ -284,11 +295,7 @@ public final class FlowBuilder {
             nodes.put(void_.requireId(), void_);
         }
 
-        return new FlowRunner(this);
-    }
-
-    public void run() {
-        build().run();
+        new FlowRunner(this).run();
     }
 
     private String getId(Node node) {

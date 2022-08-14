@@ -9,6 +9,9 @@ import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import b.nana.technology.graphtxt.GraphTxt;
+import b.nana.technology.graphtxt.Node;
+import b.nana.technology.graphtxt.SimpleNode;
 import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,41 +34,35 @@ public final class FlowRunner {
 
     public FlowRunner(FlowBuilder flowBuilder) {
         this.flowBuilder = flowBuilder;
-
-        configure();
-        setupElog();
-        setupSeed();
-        explore();
-        align();
-        initialize();
     }
 
     public void run() {
 
-        controllers.values().forEach(Controller::open);
-        phaser.awaitAdvance(0);
+        if (flowBuilder.seeMode != null) {
 
-        if (flowBuilder.shutdownHook) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+            configure();
+            setupElog();
+            setupSeed();
+            if (flowBuilder.seeMode) explore();
+
+            List<Node> nodes = flowBuilder.nodes.values().stream()
+                    .map(node -> SimpleNode.of(
+                            node.requireId(),
+                            Stream.concat(node.getLinks().values().stream(), node.getExcepts().stream()).collect(Collectors.toList())))
+                    .collect(Collectors.toList());
+
+            GraphTxt graphTxt = new GraphTxt(nodes);
+
+            System.out.println(graphTxt.getText());
+        } else {
+            configure();
+            setupElog();
+            setupSeed();
+            explore();
+            align();
+            initialize();
+            start();
         }
-
-        Reporter reporter = null;
-        if (flowBuilder.reportIntervalSeconds > 0) {
-            reporter = new Reporter(flowBuilder.reportIntervalSeconds, controllers.values());
-            reporter.start();
-        }
-
-        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
-        Context seed = Context.newSeedContext(seedController);
-        seedController.accept(new Batch<>(seed, "seed signal"));
-        seedController.finish(null, seed);
-
-        phaser.awaitAdvance(1);
-        phaser.awaitAdvance(2);
-
-        if (reporter != null) reporter.stop();
-
-        stopping.set(true);  // set stopping true, flow stopped naturally
     }
 
     /**
@@ -154,6 +151,7 @@ public final class FlowRunner {
         seedLinks.addAll(noIncoming.isEmpty() ? configurations.keySet() : noIncoming);  // link seed with everything if noIncoming is empty for circular route detection
         seedLinks.remove("__seed__");
         seedConfiguration.links(seedLinks);
+        flowBuilder.nodes.get("__seed__").setLinks(seedLinks);
     }
 
     private void explore() {
@@ -271,6 +269,34 @@ public final class FlowRunner {
         controllers.values().forEach(Controller::discoverIncoming);
         controllers.values().forEach(Controller::discoverDownstream);
         controllers.values().forEach(Controller::discoverSyncs);
+    }
+
+    private void start() {
+
+        controllers.values().forEach(Controller::open);
+        phaser.awaitAdvance(0);
+
+        if (flowBuilder.shutdownHook) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+        }
+
+        Reporter reporter = null;
+        if (flowBuilder.reportIntervalSeconds > 0) {
+            reporter = new Reporter(flowBuilder.reportIntervalSeconds, controllers.values());
+            reporter.start();
+        }
+
+        Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get("__seed__");
+        Context seed = Context.newSeedContext(seedController);
+        seedController.accept(new Batch<>(seed, "seed signal"));
+        seedController.finish(null, seed);
+
+        phaser.awaitAdvance(1);
+        phaser.awaitAdvance(2);
+
+        if (reporter != null) reporter.stop();
+
+        stopping.set(true);  // set stopping true, flow stopped naturally
     }
 
     public class ControllerConfigurationInterface {

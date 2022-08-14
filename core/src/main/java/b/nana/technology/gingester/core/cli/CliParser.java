@@ -83,6 +83,13 @@ public final class CliParser {
                     target.setReportIntervalSeconds(Integer.parseInt(args[++i]));
                     break;
 
+                case "--see":
+                    if (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
+                        target.enableSeeMode(Boolean.parseBoolean(args[++i]));
+                    else
+                        target.enableSeeMode(false);
+                    break;
+
                 case "-d":
                 case "--divert":
                     List<String> from = new ArrayList<>();
