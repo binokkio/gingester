@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FetchTest {
 
     @Test
-    void testSimple() throws Exception {
+    void testSimple() {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
@@ -29,7 +29,7 @@ class FetchTest {
     }
 
     @Test
-    void testFetchNameParsing() throws Exception {
+    void testFetchNameParsing() {
 
         AtomicReference<Object> result = new AtomicReference<>();
 
@@ -60,11 +60,32 @@ class FetchTest {
                 "-s " +
                 "-f ^1 " +
                 "-f ^2")
-                .attach(resultUp1::set, "Fetch")
-                .attach(resultUp2::set, "Fetch_1")
+                .addTo(resultUp1::set, "Fetch")
+                .addTo(resultUp2::set, "Fetch_1")
                 .run();
 
         assertEquals("world", resultUp1.get());
         assertEquals("hello", resultUp2.get());
+    }
+
+    @Test
+    void testFetchOptional() {
+
+        AtomicReference<String> resultHit = new AtomicReference<>();
+        AtomicReference<String> resultMiss = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef hello " +
+                "-s hit " +
+                "-l Hit Miss " +
+                "-t Hit:Fetch hit optional " +
+                "-- " +
+                "-t Miss:Fetch miss optional")
+                .addTo(resultHit::set, "Hit")
+                .addTo(resultMiss::set, "Miss")
+                .run();
+
+        assertEquals("hello", resultHit.get());
+        assertNull(resultMiss.get());
     }
 }

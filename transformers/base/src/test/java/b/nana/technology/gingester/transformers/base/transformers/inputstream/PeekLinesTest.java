@@ -20,8 +20,8 @@ class PeekLinesTest {
                 "-t PeekLines 1 " +
                 "-f " +
                 "-t InputStreamToString")
-                .attach(peekResult::set, "PeekLines")
-                .attach(fullResult::set, "InputStreamToString")
+                .addTo(peekResult::set, "PeekLines")
+                .addTo(fullResult::set, "InputStreamToString")
                 .run();
 
         assertEquals("a,b,c", peekResult.get());
@@ -39,8 +39,8 @@ class PeekLinesTest {
                 "-t PeekLines '{lines: 2, bufferSize: 10, charset: \"ISO-8859-1\"}' " +
                 "-f " +
                 "-t InputStreamToString")
-                .attach(peekResult::set, "PeekLines")
-                .attach(fullResult::set)
+                .addTo(peekResult::set, "PeekLines")
+                .add(fullResult::set)
                 .run();
 
         assertEquals("id,character\n1,ä", peekResult.get());

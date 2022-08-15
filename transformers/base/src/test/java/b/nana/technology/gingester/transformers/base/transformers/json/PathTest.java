@@ -49,7 +49,7 @@ class PathTest {
                 "-t JsonPath '$.missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertNotNull(result.get());
@@ -66,7 +66,7 @@ class PathTest {
                 "-t JsonPath '$.missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertNull(result.get());
@@ -83,7 +83,7 @@ class PathTest {
                 "-t JsonPath '$.**.missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertNotNull(result.get());
@@ -100,7 +100,7 @@ class PathTest {
                 "-t JsonPath '$.**.missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertNull(result.get());

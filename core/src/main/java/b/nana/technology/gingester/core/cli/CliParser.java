@@ -83,11 +83,10 @@ public final class CliParser {
                     target.setReportIntervalSeconds(Integer.parseInt(args[++i]));
                     break;
 
-                case "--see":
-                    if (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
-                        target.enableSeeMode(Boolean.parseBoolean(args[++i]));
-                    else
-                        target.enableSeeMode(false);
+                case "-v":
+                case "--view":
+                    boolean viewBridges = i + 1 < args.length && !args[i + 1].matches("[+-].*") && Boolean.parseBoolean(args[++i]);
+                    target.setGoal(viewBridges ? FlowBuilder.Goal.VIEW_BRIDGES : FlowBuilder.Goal.VIEW);
                     break;
 
                 case "-d":

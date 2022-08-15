@@ -25,7 +25,7 @@ class NdjsonTest {
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         String test = new String(new GZIPInputStream(new ByteArrayInputStream(result.get())).readAllBytes(), StandardCharsets.UTF_8);

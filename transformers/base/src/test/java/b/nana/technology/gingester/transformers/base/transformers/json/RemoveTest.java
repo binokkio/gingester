@@ -18,7 +18,7 @@ class RemoveTest {
                 "-t JsonRemove $.bye");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("world b", result.get().textValue());
@@ -32,7 +32,7 @@ class RemoveTest {
                 "-s -t JsonRemove $.bye -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertTrue(result.get().has("hello"));
@@ -47,7 +47,7 @@ class RemoveTest {
                 "-s -t JsonRemove $.nested.bar -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertTrue(result.get().has("hello"));

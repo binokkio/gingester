@@ -23,7 +23,7 @@ class OuterJoinTest {
                 "-s value " +
                 "-t JsonPath '$.id' " +
                 "-t OuterJoin")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         List<Map<String, JsonNode>> sorted = result.stream()
@@ -58,7 +58,7 @@ class OuterJoinTest {
                 "-s value " +
                 "-t JsonPath '$.id' " +
                 "-t OuterJoin")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         List<Map<String, JsonNode>> sorted = result.stream()
@@ -99,7 +99,7 @@ class OuterJoinTest {
                 "-s value " +
                 "-t JsonPath '$.id' " +
                 "-t OuterJoin")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         List<Map<String, JsonNode>> sorted = result.stream()
@@ -140,7 +140,7 @@ class OuterJoinTest {
                 "-s value " +
                 "-t JsonPath '$.id' " +
                 "-t OuterJoin")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         List<Map<String, JsonNode>> sorted = result.stream()
@@ -175,7 +175,7 @@ class OuterJoinTest {
                 "-s value " +
                 "-t JsonPath '$.id' " +
                 "-t OuterJoin letters")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         List<Map<String, Object>> sorted = result.stream()

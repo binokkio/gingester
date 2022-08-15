@@ -19,7 +19,7 @@ class FilterTest {
                 "-t RegexFilterIn '.*1.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.attach(result::add);
+        flowBuilder.add(result::add);
 
         flowBuilder.run();
 
@@ -35,7 +35,7 @@ class FilterTest {
                 "-t RegexFilterOut '.*1.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.attach(result::add);
+        flowBuilder.add(result::add);
 
         flowBuilder.run();
 
@@ -68,7 +68,7 @@ class FilterTest {
                 "-t RegexFilterIn '.*${needle}.*'");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.attach(result::add);
+        flowBuilder.add(result::add);
 
         flowBuilder.run();
 

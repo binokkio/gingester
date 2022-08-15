@@ -19,7 +19,7 @@ class FetchOutputTypeTest {
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -36,7 +36,7 @@ class FetchOutputTypeTest {
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -53,7 +53,7 @@ class FetchOutputTypeTest {
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -70,7 +70,7 @@ class FetchOutputTypeTest {
                 "-t StringAppend '!'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 

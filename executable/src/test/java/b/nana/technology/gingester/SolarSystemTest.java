@@ -28,9 +28,9 @@ class SolarSystemTest {
                 "resource", "/data/solar-system.tar.gz",
                 "workDir", tempDir
         ));
-        flowBuilder.attach(paths::add, "UnpackedPaths");
-        flowBuilder.attach(planetsPath::set, "PathSearch");
-        flowBuilder.attach(resultsPath::set, "PathWrite");
+        flowBuilder.addTo(paths::add, "UnpackedPaths");
+        flowBuilder.addTo(planetsPath::set, "PathSearch");
+        flowBuilder.addTo(resultsPath::set, "PathWrite");
         flowBuilder.run();
 
         assertEquals(tempDir.resolve("solar-system.tar/planets.csv"), planetsPath.get());

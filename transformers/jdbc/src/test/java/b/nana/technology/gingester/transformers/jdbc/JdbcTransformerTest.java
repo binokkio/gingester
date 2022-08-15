@@ -23,7 +23,7 @@ class JdbcTransformerTest {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
         FlowBuilder reader = new FlowBuilder().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test'}\"");
-        reader.attach(result::set);
+        reader.add(result::set);
         reader.run();
 
         Map<String, ?> container = result.get().get("test");
@@ -42,7 +42,7 @@ class JdbcTransformerTest {
 
         AtomicReference<Map<String, Map<String, ?>>> result = new AtomicReference<>();
         FlowBuilder reader = new FlowBuilder().cli("-t JdbcDql \"{url:'jdbc:sqlite:" + tempFile + "',dql:'SELECT * FROM test',columnsOnly:true}\"");
-        reader.attach(result::set);
+        reader.add(result::set);
         reader.run();
 
         Map<String, ?> container = result.get();
@@ -68,7 +68,7 @@ class JdbcTransformerTest {
                 "-t Repeat 3 " +
                 "-t JdbcDql 'SELECT *, a * 2 as a2, a * 3 as \"test.a3\" FROM test'");
 
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -86,7 +86,7 @@ class JdbcTransformerTest {
                 "-t JdbcTables \"{ddl:['CREATE TABLE hello (one INT)','CREATE TABLE world (two INT)']}\"");
 
         ArrayDeque<String> tableNames = new ArrayDeque<>();
-        flowBuilder.attach(tableNames::add).run();
+        flowBuilder.add(tableNames::add).run();
 
         assertEquals(2, tableNames.size());
         assertTrue(tableNames.contains("hello"));
@@ -109,7 +109,7 @@ class JdbcTransformerTest {
                 Map.of("url", "jdbc:sqlite:" + tempFile));
 
         ArrayDeque<JsonNode> results = new ArrayDeque<>();
-        flowBuilder.attach(results::add).run();
+        flowBuilder.add(results::add).run();
 
         assertEquals(3, results.size());
         assertEquals("{\"test\":{\"a\":123,\"b\":\"Hello, World!\",\"c\":true}}", results.remove().toString());

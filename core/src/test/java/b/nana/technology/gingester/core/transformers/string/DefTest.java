@@ -53,7 +53,7 @@ class DefTest {
                 "-t IntDef 123456 " +
                 "-s number " +
                 "-t StringDef 'Hello, ${number}!'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("Hello, 123456!", result.get());
@@ -68,7 +68,7 @@ class DefTest {
                 "-t BooleanDef true " +
                 "-s value " +
                 "-t StringDef 'Hello, ${value}!'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("Hello, true!", result.get());

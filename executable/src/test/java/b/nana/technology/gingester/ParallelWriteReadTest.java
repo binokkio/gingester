@@ -38,7 +38,7 @@ public class ParallelWriteReadTest {
                 "-t Unpack " +
                 "-t InputStreamToString",
                 Map.of("tempDir", tempDir))
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(1000, results.size());
@@ -83,7 +83,7 @@ public class ParallelWriteReadTest {
                 .cli("-s description")
                 .cli("-t Unpack")
                 .cli("-t InputStreamToString")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(1000, results.size());

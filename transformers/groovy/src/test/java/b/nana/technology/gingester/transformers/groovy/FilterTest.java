@@ -17,7 +17,7 @@ class FilterTest {
         new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in.length() > 3'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("Hello, World!", result.get());
@@ -31,7 +31,7 @@ class FilterTest {
         new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in.length() < 3'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertNull(result.get());
@@ -46,7 +46,7 @@ class FilterTest {
                 "-e ExceptionHandler -t ExceptionHandler:Passthrough -- " +
                 "-t StringDef 'Hello, World!' " +
                 "-t Filter 'in'")
-                .attach(result::set, "ExceptionHandler")
+                .addTo(result::set, "ExceptionHandler")
                 .run();
 
         assertEquals("Filter did not return a boolean but returned \"Hello, World!\"", result.get().getMessage());

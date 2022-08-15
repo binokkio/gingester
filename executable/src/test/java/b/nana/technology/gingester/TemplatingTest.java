@@ -21,7 +21,7 @@ class TemplatingTest {
                 "-t MapCollect " +
                 "-s map " +
                 "-t StringDef '<#list map as count, value>${count}: ${value}, </#list>'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("0: A, 1: B, 2: C, ", result.get());

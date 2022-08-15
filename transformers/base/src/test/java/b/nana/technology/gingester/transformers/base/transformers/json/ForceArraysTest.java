@@ -22,7 +22,7 @@ class ForceArraysTest {
                 "-t JsonPath $.record[*] " +
                 "-t JsonForceArrays [\"$.container.list.item\"]");
 
-        flowBuilder.attach(results::add);
+        flowBuilder.add(results::add);
 
         flowBuilder.run();
 
@@ -40,7 +40,7 @@ class ForceArraysTest {
                 "-t JsonForceArrays $");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals(123, result.get().get(0).get("hello").intValue());

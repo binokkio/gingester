@@ -21,7 +21,7 @@ class EqualsTest {
                 "-t InputStreamToString");
 
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.attach(result::add);
+        flowBuilder.add(result::add);
 
         flowBuilder.run();
 
@@ -41,7 +41,7 @@ class EqualsTest {
                 "-t InputStreamDrain " +
                 "-f customKey " +
                 "-t BytesToString")  // Pure StringToBytes must be inserted
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("Hello, World!", result.get());
@@ -58,8 +58,8 @@ class EqualsTest {
                 "-sft GroupByEquals " +
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")
-                .attach(resultsWithoutLimit::add, "Bye")
-                .attach(resultsWithoutLimit::add)
+                .addTo(resultsWithoutLimit::add, "Bye")
+                .add(resultsWithoutLimit::add)
                 .run();
         assertEquals("bye", resultsWithoutLimit.remove());
         assertEquals("bye", resultsWithoutLimit.remove());
@@ -74,8 +74,8 @@ class EqualsTest {
                 "-sft GroupByEquals 2 " +
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")
-                .attach(resultsWithLimit::add, "Bye")
-                .attach(resultsWithLimit::add, "StringAppend")
+                .addTo(resultsWithLimit::add, "Bye")
+                .addTo(resultsWithLimit::add, "StringAppend")
                 .run();
         assertEquals("hello, hello!", resultsWithLimit.remove());
         assertEquals("bye", resultsWithLimit.remove());

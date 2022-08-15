@@ -19,7 +19,7 @@ class Sha1Test {
                         "-t Sha1 " +
                         "-t Base16Encode " +
                         "-t BytesToString")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("0a0a9f2a6772942557ab5355d76af442f8f65e01", result.get());

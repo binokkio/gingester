@@ -19,7 +19,7 @@ class SplitTest {
         new FlowBuilder().cli("" +
                 "-t StringDef one,two,three " +
                 "-t StringSplit ,")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(List.of("one", "two", "three"), new ArrayList<>(results));
@@ -33,7 +33,7 @@ class SplitTest {
         new FlowBuilder().cli("" +
                 "-t StringDef ,one,two,,three, " +
                 "-t StringSplit ,")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(List.of("", "one", "two", "", "three", ""), new ArrayList<>(results));
@@ -47,7 +47,7 @@ class SplitTest {
         new FlowBuilder().cli("" +
                 "-t StringDef , " +
                 "-t StringSplit ,")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(List.of("", ""), new ArrayList<>(results));
@@ -61,7 +61,7 @@ class SplitTest {
         new FlowBuilder().cli("" +
                 "-t StringDef ,, " +
                 "-t StringSplit ,")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(List.of("", "", ""), new ArrayList<>(results));
