@@ -22,7 +22,7 @@ class MergeTest {
                 "-t StringDef '${hello},${bye}'");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -45,7 +45,7 @@ class MergeTest {
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -63,7 +63,7 @@ class MergeTest {
                 "-s greeting " +
                 "-t Merge 'greeting > greetings[]' " +
                 "-f greetings")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(result.get(), List.of("hello", "hello", "hello"));
@@ -80,7 +80,7 @@ class MergeTest {
                 "-s greeting " +
                 "-t Merge 'notStashed > greetings[]?' " +
                 "-f greetings")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(result.get(), List.of());
@@ -99,7 +99,7 @@ class MergeTest {
                 "-t Merge 'notStashed > greetings[]' " +
                 "-- " +
                 "-t ExceptionHandler:Passthrough")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("No values for \"notStashed > greetings[]\"", result.get().getMessage());
@@ -116,7 +116,7 @@ class MergeTest {
                 "-s greeting " +
                 "-t Merge 'greeting' " +
                 "-f greeting")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("hello", result.get());

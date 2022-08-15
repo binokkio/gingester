@@ -20,7 +20,7 @@ class CycleRouteTest {
                 "-t CycleRoute A B " +
                 "-t B:Void -- " +
                 "-t A:Passthrough")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals("0", results.remove());

@@ -30,8 +30,8 @@ class CollectCollectionsTest {
                 "-t BLists:MapCollectLists " +
                 "-t ObjectToJson '{enable:\"ORDER_MAP_ENTRIES_BY_KEYS\"}' " +
                 "-t ResultB:ObjectToString")
-                .attach(resultA::set, "ResultA")
-                .attach(resultB::set, "ResultB")
+                .addTo(resultA::set, "ResultA")
+                .addTo(resultB::set, "ResultB")
                 .run();
 
         assertEquals("{\"0\":[\"0.0\",\"0.1\",\"0.2\"],\"1\":[\"1.0\",\"1.1\",\"1.2\"],\"2\":[\"2.0\",\"2.1\",\"2.2\"]}", resultA.get());
@@ -53,7 +53,7 @@ class CollectCollectionsTest {
                 "-t MapCollectSets " +
                 "-t ObjectToJson '{enable:\"ORDER_MAP_ENTRIES_BY_KEYS\"}' " +
                 "-t ResultB:ObjectToString")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("{\"0\":[0,1,2],\"1\":[0,1,2],\"2\":[0,1,2]}", result.get());

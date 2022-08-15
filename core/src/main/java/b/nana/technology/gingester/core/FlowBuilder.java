@@ -318,26 +318,4 @@ public final class FlowBuilder {
     public String getLastId() {
         return last.requireId();
     }
-
-
-
-    @Deprecated
-    public <T> FlowBuilder attach(Consumer<T> consumer) {
-        return add(consumer);
-    }
-
-    @Deprecated
-    public <T> FlowBuilder attach(BiConsumer<Context, T> biConsumer) {
-        return add(biConsumer);
-    }
-
-    @Deprecated
-    public <T> FlowBuilder attach(Consumer<T> consumer, String linkFrom) {
-        return addTo(consumer, linkFrom);
-    }
-
-    @Deprecated
-    public <T> FlowBuilder attach(BiConsumer<Context, T> biConsumer, String linkFrom) {
-        return addTo(biConsumer, linkFrom);
-    }
 }

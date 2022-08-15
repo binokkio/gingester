@@ -18,8 +18,7 @@ class SyncTest {
                 "-stt OnPrepare " +
                 "-t Generate 'Message from OnPrepare'");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnPrepare", result.get());
@@ -35,8 +34,7 @@ class SyncTest {
                 "-stt OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -52,8 +50,7 @@ class SyncTest {
                 "-stt OnPrepare " +
                 "-stt SyncCounter");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals(1, result.get());
@@ -71,8 +68,7 @@ class SyncTest {
                 "-stt ExceptionHandler:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -94,8 +90,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -117,8 +112,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -140,8 +134,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -163,8 +156,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -186,8 +178,7 @@ class SyncTest {
                 "-t Generate 'Message from OnFinish' " +
                 "-s");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -206,8 +197,7 @@ class SyncTest {
                 "-stt C:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());
@@ -227,8 +217,7 @@ class SyncTest {
                 "-stt C:OnFinish " +
                 "-t Generate 'Message from OnFinish'");
 
-        flowBuilder.attach(result::set);
-
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals("Message from OnFinish", result.get());

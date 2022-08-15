@@ -21,7 +21,7 @@ class CollectAndStreamTest {
                 "-t StringDef '${letter}-${Repeat.description}' " +
                 "-t ListCollect " +
                 "-t ListStream")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         assertEquals("A-0", result.remove());

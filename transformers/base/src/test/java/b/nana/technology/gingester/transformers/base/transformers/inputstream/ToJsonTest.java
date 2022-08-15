@@ -18,7 +18,7 @@ class ToJsonTest {
         new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/json/multi-line-objects.jsons " +
                 "-t InputStreamToJson")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals("[1,2,3,4]", results.remove().toString());

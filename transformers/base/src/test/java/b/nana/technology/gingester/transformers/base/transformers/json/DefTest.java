@@ -23,7 +23,7 @@ class DefTest {
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-t StringAsJsonNode " +
                 "-t JsonAdd")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(2, results.size());

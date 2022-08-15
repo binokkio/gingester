@@ -17,7 +17,7 @@ class EvalTest {
         new FlowBuilder().cli("" +
                 "-t StringDef Hello " +
                 "-t Eval 'in + \", World!\"'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("Hello, World!", result.get());

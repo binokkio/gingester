@@ -18,7 +18,7 @@ class CountCollectTest {
                 "-sft Repeat 2 " +
                 "-t Repeat 1000 " +
                 "-stt CountCollect")
-                .attach(result::add)
+                .add(result::add)
                 .run();
 
         assertEquals(2, result.size());

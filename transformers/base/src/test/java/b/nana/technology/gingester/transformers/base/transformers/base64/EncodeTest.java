@@ -18,7 +18,7 @@ class EncodeTest {
                 "-t StringDef 'Hello, World!' " +
                 "-t Base64Encode " +
                 "-t BytesToString")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("SGVsbG8sIFdvcmxkIQ==", result.get());
@@ -33,7 +33,7 @@ class EncodeTest {
                 "-t StringDef 'Hello, World!' " +
                 "-t Base64Encode 8 " +
                 "-t BytesToString")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("SGVsbG8s\r\nIFdvcmxk\r\nIQ==", result.get());

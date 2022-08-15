@@ -21,7 +21,7 @@ class StreamTest {
                 "-s -f description " +
                 "-t MapCollect " +
                 "-t MapStream")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(3, results.size());

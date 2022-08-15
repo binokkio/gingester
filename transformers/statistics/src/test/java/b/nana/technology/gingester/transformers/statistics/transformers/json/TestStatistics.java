@@ -20,7 +20,7 @@ class TestStatistics {
                 "-t DsvToJson " +
                 "-t JsonStatistics");
 
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals(26, result.get().get("index").get("presence").get("count").intValue());
@@ -73,7 +73,7 @@ class TestStatistics {
                 "-t InputStreamToJson " +
                 "-stt JsonStatistics");  // -sft and -stt are unnecessary but here to add some variation to the tests
 
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertNotNull(result.get().get("array[*]"));
@@ -91,7 +91,7 @@ class TestStatistics {
                 "-t InputStreamToJson " +
                 "-t JsonStatistics {array:{arrays:'indexed'}}");
 
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertNull(result.get().get("array[*]"));
@@ -110,7 +110,7 @@ class TestStatistics {
                 "-t InputStreamToJson " +
                 "-t JsonStatistics");
 
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
 
         assertEquals(2, result.get().get("foo").get("numerical").get("count").intValue());

@@ -70,7 +70,7 @@ class RouteTest {
                 "-t Hello:Passthrough");
         
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
         flowBuilder.run();
         
         assertEquals("Hello, World!", result.get());
@@ -87,7 +87,7 @@ class RouteTest {
                 "-t JsonToString " +
                 "-t RegexRoute '{\".\":\"Target\"}' " +
                 "-t Target:Passthrough")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("world", result.get().get("hello").asText());
@@ -104,7 +104,7 @@ class RouteTest {
                 "-t JsonToString " +
                 "-t RegexRoute '{\".\":\"Target\"}' " +
                 "-t Target:StringAppend '!'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals("{\"hello\":\"world\"}!", result.get());

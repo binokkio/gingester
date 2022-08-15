@@ -37,7 +37,7 @@ class MultiTest {
                 "-t PathDef [=tempDir] " +
                 "-t PathDelete true",
                 Map.of("tempDir", tempDir))
-                .attach(results::add, "PathFilterExistsIn")
+                .addTo(results::add, "PathFilterExistsIn")
                 .run();
 
         assertFalse(Files.exists(tempDir));

@@ -21,7 +21,7 @@ class OnFinishTest {
                 "-t Monkey " +
                 "-stt OnFinish flawless " +
                 "-f description")
-                .attach(results::add)
+                .add(results::add)
                 .run();
 
         assertEquals(0, results.remove());

@@ -15,7 +15,7 @@ class GroovyTest {
         AtomicReference<Object> result = new AtomicReference<>();
 
         new FlowBuilder().cli("-t Groovy 'yield(3 * 3)'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(9, result.get());
@@ -27,7 +27,7 @@ class GroovyTest {
         AtomicReference<Object> result = new AtomicReference<>();
 
         new FlowBuilder().cli("-t Groovy 'out.accept(context, 3 * 3)'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(9, result.get());

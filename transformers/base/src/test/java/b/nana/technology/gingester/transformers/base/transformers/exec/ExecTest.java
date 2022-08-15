@@ -18,7 +18,7 @@ class ExecTest {
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 

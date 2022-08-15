@@ -19,7 +19,7 @@ class FetchMapTest {
                 "-ss hello hello " +
                 "-ss world world " +
                 "-t FetchMap hello world")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(2, result.get().size());
@@ -36,7 +36,7 @@ class FetchMapTest {
                 "-t StringDef hello -s " +
                 "-t StringDef world -s " +
                 "-t FetchMap '^2 > greeting' '^1 > target'")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(2, result.get().size());

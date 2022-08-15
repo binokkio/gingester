@@ -25,8 +25,8 @@ class ExceptionHandlingTest {
         ArrayDeque<String> results = new ArrayDeque<>();
         ArrayDeque<Exception> exceptions = new ArrayDeque<>();
 
-        flowBuilder.attach(results::add, "Monkey");
-        flowBuilder.attach(exceptions::add, "ExceptionHandler");
+        flowBuilder.addTo(results::add, "Monkey");
+        flowBuilder.addTo(exceptions::add, "ExceptionHandler");
 
         flowBuilder.run();
 
@@ -48,7 +48,7 @@ class ExceptionHandlingTest {
                 "-t ResultHandler:Passthrough");
 
         AtomicReference<Context> result = new AtomicReference<>();
-        flowBuilder.attach((c, e) -> result.set(c));
+        flowBuilder.add((c, e) -> result.set(c));
 
         flowBuilder.run();
 
@@ -68,7 +68,7 @@ class ExceptionHandlingTest {
                 "-t Generate hello " +
                 "-t Monkey 1 -- " +
                 "-t ExceptionHandler:Void")
-                .attach((context, object) -> result.set(context), "__seed__")
+                .addTo((context, object) -> result.set(context), "__seed__")
                 .run();
 
         assertFalse(result.get().isFlawless());

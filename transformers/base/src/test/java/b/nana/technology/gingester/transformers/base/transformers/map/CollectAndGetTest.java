@@ -28,8 +28,8 @@ class CollectAndGetTest {
                 "-s map " +
                 "-t IntDef 1 " +
                 "-t MapGet")
-                .attach(map::set, "MapCollect")
-                .attach(result::set, "MapGet")
+                .addTo(map::set, "MapCollect")
+                .addTo(result::set, "MapGet")
                 .run();
 
         assertEquals(3, map.get().size());
@@ -57,7 +57,7 @@ class CollectAndGetTest {
                 "-t MapGet map " +
                 "-t JsonSet lookup");
 
-        flowBuilder.attach(results::add);
+        flowBuilder.add(results::add);
 
         flowBuilder.run();
 

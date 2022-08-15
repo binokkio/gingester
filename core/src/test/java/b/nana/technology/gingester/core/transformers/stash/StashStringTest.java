@@ -20,7 +20,7 @@ class StashStringTest {
         new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-ss bye 'Bye, World!'")
-                .attach(((BiConsumer<Context, String>) (context, value) -> {
+                .add(((BiConsumer<Context, String>) (context, value) -> {
                     hello.set(value);
                     bye.set((String) context.require("bye"));
                 }))

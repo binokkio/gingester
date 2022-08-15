@@ -14,7 +14,7 @@ class DiamondRouteTest {
         ArrayDeque<String> results = new ArrayDeque<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.attach(results::add);
+        flowBuilder.add(results::add);
         flowBuilder.run();
 
         assertEquals(2, results.size());
@@ -23,12 +23,12 @@ class DiamondRouteTest {
     }
 
     @Test
-    void testAttachToTarget() {
+    void testAddToTarget() {
 
         ArrayDeque<String> results = new ArrayDeque<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.attach(results::add, "Emphasize");
+        flowBuilder.addTo(results::add, "Emphasize");
         flowBuilder.run();
 
         assertEquals(1, results.size());
@@ -36,14 +36,14 @@ class DiamondRouteTest {
     }
 
     @Test
-    void testAttachToTargets() {
+    void testAddToTargets() {
 
         ArrayDeque<String> emphasizeResults = new ArrayDeque<>();
         ArrayDeque<String> questionResults = new ArrayDeque<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("-cr hello-world-diamond.cli");
-        flowBuilder.attach(emphasizeResults::add, "Emphasize");
-        flowBuilder.attach(questionResults::add, "Question");
+        flowBuilder.addTo(emphasizeResults::add, "Emphasize");
+        flowBuilder.addTo(questionResults::add, "Question");
         flowBuilder.run();
 
         assertEquals(1, emphasizeResults.size());

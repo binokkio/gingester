@@ -23,7 +23,7 @@ class BridgeTest {
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -44,7 +44,7 @@ class BridgeTest {
                 "-t InputStreamToBytes");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -64,7 +64,7 @@ class BridgeTest {
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 
@@ -81,7 +81,7 @@ class BridgeTest {
                 "-t InputStreamToString");
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.attach(result::set);
+        flowBuilder.add(result::set);
 
         flowBuilder.run();
 

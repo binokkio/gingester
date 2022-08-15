@@ -29,11 +29,11 @@ class ExceptionHandlingTest {
                         "-e ExceptionHandler " +
                         "-t Three:Passthrough " +
                         "-t Monkey")
-                .attach((c, i) -> exceptionHandlerIsFlawless.add(c.isFlawless()), "ExceptionHandler")
-                .attach((c, i) -> exceptionHandlerDownstreamIsFlawless.add(c.isFlawless()), "ExceptionHandlerDownstream")
-                .attach((c, i) -> oneIsFlawless.add(c.isFlawless()), "One")
-                .attach((c, i) -> twoIsFlawless.add(c.isFlawless()), "Two")
-                .attach((c, i) -> threeIsFlawless.add(c.isFlawless()), "Three")
+                .addTo((c, i) -> exceptionHandlerIsFlawless.add(c.isFlawless()), "ExceptionHandler")
+                .addTo((c, i) -> exceptionHandlerDownstreamIsFlawless.add(c.isFlawless()), "ExceptionHandlerDownstream")
+                .addTo((c, i) -> oneIsFlawless.add(c.isFlawless()), "One")
+                .addTo((c, i) -> twoIsFlawless.add(c.isFlawless()), "Two")
+                .addTo((c, i) -> threeIsFlawless.add(c.isFlawless()), "Three")
                 .run();
 
         assertEquals(List.of(true), exceptionHandlerIsFlawless);

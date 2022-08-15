@@ -21,8 +21,8 @@ class SplitTest {
                 "-t OrdinalRoute A B " +
                 "-t A:InputStreamToString -- " +
                 "-t B:InputStreamToString --")
-                .attach(a::set, "A")
-                .attach(b::set, "B")
+                .addTo(a::set, "A")
+                .addTo(b::set, "B")
                 .run();
 
         assertEquals("a", a.get());

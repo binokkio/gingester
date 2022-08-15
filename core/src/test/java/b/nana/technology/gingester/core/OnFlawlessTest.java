@@ -14,6 +14,8 @@ class OnFlawlessTest {
     @Test
     void testTwoOutOfThree() {
 
+        ArrayDeque<Integer> results = new ArrayDeque<>();
+
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t Void -- " +
                 "-t Repeat 3 " +
@@ -23,9 +25,7 @@ class OnFlawlessTest {
                 "-stt OnFinish flawless " +
                 "-f description");
 
-        ArrayDeque<Integer> results = new ArrayDeque<>();
-        flowBuilder.attach(results::add);
-
+        flowBuilder.add(results::add);
         flowBuilder.run();
 
         assertEquals(0, results.remove());
@@ -45,8 +45,8 @@ class OnFlawlessTest {
                 "-l SeedFlawless SeedFlawed " +
                 "-t SeedFlawless:OnFinish flawless -- " +
                 "-t SeedFlawed:OnFinish flawed -- ")
-                .attach(seedFlawlessResult::set, "SeedFlawless")
-                .attach(seedFlawedResult::set, "SeedFlawed")
+                .addTo(seedFlawlessResult::set, "SeedFlawless")
+                .addTo(seedFlawedResult::set, "SeedFlawed")
                 .run();
 
         assertNull(seedFlawlessResult.get());
@@ -80,14 +80,14 @@ class OnFlawlessTest {
                 "-sf Passthrough -stt PassthroughFlawed:OnFinish flawed -t PassthroughFlawedResult:Generate '${description}' -- " +
                 "-sf Monkey -stt MonkeyFlawless:OnFinish flawless -t MonkeyFlawlessResult:Generate '${description}' -- " +
                 "-sf Monkey -stt MonkeyFlawed:OnFinish flawed -t MonkeyFlawedResult:Generate '${description}' -- ")
-                .attach(seedFlawlessResults::add, "SeedFlawlessResult")
-                .attach(seedFlawedResults::add, "SeedFlawedResult")
-                .attach(repeatFlawlessResults::add, "RepeatFlawlessResult")
-                .attach(repeatFlawedResults::add, "RepeatFlawedResult")
-                .attach(passthroughFlawlessResults::add, "PassthroughFlawlessResult")
-                .attach(passthroughFlawedResults::add, "PassthroughFlawedResult")
-                .attach(monkeyFlawlessResults::add, "MonkeyFlawlessResult")
-                .attach(monkeyFlawedResults::add, "MonkeyFlawedResult")
+                .addTo(seedFlawlessResults::add, "SeedFlawlessResult")
+                .addTo(seedFlawedResults::add, "SeedFlawedResult")
+                .addTo(repeatFlawlessResults::add, "RepeatFlawlessResult")
+                .addTo(repeatFlawedResults::add, "RepeatFlawedResult")
+                .addTo(passthroughFlawlessResults::add, "PassthroughFlawlessResult")
+                .addTo(passthroughFlawedResults::add, "PassthroughFlawedResult")
+                .addTo(monkeyFlawlessResults::add, "MonkeyFlawlessResult")
+                .addTo(monkeyFlawedResults::add, "MonkeyFlawedResult")
                 .run();
 
         assertEquals(1, seedFlawlessResults.size());  // 1 because the monkey exceptions don't bubble past Repeat

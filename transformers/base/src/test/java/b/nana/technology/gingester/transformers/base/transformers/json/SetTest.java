@@ -22,7 +22,7 @@ class SetTest {
                 "-t JsonSet greeting " +
                 "-t JsonDef '{world:234}' " +
                 "-t JsonSet greeted")
-                .attach(result::set)
+                .add(result::set)
                 .run();
 
         assertEquals(123, result.get().get("greeting").get("hello").asInt());
@@ -46,8 +46,8 @@ class SetTest {
                 "-t JsonSet greeted b " +
                 "-t FetchA:Fetch a " +
                 "-t FetchB:Fetch b")
-                .attach(resultA::set, "FetchA")
-                .attach(resultB::set, "FetchB")
+                .addTo(resultA::set, "FetchA")
+                .addTo(resultB::set, "FetchB")
                 .run();
 
         assertEquals(123, resultA.get().get("greeting").get("hello").asInt());
