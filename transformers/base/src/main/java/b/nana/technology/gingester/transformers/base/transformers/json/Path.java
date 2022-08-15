@@ -67,7 +67,6 @@ public class Path implements Transformer<JsonNode, JsonNode> {
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
-
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
