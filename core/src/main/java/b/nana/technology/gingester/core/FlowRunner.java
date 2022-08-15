@@ -38,12 +38,18 @@ public final class FlowRunner {
 
     public void run() {
 
-        if (flowBuilder.seeMode != null) {
+        configure();
+        setupElog();
+        setupSeed();
 
-            configure();
-            setupElog();
-            setupSeed();
-            if (flowBuilder.seeMode) explore();
+        if (flowBuilder.goal != FlowBuilder.Goal.VIEW)
+            explore();
+
+        if (flowBuilder.goal == FlowBuilder.Goal.RUN) {
+            align();
+            initialize();
+            start();
+        } else {
 
             List<Node> nodes = flowBuilder.nodes.values().stream()
                     .map(node -> SimpleNode.of(
@@ -54,14 +60,6 @@ public final class FlowRunner {
             GraphTxt graphTxt = new GraphTxt(nodes);
 
             System.out.println(graphTxt.getText());
-        } else {
-            configure();
-            setupElog();
-            setupSeed();
-            explore();
-            align();
-            initialize();
-            start();
         }
     }
 

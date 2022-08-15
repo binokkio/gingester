@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 public final class FlowBuilder {
 
     final Map<String, Node> nodes = new LinkedHashMap<>();
+    Goal goal = Goal.RUN;
     int reportIntervalSeconds;
-    Boolean seeMode;
     boolean debugMode;
     boolean shutdownHook;
 
@@ -250,13 +250,12 @@ public final class FlowBuilder {
     }
 
     /**
-     * Enable see mode, experimental.
+     * Set the goal for the FlowRunner.
      *
-     * When enabled the FlowRunner will actually run the flow but print a textual representation of it instead.
+     * @param goal the goal
      */
-    public FlowBuilder enableSeeMode(boolean withBridges) {
-        seeMode = withBridges;
-        return this;
+    public void setGoal(Goal goal) {
+        this.goal = goal;
     }
 
     /**
@@ -317,5 +316,11 @@ public final class FlowBuilder {
 
     public String getLastId() {
         return last.requireId();
+    }
+
+    public enum Goal {
+        VIEW,
+        VIEW_BRIDGES,
+        RUN
     }
 }
