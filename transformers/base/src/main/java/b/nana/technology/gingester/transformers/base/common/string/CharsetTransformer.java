@@ -21,7 +21,7 @@ public abstract class CharsetTransformer<I, O> implements Transformer<I, O> {
             case "UTF-16BE": return StandardCharsets.UTF_16BE;
             case "UTF-16LE": return StandardCharsets.UTF_16LE;
             case "UTF-8": return StandardCharsets.UTF_8;
-            default: throw new IllegalArgumentException("No case for " + charsetParameter);
+            default: return Charset.forName(charsetParameter);
         }
     }
 
