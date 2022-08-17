@@ -42,10 +42,10 @@ public final class FlowRunner {
         setupElog();
         setupSeed();
 
-        if (flowBuilder.goal != FlowBuilder.Goal.VIEW)
+        if (flowBuilder.goal != Goal.VIEW)
             explore();
 
-        if (flowBuilder.goal == FlowBuilder.Goal.RUN) {
+        if (flowBuilder.goal == Goal.RUN) {
             align();
             initialize();
             start();
@@ -336,5 +336,11 @@ public final class FlowRunner {
         public boolean isStopping() {
             return stopping.get();
         }
+    }
+
+    public enum Goal {
+        VIEW,
+        VIEW_BRIDGES,
+        RUN
     }
 }

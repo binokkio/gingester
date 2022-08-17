@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.cli;
 
 import b.nana.technology.gingester.core.FlowBuilder;
+import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.Main;
 import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
@@ -86,7 +87,7 @@ public final class CliParser {
                 case "-v":
                 case "--view":
                     boolean viewBridges = i + 1 < args.length && !args[i + 1].matches("[+-].*") && Boolean.parseBoolean(args[++i]);
-                    target.setGoal(viewBridges ? FlowBuilder.Goal.VIEW_BRIDGES : FlowBuilder.Goal.VIEW);
+                    target.setGoal(viewBridges ? FlowRunner.Goal.VIEW_BRIDGES : FlowRunner.Goal.VIEW);
                     break;
 
                 case "-d":

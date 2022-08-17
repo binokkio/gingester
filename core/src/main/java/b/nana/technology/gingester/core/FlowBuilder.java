@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public final class FlowBuilder {
 
     final Map<String, Node> nodes = new LinkedHashMap<>();
-    Goal goal = Goal.RUN;
+    FlowRunner.Goal goal = FlowRunner.Goal.RUN;
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
@@ -254,7 +254,7 @@ public final class FlowBuilder {
      *
      * @param goal the goal
      */
-    public void setGoal(Goal goal) {
+    public void setGoal(FlowRunner.Goal goal) {
         this.goal = goal;
     }
 
@@ -316,11 +316,5 @@ public final class FlowBuilder {
 
     public String getLastId() {
         return last.requireId();
-    }
-
-    public enum Goal {
-        VIEW,
-        VIEW_BRIDGES,
-        RUN
     }
 }
