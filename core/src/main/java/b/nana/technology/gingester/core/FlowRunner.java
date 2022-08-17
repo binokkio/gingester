@@ -42,10 +42,10 @@ public final class FlowRunner {
         setupElog();
         setupSeed();
 
-        if (flowBuilder.goal != FlowBuilder.Goal.VIEW)
+        if (flowBuilder.goal != Goal.VIEW)
             explore();
 
-        if (flowBuilder.goal == FlowBuilder.Goal.RUN) {
+        if (flowBuilder.goal == Goal.RUN) {
             align();
             initialize();
             start();
@@ -198,9 +198,8 @@ public final class FlowRunner {
                 Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
                         .orElseThrow(() -> new IllegalStateException("Transformations from " + upstreamId + " to " + downstreamId + " must be specified"));  // TODO
 
-                if (LOGGER.isDebugEnabled()) {
+                if (LOGGER.isDebugEnabled())
                     LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
-                }
 
                 ControllerConfiguration<?, ?> pointer = upstream;
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
@@ -336,5 +335,11 @@ public final class FlowRunner {
         public boolean isStopping() {
             return stopping.get();
         }
+    }
+
+    public enum Goal {
+        VIEW,
+        VIEW_BRIDGES,
+        RUN
     }
 }
