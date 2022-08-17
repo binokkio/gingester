@@ -89,7 +89,7 @@ class BridgeTest {
     }
 
     @Test
-    void testNoBridgingSolutionFoundThrows() {
+    void testNoBridgingSolutionFoundThrows1() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-t TimeNow " +
@@ -97,5 +97,16 @@ class BridgeTest {
 
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
         assertEquals("Transformations from TimeNow to PathSize must be specified", e.getMessage());
+    }
+
+    @Test
+    void testNoBridgingSolutionFoundThrows2() {
+
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
+                "-t StringDef hello " +
+                "-t PathMove /tmp/foo");
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
+        assertEquals("Transformations from StringDef to PathMove must be specified", e.getMessage());
     }
 }

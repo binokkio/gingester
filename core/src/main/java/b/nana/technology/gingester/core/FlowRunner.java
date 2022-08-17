@@ -198,9 +198,8 @@ public final class FlowRunner {
                 Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
                         .orElseThrow(() -> new IllegalStateException("Transformations from " + upstreamId + " to " + downstreamId + " must be specified"));  // TODO
 
-                if (LOGGER.isDebugEnabled()) {
+                if (LOGGER.isDebugEnabled())
                     LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
-                }
 
                 ControllerConfiguration<?, ?> pointer = upstream;
                 for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {

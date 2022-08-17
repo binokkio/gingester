@@ -154,8 +154,16 @@ public final class TransformerFactory {
                         .flatMap(b -> {
                             Class<?> tailType = TypeResolver.resolveRawArguments(Transformer.class, b.getLast())[1];
                             return PURE_TRANSFORMERS.stream()
-                                    .filter(c -> !b.contains(c))
-                                    .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].isAssignableFrom(tailType))
+                                    .filter(c -> {
+                                        Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, c);
+                                        Class<?> in = types[0];
+                                        Class<?> out = types[1];
+                                        boolean inIsAssignableFromTail = in.isAssignableFrom(tailType);
+                                        boolean outIsANewTypeInBridge = b.stream()
+                                                .map(bc -> TypeResolver.resolveRawArguments(Transformer.class, bc)[1])
+                                                .noneMatch(out::equals);
+                                        return inIsAssignableFromTail && outIsANewTypeInBridge;
+                                    })
                                     .map(c -> {
                                         ArrayDeque<Class<? extends Transformer<?, ?>>> next = new ArrayDeque<>(b);
                                         next.add(c);
