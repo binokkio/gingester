@@ -59,7 +59,7 @@ public final class FlowRunner {
 
             GraphTxt graphTxt = new GraphTxt(nodes);
 
-            System.out.println(graphTxt.getText());
+            System.out.print(graphTxt.getText());
         }
     }
 
