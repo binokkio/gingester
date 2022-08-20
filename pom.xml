@@ -76,6 +76,11 @@
                 <version>2.3.31</version>
             </dependency>
             <dependency>
+                <groupId>com.github.binokkio</groupId>
+                <artifactId>graphtxt</artifactId>
+                <version>v0.0.4</version>
+            </dependency>
+            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j.version}</version>
