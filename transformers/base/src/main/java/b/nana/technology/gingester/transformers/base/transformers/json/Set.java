@@ -6,6 +6,8 @@ import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -16,18 +18,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Example(example = "key target", description = "Set input as \"key\" on what is stashed as \"target\"")
 public final class Set implements Transformer<JsonNode, JsonNode> {
 
-    private final String key;
+    private final Template key;
     private final FetchKey fetchTarget;
 
     public Set(Parameters parameters) {
-        key = parameters.key;
+        key = Context.newTemplate(parameters.key);
         fetchTarget = parameters.target;
     }
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
         ObjectNode objectNode = (ObjectNode) context.require(fetchTarget);
-        objectNode.set(key, in);
+        objectNode.set(key.render(context), in);
         out.accept(context, objectNode);
     }
 
@@ -45,7 +47,7 @@ public final class Set implements Transformer<JsonNode, JsonNode> {
             }
         }
 
-        public String key;
+        public TemplateParameters key;
         public FetchKey target = new FetchKey(1);
     }
 }

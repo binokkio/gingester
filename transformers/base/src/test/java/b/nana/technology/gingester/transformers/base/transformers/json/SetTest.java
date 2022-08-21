@@ -53,4 +53,21 @@ class SetTest {
         assertEquals(123, resultA.get().get("greeting").get("hello").asInt());
         assertEquals(234, resultB.get().get("greeted").get("world").asInt());
     }
+
+    @Test
+    void testKeyTemplate() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-ss key hello " +
+                "-t JsonDef '{}' " +
+                "-s result " +
+                "-t JsonDef '\"world\"' " +
+                "-t JsonSet '${key}'")
+                .add(result::set)
+                .run();
+
+        assertEquals("world", result.get().get("hello").asText());
+    }
 }
