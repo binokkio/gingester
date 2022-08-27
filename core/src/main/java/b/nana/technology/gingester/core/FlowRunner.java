@@ -36,30 +36,36 @@ public final class FlowRunner {
         this.flowBuilder = flowBuilder;
     }
 
-    public void run() {
+    public String render() {
 
         configure();
         setupElog();
         setupSeed();
 
-        if (flowBuilder.goal != Goal.VIEW)
+        if (flowBuilder.goal == Goal.VIEW_BRIDGES) {
             explore();
+        }
 
+        List<Node> nodes = flowBuilder.nodes.values().stream()
+                .map(node -> SimpleNode.of(
+                        node.requireId(),
+                        Stream.concat(node.getLinks().values().stream(), node.getExcepts().stream()).collect(Collectors.toList())))
+                .collect(Collectors.toList());
+
+        return new GraphTxt(nodes).getText();
+    }
+
+    public void run() {
         if (flowBuilder.goal == Goal.RUN) {
+            configure();
+            setupElog();
+            setupSeed();
+            explore();
             align();
             initialize();
             start();
         } else {
-
-            List<Node> nodes = flowBuilder.nodes.values().stream()
-                    .map(node -> SimpleNode.of(
-                            node.requireId(),
-                            Stream.concat(node.getLinks().values().stream(), node.getExcepts().stream()).collect(Collectors.toList())))
-                    .collect(Collectors.toList());
-
-            GraphTxt graphTxt = new GraphTxt(nodes);
-
-            System.out.print(graphTxt.getText());
+            System.out.println(render());
         }
     }
 

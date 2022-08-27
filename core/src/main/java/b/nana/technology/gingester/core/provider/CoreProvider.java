@@ -10,6 +10,7 @@ public final class CoreProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                b.nana.technology.gingester.core.transformers.CliToGraphTxt.class,
                 b.nana.technology.gingester.core.transformers.CycleRoute.class,
                 b.nana.technology.gingester.core.transformers.FinishGate.class,
                 b.nana.technology.gingester.core.transformers.Log.class,
