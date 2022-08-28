@@ -78,7 +78,7 @@
             <dependency>
                 <groupId>com.github.binokkio</groupId>
                 <artifactId>graphtxt</artifactId>
-                <version>v0.0.4</version>
+                <version>v0.0.7</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
