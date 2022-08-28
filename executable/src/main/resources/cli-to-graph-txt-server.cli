@@ -1,0 +1,17 @@
+-r 0
+
+-t HttpServer [=port!8765]
+-e Exception
+
+-t InputStreamToString
+-s cli
+-t PathDef '${cli}'
+
+-t CliToGraphTxt
+-t PathOverwrite '${cli}.gtxt'
+
+-t StringDef 'OK'
+-t HttpRespond --
+
+-t Exception:StringDef 'Not OK'
+-t HttpRespond

@@ -110,6 +110,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.path.OverwriteSync.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Search.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Size.class,
+                b.nana.technology.gingester.transformers.base.transformers.path.Watch.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Write.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.WriteSync.class,
                 b.nana.technology.gingester.transformers.base.transformers.primitive.CountCollect.class,

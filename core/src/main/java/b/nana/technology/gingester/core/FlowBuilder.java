@@ -254,8 +254,9 @@ public final class FlowBuilder {
      *
      * @param goal the goal
      */
-    public void setGoal(FlowRunner.Goal goal) {
+    public FlowBuilder setGoal(FlowRunner.Goal goal) {
         this.goal = goal;
+        return this;
     }
 
     /**
@@ -283,9 +284,22 @@ public final class FlowBuilder {
     /**
      * Construct a FlowRunner for the current state of this FlowBuilder and run it.
      *
-     * Further modification of the FlowBuilder is an error leading to undefined behavior.
+     * Further use of this FlowBuilder is an error leading to undefined behavior.
      */
     public void run() {
+        build().run();
+    }
+
+    /**
+     * Create a plain text representation of the current state of this FlowBuilder.
+     *
+     * Further use of this FlowBuilder is an error leading to undefined behavior.
+     */
+    public String render() {
+        return build().render();
+    }
+
+    private FlowRunner build() {
 
         if (nodes.values().stream().map(Node::getLinks).map(Map::values).flatMap(Collection::stream).anyMatch("__void__"::equals)) {
             Node void_ = new Node();
@@ -294,7 +308,7 @@ public final class FlowBuilder {
             nodes.put(void_.requireId(), void_);
         }
 
-        new FlowRunner(this).run();
+        return new FlowRunner(this);
     }
 
     private String getId(Node node) {
