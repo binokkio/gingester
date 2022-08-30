@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 @Names(1)
-@Example(example = "1000", description = "Yield the first 1000 bytes, stash complete inputstream at `stash`")
+@Example(example = "1000", description = "Yield the first 1000 bytes, stash complete inputstream as `stash`")
 public final class PeekBytes implements Transformer<InputStream, byte[]> {
 
     private final int bufferSize;
@@ -34,7 +34,6 @@ public final class PeekBytes implements Transformer<InputStream, byte[]> {
     public void transform(Context context, InputStream in, Receiver<byte[]> out) throws Exception {
 
         byte[] buffer = reuseBuffer ? buffers.get() : new byte[bufferSize];
-
         int total = 0;
         int read;
         while ((total != buffer.length && (read = in.read(buffer, total, buffer.length - total)) != -1)) {

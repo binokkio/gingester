@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 @Names(1)
-@Example(example = "1", description = "Yield the first line, stash complete inputstream at `stash`")
+@Example(example = "1", description = "Yield the first line, stash complete inputstream as `stash`")
 public final class PeekLines extends CharsetTransformer<InputStream, String> {
 
     private final int numLines;
@@ -55,7 +55,7 @@ public final class PeekLines extends CharsetTransformer<InputStream, String> {
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
-    public static class Parameters extends CharsetTransformer.Parameters{
+    public static class Parameters extends CharsetTransformer.Parameters {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
