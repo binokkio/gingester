@@ -11,7 +11,8 @@ public final class KafkaProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
-            Consume.class
+            Consume.class,
+            Produce.class
         );
     }
 }
