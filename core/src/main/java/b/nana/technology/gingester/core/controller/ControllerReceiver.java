@@ -21,7 +21,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         this.debugMode = debugMode;
     }
 
-    public void examineController() {
+    void examineController() {
         controllerHasSyncs = !controller.syncs.isEmpty();
         controllerHasSyncsOrExcepts =
                 controllerHasSyncs ||
@@ -149,7 +149,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         }
     }
 
-    public void except(String method, Context context, Exception cause) {
+    void except(String method, Context context, Exception cause) {
         Controller<?, ?> catcher = except(context, cause);
         Context next = context.stash(Map.of(
                 "transformer", controller.id,
@@ -160,7 +160,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         catcher.excepts.values().forEach(target -> accept(next, cause, target));
     }
 
-    public void except(String method, Context context, I in, Exception cause) {
+    void except(String method, Context context, I in, Exception cause) {
         Controller<?, ?> catcher = except(context, cause);
         Context next = context.stash(Map.of(
                 "transformer", controller.id,
