@@ -14,7 +14,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public final class FlowBuilder {
 
@@ -145,7 +144,16 @@ public final class FlowBuilder {
     }
 
     public FlowBuilder divert(List<String> divertFrom) {
-        knife(divertFrom.stream().map(nodes::get).map(Node::getLinks).map(Map::values).flatMap(Collection::stream).collect(Collectors.toSet()));
+
+        Set<String> knifeTargets = new HashSet<>();
+
+        for (String id : divertFrom) {
+            Collection<String> links = nodes.get(id).getLinks().values();
+            if (links.isEmpty()) throw new IllegalArgumentException("Can't divert from " + id + ", it has no links");
+            knifeTargets.addAll(links);
+        }
+
+        knife(knifeTargets);
         this.last = null;
         this.linkFrom = List.of();
         this.divertFrom = divertFrom;
