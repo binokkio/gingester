@@ -84,6 +84,9 @@ General usage:
     ++ <comment> ++
         has no effect, <comment> may be multiple arguments
 
+    -h/--help
+        print this help and exit
+
 
 Terminology:
 
