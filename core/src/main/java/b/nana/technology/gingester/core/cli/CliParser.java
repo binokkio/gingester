@@ -146,6 +146,14 @@ public final class CliParser {
                     target.linkTo(links);
                     break;
 
+                case "-lf":
+                case "--link-from":
+                    List<String> linkFrom = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
+                        linkFrom.add(args[++i]);
+                    target.linkFrom(linkFrom);
+                    break;
+
                 case "-e":
                 case "--excepts":
                     List<String> excepts = new ArrayList<>();
