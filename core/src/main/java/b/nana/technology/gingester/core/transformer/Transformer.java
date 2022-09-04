@@ -1,8 +1,13 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import net.jodah.typetools.TypeResolver;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Transformer.
@@ -27,6 +32,30 @@ import b.nana.technology.gingester.core.receiver.Receiver;
  * @param <O> the output type
  */
 public interface Transformer<I, O> {
+
+    @SuppressWarnings("unchecked")
+    default Class<? extends I> getInputType() {
+        return (Class<I>) TypeResolver.resolveRawArguments(Transformer.class, getClass())[0];
+    }
+
+    @SuppressWarnings("unchecked")
+    default Class<? extends O> getOutputType() {
+        return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, getClass())[1];
+    }
+
+    @SuppressWarnings("unchecked")
+    default Map<String, Object> getStashDetails() {
+        Map<String, Object> stashDetails = new HashMap<>();
+        Stashes[] stashes = getClass().getAnnotationsByType(Stashes.class);
+        for (Stashes stash : stashes) {
+            Map<String, Object> pointer = stashDetails;
+            String[] parts = stash.stash().split("\\.");
+            for (int i = 0; i < parts.length - 1; i++)
+                pointer = (Map<String, Object>) pointer.computeIfAbsent(parts[i], p -> new HashMap<>());
+            pointer.put(parts[parts.length - 1], stash.type());
+        }
+        return stashDetails;
+    }
 
     /**
      * Transformer setup.

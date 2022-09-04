@@ -2,13 +2,11 @@ package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.annotations.Passthrough;
-import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import net.jodah.typetools.TypeResolver;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -139,13 +137,12 @@ public final class ControllerConfiguration<I, O> {
 
 
 
-    @SuppressWarnings("unchecked")
-    public Class<I> getInputType() {
-        return (Class<I>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[0];
+    public Class<? extends I> getInputType() {
+        return transformer.getInputType();
     }
 
     @SuppressWarnings("unchecked")
-    public Class<O> getOutputType() {
+    public Class<? extends O> getOutputType() {
         if (transformer instanceof OutputFetcher) {
             return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
                     .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
@@ -154,7 +151,7 @@ public final class ControllerConfiguration<I, O> {
         } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
             return (Class<O>) getActualInputType();
         } else {
-            return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, transformer.getClass())[1];
+            return transformer.getOutputType();
         }
     }
 
@@ -177,17 +174,22 @@ public final class ControllerConfiguration<I, O> {
             }
         } else {
             if (fetchKey.getNames().length == 0) return Map.class;
-            if (fetchKey.getNames().length > 1) return Object.class;  // TODO determining stash type for deeply stashed items is currently not supported
             if (!fetchKey.hasTarget() || fetchKey.getTarget().equals(id)) {
-                if (transformer instanceof InputStasher && ((InputStasher) transformer).getInputStashName().equals(fetchKey.getNames()[0])) {
+                if (fetchKey.getNames().length == 1 && transformer instanceof InputStasher && ((InputStasher) transformer).getInputStashName().equals(fetchKey.getNames()[0])) {
                     return getActualInputType();
                 } else {
-                    Stashes[] stashes = transformer.getClass().getAnnotationsByType(Stashes.class);
-                    for (Stashes stash : stashes) {
-                        if (stash.stash().equals(fetchKey.getNames()[0])) {
-                            return stash.type();
+                    Map<?, ?> pointer = transformer.getStashDetails();
+                    for (int i = 0; i < fetchKey.getNames().length - 1; i++) {
+                        Object value = pointer.get(fetchKey.getNames()[i]);
+                        if (!(value instanceof Map)) {
+                            pointer = Map.of();
+                            break;
                         }
+                        pointer = (Map<?, ?>) value;
                     }
+                    Object type = pointer.get(fetchKey.getNames()[fetchKey.getNames().length - 1]);
+                    if (type instanceof Map) return Map.class;
+                    else if (type instanceof Class) return (Class<?>) type;
                 }
             }
         }
@@ -199,7 +201,7 @@ public final class ControllerConfiguration<I, O> {
                 .collect(Collectors.toList()));
     }
 
-    static Class<?> getCommonSuperClass(List<Class<?>> classes) {
+    private static Class<?> getCommonSuperClass(List<Class<?>> classes) {
         if (classes.isEmpty()) return Object.class;  // TODO this is a quick fix
         AtomicReference<Class<?>> pointer = new AtomicReference<>(classes.get(0));
         while (classes.stream().anyMatch(c -> !pointer.get().isAssignableFrom(c))) {
