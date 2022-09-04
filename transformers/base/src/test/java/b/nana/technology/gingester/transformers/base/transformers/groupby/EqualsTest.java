@@ -115,8 +115,6 @@ class EqualsTest {
                 "-t StringAppend '!'")
                 .add(resultsWithMaxGroups::add)
                 .run();
-        assertEquals("B!", resultsWithMaxGroups.getFirst());
-        assertEquals("C!", resultsWithMaxGroups.toArray()[1]);
         List<String> resultsWithMaxGroupsSorted = resultsWithMaxGroups.stream().sorted(String::compareTo).collect(Collectors.toList());
         assertEquals(5, resultsWithMaxGroupsSorted.size());
         assertEquals("A, A, A, A!", resultsWithMaxGroupsSorted.get(0));
