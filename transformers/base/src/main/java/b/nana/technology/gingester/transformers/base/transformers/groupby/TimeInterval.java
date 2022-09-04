@@ -96,7 +96,7 @@ public final class TimeInterval implements Transformer<Object, Object> {
                         } else if (zone == null) {
                             zone = element.asText();
                         } else {
-                            throw new IllegalArgumentException("TimeInterval parameter parsing failed at " + element);
+                            throw new IllegalArgumentException("GroupByTimeInterval parameter parsing failed at " + element);
                         }
                     }
                     return o(
