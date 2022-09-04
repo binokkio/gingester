@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.groupby;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
+import b.nana.technology.gingester.core.common.LruMap;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
@@ -9,6 +10,7 @@ import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,11 +20,13 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
     private final String stash;
-    private final int limit;
+    private final int maxGroups;
+    private final int maxEntries;
 
     public Equals(Parameters parameters) {
         stash = parameters.stash;
-        limit = parameters.limit;
+        maxGroups = parameters.maxGroups;
+        maxEntries = parameters.maxEntries;
     }
 
     @Override
@@ -55,26 +59,46 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
             public Deserializer() {
                 super(Parameters.class);
                 rule(JsonNode::isTextual, stash -> o("stash", stash));
-                rule(JsonNode::isInt, limit -> o("limit", limit));
-                rule(JsonNode::isArray, array -> array.get(0).isTextual() ?
-                        o("stash", array.get(0), "limit", array.get(1)) :
-                        o("limit", array.get(0), "stash", array.get(1)));
+                rule(JsonNode::isInt, maxEntries -> o("maxEntries", maxEntries));
+                rule(JsonNode::isArray, array -> {
+                    ObjectNode objectNode = o();
+                    for (JsonNode element : array) {
+                        if (element.isTextual() && !objectNode.has("stash")) {
+                            objectNode.set("stash", element);
+                        } else if (element.isInt()) {
+                            if (!objectNode.has("maxEntries")) {
+                                objectNode.set("stash", element);
+                            } else if (!objectNode.has("maxGroups")) {
+                                objectNode.set("stash", element);
+                            } else {
+                                throw new IllegalArgumentException("GroupByEquals parameter parsing failed at " + element);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("GroupByEquals parameter parsing failed at " + element);
+                        }
+                    }
+                    return objectNode;
+                });
             }
         }
 
         public String stash = "groupKey";
-        public int limit = -1;
+        public int maxGroups = -1;
+        public int maxEntries = -1;
     }
 
     private class State {
 
         private final Context groupParent;
         private final Receiver<Object> out;
-        private final Map<Object, Group> groups = new HashMap<>();
+        private final Map<Object, Group> groups;
 
         public State(Context groupParent, Receiver<Object> out) {
             this.groupParent = groupParent;
             this.out = out;
+            this.groups = maxGroups != -1 ?
+                    new LruMap<>(maxGroups, this::onExpelLru) :
+                    new HashMap<>();
         }
 
         private Group getGroup(Object key) {
@@ -83,10 +107,14 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
         }
 
         private void count(Object key, Group group) {
-            if (limit != -1 && ++group.counter == limit) {
+            if (maxEntries != -1 && ++group.counter == maxEntries) {
                 out.closeGroup(group.context);
                 groups.remove(key);
             }
+        }
+
+        private void onExpelLru(Object key, Group group) {
+            out.closeGroup(group.context);
         }
 
         private void closeGroups() {

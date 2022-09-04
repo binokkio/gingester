@@ -3,8 +3,11 @@ package b.nana.technology.gingester.transformers.base.transformers.groupby;
 import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,7 +23,7 @@ class EqualsTest {
                 "-stt InputStreamJoin " +
                 "-t InputStreamToString");
 
-        ArrayDeque<String> result = new ArrayDeque<>();
+        Deque<String> result = new ConcurrentLinkedDeque<>();
         flowBuilder.add(result::add);
 
         flowBuilder.run();
@@ -48,38 +51,78 @@ class EqualsTest {
     }
 
     @Test
-    void testLimit() {
+    void testMaxEntries() {
 
-        // without limit, GroupByEquals does not close a group until its sync-from finish signal (seed in this case)
-        ArrayDeque<String> resultsWithoutLimit = new ArrayDeque<>();
+        // without maxEntries, GroupByEquals does not close a group until its sync-from finish signal (seed in this case)
+        Deque<String> resultsWithoutMaxEntries = new ConcurrentLinkedDeque<>();
         new FlowBuilder().cli("" +
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals " +
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")
-                .addTo(resultsWithoutLimit::add, "Bye")
-                .add(resultsWithoutLimit::add)
+                .addTo(resultsWithoutMaxEntries::add, "Bye")
+                .add(resultsWithoutMaxEntries::add)
                 .run();
-        assertEquals("bye", resultsWithoutLimit.remove());
-        assertEquals("bye", resultsWithoutLimit.remove());
+        assertEquals("bye", resultsWithoutMaxEntries.remove());
+        assertEquals("bye", resultsWithoutMaxEntries.remove());
         // the order of the remaining 2 is undetermined due to the GroupByEquals HashMap
 
 
-        // with limit, GroupByEquals will close each group as soon as the limit is reached
-        ArrayDeque<String> resultsWithLimit = new ArrayDeque<>();
+        // with maxEntries, GroupByEquals will close each group as soon as maxEntries is reached
+        Deque<String> resultsWithMaxEntries = new ConcurrentLinkedDeque<>();
         new FlowBuilder().cli("" +
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals 2 " +
                 "-stt InputStreamJoin ', ' " +
                 "-t StringAppend '!'")
-                .addTo(resultsWithLimit::add, "Bye")
-                .addTo(resultsWithLimit::add, "StringAppend")
+                .addTo(resultsWithMaxEntries::add, "Bye")
+                .addTo(resultsWithMaxEntries::add, "StringAppend")
                 .run();
-        assertEquals("hello, hello!", resultsWithLimit.remove());
-        assertEquals("bye", resultsWithLimit.remove());
-        assertEquals("bye", resultsWithLimit.remove());
-        assertEquals("bye, bye!", resultsWithLimit.getFirst());
+        assertEquals("hello, hello!", resultsWithMaxEntries.remove());
+        assertEquals("bye", resultsWithMaxEntries.remove());
+        assertEquals("bye", resultsWithMaxEntries.remove());
+        assertEquals("bye, bye!", resultsWithMaxEntries.getFirst());
+    }
+
+    @Test
+    void testMaxGroups() {
+
+        // without maxGroups
+        Deque<String> resultsWithoutMaxGroups = new ConcurrentLinkedDeque<>();
+        new FlowBuilder().cli("" +
+                "-t Repeat 8 " +
+                "-t Cycle A B A C -t ObjectToString " +
+                "-sft GroupByEquals " +
+                "-stt InputStreamJoin ', ' " +
+                "-t StringAppend '!'")
+                .add(resultsWithoutMaxGroups::add)
+                .run();
+        List<String> resultsWithoutMaxGroupsSorted = resultsWithoutMaxGroups.stream().sorted(String::compareTo).collect(Collectors.toList());
+        assertEquals(3, resultsWithoutMaxGroupsSorted.size());
+        assertEquals("A, A, A, A!", resultsWithoutMaxGroupsSorted.get(0));
+        assertEquals("B, B!", resultsWithoutMaxGroupsSorted.get(1));
+        assertEquals("C, C!", resultsWithoutMaxGroupsSorted.get(2));
+
+        // with maxGroups
+        Deque<String> resultsWithMaxGroups = new ConcurrentLinkedDeque<>();
+        new FlowBuilder().cli("" +
+                "-t Repeat 8 " +
+                "-t Cycle A B A C -t ObjectToString " +
+                "-sft GroupByEquals '{maxGroups: 2}' " +
+                "-stt InputStreamJoin ', ' " +
+                "-t StringAppend '!'")
+                .add(resultsWithMaxGroups::add)
+                .run();
+        assertEquals("B!", resultsWithMaxGroups.getFirst());
+        assertEquals("C!", resultsWithMaxGroups.toArray()[1]);
+        List<String> resultsWithMaxGroupsSorted = resultsWithMaxGroups.stream().sorted(String::compareTo).collect(Collectors.toList());
+        assertEquals(5, resultsWithMaxGroupsSorted.size());
+        assertEquals("A, A, A, A!", resultsWithMaxGroupsSorted.get(0));
+        assertEquals("B!", resultsWithMaxGroupsSorted.get(1));
+        assertEquals("B!", resultsWithMaxGroupsSorted.get(2));
+        assertEquals("C!", resultsWithMaxGroupsSorted.get(3));
+        assertEquals("C!", resultsWithMaxGroupsSorted.get(4));
     }
 }
