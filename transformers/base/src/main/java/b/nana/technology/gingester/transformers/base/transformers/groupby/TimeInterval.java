@@ -25,10 +25,11 @@ import java.util.function.Consumer;
 import static java.util.Objects.requireNonNull;
 
 @Passthrough
+@Stashes(stash = "interval", type = Integer.class)
 @Stashes(stash = "intervalStart", type = ZonedDateTime.class)
-@Example(example = "PT10M", description = "Group items per 10 minutes with groups starting when the first item arrives")
-@Example(example = "PT10M fixedRate", description = "Group items per 10 minutes with fixed rate groups")
-@Example(example = "PT10M fixedRate yieldEmpty", description = "Group items per 10 minutes with fixed rate groups and yield empty groups")
+@Example(example = "PT10M", description = "Group items per 10 minutes starting when the first item of a group arrives")
+@Example(example = "PT10M fixedRate", description = "Group items in a new group every 10 minutes, omit empty groups")
+@Example(example = "PT10M fixedRate yieldEmpty", description = "Group items in a new group every 10 minutes, yield empty groups")
 public final class TimeInterval implements Transformer<Object, Object> {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
