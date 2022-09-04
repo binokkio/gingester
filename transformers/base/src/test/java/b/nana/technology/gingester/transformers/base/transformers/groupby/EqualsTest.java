@@ -3,9 +3,9 @@ package b.nana.technology.gingester.transformers.base.transformers.groupby;
 import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -23,7 +23,7 @@ class EqualsTest {
                 "-stt InputStreamJoin " +
                 "-t InputStreamToString");
 
-        Deque<String> result = new ArrayDeque<>();
+        Deque<String> result = new ConcurrentLinkedDeque<>();
         flowBuilder.add(result::add);
 
         flowBuilder.run();
@@ -54,7 +54,7 @@ class EqualsTest {
     void testMaxEntries() {
 
         // without maxEntries, GroupByEquals does not close a group until its sync-from finish signal (seed in this case)
-        Deque<String> resultsWithoutMaxEntries = new ArrayDeque<>();
+        Deque<String> resultsWithoutMaxEntries = new ConcurrentLinkedDeque<>();
         new FlowBuilder().cli("" +
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
@@ -70,7 +70,7 @@ class EqualsTest {
 
 
         // with maxEntries, GroupByEquals will close each group as soon as maxEntries is reached
-        Deque<String> resultsWithMaxEntries = new ArrayDeque<>();
+        Deque<String> resultsWithMaxEntries = new ConcurrentLinkedDeque<>();
         new FlowBuilder().cli("" +
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
@@ -90,7 +90,7 @@ class EqualsTest {
     void testMaxGroups() {
 
         // without maxGroups
-        Deque<String> resultsWithoutMaxGroups = new ArrayDeque<>();
+        Deque<String> resultsWithoutMaxGroups = new ConcurrentLinkedDeque<>();
         new FlowBuilder().cli("" +
                 "-t Repeat 8 " +
                 "-t Cycle A B A C -t ObjectToString " +
@@ -106,7 +106,7 @@ class EqualsTest {
         assertEquals("C, C!", resultsWithoutMaxGroupsSorted.get(2));
 
         // with maxGroups
-        ArrayDeque<String> resultsWithMaxGroups = new ArrayDeque<>();
+        Deque<String> resultsWithMaxGroups = new ConcurrentLinkedDeque<>();
         new FlowBuilder().cli("" +
                 "-t Repeat 8 " +
                 "-t Cycle A B A C -t ObjectToString " +
@@ -116,7 +116,7 @@ class EqualsTest {
                 .add(resultsWithMaxGroups::add)
                 .run();
         assertEquals("B!", resultsWithMaxGroups.getFirst());
-        assertEquals("C!", resultsWithMaxGroups.stream().skip(1).findFirst().orElseThrow());
+        assertEquals("C!", resultsWithMaxGroups.toArray()[1]);
         List<String> resultsWithMaxGroupsSorted = resultsWithMaxGroups.stream().sorted(String::compareTo).collect(Collectors.toList());
         assertEquals(5, resultsWithMaxGroupsSorted.size());
         assertEquals("A, A, A, A!", resultsWithMaxGroupsSorted.get(0));
