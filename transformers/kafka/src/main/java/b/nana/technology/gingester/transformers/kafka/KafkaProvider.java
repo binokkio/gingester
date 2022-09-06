@@ -12,7 +12,9 @@ public final class KafkaProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
             Consume.class,
-            Produce.class
+            GetPosition.class,
+            Produce.class,
+            Seek.class
         );
     }
 }
