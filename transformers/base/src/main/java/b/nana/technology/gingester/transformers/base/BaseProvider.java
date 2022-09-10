@@ -145,6 +145,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.time.FromString.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.Now.class,
                 b.nana.technology.gingester.transformers.base.transformers.time.ToString.class,
+                b.nana.technology.gingester.transformers.base.transformers.util.Choke.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Count.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Cycle.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Delay.class,
