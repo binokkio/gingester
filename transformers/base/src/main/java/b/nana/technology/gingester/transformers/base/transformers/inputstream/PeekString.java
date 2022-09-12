@@ -13,6 +13,7 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
 
 @Names(1)
 @Example(example = "1000", description = "Yield the first 1000 characters, stash complete inputstream as `stash`")
@@ -27,6 +28,11 @@ public final class PeekString extends CharsetTransformer<InputStream, String> {
         bufferSize = parameters.length;
         stashName = parameters.stash;
         buffers = ThreadLocal.withInitial(() -> new char[bufferSize]);
+    }
+
+    @Override
+    public Map<String, Object> getStashDetails() {
+        return Map.of(stashName, InputStream.class);
     }
 
     @Override

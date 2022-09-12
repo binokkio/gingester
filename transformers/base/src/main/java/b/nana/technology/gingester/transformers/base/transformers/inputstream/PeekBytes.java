@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Map;
 
 @Names(1)
 @Example(example = "1000", description = "Yield the first 1000 bytes, stash complete inputstream as `stash`")
@@ -28,6 +29,11 @@ public final class PeekBytes implements Transformer<InputStream, byte[]> {
         reuseBuffer = parameters.reuseBuffer;
         stashName = parameters.stash;
         buffers = !reuseBuffer ? null : ThreadLocal.withInitial(() -> new byte[bufferSize]);
+    }
+
+    @Override
+    public Map<String, Object> getStashDetails() {
+        return Map.of(stashName, InputStream.class);
     }
 
     @Override
