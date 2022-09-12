@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.base.transformers.exec;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -40,9 +41,10 @@ public final class Exec implements Transformer<InputStream, InputStream> {
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
 
         String command = commandTemplate.render(context);
+        String[] args = CliSplitter.split(command);
 
         Runtime runtime = Runtime.getRuntime();
-        Process process = runtime.exec(command, null, new File(workDirTemplate.render(context)).getAbsoluteFile());
+        Process process = runtime.exec(args, null, new File(workDirTemplate.render(context)).getAbsoluteFile());
 
         out.accept(context.stash("description", command), process.getInputStream());
 

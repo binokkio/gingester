@@ -44,6 +44,10 @@ public final class FlowBuilder {
         last = seed;
     }
 
+    public Node node() {
+        return new Node(this);
+    }
+
     public FlowBuilder add(Node node) {
 
         String id = getId(node);
