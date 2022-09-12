@@ -11,6 +11,8 @@ public final class Node {
     private final List<String> syncs = new ArrayList<>();
     private final List<String> excepts = new ArrayList<>();
 
+    private final FlowBuilder target;
+
     private String id;
     private String name;
     private Transformer<?, ?> transformer;
@@ -19,6 +21,14 @@ public final class Node {
     private Integer maxQueueSize;
     private Integer maxBatchSize;
     private Boolean report;
+
+    public Node() {
+        target = null;
+    }
+
+    Node(FlowBuilder target) {
+        this.target = target;
+    }
 
     public Node id(String id) {
         this.id = id;
@@ -52,6 +62,10 @@ public final class Node {
         return this;
     }
 
+    public Node report() {
+        return report(true);
+    }
+
     public Node report(boolean report) {
         this.report = report;
         return this;
@@ -80,10 +94,6 @@ public final class Node {
         return this;
     }
 
-    public String getLink(String linkName) {
-        return links.get(linkName);
-    }
-
     public Node updateLink(String linkName, String link) {
         links.put(linkName, link);
         return this;
@@ -98,6 +108,10 @@ public final class Node {
         links.replaceAll((linkName, currentTarget) ->
                 currentTarget.equals(oldTarget) ? newTarget : currentTarget);
         return this;
+    }
+
+    public String getLink(String linkName) {
+        return links.get(linkName);
     }
 
 
@@ -134,6 +148,18 @@ public final class Node {
     public Node addExcepts(List<String> excepts) {
         this.excepts.addAll(excepts);
         return this;
+    }
+
+
+
+    public FlowBuilder add() {
+
+        if (target == null) {
+            throw new IllegalStateException("`add()` called on node without target");
+        }
+
+        target.add(this);
+        return target;
     }
 
 
