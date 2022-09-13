@@ -46,7 +46,6 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
         for (Rule rule : rules) {
             if (rule.predicate.test(json)) {
                 json = rule.normalizer.apply(json);
-                break;
             }
         }
 

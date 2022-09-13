@@ -1,0 +1,31 @@
+{
+  "normal": "value",
+  "whitespace  ": "  ",
+  "null": null,
+  "empty-array": [],
+  "empty-object": {},
+  "array": [
+    [],
+    {},
+    null,
+    " "
+  ],
+  "object": {
+    "a": [],
+    "b": {},
+    "c": null,
+    "d": " "
+  },
+  "deep": [
+    {
+      "a": [
+        {
+          "b": {
+            "c": "  ",
+            "d": null
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,8 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.util.Map;
+
 @Names(1)
 @Passthrough
 public final class StashString implements Transformer<Object, Object>  {
@@ -21,6 +23,11 @@ public final class StashString implements Transformer<Object, Object>  {
     public StashString(Parameters parameters) {
         stash = parameters.stash;
         template = Context.newTemplate(parameters.template);
+    }
+
+    @Override
+    public Map<String, Object> getStashDetails() {
+        return Map.of(stash, String.class);
     }
 
     @Override

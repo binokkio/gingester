@@ -76,31 +76,57 @@ public final class FlowBuilder {
         return add(new Node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
     }
 
+    /**
+     * Convenience method to add a consumer immediately downstream of a transformer.
+     *
+     * @param consumer the consumer
+     * @param linkFrom the id of the transformer to add the consumer to
+     */
     public <T> FlowBuilder addTo(Consumer<T> consumer, String linkFrom) {
         linkFrom(linkFrom);
         return add(consumer);
     }
 
+    /**
+     * Convenience method to add a bi-consumer immediately downstream of a transformer.
+     *
+     * @param biConsumer the bi-consumer
+     * @param linkFrom the id of the transformer to add the consumer to
+     */
     public <T> FlowBuilder addTo(BiConsumer<Context, T> biConsumer, String linkFrom) {
         linkFrom(linkFrom);
         return add(biConsumer);
     }
 
+    /**
+     * @see #linkTo(List)
+     */
     public FlowBuilder linkTo(String link) {
         return linkTo(List.of(link));
     }
 
+    /**
+     * Link the output of the most recently added transformer.
+     *
+     * @param links the ids of the transformers to link the output to
+     */
     public FlowBuilder linkTo(List<String> links) {
         last.setLinks(links);
         linkFrom = List.of();
         return this;
     }
 
+    /**
+     * Sync the most recently added transformer with the current sync-from transformers.
+     */
     public FlowBuilder sync() {
         last.setSyncs(syncFrom);
         return this;
     }
 
+    /**
+     * @see #exceptTo(List)
+     */
     public FlowBuilder exceptTo(String except) {
         return exceptTo(List.of(except));
     }
@@ -110,19 +136,35 @@ public final class FlowBuilder {
         return this;
     }
 
+    /**
+     * @see #linkFrom(List)
+     */
     public FlowBuilder linkFrom(String linkFrom) {
         return linkFrom(List.of(linkFrom));
     }
 
+    /**
+     * Set the current link-from transformers.
+     *
+     * @param linkFrom the ids of the transformers to link from when the
+     */
     public FlowBuilder linkFrom(List<String> linkFrom) {
         this.linkFrom = linkFrom;
         return this;
     }
 
+    /**
+     * @see #syncFrom(List)
+     */
     public FlowBuilder syncFrom(String syncFrom) {
         return syncFrom(List.of(syncFrom));
     }
 
+    /**
+     * Set the current sync-from transformers.
+     *
+     * @param syncFrom the ids of the transformers to sync from when {@link #sync()} is called
+     */
     public FlowBuilder syncFrom(List<String> syncFrom) {
         this.syncFrom = syncFrom;
         return this;
@@ -143,10 +185,18 @@ public final class FlowBuilder {
         return this;
     }
 
+    /**
+     * @see #divert(List)
+     */
     public FlowBuilder divert(String divertFrom) {
         return divert(List.of(divertFrom));
     }
 
+    /**
+     * Remove everything downstream from the given nodes, those nodes will be linked to the next node added.
+     *
+     * @param divertFrom the ids of the nodes to divert from
+     */
     public FlowBuilder divert(List<String> divertFrom) {
 
         Set<String> knifeTargets = new HashSet<>();
@@ -164,10 +214,18 @@ public final class FlowBuilder {
         return this;
     }
 
+    /**
+     * @see #knife(Set)
+     */
     public FlowBuilder knife(String targetId) {
         return knife(Set.of(targetId));
     }
 
+    /**
+     * Remove the given nodes and everything downstream from them.
+     *
+     * @param targetIds the ids of the nodes to knife
+     */
     public FlowBuilder knife(Set<String> targetIds) {
 
         Set<String> nextTargetIds = new HashSet<>();

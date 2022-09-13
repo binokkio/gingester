@@ -14,6 +14,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 @Names(1)
 @Example(example = "1", description = "Yield the first line, stash complete inputstream as `stash`")
@@ -28,6 +29,11 @@ public final class PeekLines extends CharsetTransformer<InputStream, String> {
         numLines = parameters.lines;
         bufferSize = parameters.bufferSize;
         stashName = parameters.stash;
+    }
+
+    @Override
+    public Map<String, Object> getStashDetails() {
+        return Map.of(stashName, InputStream.class);
     }
 
     @Override
