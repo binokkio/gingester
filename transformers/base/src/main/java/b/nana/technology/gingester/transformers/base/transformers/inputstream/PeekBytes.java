@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.PrefixInputStream;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,11 +14,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Map;
 
 @Names(1)
 @Example(example = "1000", description = "Yield the first 1000 bytes, stash complete inputstream as `stash`")
-public final class PeekBytes implements Transformer<InputStream, byte[]> {
+public final class PeekBytes implements Transformer<InputStream, byte[]>, InputStasher {
 
     private final int bufferSize;
     private final boolean reuseBuffer;
@@ -32,8 +32,8 @@ public final class PeekBytes implements Transformer<InputStream, byte[]> {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(stashName, InputStream.class);
+    public String getInputStashName() {
+        return stashName;
     }
 
     @Override
