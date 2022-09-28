@@ -5,6 +5,7 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.InputStasher;
 import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -14,11 +15,10 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Map;
 
 @Names(1)
 @Example(example = "1", description = "Yield the first line, stash complete inputstream as `stash`")
-public final class PeekLines extends CharsetTransformer<InputStream, String> {
+public final class PeekLines extends CharsetTransformer<InputStream, String> implements InputStasher {
 
     private final int numLines;
     private final int bufferSize;
@@ -32,14 +32,14 @@ public final class PeekLines extends CharsetTransformer<InputStream, String> {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(stashName, InputStream.class);
+    public String getInputStashName() {
+        return stashName;
     }
 
     @Override
     public void transform(Context context, InputStream in, Receiver<String> out) throws Exception {
 
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(in, bufferSize * 4);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(in);
         bufferedInputStream.mark(bufferSize * 4);
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(bufferedInputStream, getCharset()));
