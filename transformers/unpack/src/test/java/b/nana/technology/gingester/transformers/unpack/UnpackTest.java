@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.unpack;
 
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.BiReceiver;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import java.io.InputStream;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,6 +46,21 @@ class UnpackTest {
         assertEquals("/tmp/test.tar.gz :: test.tar :: dir/d.bz2 :: d -> Hello, World", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: f.7z :: e -> Hello, 7zip World!", results.remove());
         assertEquals("/tmp/test.tar.gz :: test.tar :: test.zip :: a -> Hello, World!", results.remove());
+    }
+
+    @Test
+    void testUnpackTestTarGz1Level() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t ResourceOpen '/test.tar.gz' " +
+                "-t Unpack 1 " +
+                "-f description")
+                .add(result::set)
+                .run();
+
+        assertEquals("test.tar", result.get());
     }
 
     @Test
