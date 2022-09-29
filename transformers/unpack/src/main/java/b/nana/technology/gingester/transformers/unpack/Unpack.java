@@ -38,12 +38,15 @@ import java.util.zip.InflaterInputStream;
 @Description("Recursively unpack an archive")
 @Example(example = "", description = "Unpack input based on extensions found in stashed `description`")
 @Example(example = "'data.tar.gz'", description = "Unpack input as a gzip compressed tar")
+@Example(example = "1", description = "Unpack 1 level deep, e.g. remove the GZIP compression from a .tar.gz")
 public final class Unpack implements Transformer<InputStream, InputStream> {
 
     private final Template descriptionTemplate;
+    private final int maxDepth;
 
     public Unpack(Parameters parameters) {
         descriptionTemplate = Context.newTemplate(parameters.description);
+        maxDepth = parameters.maxDepth != null ? parameters.maxDepth : -1;
     }
 
     @Override
@@ -57,6 +60,16 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
     }
 
     private void unpack(Context context, InputStream in, Receiver<InputStream> out, Deque<String> descriptions) throws Exception {
+
+        if (maxDepth != -1 && descriptions.size() > maxDepth) {
+
+            out.accept(
+                    context.stash("description", descriptions.stream().skip(1).collect(Collectors.joining(" :: "))),
+                    new NoCloseInputStream(in)
+            );
+
+            return;
+        }
 
         String tailLowerCase = descriptions.getLast().toLowerCase(Locale.ENGLISH);
 
@@ -145,10 +158,13 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
             public Deserializer() {
                 super(Parameters.class);
                 rule(JsonNode::isTextual, text -> o("description", text));
+                rule(JsonNode::isInt, int_ -> o("maxDepth", int_));
+                rule(JsonNode::isArray, array -> o("description", array.get(0), "maxDepth", array.get(1)));
             }
         }
 
         public TemplateParameters description = new TemplateParameters("${description}", false);
+        public Integer maxDepth;
     }
 
     private static class NoCloseInputStream extends FilterInputStream {
