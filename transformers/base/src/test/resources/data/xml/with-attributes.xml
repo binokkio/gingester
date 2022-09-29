@@ -1,0 +1,7 @@
+<body>
+    <message audience="world">Hello, World!</message>
+    <list>
+        <item>Hello</item>
+        <item>World</item>
+    </list>
+</body>

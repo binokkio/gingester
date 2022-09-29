@@ -9,6 +9,9 @@ class ByteSizeParserTest {
     @Test
     void parse() {
 
+        assertEquals(10, ByteSizeParser.parse("10"));
+        assertEquals(10, ByteSizeParser.parse("10B"));
+
         assertEquals(1000, ByteSizeParser.parse("1KB"));
         assertEquals(1000000, ByteSizeParser.parse("1MB"));
 

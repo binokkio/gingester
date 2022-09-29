@@ -6,8 +6,8 @@ import java.util.regex.Pattern;
 
 public class ByteSizeParser {
 
-    private static final String PREFIXES = "kmgtpezy";
-    private static final Pattern BYTE_SIZE_PATTERN = Pattern.compile("(?i)([\\d.]+)(?:([kmgtpezy]?)([i]?)b)?");
+    private static final String PREFIXES = "bkmgtpezy";
+    private static final Pattern BYTE_SIZE_PATTERN = Pattern.compile("(?i)([\\d.]+)(?:([kmgtpezy]?)(i?)b)?");
 
     private ByteSizeParser() {}
 
@@ -15,8 +15,9 @@ public class ByteSizeParser {
         Matcher matcher = BYTE_SIZE_PATTERN.matcher(byteSize.toLowerCase(Locale.ENGLISH));
         if (!matcher.matches()) throw new IllegalArgumentException("Invalid byteSize format");
         double value = Double.parseDouble(matcher.group(1));
+        if (matcher.group(2) == null) return (long) value;
         int base = matcher.group(3).isEmpty() ? 1000 : 1024;
-        int exponent = PREFIXES.indexOf(matcher.group(2)) + 1;
+        int exponent = PREFIXES.indexOf(matcher.group(2));
         return (long) (value * Math.pow(base, exponent));
     }
 }
