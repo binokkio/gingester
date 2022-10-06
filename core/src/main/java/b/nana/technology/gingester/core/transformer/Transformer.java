@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.transformer;
 
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
@@ -41,6 +42,10 @@ public interface Transformer<I, O> {
     @SuppressWarnings("unchecked")
     default Class<? extends O> getOutputType() {
         return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, getClass())[1];
+    }
+
+    default boolean isPassthrough() {
+        return getClass().getAnnotation(Passthrough.class) != null;
     }
 
     @SuppressWarnings("unchecked")
