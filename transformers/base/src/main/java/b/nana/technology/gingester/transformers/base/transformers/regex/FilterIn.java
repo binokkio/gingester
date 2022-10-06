@@ -2,50 +2,68 @@ package b.nana.technology.gingester.transformers.base.transformers.regex;
 
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.annotations.Example;
+import b.nana.technology.gingester.core.annotations.Passthrough;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Description("Pass only items of which a subsequence matches any of the given regexes")
 @Example(example = "hello", description = "Pass only items containing \"hello\"")
-@Example(example = "'[\"hello\", \"bye\"]", description = "Pass only items containing \"hello\" or \"bye\"")
+@Example(example = "'hello|bye'", description = "Pass only items containing \"hello\" or \"bye\"")
 @Example(example = "'^Hello, World!$'", description = "Pass only exactly \"Hello, World!\"")
 @Example(example = "'Hello.*!'", description = "Pass only items containing \"Hello\" followed by an '!' anywhere on the same line")
 @Example(example = "'(?s)Hello.*!'", description = "Pass only items containing \"Hello\" followed by an '!' anywhere")
-public final class FilterIn implements Transformer<String, String> {
+@Passthrough
+public final class FilterIn implements Transformer<Object, Object> {
 
-    private final List<TemplateMapper<Pattern>> patterns;
+    private final TemplateMapper<Pattern> pattern;
+    private final Template input;
 
     public FilterIn(Parameters parameters) {
-        patterns = parameters.regexes.stream()
-                .map(tp -> Context.newTemplateMapper(tp, Pattern::compile))
-                .collect(Collectors.toList());
+        pattern = Context.newTemplateMapper(parameters.regex, Pattern::compile);
+
+        if (parameters.input != null) {
+            input = Context.newTemplate(parameters.input);
+            if (input.isInvariant()) {
+                throw new IllegalArgumentException("RegexFilterIn input template must not be invariant");
+            }
+        } else {
+            input = null;
+        }
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<String> out) {
-        if (patterns.stream().anyMatch(pattern -> pattern.render(context).matcher(in).find())) {
+    public Class<?> getInputType() {
+        return input == null ? String.class : Object.class;
+    }
+
+    @Override
+    public void transform(Context context, Object in, Receiver<Object> out) {
+        String string = input == null ? (String) in : input.render(context);
+        if (pattern.render(context).matcher(string).find()) {
             out.accept(context, in);
         }
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
-
-        public List<TemplateParameters> regexes;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(List<TemplateParameters> regexes) {
-            this.regexes = regexes;
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, regex -> o("regex", regex));
+                rule(JsonNode::isArray, array -> o("input", array.get(0), "regex", array.get(1)));
+            }
         }
+
+        public TemplateParameters regex;
+        public TemplateParameters input;
     }
 }
