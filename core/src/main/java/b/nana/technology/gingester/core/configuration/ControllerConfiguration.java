@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.FlowRunner;
-import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.InputStasher;
@@ -148,7 +147,7 @@ public final class ControllerConfiguration<I, O> {
                     .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
                     .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
                     .collect(Collectors.toList()));
-        } else if (transformer.getClass().getAnnotation(Passthrough.class) != null) {
+        } else if (transformer.isPassthrough()) {
             return (Class<O>) getActualInputType();
         } else {
             return transformer.getOutputType();

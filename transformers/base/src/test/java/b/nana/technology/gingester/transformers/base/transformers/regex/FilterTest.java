@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -73,5 +74,24 @@ class FilterTest {
         flowBuilder.run();
 
         assertEquals(List.of("Hello, World 1!", "Hello, World 10!"), List.copyOf(result));
+    }
+
+    @Test
+    void testFilterInWithTemplatedInput() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 11 " +
+                "-t StringDef 'Hello, World ${description}!' " +
+                "-s input " +
+                "-f Repeat.description " +
+                "-t RegexFilterIn '${input}' 'World 1' " +
+                "-t InputStreamJoin , " +
+                "-t InputStreamToString")
+                .add(result::set)
+                .run();
+
+        assertEquals("1,10", result.get());
     }
 }

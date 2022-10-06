@@ -17,7 +17,7 @@ public final class Context implements Iterable<Context> {
 
     /**
      * Create a new Template.
-     *
+     * <p>
      * See {@link Template} for details.
      *
      * @param templateParameters the template parameters
@@ -29,7 +29,7 @@ public final class Context implements Iterable<Context> {
 
     /**
      * Create a new TemplateMapper.
-     *
+     * <p>
      * See {@link TemplateMapper} for details.
      *
      * @param templateParameters the template parameters
@@ -85,7 +85,7 @@ public final class Context implements Iterable<Context> {
 
     /**
      * Check if this context is flawless.
-     *
+     * <p>
      * When a transformer throws an exception in a `prepare`, `transform`, or `finish` call the context of that
      * call is marked as flawed. The exception then traverses the context chain up to the first context from a
      * transformer that has an exception handler, inclusive, marking all those contexts as flawed. The exception
@@ -147,7 +147,7 @@ public final class Context implements Iterable<Context> {
     public Stream<Object> fetchAll(FetchKey fetchKey) {
         if (fetchKey.isOrdinal()) {
             return stream()
-                    .filter(c -> c.controller.transformer instanceof InputStasher)
+                    .filter(c -> c.stash != null && c.controller.transformer instanceof InputStasher)  // stash can be null even for InputStashers, e.g. GroupByEquals, TODO maybe only consider the Stash transformer
                     .flatMap(c -> c.stash.values().stream())  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
                     .skip(fetchKey.ordinal() - 1);  // should actually have a .limit(1) here as well but assuming it will only be used with findFirst() for now
         } else {
@@ -182,7 +182,7 @@ public final class Context implements Iterable<Context> {
 
     /**
      * Fetch objects from stash, reversed.
-     *
+     * <p>
      * See {@link #fetchAll(FetchKey)} for details.
      *
      * @param fetchKey descriptor of the objects to fetch
