@@ -87,7 +87,7 @@ public final class Giterate implements Transformer<Object, Path> {
         }
         {
             System.out.println("stderr");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getInputStream()));
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getErrorStream()));
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 System.out.println(line);
