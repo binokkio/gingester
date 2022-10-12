@@ -1,0 +1,29 @@
+-t Giterate '{
+        origin: "[=origin]",
+        scratch: "[=scratch]",
+        stepType: "PERIOD",
+        stepSize: "P1M"
+    }'
+
+-s root
+
+-f target
+-t TimeToString 'yyyy-MM-dd'
+-sft Stash date
+
+-t PathSearch '{
+        root: "${root}",
+        globs: "**.java"
+    }'
+
+-t RegexFilterIn '(?:implements|extends) Transformer<'
+
+-f path.relative
+
+-stt SetCollect
+-s transformers
+-t SetDiff
+-t StringDef '${date},${transformers?size},${added?size},${removed?size}'
+-t InputStreamJoin
+-t InputStreamPrepend 'date,total,added,removed${"\\n"}'
+-t InputStreamToString

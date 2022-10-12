@@ -19,6 +19,7 @@
         <module>audio</module>
         <module>base</module>
         <module>elasticsearch7</module>
+        <module>git</module>
         <module>groovy</module>
         <module>hadoop3</module>
         <module>jdbc</module>
