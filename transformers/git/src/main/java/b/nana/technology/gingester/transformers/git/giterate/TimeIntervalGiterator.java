@@ -5,18 +5,24 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Period;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
 import java.util.List;
 import java.util.Map;
 
-class PeriodGiterator implements Giterator {
+class TimeIntervalGiterator implements Giterator {
 
     private final Runtime runtime = Runtime.getRuntime();
-    private final Period period;
+    private final TemporalAmount interval;
 
-    PeriodGiterator(String stepSize) {
-        this.period = Period.parse(stepSize);
+    TimeIntervalGiterator(String intervalString) {
+        if (intervalString.startsWith("PT")) {
+            interval = Duration.parse(intervalString);
+        } else {
+            interval = Period.parse(intervalString);
+        }
     }
 
     @Override
@@ -32,6 +38,7 @@ class PeriodGiterator implements Giterator {
     public void giterate(Path clone, List<Commit> commits, Context context, Receiver<Path> out) throws IOException, InterruptedException {
 
         ZonedDateTime target = commits.get(0).time;
+        String current = null;
 
         for (int i = 0; i < commits.size() - 1; i++) {
 
@@ -40,9 +47,12 @@ class PeriodGiterator implements Giterator {
 
             if (b.time.isAfter(target)) {
 
-                Process checkoutProcess = runtime.exec(new String[]{"git", "checkout", a.hash}, null, clone.toFile());
-                int checkoutResult = checkoutProcess.waitFor();
-                if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0");
+                if (!a.hash.equals(current)) {
+                    Process checkoutProcess = runtime.exec(new String[]{"git", "checkout", a.hash}, null, clone.toFile());
+                    int checkoutResult = checkoutProcess.waitFor();
+                    if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0");
+                    current = a.hash;
+                }
 
                 out.accept(
                         context.stash(Map.of(
@@ -53,7 +63,7 @@ class PeriodGiterator implements Giterator {
                         clone
                 );
 
-                target = target.plus(period);
+                target = target.plus(interval);
                 i--;
             }
         }

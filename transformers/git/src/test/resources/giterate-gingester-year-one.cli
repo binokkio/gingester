@@ -2,8 +2,7 @@
         origin: "[=origin]",
         branch: "[=branch]",
         scratch: "[=scratch]",
-        stepType: "PERIOD",
-        stepSize: "P1M"
+        interval: "P1M"
     }'
 
 -s root

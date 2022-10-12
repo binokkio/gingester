@@ -34,15 +34,7 @@ public final class Giterate implements Transformer<Object, Path> {
         branchTemplate = parameters.branch == null ? null :
                 Context.newTemplate(parameters.branch);
         scratchTemplate = Context.newTemplateMapper(parameters.scratch, Paths::get);
-
-        switch (parameters.stepType) {
-            case PERIOD:
-                giteratorSupplier = () -> new PeriodGiterator(parameters.stepSize);
-                break;
-
-            default:
-                throw new UnsupportedOperationException("Giterator not implemented for step type " + parameters.stepType);
-        }
+        giteratorSupplier = () -> new TimeIntervalGiterator(parameters.interval);
     }
 
     @Override
@@ -116,17 +108,9 @@ public final class Giterate implements Transformer<Object, Path> {
     }
 
     public static class Parameters {
-
         public TemplateParameters origin;
         public TemplateParameters branch;
         public TemplateParameters scratch = new TemplateParameters("/tmp", true);
-        public StepType stepType = StepType.COMMIT;
-        public String stepSize = "1";
-    }
-
-    public enum StepType {
-        COMMIT,
-        PERIOD,
-        DURATION
+        public String interval = "P1D";
     }
 }
