@@ -11,6 +11,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
@@ -59,43 +60,39 @@ public final class Giterate implements Transformer<Object, Path> {
         Path clone = scratch.resolve("clone");
         Process cloneProcess = runtime.exec(new String[] { "git", "clone", originTemplate.render(context), clone.toString() });
         int cloneResult = cloneProcess.waitFor();
-        if (cloneResult != 0) throw new IllegalStateException("git clone did not exit with 0 but " + cloneResult);
+        if (cloneResult != 0) throw new IllegalStateException("git clone did not exit with 0");
 
         // branch
         if (branchTemplate != null) {
-            Process checkoutProcess = runtime.exec(new String[] { "git", "checkout", branchTemplate.render(context) });
-            int checkoutResult = checkoutProcess.waitFor();
-            if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0 but " + checkoutResult);
+
+            Process branchProcess = runtime.exec(new String[] { "git", "branch" }, null, clone.toFile());
+            String currentBranch = new String(branchProcess.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            int branchResult = branchProcess.waitFor();
+            if (branchResult != 0) throw new IllegalStateException("git branch did not exit with 0 but " + branchResult);
+
+            String targetBranch = branchTemplate.render(context);
+
+            if (!currentBranch.equals(targetBranch)) {
+                Process checkoutProcess = runtime.exec(new String[] { "git", "checkout", targetBranch }, null, clone.toFile());
+                int checkoutResult = checkoutProcess.waitFor();
+                if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0 but " + checkoutResult);
+            }
         }
 
         // get commit hashes and dates
         List<Commit> commits = new ArrayList<>();
         Process logProcess = runtime.exec(new String[] { "git", "log", "--first-parent", "--format=%H %aI" }, null, clone.toFile());
-        {
-            System.out.println("stdout");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getInputStream()));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                System.out.println(line);
-                String[] parts = line.split(" ");
-                commits.add(new Commit(
-                        parts[0],
-                        ZonedDateTime.parse(parts[1])
-                ));
-            }
-            System.out.println();
-        }
-        {
-            System.out.println("stderr");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getErrorStream()));
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                System.out.println(line);
-            }
-            System.out.println();
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getInputStream()));
+        String line;
+        while ((line = bufferedReader.readLine()) != null) {
+            String[] parts = line.split(" ");
+            commits.add(new Commit(
+                    parts[0],
+                    ZonedDateTime.parse(parts[1])
+            ));
         }
         int logResult = logProcess.waitFor();
-        if (logResult != 0) throw new IllegalStateException("git log did not exit with 0 but " + logResult);
+        if (logResult != 0) throw new IllegalStateException("git log did not exit with 0");
         Collections.reverse(commits);
 
         // giterate

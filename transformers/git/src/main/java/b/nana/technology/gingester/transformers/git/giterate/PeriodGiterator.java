@@ -42,7 +42,7 @@ class PeriodGiterator implements Giterator {
 
                 Process checkoutProcess = runtime.exec(new String[]{"git", "checkout", a.hash}, null, clone.toFile());
                 int checkoutResult = checkoutProcess.waitFor();
-                if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0 but " + checkoutResult);
+                if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0");
 
                 out.accept(
                         context.stash(Map.of(
