@@ -25,6 +25,7 @@ class GiterateTest {
         new FlowBuilder()
                 .cli(getClass().getResource("/giterate-gingester-year-one.cli"), Map.of(
                         "origin", bundle,
+                        "branch", "main",
                         "scratch", tempDir
                 ))
                 .add(result::set)

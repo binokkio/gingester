@@ -1,5 +1,6 @@
 -t Giterate '{
         origin: "[=origin]",
+        branch: "[=branch]",
         scratch: "[=scratch]",
         stepType: "PERIOD",
         stepSize: "P1M"
