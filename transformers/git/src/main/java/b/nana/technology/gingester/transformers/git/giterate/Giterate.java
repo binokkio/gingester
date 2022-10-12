@@ -71,14 +71,28 @@ public final class Giterate implements Transformer<Object, Path> {
         // get commit hashes and dates
         List<Commit> commits = new ArrayList<>();
         Process logProcess = runtime.exec(new String[] { "git", "log", "--first-parent", "--format=%H %aI" }, null, clone.toFile());
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getInputStream()));
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            String[] parts = line.split(" ");
-            commits.add(new Commit(
-                    parts[0],
-                    ZonedDateTime.parse(parts[1])
-            ));
+        {
+            System.out.println("stdout");
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getInputStream()));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(line);
+                String[] parts = line.split(" ");
+                commits.add(new Commit(
+                        parts[0],
+                        ZonedDateTime.parse(parts[1])
+                ));
+            }
+            System.out.println();
+        }
+        {
+            System.out.println("stderr");
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(logProcess.getInputStream()));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                System.out.println(line);
+            }
+            System.out.println();
         }
         int logResult = logProcess.waitFor();
         if (logResult != 0) throw new IllegalStateException("git log did not exit with 0 but " + logResult);
