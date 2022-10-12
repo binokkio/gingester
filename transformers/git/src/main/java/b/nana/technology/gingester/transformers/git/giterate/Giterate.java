@@ -59,13 +59,13 @@ public final class Giterate implements Transformer<Object, Path> {
         Path clone = scratch.resolve("clone");
         Process cloneProcess = runtime.exec(new String[] { "git", "clone", originTemplate.render(context), clone.toString() });
         int cloneResult = cloneProcess.waitFor();
-        if (cloneResult != 0) throw new IllegalStateException("git clone did not exit with 0");
+        if (cloneResult != 0) throw new IllegalStateException("git clone did not exit with 0 but " + cloneResult);
 
         // branch
         if (branchTemplate != null) {
             Process checkoutProcess = runtime.exec(new String[] { "git", "checkout", branchTemplate.render(context) });
             int checkoutResult = checkoutProcess.waitFor();
-            if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0");
+            if (checkoutResult != 0) throw new IllegalStateException("git checkout did not exit with 0 but " + checkoutResult);
         }
 
         // get commit hashes and dates
@@ -81,7 +81,7 @@ public final class Giterate implements Transformer<Object, Path> {
             ));
         }
         int logResult = logProcess.waitFor();
-        if (logResult != 0) throw new IllegalStateException("git log did not exit with 0");
+        if (logResult != 0) throw new IllegalStateException("git log did not exit with 0 but " + logResult);
         Collections.reverse(commits);
 
         // giterate
