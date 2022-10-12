@@ -5,12 +5,8 @@ import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Supplier;
 
 public final class Collect implements Transformer<Object, Set<?>> {
@@ -47,24 +43,6 @@ public final class Collect implements Transformer<Object, Set<?>> {
         @JsonCreator
         public Parameters(Type type) {
             this.type = type;
-        }
-
-        public enum Type {
-
-            @JsonProperty("hash")
-            HASH_SET(HashSet::new),
-
-            @JsonProperty("linked")
-            LINKED_HASH_SET(LinkedHashSet::new),
-
-            @JsonProperty("tree")
-            TREE_SET(TreeSet::new);
-
-            private final Supplier<Set<Object>> setSupplier;
-
-            Type(Supplier<Set<Object>> setSupplier) {
-                this.setSupplier = setSupplier;
-            }
         }
     }
 }

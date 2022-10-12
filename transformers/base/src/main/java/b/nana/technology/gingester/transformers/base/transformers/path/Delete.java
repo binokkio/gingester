@@ -1,9 +1,12 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -55,7 +58,21 @@ public final class Delete implements Transformer<Path, Path> {
         out.accept(context, in);
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isBoolean, recursive -> o("recursive", recursive));
+                rule(JsonNode::isTextual, text -> {
+                    if (text.textValue().equals("recursive")) {
+                        return o("recursive", true);
+                    } else {
+                        throw new IllegalArgumentException("Unexpected textual value: " + text);
+                    }
+                });
+            }
+        }
 
         public boolean recursive;
 
