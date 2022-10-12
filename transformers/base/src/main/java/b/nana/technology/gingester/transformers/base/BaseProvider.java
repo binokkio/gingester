@@ -125,6 +125,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.regex.Route.class,
                 b.nana.technology.gingester.transformers.base.transformers.resource.Open.class,
                 b.nana.technology.gingester.transformers.base.transformers.set.Collect.class,
+                b.nana.technology.gingester.transformers.base.transformers.set.Diff.class,
                 b.nana.technology.gingester.transformers.base.transformers.set.Stream.class,
                 b.nana.technology.gingester.transformers.base.transformers.std.In.class,
                 b.nana.technology.gingester.transformers.base.transformers.std.Out.class,
