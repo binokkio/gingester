@@ -14,27 +14,27 @@ import java.nio.charset.StandardCharsets;
 
 public final class Append implements Transformer<InputStream, InputStream> {
 
-    private final TemplateMapper<byte[]> prepend;
+    private final TemplateMapper<byte[]> append;
 
     public Append(Parameters parameters) {
-        prepend = Context.newTemplateMapper(parameters.prepend, s -> s.getBytes(StandardCharsets.UTF_8));
+        append = Context.newTemplateMapper(parameters.append, s -> s.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) {
-        out.accept(context, new SequenceInputStream(in, new ByteArrayInputStream(prepend.render(context))));
+        out.accept(context, new SequenceInputStream(in, new ByteArrayInputStream(append.render(context))));
     }
 
     public static class Parameters {
 
-        public TemplateParameters prepend = new TemplateParameters("\n");
+        public TemplateParameters append = new TemplateParameters("\n");
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(TemplateParameters prepend) {
-            this.prepend = prepend;
+        public Parameters(TemplateParameters append) {
+            this.append = append;
         }
     }
 }
