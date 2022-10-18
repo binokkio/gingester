@@ -308,7 +308,7 @@ public final class FlowBuilder {
 
     /**
      * Set report interval in seconds.
-     *
+     * <p>
      * When set the FlowRunner will report flow details at the given interval.
      * Set 0 to disable reporting.
      *
@@ -331,7 +331,7 @@ public final class FlowBuilder {
 
     /**
      * Enable debug mode.
-     *
+     * <p>
      * When enabled the FlowRunner will not optimize transformers out of the context stack and will therefore
      * produce more detailed transform traces.
      */
@@ -342,7 +342,7 @@ public final class FlowBuilder {
 
     /**
      * Enable the shutdown hook.
-     *
+     * <p>
      * When enabled the FlowRunner will register a virtual-machine shutdown hook. When the hook is triggered
      * the FlowRunner will attempt to stop the flow gracefully.
      */
@@ -353,7 +353,7 @@ public final class FlowBuilder {
 
     /**
      * Construct a FlowRunner for the current state of this FlowBuilder and run it.
-     *
+     * <p>
      * Further use of this FlowBuilder is an error leading to undefined behavior.
      */
     public void run() {
@@ -362,7 +362,7 @@ public final class FlowBuilder {
 
     /**
      * Create a plain text representation of the current state of this FlowBuilder.
-     *
+     * <p>
      * Further use of this FlowBuilder is an error leading to undefined behavior.
      */
     public String render() {
