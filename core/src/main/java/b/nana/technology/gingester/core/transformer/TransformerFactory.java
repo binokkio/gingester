@@ -1,10 +1,7 @@
 package b.nana.technology.gingester.core.transformer;
 
 import b.nana.technology.gingester.core.FlowBuilder;
-import b.nana.technology.gingester.core.annotations.Description;
-import b.nana.technology.gingester.core.annotations.Example;
-import b.nana.technology.gingester.core.annotations.Names;
-import b.nana.technology.gingester.core.annotations.Pure;
+import b.nana.technology.gingester.core.annotations.*;
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.provider.Provider;
@@ -231,6 +228,14 @@ public final class TransformerFactory {
                             e.printStackTrace();
                         }
                     });
+
+                    List<String> characteristics = new ArrayList<>();
+                    if (transformer.getAnnotation(Passthrough.class) != null) characteristics.add("passthrough");
+                    if (Transformers.isSyncAware(transformer)) characteristics.add("sync-aware");
+                    if (!characteristics.isEmpty())
+                        help
+                                .append("  # ")
+                                .append(String.join(", ", characteristics));
 
                     Optional.ofNullable(transformer.getAnnotation(Description.class))
                             .map(description -> "\n        " + description.value())
