@@ -222,4 +222,14 @@ class SyncTest {
 
         assertEquals("Message from OnFinish", result.get());
     }
+
+    @Test
+    void testSyncToUnawareTransformerThrows() {
+
+        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
+                "-stt StringDef hello");
+
+        Exception e = assertThrows(IllegalArgumentException.class, flowBuilder::run);
+        assertEquals("StringDef is synced with __seed__ but is not sync-aware", e.getMessage());
+    }
 }

@@ -7,6 +7,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import net.jodah.typetools.TypeResolver;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +47,22 @@ public interface Transformer<I, O> {
 
     default boolean isPassthrough() {
         return getClass().getAnnotation(Passthrough.class) != null;
+    }
+
+    default boolean isSyncAware() {
+        try {
+
+            Method prepare = getClass().getMethod("prepare", Context.class, Receiver.class);
+            Method finish = getClass().getMethod("finish", Context.class, Receiver.class);
+
+            boolean isPrepareOverridden = !prepare.getDeclaringClass().equals(Transformer.class);
+            boolean isFinishOverridden = !finish.getDeclaringClass().equals(Transformer.class);
+
+            return isPrepareOverridden || isFinishOverridden;
+
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @SuppressWarnings("unchecked")
