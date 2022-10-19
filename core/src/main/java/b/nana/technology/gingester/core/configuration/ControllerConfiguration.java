@@ -67,6 +67,14 @@ public final class ControllerConfiguration<I, O> {
     }
 
     public ControllerConfiguration<I, O> syncs(List<String> syncs) {
+
+        // TODO instead of this check, pass id and transformer to constructor
+        if (id == null || transformer == null)
+            throw new IllegalStateException("syncs() called before id() or transformer()");
+
+        if (!syncs.isEmpty() && !transformer.isSyncAware())
+            throw new IllegalArgumentException(id + " is synced with " + String.join(", ", syncs) + " but is not sync-aware");
+
         this.syncs = syncs;
         return this;
     }

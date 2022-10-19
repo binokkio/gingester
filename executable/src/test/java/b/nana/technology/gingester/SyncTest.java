@@ -11,7 +11,7 @@ class SyncTest {
         new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-sft Repeat 100000 " +
-                "-stt Passthrough " +
+                "-stt GroupByEquals " +
                 "-t InputStreamJoin " +
                 "-t InputStreamDrain")
                 .run();

@@ -1,12 +1,9 @@
 package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.Node;
-import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,23 +17,10 @@ public final class SetupControls {
     public SetupControls(Transformer<?, ?> transformer, Node node) {
         this.node = node;
 
-        // if prepare or finish are overridden then preconfigure this SetupControls to sync with __seed__
-        try {
-
-            Method prepare = transformer.getClass().getMethod("prepare", Context.class, Receiver.class);
-            Method finish = transformer.getClass().getMethod("finish", Context.class, Receiver.class);
-
-            if (isOverridden(prepare) || isOverridden(finish)) {
-                node.addSync("__seed__");
-            }
-
-        } catch (NoSuchMethodException e) {
-            throw new IllegalStateException(e);
+        // if the transformer is sync-aware, then preconfigure this SetupControls to sync with __seed__
+        if (transformer.isSyncAware()) {
+            node.addSync("__seed__");
         }
-    }
-
-    private static boolean isOverridden(Method method) {
-        return !method.getDeclaringClass().equals(Transformer.class);
     }
 
 
