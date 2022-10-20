@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.InputStasher;
-import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
@@ -150,15 +149,18 @@ public final class ControllerConfiguration<I, O> {
 
     @SuppressWarnings("unchecked")
     public Class<? extends O> getOutputType() {
-        if (transformer instanceof OutputFetcher) {
-            return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
-                    .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
-                    .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
-                    .collect(Collectors.toList()));
-        } else if (transformer.isPassthrough()) {
+        if (transformer.isPassthrough()) {
             return (Class<O>) getActualInputType();
         } else {
-            return transformer.getOutputType();
+            Object outputType = transformer.getOutputType();
+            if (outputType instanceof FetchKey) {
+                return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
+                        .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
+                        .map(c -> c.getStashType((FetchKey) outputType))
+                        .collect(Collectors.toList()));
+            } else {
+                return (Class<O>) transformer.getOutputType();
+            }
         }
     }
 
