@@ -5,8 +5,12 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -15,12 +19,14 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public final class Route implements Transformer<String, Object> {
+public final class Route implements Transformer<Object, Object> {
 
-    private final FetchKey fetch;
+    private final Template inputTemplate;
     private final LinkedHashMap<Pattern, String> routes;
+    private final FetchKey fetch;
 
     public Route(Parameters parameters) {
+        inputTemplate = parameters.input != null ? Context.newTemplate(parameters.input) : null;
         fetch = parameters.fetch;
         routes = parameters.routes.entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(Pattern.compile(e.getKey()), e.getValue()))
@@ -33,8 +39,20 @@ public final class Route implements Transformer<String, Object> {
     }
 
     @Override
+    public Class<?> getInputType() {
+        return inputTemplate == null ? String.class : Object.class;
+    }
+
+    @Override
     public Object getOutputType() {
+        if (fetch == null)
+            throw new IllegalStateException("getOutputType() called while fetch == null");
         return fetch;
+    }
+
+    @Override
+    public boolean isPassthrough() {
+        return fetch == null;  // TODO return an Input sentinel from getOutputType instead
     }
 
     @Override
@@ -43,12 +61,13 @@ public final class Route implements Transformer<String, Object> {
     }
 
     @Override
-    public void transform(Context context, String in, Receiver<Object> out) {
+    public void transform(Context context, Object in, Receiver<Object> out) {
+        String input = inputTemplate == null ? (String) in : inputTemplate.render(context);
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
-            if (route.getKey().matcher(in).find()) {
+            if (route.getKey().matcher(input).find()) {
                 out.accept(
                         context.stash("route", route.getKey().pattern()),
-                        context.require(fetch),
+                        fetch != null ? context.require(fetch) : in,
                         route.getValue()
                 );
                 break;  // TODO parameterize
@@ -58,15 +77,16 @@ public final class Route implements Transformer<String, Object> {
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
-
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
-                rule(json -> !json.path("routes").isObject(), routes -> o("routes", routes));
+                rule(JsonNode::isArray, array -> am((ArrayNode) array, "input", "routes", "fetch"));
+                rule(json -> !json.path("routes").isObject(), routes -> o("routes", routes, "fetch", "^"));
             }
         }
 
-        public FetchKey fetch = new FetchKey(1);
+        public TemplateParameters input;
         public LinkedHashMap<String, String> routes;
+        public FetchKey fetch;
     }
 }

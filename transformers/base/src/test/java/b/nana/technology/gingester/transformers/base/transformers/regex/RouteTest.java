@@ -109,4 +109,20 @@ class RouteTest {
 
         assertEquals("{\"hello\":\"world\"}!", result.get());
     }
+
+    @Test
+    void testRouteOnTemplate() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t JsonDef '{hello:\"world\"}' " +
+                "-s " +
+                "-t RegexRoute '${stash.hello}' '{\"world\": \"Target\"}' " +
+                "-t Target:StringAppend '!'")
+                .add(result::set)
+                .run();
+
+        assertEquals("{\"hello\":\"world\"}!", result.get());
+    }
 }

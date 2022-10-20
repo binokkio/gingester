@@ -86,6 +86,14 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
         return arrayNode;
     }
 
+    public static ObjectNode am(ArrayNode array, String... keys) {
+        ObjectNode objectNode = o();
+        for (int i = 0; i < array.size(); i++) {
+            objectNode.set(keys[i], array.get(i));
+        }
+        return objectNode;
+    }
+
     private static JsonNode v(Object o) {
         if (o == null) {
             return JsonNodeFactory.instance.nullNode();
