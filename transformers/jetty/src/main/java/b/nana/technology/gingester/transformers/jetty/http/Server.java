@@ -8,15 +8,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,12 +27,27 @@ public final class Server implements Transformer<Object, InputStream> {
     private final boolean stashHeaders;
     private final boolean stashQuery;
     private final boolean stashCookies;
+    private final int inflateBufferSize;
+    private final String[] gzipIncludedMethods;
+    private final String[] gzipExcludedMethods;
+    private final String[] gzipIncludedMimeTypes;
+    private final String[] gzipExcludedMimeTypes;
+    private final String[] gzipIncludedPaths;
+    private final String[] gzipExcludedPaths;
+
 
     public Server(Parameters parameters) {
         port = parameters.port;
         stashHeaders = parameters.stashHeaders;
         stashQuery = parameters.stashQuery;
         stashCookies = parameters.stashCookies;
+        inflateBufferSize = parameters.inflateBufferSize;
+        gzipIncludedMethods = getIncludedExcluded(parameters.gzipMethods, true);
+        gzipExcludedMethods = getIncludedExcluded(parameters.gzipMethods, false);
+        gzipIncludedMimeTypes = getIncludedExcluded(parameters.gzipMimeTypes, true);
+        gzipExcludedMimeTypes = getIncludedExcluded(parameters.gzipMimeTypes, false);
+        gzipIncludedPaths = getIncludedExcluded(parameters.gzipPaths, true);
+        gzipExcludedPaths = getIncludedExcluded(parameters.gzipPaths, false);
 
         if (parameters.keyStore != null) {
             sslContextFactory = new SslContextFactory.Server();
@@ -49,6 +63,13 @@ public final class Server implements Transformer<Object, InputStream> {
         } else {
             sslContextFactory = null;
         }
+    }
+
+    private String[] getIncludedExcluded(String[] values, boolean returnIncluded) {
+        return Arrays.stream(values)
+                .filter(s -> returnIncluded != s.startsWith("!"))
+                .map(s -> returnIncluded ? s : s.substring(1))
+                .toArray(String[]::new);
     }
 
     @Override
@@ -73,7 +94,7 @@ public final class Server implements Transformer<Object, InputStream> {
         connector.setPort(port);
         server.addConnector(connector);
 
-        server.setHandler(new AbstractHandler() {
+        Handler handler = new AbstractHandler() {
 
             @Override
             public void handle(String target, Request jettyRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -132,7 +153,19 @@ public final class Server implements Transformer<Object, InputStream> {
                 out.accept(contextBuilder, jettyRequest.getInputStream());
                 responseWrapper.awaitResponse();
             }
-        });
+        };
+
+        GzipHandler gzipHandler = new GzipHandler();
+        gzipHandler.setInflateBufferSize(inflateBufferSize);
+        gzipHandler.setIncludedMethods(gzipIncludedMethods);
+        gzipHandler.setExcludedMethods(gzipExcludedMethods);
+        gzipHandler.setIncludedMimeTypes(gzipIncludedMimeTypes);
+        gzipHandler.setExcludedMimeTypes(gzipExcludedMimeTypes);
+        gzipHandler.setIncludedPaths(gzipIncludedPaths);
+        gzipHandler.setExcludedPaths(gzipExcludedPaths);
+
+        gzipHandler.setHandler(handler);
+        server.setHandler(gzipHandler);
 
         server.start();
         server.join();
@@ -219,6 +252,10 @@ public final class Server implements Transformer<Object, InputStream> {
         public boolean stashCookies = true;
         public StoreParameters trustStore;
         public StoreParameters keyStore;
+        public int inflateBufferSize = 8192;
+        public String[] gzipMethods = new String[] { "GET" };
+        public String[] gzipMimeTypes = new String[0];
+        public String[] gzipPaths = new String[] { "/*" };
 
         @JsonCreator
         public Parameters() {}
