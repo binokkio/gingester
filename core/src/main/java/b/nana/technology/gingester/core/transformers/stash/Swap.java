@@ -31,7 +31,7 @@ public final class Swap implements Transformer<Object, Object>, InputStasher, Ou
     }
 
     @Override
-    public FetchKey getOutputStashName() {
+    public FetchKey getOutputFetchKey() {
         return fetchKey;
     }
 

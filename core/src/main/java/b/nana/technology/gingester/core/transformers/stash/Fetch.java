@@ -19,11 +19,11 @@ public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
 
     public Fetch(Parameters parameters) {
         fetchKey = new FetchKey(parameters.fetchKey);
-        optional =parameters.optional;
+        optional = parameters.optional;
     }
 
     @Override
-    public FetchKey getOutputStashName() {
+    public FetchKey getOutputFetchKey() {
         return fetchKey;
     }
 

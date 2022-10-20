@@ -34,7 +34,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
     }
 
     @Override
-    public FetchKey getOutputStashName() {
+    public FetchKey getOutputFetchKey() {
         return fetch;
     }
 

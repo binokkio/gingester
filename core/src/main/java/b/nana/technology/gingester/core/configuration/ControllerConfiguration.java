@@ -153,7 +153,7 @@ public final class ControllerConfiguration<I, O> {
         if (transformer instanceof OutputFetcher) {
             return (Class<O>) getCommonSuperClass(gingester.getControllers().values().stream()
                     .filter(c -> c.links.containsValue(id) || c.excepts.contains(id))
-                    .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputStashName()))
+                    .map(c -> c.getStashType(((OutputFetcher) transformer).getOutputFetchKey()))
                     .collect(Collectors.toList()));
         } else if (transformer.isPassthrough()) {
             return (Class<O>) getActualInputType();
