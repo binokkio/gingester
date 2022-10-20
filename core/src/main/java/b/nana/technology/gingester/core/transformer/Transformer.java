@@ -39,9 +39,8 @@ public interface Transformer<I, O> {
         return (Class<I>) TypeResolver.resolveRawArguments(Transformer.class, getClass())[0];
     }
 
-    @SuppressWarnings("unchecked")
-    default Class<? extends O> getOutputType() {
-        return (Class<O>) TypeResolver.resolveRawArguments(Transformer.class, getClass())[1];
+    default Object getOutputType() {
+        return TypeResolver.resolveRawArguments(Transformer.class, getClass())[1];
     }
 
     default boolean isPassthrough() {

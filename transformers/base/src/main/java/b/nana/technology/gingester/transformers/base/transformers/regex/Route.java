@@ -5,7 +5,6 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -16,7 +15,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public final class Route implements Transformer<String, Object>, OutputFetcher {
+public final class Route implements Transformer<String, Object> {
 
     private final FetchKey fetch;
     private final LinkedHashMap<Pattern, String> routes;
@@ -34,7 +33,7 @@ public final class Route implements Transformer<String, Object>, OutputFetcher {
     }
 
     @Override
-    public FetchKey getOutputFetchKey() {
+    public Object getOutputType() {
         return fetch;
     }
 

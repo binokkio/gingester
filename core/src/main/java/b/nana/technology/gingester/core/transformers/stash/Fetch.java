@@ -5,14 +5,13 @@ import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.OutputFetcher;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Names(1)
-public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
+public final class Fetch implements Transformer<Object, Object> {
 
     private final FetchKey fetchKey;
     private final boolean optional;
@@ -23,7 +22,7 @@ public final class Fetch implements Transformer<Object, Object>, OutputFetcher {
     }
 
     @Override
-    public FetchKey getOutputFetchKey() {
+    public Object getOutputType() {
         return fetchKey;
     }
 
