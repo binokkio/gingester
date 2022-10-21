@@ -35,7 +35,6 @@ public final class Server implements Transformer<Object, InputStream> {
     private final String[] gzipIncludedPaths;
     private final String[] gzipExcludedPaths;
 
-
     public Server(Parameters parameters) {
         port = parameters.port;
         stashHeaders = parameters.stashHeaders;
