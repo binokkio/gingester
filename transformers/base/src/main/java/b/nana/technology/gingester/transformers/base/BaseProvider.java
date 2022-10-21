@@ -154,7 +154,8 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.util.Latch.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Sample.class,
                 b.nana.technology.gingester.transformers.base.transformers.util.Throttle.class,
-                b.nana.technology.gingester.transformers.base.transformers.xml.ToJson.class
+                b.nana.technology.gingester.transformers.base.transformers.xml.ToJson.class,
+                b.nana.technology.gingester.transformers.base.transformers.yml.ToJson.class
         );
     }
 }
