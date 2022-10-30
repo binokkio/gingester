@@ -5,7 +5,6 @@ import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.Main;
 import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
-import b.nana.technology.gingester.core.template.FreemarkerTemplateWrapper;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
@@ -19,15 +18,14 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
-
-import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.createCliTemplate;
 
 public final class CliParser {
 
@@ -112,29 +110,12 @@ public final class CliParser {
 
                 case "-cf":
                 case "--cli-file":
-                    try {
-                        String arg = args[++i];
-                        String raw = Files.readString(Paths.get(arg));
-                        args = splice(arg, raw, args, i);
-                    } catch (IOException e) {
-                        throw new IllegalArgumentException(e);  // TODO
-                    }
+                    i = handleCliFile(target, args, i);
                     break;
 
                 case "-cr":
                 case "--cli-resource":
-                    try {
-                        String arg = args[++i];
-                        String resource = Stream.of(arg, "/" + arg, "/gingester/" + arg)
-                                .flatMap(s -> Stream.of(s, s + ".cli"))
-                                .filter(s -> Main.class.getResourceAsStream(s) != null)
-                                .findFirst()
-                                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + arg));
-                        String raw = new String(Main.class.getResourceAsStream(resource).readAllBytes(), StandardCharsets.UTF_8);
-                        args = splice(resource, raw, args, i);
-                    } catch (IOException e) {
-                        throw new IllegalArgumentException(e);  // TODO
-                    }
+                    i = handleCliResource(target, args, i);
                     break;
 
                 case "-l":
@@ -276,16 +257,77 @@ public final class CliParser {
         }
     }
 
-    private static String[] splice(String templateName, String templateSource, String[] args, int i) throws JsonProcessingException {
-        FreemarkerTemplateWrapper template = createCliTemplate(templateName, templateSource);
-        if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
-            JsonNode parameters = OBJECT_READER.readTree(args[i + 1]);
-            String cli = template.render(parameters);
-            return splice(args, CliSplitter.split(cli), i + 1, 1);
-        } else {
-            String cli = template.render();
-            return splice(args, CliSplitter.split(cli), i + 1, 0);
+    private static int handleCliFile(FlowBuilder target, String[] args, int i) {
+
+        ScopedSource scopedSource = new ScopedSource(args[++i]);
+        URL url;
+        try {
+            url = Paths.get(scopedSource.source).toUri().toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);  // TODO
         }
+
+        return handleCliUrl(target, scopedSource, url, args, i);
+    }
+
+    private static int handleCliResource(FlowBuilder target, String[] args, int i) {
+
+        ScopedSource scopedSource = new ScopedSource(args[++i]);
+        URL url = Stream.of(scopedSource.source, "/" + scopedSource.source, "/gingester/" + scopedSource.source)
+                .flatMap(s -> Stream.of(s, s + ".cli"))
+                .map(Main.class::getResource)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + scopedSource.source));
+
+        return handleCliUrl(target, scopedSource, url, args, i);
+    }
+
+    private static class ScopedSource {
+
+        private final String scope;
+        private final String source;
+
+        private ScopedSource(String arg) {
+            if (arg.contains(":")) {
+                String[] parts = arg.split(":", 2);
+                scope = parts[0];
+                source = parts[1];
+            } else {
+                scope = null;
+                source = arg;
+            }
+        }
+    }
+
+    private static int handleCliUrl(FlowBuilder target, ScopedSource scopedSource, URL url, String[] args, int i) {
+
+        if (scopedSource.scope != null)
+            target.enterScope(scopedSource.scope);
+
+        int returnValue;
+
+        if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
+
+            JsonNode parameters;
+            try {
+                parameters = OBJECT_READER.readTree(args[i + 1]);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            target.cli(url, parameters);
+            returnValue =  i + 1;
+
+        } else {
+            target.cli(url);
+            returnValue =  i;
+        }
+
+        if (scopedSource.scope != null)
+            target.exitScope();
+
+        return returnValue;
     }
 
     private static String[] splice(String[] target, String[] items, int index, int lose) {

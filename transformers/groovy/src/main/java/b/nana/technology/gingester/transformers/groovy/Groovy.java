@@ -1,12 +1,14 @@
 package b.nana.technology.gingester.transformers.groovy;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
 import groovy.lang.GroovyShell;
@@ -44,7 +46,7 @@ public final class Groovy implements Transformer<Object, Object> {
         script.out = null;
     }
 
-    private final static class ScriptWithYield {
+    private static final class ScriptWithYield {
 
         private final Script script;
         private final Closure<Void> yield = new Closure<>(this) {
@@ -63,16 +65,15 @@ public final class Groovy implements Transformer<Object, Object> {
         }
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, script -> o("script", script));
+            }
+        }
 
         public TemplateParameters script;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(TemplateParameters script) {
-            this.script = script;
-        }
     }
 }

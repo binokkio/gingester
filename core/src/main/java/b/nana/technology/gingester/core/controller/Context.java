@@ -151,7 +151,7 @@ public final class Context implements Iterable<Context> {
                     .flatMap(c -> c.stash.values().stream())  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
                     .skip(fetchKey.ordinal() - 1);  // should actually have a .limit(1) here as well but assuming it will only be used with findFirst() for now
         } else {
-            return (fetchKey.hasTarget() ? stream().filter(c -> c.controller.id.equals(fetchKey.getTarget())) : stream())
+            return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller)) : stream())
                     .map(c -> c.stash)
                     .filter(Objects::nonNull)
                     .map(s -> {

@@ -46,10 +46,10 @@ public final class FlowRunner {
             explore();
         }
 
-        List<Node> nodes = flowBuilder.nodes.values().stream()
-                .map(node -> SimpleNode.of(
-                        node.requireId(),
-                        Stream.concat(node.getLinks().values().stream(), node.getExcepts().stream()).collect(Collectors.toList())))
+        List<Node> nodes = flowBuilder.nodes.entrySet().stream()
+                .map(entry -> SimpleNode.of(
+                        entry.getKey(),
+                        Stream.concat(entry.getValue().getLinks().values().stream(), entry.getValue().getExcepts().stream()).collect(Collectors.toList())))
                 .collect(Collectors.toList());
 
         return new GraphTxt(nodes).getText();

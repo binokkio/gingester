@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
+import java.util.function.Function;
 
 public final class Node {
 
@@ -162,14 +163,16 @@ public final class Node {
         return target;
     }
 
+    void scope(Function<String, String> scoper) {
+        links.replaceAll((key, value) -> scoper.apply(value));
+        syncs.replaceAll(scoper::apply);
+        excepts.replaceAll(scoper::apply);
+    }
+
 
 
     public Optional<String> getId() {
         return Optional.ofNullable(id);
-    }
-
-    public String requireId() {
-        return getId().orElseThrow();
     }
 
     public Optional<String> getName() {

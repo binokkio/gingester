@@ -183,7 +183,7 @@ public final class ControllerConfiguration<I, O> {
             }
         } else {
             if (fetchKey.getNames().length == 0) return Map.class;
-            if (!fetchKey.hasTarget() || fetchKey.getTarget().equals(id)) {
+            if (!fetchKey.hasTarget() || fetchKey.matchesTarget(id)) {
                 if (fetchKey.getNames().length == 1 && transformer instanceof InputStasher && ((InputStasher) transformer).getInputStashName().equals(fetchKey.getNames()[0])) {
                     return getActualInputType();
                 } else {

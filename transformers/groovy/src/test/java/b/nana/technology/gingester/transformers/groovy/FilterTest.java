@@ -49,6 +49,6 @@ class FilterTest {
                 .addTo(result::set, "ExceptionHandler")
                 .run();
 
-        assertEquals("Filter did not return a boolean but returned \"Hello, World!\"", result.get().getMessage());
+        assertEquals("Filter script did not return a boolean but returned \"Hello, World!\"", result.get().getMessage());
     }
 }
