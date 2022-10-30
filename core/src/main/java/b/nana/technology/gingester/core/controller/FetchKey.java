@@ -9,7 +9,8 @@ public final class FetchKey {
 
     private final boolean isOrdinal;
     private final int ordinal;
-    private final String target;
+    private final String id;
+    private final boolean isLocalId;
     private final String[] names;
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
@@ -19,20 +20,16 @@ public final class FetchKey {
         } else if (fetch.charAt(0) == '^') {
             isOrdinal = true;
             ordinal = fetch.length() == 1 ? 1 : Integer.parseInt(fetch.substring(1));
-            target = null;
+            id = null;
+            isLocalId = false;
             names = null;
         } else {
             isOrdinal = false;
             ordinal = 0;
-            String[] parts = fetch.split("\\.");
-            if (isTarget(parts[0])) {
-                target = parts[0];
-                names = new String[parts.length - 1];
-                System.arraycopy(parts, 1, names, 0, names.length);
-            } else {
-                target = null;
-                names = parts;
-            }
+            Target target = new Target(fetch);
+            id = target.id;
+            isLocalId = target.isLocalId;
+            names = target.names;
         }
     }
 
@@ -40,11 +37,17 @@ public final class FetchKey {
         if (isSingleName) {
             isOrdinal = false;
             ordinal = 0;
-            if (isTarget(fetch)) {
-                target = fetch;
+            if (fetch.charAt(0) == '$') {  // TODO refer to central SCOPE_DELIMITER
+                id = fetch;
+                isLocalId = false;
+                names = EMPTY_NAMES;
+            } else if (fetch.charAt(0) >= 'A' && fetch.charAt(0) <= 'Z') {
+                id = fetch;
+                isLocalId = true;
                 names = EMPTY_NAMES;
             } else {
-                target = null;
+                id = null;
+                isLocalId = false;
                 names = new String[] { fetch };
             }
         } else {
@@ -55,12 +58,9 @@ public final class FetchKey {
     public FetchKey(int ordinal) {
         this.isOrdinal = true;
         this.ordinal = ordinal;
-        this.target = null;
+        this.id = null;
+        this.isLocalId = false;
         this.names = null;
-    }
-
-    private boolean isTarget(String test) {
-        return test.charAt(0) >= 'A' && test.charAt(0) <= 'Z';
     }
 
     public boolean isOrdinal() {
@@ -72,15 +72,23 @@ public final class FetchKey {
     }
 
     public FetchKey decrement() {
-        return new FetchKey("^" + (ordinal - 1));
+        return new FetchKey(ordinal - 1);
     }
 
     public boolean hasTarget() {
-        return target != null;
+        return id != null;
     }
 
-    public String getTarget() {
-        return target;
+    public boolean matchesTarget(String id) {
+        return isLocalId ?
+                Controller.getLocalId(id).equals(this.id) :
+                id.equals(this.id);
+    }
+
+    public boolean matchesTarget(Controller<?, ?> controller) {
+        return isLocalId ?
+                controller.localId.equals(this.id) :
+                controller.id.equals(this.id);
     }
 
     public String[] getNames() {
@@ -92,14 +100,45 @@ public final class FetchKey {
     public String toString() {
         if (isOrdinal) {
             return ordinal == 1 ? "^" : "^" + ordinal;
-        } else if (target == null) {
+        } else if (id == null) {
             return String.join(".", names);
         } else {
             if (names.length == 0) {
-                return target;
+                return id;
             } else {
-                return target + '.' + String.join(".", names);
+                return id + '.' + String.join(".", names);
             }
         }
+    }
+
+    private static class Target {
+
+        Target(String fetch) {
+
+            if (fetch.contains(".."))
+                throw new IllegalArgumentException("Fetch keys don't support scope-up references");
+
+            String[] parts = fetch.split("\\.");
+
+            if (parts[0].charAt(0) == '$') {  // TODO refer to central SCOPE_DELIMITER
+                id = parts[0];
+                isLocalId = false;
+                names = new String[parts.length - 1];
+                System.arraycopy(parts, 1, names, 0, names.length);
+            } else if (parts[0].charAt(0) >= 'A' && parts[0].charAt(0) <= 'Z') {
+                id = parts[0];
+                isLocalId = true;
+                names = new String[parts.length - 1];
+                System.arraycopy(parts, 1, names, 0, names.length);
+            } else {
+                id = null;
+                isLocalId = false;
+                names = parts;
+            }
+        }
+
+        final String id;
+        final boolean isLocalId;
+        final String[] names;
     }
 }

@@ -125,4 +125,36 @@ class RouteTest {
 
         assertEquals("{\"hello\":\"world\"}!", result.get());
     }
+
+    @Test
+    void testGetGroupFromRouteMatch() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef 'Hello, World!' " +
+                "-t RegexRoute '{\"\\\\\\\\w+.*?(\\\\\\\\w+)\": \"Target\"}' 'null' " +
+                "-t Target:Fetch match " +
+                "-t RegexGroup 1")
+                .add(result::set)
+                .run();
+
+        assertEquals("World", result.get());
+    }
+
+    @Test
+    void testBridgeMatch() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef 'Hello, World' " +
+                "-t RegexRoute '{\"\\\\\\\\w+.*?(\\\\\\\\w+)\": \"Target\"}' 'null' " +
+                "-t Target:Fetch match " +
+                "-t StringAppend '!'")
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
 }

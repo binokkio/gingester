@@ -13,7 +13,9 @@ public final class GroovyProvider implements Provider {
         return List.of(
                 Eval.class,
                 Filter.class,
-                Groovy.class
+                Groovy.class,
+                TernaryRoute.class,
+                ThrowIf.class
         );
     }
 }

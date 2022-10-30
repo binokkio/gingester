@@ -16,6 +16,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,14 @@ public final class Route implements Transformer<Object, Object> {
     }
 
     @Override
+    public Map<String, Object> getStashDetails() {
+        return Map.of(
+                "route", String.class,
+                "match", Matcher.class
+        );
+    }
+
+    @Override
     public boolean isPassthrough() {
         return fetch == null;  // TODO return an Input sentinel from getOutputType instead
     }
@@ -64,9 +73,11 @@ public final class Route implements Transformer<Object, Object> {
     public void transform(Context context, Object in, Receiver<Object> out) {
         String input = inputTemplate == null ? (String) in : inputTemplate.render(context);
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
-            if (route.getKey().matcher(input).find()) {
+            Pattern pattern = route.getKey();
+            Matcher matcher = pattern.matcher(input);
+            if (matcher.find()) {
                 out.accept(
-                        context.stash("route", route.getKey().pattern()),
+                        context.stash(Map.of("route", pattern.pattern(), "match", matcher)),
                         fetch != null ? context.require(fetch) : in,
                         route.getValue()
                 );
@@ -80,7 +91,11 @@ public final class Route implements Transformer<Object, Object> {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
-                rule(JsonNode::isArray, array -> am((ArrayNode) array, "input", "routes", "fetch"));
+                rule(JsonNode::isArray, array ->
+                        array.get(0).isObject() ?
+                                am((ArrayNode) array, "routes", "fetch") :
+                                am((ArrayNode) array, "input", "routes", "fetch")
+                );
                 rule(json -> !json.path("routes").isObject(), routes -> o("routes", routes, "fetch", "^"));
             }
         }

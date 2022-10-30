@@ -1,0 +1,2 @@
+-t StringDef 'Hello, World!'
+-l [=target]

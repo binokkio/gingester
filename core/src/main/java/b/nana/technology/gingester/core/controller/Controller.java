@@ -19,6 +19,7 @@ public final class Controller<I, O> {
     private final ControllerConfiguration<I, O> configuration;
     final FlowRunner.ControllerInterface gingester;
     public final String id;
+    public final String localId;
     public final Transformer<I, O> transformer;
     final Phaser phaser;
 
@@ -56,6 +57,7 @@ public final class Controller<I, O> {
         this.gingester = gingester;
 
         id = configuration.getId();
+        localId = getLocalId(id);
         transformer = configuration.getTransformer();
         receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
         async = configuration.getMaxWorkers().orElse(0) > 0;
@@ -69,6 +71,10 @@ public final class Controller<I, O> {
 
         phaser = gingester.getPhaser();
         phaser.bulkRegister(maxWorkers);
+    }
+
+    public static String getLocalId(String id) {
+        return id.contains("$") ? id.substring(id.lastIndexOf('$') + 1) : id;
     }
 
     @SuppressWarnings("unchecked")
@@ -348,6 +354,7 @@ public final class Controller<I, O> {
         configuration = null;
         gingester = null;
         id = controllerId;
+        localId = controllerId;
         transformer = null;
         receiver = null;
         phaser = null;
