@@ -57,7 +57,7 @@ public final class FromJson implements Transformer<JsonNode, OutputStreamWrapper
             }
 
             List<String> row = new ArrayList<>(in.size());
-            in.iterator().forEachRemaining(jsonNode -> row.add(jsonNode.textValue()));
+            in.iterator().forEachRemaining(jsonNode -> row.add(jsonNode.asText()));
             state.writer.write(row);
         });
     }
