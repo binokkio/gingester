@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.kafka;
 
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.controller.FetchKey;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
+@Passthrough
 public final class Produce implements Transformer<byte[], byte[]> {
 
     private final ContextMap<ProducerWrapper> producers = new ContextMap<>();
@@ -60,6 +62,8 @@ public final class Produce implements Transformer<byte[], byte[]> {
         }
 
         producers.get(context).send(record);
+
+        out.accept(context, in);
     }
 
     @Override
