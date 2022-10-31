@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PathTest {
 
     @Test
-    void testJsonPath() throws IOException, NoSuchMethodException {
+    void testJsonPath() throws IOException {
 
         Queue<JsonNode> results = new ArrayDeque<>();
 
