@@ -56,12 +56,15 @@ public class Path implements Transformer<JsonNode, JsonNode> {
             }
         } else {
             ArrayNode jsonNodes = documentContext.read(jsonPath);
-            if (remove) documentContext.delete(jsonPath);
-            int i = 0;
-            for (; i < jsonNodes.size(); i++) {
-                out.accept(context.stash("description", descriptionPrefix + i), jsonNodes.get(i));
+            if (!jsonNodes.isEmpty()) {
+                if (remove) documentContext.delete(jsonPath);
+                int i = 0;
+                for (JsonNode jsonNode : jsonNodes) {
+                    out.accept(context.stash("description", descriptionPrefix + i++), jsonNode);
+                }
+            } else if (!optional) {
+                throw new NoSuchElementException(description);
             }
-            if (i == 0 && !optional) throw new NoSuchElementException(description);
         }
     }
 
