@@ -35,16 +35,18 @@ public final class TernaryRoute extends SimpleScriptTransformer {
     public void transform(Context context, Object in, Receiver<Object> out) {
 
         Object result = getResult(context, in);
+        boolean asBoolean;
 
         try {
-            boolean asBoolean = (boolean) result;
-            if (asBoolean)
-                out.accept(context, in, thenRoute);
-            else
-                out.accept(context, in, otherwiseRoute);
+            asBoolean = (boolean) result;
         } catch (ClassCastException e) {
             throw new IllegalStateException("TernaryRoute script did not return a boolean but returned \"" + result + "\"");
         }
+
+        if (asBoolean)
+            out.accept(context, in, thenRoute);
+        else
+            out.accept(context, in, otherwiseRoute);
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
