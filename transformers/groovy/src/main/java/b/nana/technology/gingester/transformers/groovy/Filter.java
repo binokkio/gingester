@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.groovy;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Names(1)
+@Passthrough
 public final class Filter extends SimpleScriptTransformer {
 
     public Filter(Parameters parameters) {

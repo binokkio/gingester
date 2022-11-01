@@ -47,4 +47,23 @@ class TernaryRouteTest {
         assertNull(thenResult.get());
         assertEquals("Bye, World!", otherwiseResult.get());
     }
+
+    @Test
+    void testBridgeAfterTernaryRoute() {
+
+        AtomicReference<String> thenResult = new AtomicReference<>();
+        AtomicReference<String> otherwiseResult = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t IntDef 123 " +
+                "-t TernaryRoute 'in > 100' Then Otherwise " +
+                "-t Then:StringAppend '!'")
+                .add(thenResult::set)
+                .cli("--")
+                .node().id("Otherwise").transformer(new ConsumerPassthrough<>(otherwiseResult::set)).add()
+                .run();
+
+        assertEquals("123!", thenResult.get());
+        assertNull(otherwiseResult.get());
+    }
 }

@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.groovy;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.List;
 
 @Names(1)
+@Passthrough
 public final class TernaryRoute extends SimpleScriptTransformer {
 
     private final String thenRoute;
