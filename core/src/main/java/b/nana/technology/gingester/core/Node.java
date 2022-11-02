@@ -155,9 +155,8 @@ public final class Node {
 
     public FlowBuilder add() {
 
-        if (target == null) {
+        if (target == null)
             throw new IllegalStateException("`add()` called on node without target");
-        }
 
         target.add(this);
         return target;
