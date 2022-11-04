@@ -239,7 +239,7 @@ public final class CliParser {
 
                     target.add(transformer);
                     if (syncTo) target.sync();
-                    if (markSyncFrom) target.syncFrom(target.getLastId());
+                    if (markSyncFrom) target.syncFrom(target.getLastLocalId());
 
                     break;
 
