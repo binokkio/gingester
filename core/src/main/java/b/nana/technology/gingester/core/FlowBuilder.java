@@ -17,6 +17,8 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+// TODO dedicate a class to the scoping logic
+
 public final class FlowBuilder {
 
     private static final Pattern UNSCOPED_ID = Pattern.compile("[A-Z][A-Za-z0-9]*");
@@ -442,7 +444,7 @@ public final class FlowBuilder {
             String remaining = id;
             while (remaining.startsWith(SCOPE_UP)) {
                 if (scopes.isEmpty())
-                    throw new IllegalArgumentException("\"" + id + "\" has too manu up references (\"" + SCOPE_UP + "\")");
+                    throw new IllegalArgumentException("\"" + id + "\" has too many up references (\"" + SCOPE_UP + "\")");
                 scopes.removeLast();
                 remaining = remaining.substring(SCOPE_UP.length());
             }
@@ -456,5 +458,11 @@ public final class FlowBuilder {
 //        int count = nodes.size();
 //        return nodes.keySet().stream().skip(count - 1).findFirst().orElseThrow();
         return lastId;
+    }
+
+    public String getLastLocalId() {
+        int lastIndexOf = lastId.lastIndexOf(SCOPE_DELIMITER);
+        if (lastIndexOf == -1) return lastId;
+        return lastId.substring(lastIndexOf + 1);
     }
 }
