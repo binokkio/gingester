@@ -136,7 +136,7 @@ public final class FlowRunner {
 
         if (configurations.values().stream().noneMatch(ControllerConfiguration::getReport)) {
             configurations.values().stream()
-                    .filter(c -> !c.getId().getLocalId().startsWith("$__"))
+                    .filter(c -> !c.getId().getLocalId().startsWith("__"))
                     .filter(c -> c.getLinks().isEmpty())
                     .forEach(c -> c.report(true));
         }
