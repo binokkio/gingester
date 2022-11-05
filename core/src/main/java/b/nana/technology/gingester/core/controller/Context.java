@@ -300,7 +300,7 @@ public final class Context implements Iterable<Context> {
                     .append(": ")
                     .append(pretty(e.getValue(), limit, indentation + INDENT, false)));
 
-            if (size > limit + 1)
+            if (!root && size > limit + 1)
                 stringBuilder
                         .append(" ".repeat(indentation + INDENT))
                         .append("...and ")
@@ -322,7 +322,34 @@ public final class Context implements Iterable<Context> {
             Stream<?> stream = ((Set<?>) object).stream();
             return prettyEntries(indentation, '{', '}', size, limit, stream);
         } else {
-            return object + "\n";
+
+            String string = object.toString();
+            String truncated = string.substring(0, Math.min(string.length(), limit * 100));
+            String[] lines = truncated.split("\\r?\\n");
+
+            if (lines.length == 1 && lines[0].length() == string.length()) {
+                return lines[0] + "\n";
+            } else {
+
+                StringBuilder stringBuilder = new StringBuilder();
+
+                for (int i = 0; i < lines.length && i < limit; i++)
+                    stringBuilder
+                            .append('\n')
+                            .append(" ".repeat(indentation + INDENT))
+                            .append(lines[i]);
+
+                if (truncated.length() < string.length() || limit < lines.length)
+                    stringBuilder
+                            .append('\n')
+                            .append(" ".repeat(indentation + INDENT))
+                            .append("...and more, total length is ")
+                            .append(string.length());
+
+                stringBuilder.append('\n');
+
+                return stringBuilder.toString();
+            }
         }
     }
 
