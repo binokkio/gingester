@@ -1,9 +1,6 @@
 package b.nana.technology.gingester.core.cli;
 
-import b.nana.technology.gingester.core.FlowBuilder;
-import b.nana.technology.gingester.core.FlowRunner;
-import b.nana.technology.gingester.core.Main;
-import b.nana.technology.gingester.core.Node;
+import b.nana.technology.gingester.core.*;
 import b.nana.technology.gingester.core.template.FreemarkerTemplateFactory;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -140,7 +137,7 @@ public final class CliParser {
                     List<String> excepts = new ArrayList<>();
                     while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
                         excepts.add(args[++i]);
-                    if (excepts.isEmpty()) excepts.add("__elog__");
+                    if (excepts.isEmpty()) excepts.add(Id.ELOG.getGlobalId());
                     target.exceptTo(excepts);
                     break;
 
@@ -239,7 +236,7 @@ public final class CliParser {
 
                     target.add(transformer);
                     if (syncTo) target.sync();
-                    if (markSyncFrom) target.syncFrom(target.getLastLocalId());
+                    if (markSyncFrom) target.syncFrom(target.getLastId().getGlobalId());
 
                     break;
 

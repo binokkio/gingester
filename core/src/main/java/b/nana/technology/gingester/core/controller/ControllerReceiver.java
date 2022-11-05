@@ -152,7 +152,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     void except(String method, Context context, Exception cause) {
         Controller<?, ?> catcher = except(context, cause);
         Context next = context.stash(Map.of(
-                "transformer", controller.id,
+                "transformer", controller.id.toString(),
                 "method", method,
                 "exception", cause,
                 "caughtBy", catcher.id
@@ -163,7 +163,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     void except(String method, Context context, I in, Exception cause) {
         Controller<?, ?> catcher = except(context, cause);
         Context next = context.stash(Map.of(
-                "transformer", controller.id,
+                "transformer", controller.id.toString(),
                 "method", method,
                 "in", in,
                 "exception", cause,

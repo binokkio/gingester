@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.controller;
 
+import b.nana.technology.gingester.core.Id;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -79,16 +80,10 @@ public final class FetchKey {
         return id != null;
     }
 
-    public boolean matchesTarget(String id) {
+    public boolean matchesTarget(Id id) {
         return isLocalId ?
-                Controller.getLocalId(id).equals(this.id) :
-                id.equals(this.id);
-    }
-
-    public boolean matchesTarget(Controller<?, ?> controller) {
-        return isLocalId ?
-                controller.localId.equals(this.id) :
-                controller.id.equals(this.id);
+                id.getLocalId().equals(this.id) :
+                id.getGlobalId().equals(this.id);
     }
 
     public String[] getNames() {
@@ -120,7 +115,7 @@ public final class FetchKey {
 
             String[] parts = fetch.split("\\.");
 
-            if (parts[0].charAt(0) == '$') {  // TODO refer to central SCOPE_DELIMITER
+            if (parts[0].charAt(0) == Id.SCOPE_DELIMITER) {
                 id = parts[0];
                 isLocalId = false;
                 names = new String[parts.length - 1];
