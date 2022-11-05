@@ -264,7 +264,7 @@ public final class Context implements Iterable<Context> {
         return contexts.stream();
     }
 
-    public String prettyStash() {
+    public String prettyStash(int limit) {
         List<Context> contexts = stream().collect(Collectors.toList());
         Collections.reverse(contexts);
         Map<Object, Object> combined = new LinkedHashMap<>();
@@ -276,10 +276,10 @@ public final class Context implements Iterable<Context> {
                 );
             }
         }
-        return pretty(combined, 0, false);
+        return pretty(combined, limit, 0, true);
     }
 
-    private String pretty(Object object, int indentation, boolean sort) {
+    private String pretty(Object object, int limit, int indentation, boolean root) {
 
         if (object instanceof Map) {
 
@@ -287,14 +287,25 @@ public final class Context implements Iterable<Context> {
 
             stringBuilder.append("{\n");
 
+            int size = ((Map<?, ?>) object).size();
             Stream<? extends Map.Entry<?, ?>> stream = ((Map<?, ?>) object).entrySet().stream();
-            if (sort) stream = stream.sorted(Comparator.comparing(entry -> entry.getKey().toString()));
+            if (!root)
+                stream = stream
+                        .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
+                        .limit(size > limit + 1 ? limit : size);
 
             stream.forEach(e -> stringBuilder
                     .append(" ".repeat(indentation + INDENT))
                     .append(e.getKey())
                     .append(": ")
-                    .append(pretty(e.getValue(), indentation + INDENT, true)));
+                    .append(pretty(e.getValue(), limit, indentation + INDENT, false)));
+
+            if (size > limit + 1)
+                stringBuilder
+                        .append(" ".repeat(indentation + INDENT))
+                        .append("...and ")
+                        .append(size - limit)
+                        .append(" more\n");
 
             stringBuilder
                     .append(" ".repeat(indentation))
@@ -302,9 +313,42 @@ public final class Context implements Iterable<Context> {
 
             return stringBuilder.toString();
 
+        } else if (object instanceof List) {
+            int size = ((List<?>) object).size();
+            Stream<?> stream = ((List<?>) object).stream();
+            return prettyEntries(indentation, '[', ']', size, limit, stream);
+        } else if (object instanceof Set) {
+            int size = ((Set<?>) object).size();
+            Stream<?> stream = ((Set<?>) object).stream();
+            return prettyEntries(indentation, '{', '}', size, limit, stream);
         } else {
             return object + "\n";
         }
+    }
+
+    private String prettyEntries(int indentation, char begin, char end, int size, int limit, Stream<?> stream) {
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(begin).append('\n');
+
+        stream.limit(size > limit + 1 ? limit : size).forEach(o -> stringBuilder
+                .append(" ".repeat(indentation + INDENT))
+                .append(pretty(o, limit, indentation + INDENT, false)));
+
+        if (size > limit + 1)
+            stringBuilder
+                    .append(" ".repeat(indentation + INDENT))
+                    .append("...and ")
+                    .append(size - limit)
+                    .append(" more\n");
+
+        stringBuilder
+                .append(" ".repeat(indentation))
+                .append(end)
+                .append('\n');
+
+        return stringBuilder.toString();
     }
 
     /**

@@ -19,11 +19,11 @@ public final class Probe implements Transformer<Object, Object> {
 
     private final FetchKey fetchDescription = new FetchKey("description");
     private final PrintStream target;
-    private final boolean includeContext;
+    private final int limit;
 
     public Probe(Parameters parameters) {
         target = getTarget(parameters.target);
-        includeContext = parameters.includeContext;
+        limit = parameters.limit;
     }
 
     private PrintStream getTarget(String target) {
@@ -41,10 +41,10 @@ public final class Probe implements Transformer<Object, Object> {
                 .map(Object::toString)
                 .collect(Collectors.joining(" :: "));
 
-        if (includeContext) {
+        if (limit > 0) {
             target.print(
                     "---- " + description + " ----\n" +
-                    context.prettyStash() + '\n' +
+                    context.prettyStash(limit) + '\n' +
                     in + '\n' +
                     "-".repeat(description.length() + 10) + "\n\n"
             );
@@ -65,13 +65,13 @@ public final class Probe implements Transformer<Object, Object> {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
-                rule(JsonNode::isBoolean, includeContext -> o("includeContext", includeContext));
+                rule(JsonNode::isInt, limit -> o("limit", limit));
                 rule(JsonNode::isTextual, target -> o("target", target));
-                rule(JsonNode::isArray, array -> o("target", array.get(0), "includeContext", array.get(1)));
+                rule(JsonNode::isArray, array -> o("target", array.get(0), "limit", array.get(1)));
             }
         }
 
         public String target = "out";
-        public boolean includeContext = true;
+        public int limit = 10;
     }
 }
