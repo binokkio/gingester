@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.controller;
 
+import b.nana.technology.gingester.core.Id;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
@@ -44,7 +45,7 @@ public final class Context implements Iterable<Context> {
     }
 
     public static Context newTestContext() {
-        return new Context(null, null, true, new Controller<>("__test_seed__"), null);
+        return new Context(null, null, true, new Controller<>(Id.newTestId("$__test_seed__")), null);
     }
 
 
@@ -68,7 +69,7 @@ public final class Context implements Iterable<Context> {
     }
 
     public String getTransformerId() {
-        return controller.id;
+        return controller.id.toString();
     }
 
     public boolean isSeed() {
@@ -151,7 +152,7 @@ public final class Context implements Iterable<Context> {
                     .flatMap(c -> c.stash.values().stream())  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
                     .skip(fetchKey.ordinal() - 1);  // should actually have a .limit(1) here as well but assuming it will only be used with findFirst() for now
         } else {
-            return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller)) : stream())
+            return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller.id)) : stream())
                     .map(c -> c.stash)
                     .filter(Objects::nonNull)
                     .map(s -> {
@@ -270,7 +271,7 @@ public final class Context implements Iterable<Context> {
         for (Context context : contexts) {
             if (context.stash != null && !context.stash.isEmpty()) {
                 combined.put(
-                        new PrettyStashKey(context.controller.id),  // can't use the id as-is since grouping can cause it to occur multiple times
+                        new PrettyStashKey(context.controller.id.toString()),  // can't use the id as-is since grouping can cause it to occur multiple times
                         context.stash
                 );
             }
@@ -416,7 +417,7 @@ public final class Context implements Iterable<Context> {
          * @return the context
          */
         public Context buildForTesting() {
-            this.controller = new Controller<>("__test__");
+            this.controller = new Controller<>(Id.newTestId("$__test__"));
             return new Context(this);
         }
 

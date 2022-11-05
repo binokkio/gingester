@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.FlowRunner;
+import b.nana.technology.gingester.core.Id;
 import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
@@ -18,8 +19,7 @@ public final class Controller<I, O> {
 
     private final ControllerConfiguration<I, O> configuration;
     final FlowRunner.ControllerInterface gingester;
-    public final String id;
-    public final String localId;
+    public final Id id;
     public final Transformer<I, O> transformer;
     final Phaser phaser;
 
@@ -30,7 +30,7 @@ public final class Controller<I, O> {
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links = new LinkedHashMap<>();
-    public final Map<String, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
+    public final Map<Id, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     final Set<Controller<?, ?>> indicatesCoarse = new HashSet<>();
@@ -57,7 +57,6 @@ public final class Controller<I, O> {
         this.gingester = gingester;
 
         id = configuration.getId();
-        localId = getLocalId(id);
         transformer = configuration.getTransformer();
         receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
         async = configuration.getMaxWorkers().orElse(0) > 0;
@@ -71,10 +70,6 @@ public final class Controller<I, O> {
 
         phaser = gingester.getPhaser();
         phaser.bulkRegister(maxWorkers);
-    }
-
-    public static String getLocalId(String id) {
-        return id.contains("$") ? id.substring(id.lastIndexOf('$') + 1) : id;
     }
 
     @SuppressWarnings("unchecked")
@@ -153,7 +148,7 @@ public final class Controller<I, O> {
         }
 
         // seed finish signal is always propagated to whole `indicatesCoarse`
-        indicates.put(gingester.getController("__seed__").orElseThrow(), indicatesCoarse);
+        indicates.put(gingester.getController(Id.SEED).orElseThrow(), indicatesCoarse);
 
         receiver.examineController();
     }
@@ -350,11 +345,10 @@ public final class Controller<I, O> {
 
 
 
-    Controller(String controllerId) {
+    Controller(Id controllerId) {
         configuration = null;
         gingester = null;
         id = controllerId;
-        localId = controllerId;
         transformer = null;
         receiver = null;
         phaser = null;

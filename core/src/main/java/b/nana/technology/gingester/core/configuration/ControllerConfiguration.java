@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.FlowRunner;
+import b.nana.technology.gingester.core.Id;
+import b.nana.technology.gingester.core.IdFactory;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.InputStasher;
@@ -14,29 +16,21 @@ public final class ControllerConfiguration<I, O> {
 
     private final FlowRunner.ControllerConfigurationInterface gingester;
 
-    private String id;
-    private Transformer<I, O> transformer;
+    private final Id id;
+    private final Transformer<I, O> transformer;
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
-    private Map<String, String> links = Collections.emptyMap();
-    private List<String> syncs = Collections.emptyList();
-    private List<String> excepts = Collections.emptyList();
+    private Map<String, Id> links = Collections.emptyMap();
+    private List<Id> syncs = Collections.emptyList();
+    private List<Id> excepts = Collections.emptyList();
     private boolean report;
     private Counter acksCounter;
 
-    public ControllerConfiguration(FlowRunner.ControllerConfigurationInterface gingester) {
-        this.gingester = gingester;
-    }
-
-    public ControllerConfiguration<I, O> id(String id) {
+    public ControllerConfiguration(Id id, Transformer<I, O> transformer, FlowRunner.ControllerConfigurationInterface gingester) {
         this.id = id;
-        return this;
-    }
-
-    public ControllerConfiguration<I, O> transformer(Transformer<I, O> transformer) {
         this.transformer = transformer;
-        return this;
+        this.gingester = gingester;
     }
 
     public ControllerConfiguration<I, O> maxWorkers(int maxWorkers) {
@@ -54,31 +48,38 @@ public final class ControllerConfiguration<I, O> {
         return this;
     }
 
-    public ControllerConfiguration<I, O> links(List<String> links) {
+    public ControllerConfiguration<I, O> links(List<Id> links) {
         this.links = new LinkedHashMap<>();
-        links.forEach(link -> this.links.put(link, link));
+        links.forEach(link -> this.links.put(link.getGlobalId(), link));
         return this;
     }
 
-    public ControllerConfiguration<I, O> links(Map<String, String> links) {
+    public ControllerConfiguration<I, O> links(Map<String, Id> links) {
         this.links = new LinkedHashMap<>(links);
         return this;
     }
 
-    public ControllerConfiguration<I, O> syncs(List<String> syncs) {
-
-        // TODO instead of this check, pass id and transformer to constructor
-        if (id == null || transformer == null)
-            throw new IllegalStateException("syncs() called before id() or transformer()");
-
-        if (!syncs.isEmpty() && !transformer.isSyncAware())
-            throw new IllegalArgumentException(id + " is synced with " + String.join(", ", syncs) + " but is not sync-aware");
-
-        this.syncs = syncs;
+    public ControllerConfiguration<I, O> links(Map<String, String> links, IdFactory idFactory) {
+        this.links = new LinkedHashMap<>();
+        links.forEach((String name, String id) -> this.links.put(name, idFactory.getId(id)));
         return this;
     }
 
-    public ControllerConfiguration<I, O> excepts(List<String> excepts) {
+    public ControllerConfiguration<I, O> syncs(List<String> syncs, IdFactory idFactory) {
+
+        if (!syncs.isEmpty() && !transformer.isSyncAware())
+            throw new IllegalArgumentException(id + " is synced with " + syncs.stream().map(idFactory::getId).map(Id::toString).collect(Collectors.joining(" and ")) + " but is not sync-aware");
+
+        this.syncs = idFactory.getIds(syncs);
+        return this;
+    }
+
+    public ControllerConfiguration<I, O> excepts(List<String> excepts, IdFactory idFactory) {
+        this.excepts = idFactory.getIds(excepts);
+        return this;
+    }
+
+    public ControllerConfiguration<I, O> excepts(List<Id> excepts) {
         this.excepts = excepts;
         return this;
     }
@@ -95,13 +96,13 @@ public final class ControllerConfiguration<I, O> {
 
 
 
-    public void updateLink(String linkName, String target) {
+    public void updateLink(String linkName, Id target) {
         links.replace(linkName, target);
     }
 
 
 
-    public String getId() {
+    public Id getId() {
         return id;
     }
 
@@ -121,15 +122,15 @@ public final class ControllerConfiguration<I, O> {
         return Optional.ofNullable(maxBatchSize);
     }
 
-    public Map<String, String> getLinks() {
+    public Map<String, Id> getLinks() {
         return links;
     }
 
-    public List<String> getSyncs() {
+    public List<Id> getSyncs() {
         return syncs;
     }
 
-    public List<String> getExcepts() {
+    public List<Id> getExcepts() {
         return excepts;
     }
 

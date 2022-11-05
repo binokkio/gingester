@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
+import b.nana.technology.gingester.core.Id;
 import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -19,7 +20,7 @@ public final class SetupControls {
 
         // if the transformer is sync-aware, then preconfigure this SetupControls to sync with __seed__
         if (transformer.isSyncAware()) {
-            node.addSync("__seed__");
+            node.addSync(Id.SEED.getGlobalId());
         }
     }
 

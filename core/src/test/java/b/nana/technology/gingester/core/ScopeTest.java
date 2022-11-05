@@ -2,7 +2,9 @@ package b.nana.technology.gingester.core;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
@@ -94,5 +96,22 @@ class ScopeTest {
         assertEquals(1, sorted.get(0));
         assertEquals(2, sorted.get(1));
         assertEquals(3, sorted.get(2));
+    }
+
+    @Test
+    void testImplicitSeedSyncInScope() {
+
+        Deque<Integer> results = new ConcurrentLinkedDeque<>();
+
+        new FlowBuilder().cli("" +
+                "-cr Scope1:scope-test-implicit-seed-sync.cli -l Results " +
+                "-cr Scope2:scope-test-implicit-seed-sync.cli -l Results " +
+                "-t Results:Passthrough")
+                .add(results::add)
+                .run();
+
+        assertEquals(2, results.size());
+        assertEquals(1, results.remove());
+        assertEquals(1, results.remove());
     }
 }

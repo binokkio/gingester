@@ -14,50 +14,42 @@ import java.net.URL;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-// TODO dedicate a class to the scoping logic
 
 public final class FlowBuilder {
 
-    private static final Pattern UNSCOPED_ID = Pattern.compile("[A-Z][A-Za-z0-9]*");
-    private static final Pattern SCOPE = Pattern.compile("[A-Z][A-Za-z0-9]*");
-    private static final String SCOPE_DELIMITER = "$";
-    private static final String SCOPE_UP = ".." + SCOPE_DELIMITER;
+    private final IdFactory idFactory = new IdFactory();
+    private final Deque<String> scopes = new ArrayDeque<>();
 
-    final Deque<String> scopes = new ArrayDeque<>();
-    final Map<String, Node> nodes = new LinkedHashMap<>();
+    final Map<Id, Node> nodes = new LinkedHashMap<>();
     FlowRunner.Goal goal = FlowRunner.Goal.RUN;
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
 
     private Node last;
-    private String lastId;
-    private List<String> linkFrom = List.of();
-    private List<String> syncFrom = List.of("__seed__");
-    private List<String> divertFrom = List.of();
+    private List<Id> linkFrom = List.of();
+    private List<Id> syncFrom = List.of(Id.SEED);
+    private List<Id> divertFrom = List.of();
 
     public FlowBuilder() {
 
         Node elog = new Node();
         elog.transformer(new ELog());
-        nodes.put("__elog__", elog);
+        nodes.put(Id.ELOG, elog);
 
         Node seed = new Node();
         seed.transformer(new Passthrough());
-        seed.addExcept("__elog__");
-        nodes.put("__seed__", seed);
+        seed.addExcept(Id.ELOG.getGlobalId());
+        nodes.put(Id.SEED, seed);
 
         last = seed;
-        lastId = "__seed__";
     }
 
     public FlowBuilder enterScope(String scope) {
 
-        if (!SCOPE.matcher(scope).matches())
-            throw new IllegalArgumentException("Bad scope: \"" + scope + "\", must match " + SCOPE.pattern());
+        if (!Id.ID_PART.matcher(scope).matches())
+            throw new IllegalArgumentException("Bad scope: \"" + scope + "\", must match " + Id.ID_PART.pattern());
 
         scopes.addLast(scope);
         return this;
@@ -74,17 +66,16 @@ public final class FlowBuilder {
 
     public FlowBuilder add(Node node) {
 
-        String id = getId(node);
+        Id id = getId(node);
         nodes.put(id, node);
         last = node;
-        lastId = id;
 
-        node.scope(this::scope);
+        node.scope(id_ -> idFactory.getGlobalId(id_, scopes));
 
-        linkFrom.stream().map(nodes::get).forEach(n -> n.addLink(id));
+        linkFrom.stream().map(this::getNode).forEach(n -> n.addLink(id.getGlobalId()));
         linkFrom = List.of(id);
 
-        divertFrom.stream().map(nodes::get).forEach(n -> n.updateLinks(id));
+        divertFrom.stream().map(this::getNode).forEach(n -> n.updateLinks(id.getGlobalId()));
         divertFrom = List.of();
 
         return this;
@@ -137,7 +128,7 @@ public final class FlowBuilder {
      * @param links the ids of the transformers to link the output to
      */
     public FlowBuilder linkTo(List<String> links) {
-        last.setLinks(scope(links));
+        last.setLinks(idFactory.getGlobalIds(links, scopes));
         linkFrom = List.of();
         return this;
     }
@@ -146,7 +137,7 @@ public final class FlowBuilder {
      * Sync the most recently added transformer with the current sync-from transformers.
      */
     public FlowBuilder sync() {
-        last.setSyncs(syncFrom);
+        last.setSyncs(syncFrom.stream().map(Id::getGlobalId).collect(Collectors.toList()));
         return this;
     }
 
@@ -158,7 +149,7 @@ public final class FlowBuilder {
     }
 
     public FlowBuilder exceptTo(List<String> excepts) {
-        last.setExcepts(scope(excepts));
+        last.setExcepts(idFactory.getGlobalIds(excepts, scopes));
         return this;
     }
 
@@ -175,7 +166,7 @@ public final class FlowBuilder {
      * @param linkFrom the ids of the transformers to link from when the
      */
     public FlowBuilder linkFrom(List<String> linkFrom) {
-        this.linkFrom = scope(linkFrom);
+        this.linkFrom = idFactory.getIds(linkFrom);
         return this;
     }
 
@@ -192,21 +183,20 @@ public final class FlowBuilder {
      * @param syncFrom the ids of the transformers to sync from when {@link #sync()} is called
      */
     public FlowBuilder syncFrom(List<String> syncFrom) {
-        this.syncFrom = scope(syncFrom);
+        this.syncFrom = idFactory.getIds(syncFrom);
         return this;
     }
 
     public FlowBuilder splice(Transformer<?, ?> transformer, String targetId, String linkName) {
 
         Node node = new Node().transformer(transformer);
-        String id = getId(node);
+        Id id = getId(node);
         nodes.put(id, node);
         last = node;
-        lastId = id;
 
-        Node target = nodes.get(scope(targetId));
+        Node target = getNode(idFactory.getId(targetId, scopes));
         node.addLink(linkName, target.getLink(linkName));
-        target.updateLink(linkName, id);
+        target.updateLink(linkName, id.getGlobalId());
 
         return this;
     }
@@ -225,19 +215,19 @@ public final class FlowBuilder {
      */
     public FlowBuilder divert(List<String> divertFrom) {
 
+        this.divertFrom = idFactory.getIds(divertFrom);
+
         Set<String> knifeTargets = new HashSet<>();
 
-        for (String id : divertFrom) {
-            Collection<String> links = nodes.get(scope(id)).getLinks().values();
+        for (Id id : this.divertFrom) {
+            Collection<String> links = getNode(id).getLinks().values();
             if (links.isEmpty()) throw new IllegalArgumentException("Can't divert from " + id + ", it has no links");
             knifeTargets.addAll(links);
         }
 
         knife(knifeTargets);
         this.last = null;
-        this.lastId = null;
         this.linkFrom = List.of();
-        this.divertFrom = divertFrom;
         return this;
     }
 
@@ -257,10 +247,12 @@ public final class FlowBuilder {
 
         Set<String> nextTargetIds = new HashSet<>();
 
-        for (String targetId : targetIds) {
-            Node removed = nodes.remove(scope(targetId));
+        for (Id targetId : idFactory.getIds(targetIds, scopes)) {
+            Node removed = nodes.remove(targetId);
+            if (removed == null)
+                throw new IllegalArgumentException("No transformer has id " + targetId);
             nextTargetIds.addAll(removed.getLinks().values());
-            nodes.forEach((id, node) -> node.updateLinks(targetId, "__void__"));
+            nodes.forEach((id, node) -> node.updateLinks(targetId.getGlobalId(), "$__void__"));
         }
 
         if (!nextTargetIds.isEmpty())
@@ -396,73 +388,47 @@ public final class FlowBuilder {
         return build().render();
     }
 
+    IdFactory getIdFactory() {
+        return idFactory;
+    }
+
+    Node getNode(Id id) {
+        Node node = nodes.get(id);
+        if (node == null)
+            throw new IllegalArgumentException("No transformer has id " + id);
+        return node;
+    }
+
     private FlowRunner build() {
 
-        if (nodes.values().stream().map(Node::getLinks).map(Map::values).flatMap(Collection::stream).anyMatch("__void__"::equals)) {
+        if (nodes.values().stream().map(Node::getLinks).map(Map::values).flatMap(Collection::stream).anyMatch("$__void__"::equals)) {
             Node void_ = new Node();
             void_.transformer(new Void());
-            nodes.put("__void__", void_);
+            nodes.put(idFactory.getId("$__void__", scopes), void_);
         }
 
         return new FlowRunner(this);
     }
 
-    private String getId(Node node) {
+    private Id getId(Node node) {
         if (node.getId().isPresent()) {
-            String id = node.getId().get();
-            if (!UNSCOPED_ID.matcher(id).matches())
-                throw new IllegalArgumentException("Bad transformer id: \"" + id + "\", must match " + UNSCOPED_ID.pattern());
-            id = scope(id);
+            Id id = idFactory.getId(node.getId().get(), scopes);
             if (nodes.containsKey(id))
                 throw new IllegalArgumentException("Transformer id " + id + " already in use");
             return id;
         } else {
             String name = node.getName()
-                    .orElseGet(() -> TransformerFactory.getUniqueName(node.getTransformer().orElseThrow()));
-            if (!UNSCOPED_ID.matcher(name).matches())
-                throw new IllegalStateException("Bad transformer name: \"" + name + "\", must match " + UNSCOPED_ID.pattern());
-            name = scope(name);
-            String id = name;
+                    .orElseGet(() -> TransformerFactory.getUniqueName(node.requireTransformer()));
+            Id id = idFactory.getId(name, scopes);
             int i = 1;
             while (nodes.containsKey(id))
-                id = name + '_' + i++;
+                id = idFactory.getId(name + '_' + i++, scopes);
             return id;
         }
     }
 
-    private List<String> scope(List<String> ids) {
-        return ids.stream()
-                .map(this::scope)
-                .collect(Collectors.toList());
-    }
-
-    private String scope(String id) {
-        if (id.startsWith(SCOPE_DELIMITER)) {
-            return id.substring(SCOPE_DELIMITER.length());
-        } else {
-            Deque<String> scopes = new ArrayDeque<>(this.scopes);
-            String remaining = id;
-            while (remaining.startsWith(SCOPE_UP)) {
-                if (scopes.isEmpty())
-                    throw new IllegalArgumentException("\"" + id + "\" has too many up references (\"" + SCOPE_UP + "\")");
-                scopes.removeLast();
-                remaining = remaining.substring(SCOPE_UP.length());
-            }
-            return scopes.isEmpty() ?
-                    remaining :
-                    String.join(SCOPE_DELIMITER, scopes) + SCOPE_DELIMITER + remaining;
-        }
-    }
-
-    public String getLastId() {
-//        int count = nodes.size();
-//        return nodes.keySet().stream().skip(count - 1).findFirst().orElseThrow();
-        return lastId;
-    }
-
-    public String getLastLocalId() {
-        int lastIndexOf = lastId.lastIndexOf(SCOPE_DELIMITER);
-        if (lastIndexOf == -1) return lastId;
-        return lastId.substring(lastIndexOf + 1);
+    public Id getLastId() {
+        int count = nodes.size();
+        return nodes.keySet().stream().skip(count - 1).findFirst().orElseThrow();
     }
 }
