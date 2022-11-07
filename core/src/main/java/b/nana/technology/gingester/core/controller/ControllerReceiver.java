@@ -155,7 +155,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 "transformer", controller.id.toString(),
                 "method", method,
                 "exception", cause,
-                "caughtBy", catcher.id
+                "caughtBy", catcher.id.toString()
         )).build(controller);
         catcher.excepts.values().forEach(target -> accept(next, cause, target));
     }
@@ -167,7 +167,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
                 "method", method,
                 "in", in,
                 "exception", cause,
-                "caughtBy", catcher.id
+                "caughtBy", catcher.id.toString()
         )).build(controller);
         catcher.excepts.values().forEach(target -> accept(next, cause, target));
     }

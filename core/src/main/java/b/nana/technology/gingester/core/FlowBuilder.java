@@ -72,7 +72,7 @@ public final class FlowBuilder {
 
         node.scope(id_ -> idFactory.getGlobalId(id_, scopes));
 
-        linkFrom.stream().map(this::getNode).forEach(n -> n.addLink(id.getGlobalId()));
+        linkFrom.stream().map(this::getNode).forEach(n -> n.addLink(id.toString(), id.getGlobalId()));
         linkFrom = List.of(id);
 
         divertFrom.stream().map(this::getNode).forEach(n -> n.updateLinks(id.getGlobalId()));
@@ -166,7 +166,7 @@ public final class FlowBuilder {
      * @param linkFrom the ids of the transformers to link from when the
      */
     public FlowBuilder linkFrom(List<String> linkFrom) {
-        this.linkFrom = idFactory.getIds(linkFrom);
+        this.linkFrom = idFactory.getIds(linkFrom, scopes);
         return this;
     }
 
@@ -183,7 +183,7 @@ public final class FlowBuilder {
      * @param syncFrom the ids of the transformers to sync from when {@link #sync()} is called
      */
     public FlowBuilder syncFrom(List<String> syncFrom) {
-        this.syncFrom = idFactory.getIds(syncFrom);
+        this.syncFrom = idFactory.getIds(syncFrom, scopes);
         return this;
     }
 
@@ -215,7 +215,7 @@ public final class FlowBuilder {
      */
     public FlowBuilder divert(List<String> divertFrom) {
 
-        this.divertFrom = idFactory.getIds(divertFrom);
+        this.divertFrom = idFactory.getIds(divertFrom, scopes);
 
         Set<String> knifeTargets = new HashSet<>();
 

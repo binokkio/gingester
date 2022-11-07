@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializerFactory;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -92,6 +93,14 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
             objectNode.set(keys[i], array.get(i));
         }
         return objectNode;
+    }
+
+    public static BooleanNode f(String expected, JsonNode jsonNode) {
+        if (expected.equals(jsonNode.asText())) {
+            return BooleanNode.TRUE;
+        } else {
+            throw new IllegalArgumentException("Unexpected value for \"" + expected + "\" flag: \"" + jsonNode + "\"");
+        }
     }
 
     private static JsonNode v(Object o) {

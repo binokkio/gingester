@@ -186,13 +186,11 @@ public final class FlowRunner {
             Iterator<Id> iterator = route.descendingIterator();
             while (iterator.hasNext()) {
                 Id id = iterator.next();
-                boolean isExceptionHandler = configurations.values().stream().anyMatch(c -> c.getExcepts().contains(id));
-                if (isExceptionHandler) break;  // TODO this only works as long as a controller is not used as both a normal link and an exception handler
+                if (id == Id.ELOG) break;  // elog excepts to itself but is assumed to never throw
                 ControllerConfiguration<?, ?> controller = configurations.get(id);
                 if (!controller.getExcepts().isEmpty()) {
-                    for (Id exceptionHandler : controller.getExcepts()) {
-                        explore(exceptionHandler.toString(), exceptionHandler, new ArrayDeque<>(route), false, seen);
-                    }
+                    controller.getExcepts().forEach(eh -> explore(eh.toString(), eh, new ArrayDeque<>(route), false, seen));
+                    break;
                 }
             }
         }
