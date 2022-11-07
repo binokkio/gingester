@@ -90,6 +90,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.list.Collect.class,
                 b.nana.technology.gingester.transformers.base.transformers.list.Stream.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.Collect.class,
+                b.nana.technology.gingester.transformers.base.transformers.map.CollectCounts.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.CollectLists.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.CollectSets.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.Get.class,
