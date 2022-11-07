@@ -72,7 +72,7 @@ public final class FlowBuilder {
 
         node.scope(id_ -> idFactory.getGlobalId(id_, scopes));
 
-        linkFrom.stream().map(this::getNode).forEach(n -> n.addLink(id.getGlobalId()));
+        linkFrom.stream().map(this::getNode).forEach(n -> n.addLink(id.toString(), id.getGlobalId()));
         linkFrom = List.of(id);
 
         divertFrom.stream().map(this::getNode).forEach(n -> n.updateLinks(id.getGlobalId()));

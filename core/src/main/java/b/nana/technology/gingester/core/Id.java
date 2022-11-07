@@ -20,6 +20,7 @@ public final class Id {
 
     private final String globalId;
     private final String localId;
+    private final String toString;
 
     Id(String globalId) {
 
@@ -30,6 +31,8 @@ public final class Id {
 
         String[] parts = globalId.split("\\" + SCOPE_DELIMITER);
         this.localId = parts[parts.length - 1];
+
+        this.toString = globalId.substring(1);
     }
 
     public String getGlobalId() {
@@ -42,6 +45,6 @@ public final class Id {
 
     @Override
     public String toString() {
-        return globalId.substring(1);
+        return toString;
     }
 }
