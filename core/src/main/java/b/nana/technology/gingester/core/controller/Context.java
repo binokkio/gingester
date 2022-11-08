@@ -276,14 +276,14 @@ public final class Context implements Iterable<Context> {
                 );
             }
         }
-        return pretty(combined, limit, 0, true);
+        StringBuilder stringBuilder = new StringBuilder();
+        pretty(combined, limit, 0, true, stringBuilder);
+        return stringBuilder.toString();
     }
 
-    private String pretty(Object object, int limit, int indentation, boolean root) {
+    private void pretty(Object object, int limit, int indentation, boolean root, StringBuilder stringBuilder) {
 
         if (object instanceof Map) {
-
-            StringBuilder stringBuilder = new StringBuilder();
 
             stringBuilder.append("{\n");
 
@@ -294,11 +294,13 @@ public final class Context implements Iterable<Context> {
                         .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
                         .limit(size > limit + 1 ? limit : size);
 
-            stream.forEach(e -> stringBuilder
-                    .append(" ".repeat(indentation + INDENT))
-                    .append(e.getKey())
-                    .append(": ")
-                    .append(pretty(e.getValue(), limit, indentation + INDENT, false)));
+            stream.forEach(e -> {
+                stringBuilder
+                        .append(" ".repeat(indentation + INDENT))
+                        .append(e.getKey())
+                        .append(": ");
+                pretty(e.getValue(), limit, indentation + INDENT, false, stringBuilder);
+            });
 
             if (!root && size > limit + 1)
                 stringBuilder
@@ -311,16 +313,14 @@ public final class Context implements Iterable<Context> {
                     .append(" ".repeat(indentation))
                     .append("}\n");
 
-            return stringBuilder.toString();
-
         } else if (object instanceof List) {
             int size = ((List<?>) object).size();
             Stream<?> stream = ((List<?>) object).stream();
-            return prettyEntries(indentation, '[', ']', size, limit, stream);
+            prettyEntries(indentation, '[', ']', size, limit, stream, stringBuilder);
         } else if (object instanceof Set) {
             int size = ((Set<?>) object).size();
             Stream<?> stream = ((Set<?>) object).stream();
-            return prettyEntries(indentation, '{', '}', size, limit, stream);
+            prettyEntries(indentation, '{', '}', size, limit, stream, stringBuilder);
         } else {
 
             String string = object.toString();
@@ -328,10 +328,8 @@ public final class Context implements Iterable<Context> {
             String[] lines = truncated.split("\\r?\\n");
 
             if (lines.length == 1 && lines[0].length() == string.length()) {
-                return lines[0] + "\n";
+                stringBuilder.append(lines[0]).append('\n');
             } else {
-
-                StringBuilder stringBuilder = new StringBuilder();
 
                 for (int i = 0; i < lines.length && i < limit; i++)
                     stringBuilder
@@ -347,21 +345,18 @@ public final class Context implements Iterable<Context> {
                             .append(string.length());
 
                 stringBuilder.append('\n');
-
-                return stringBuilder.toString();
             }
         }
     }
 
-    private String prettyEntries(int indentation, char begin, char end, int size, int limit, Stream<?> stream) {
-
-        StringBuilder stringBuilder = new StringBuilder();
+    private void prettyEntries(int indentation, char begin, char end, int size, int limit, Stream<?> stream, StringBuilder stringBuilder) {
 
         stringBuilder.append(begin).append('\n');
 
-        stream.limit(size > limit + 1 ? limit : size).forEach(o -> stringBuilder
-                .append(" ".repeat(indentation + INDENT))
-                .append(pretty(o, limit, indentation + INDENT, false)));
+        stream.limit(size > limit + 1 ? limit : size).forEach(o -> {
+            stringBuilder.append(" ".repeat(indentation + INDENT));
+            pretty(o, limit, indentation + INDENT, false, stringBuilder);
+        });
 
         if (size > limit + 1)
             stringBuilder
@@ -374,8 +369,6 @@ public final class Context implements Iterable<Context> {
                 .append(" ".repeat(indentation))
                 .append(end)
                 .append('\n');
-
-        return stringBuilder.toString();
     }
 
     /**

@@ -36,10 +36,10 @@ General usage:
     -l/--links <link1> [<link2> [...]]
         link the previous transformer to the given links, it will not automatically link to the next transformer
 
-    -p/--probe [<target>] [<includeContext>]
+    -p/--probe [<target>] [<contextLimit>]
         print the items flowing through this point in the flow
         provide "err" for [<target>] to print to stderr instead of stdout
-        provide "false" for [<includeContext>] to prevent the context from being printed
+        provide an integer for [<contextLimit>] to control the amount of context printed
 
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable

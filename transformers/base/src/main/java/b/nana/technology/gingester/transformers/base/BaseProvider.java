@@ -94,6 +94,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.map.CollectLists.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.CollectSets.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.Get.class,
+                b.nana.technology.gingester.transformers.base.transformers.map.GetNullable.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.Remove.class,
                 b.nana.technology.gingester.transformers.base.transformers.map.Stream.class,
                 b.nana.technology.gingester.transformers.base.transformers.object.Distinct.class,
