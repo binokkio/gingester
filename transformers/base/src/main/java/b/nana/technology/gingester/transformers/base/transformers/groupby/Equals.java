@@ -53,40 +53,6 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
         contextMap.remove(context).closeGroups();
     }
 
-    @JsonDeserialize(using = Parameters.Deserializer.class)
-    public static class Parameters {
-        public static class Deserializer extends NormalizingDeserializer<Parameters> {
-            public Deserializer() {
-                super(Parameters.class);
-                rule(JsonNode::isTextual, stash -> o("stash", stash));
-                rule(JsonNode::isInt, maxEntries -> o("maxEntries", maxEntries));
-                rule(JsonNode::isArray, array -> {
-                    ObjectNode objectNode = o();
-                    for (JsonNode element : array) {
-                        if (element.isTextual() && !objectNode.has("stash")) {
-                            objectNode.set("stash", element);
-                        } else if (element.isInt()) {
-                            if (!objectNode.has("maxEntries")) {
-                                objectNode.set("stash", element);
-                            } else if (!objectNode.has("maxGroups")) {
-                                objectNode.set("stash", element);
-                            } else {
-                                throw new IllegalArgumentException("GroupByEquals parameter parsing failed at " + element);
-                            }
-                        } else {
-                            throw new IllegalArgumentException("GroupByEquals parameter parsing failed at " + element);
-                        }
-                    }
-                    return objectNode;
-                });
-            }
-        }
-
-        public String stash = "groupKey";
-        public int maxGroups = -1;
-        public int maxEntries = -1;
-    }
-
     private class State {
 
         private final Context groupParent;
@@ -131,5 +97,39 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
         private Group(Context context) {
             this.context = context;
         }
+    }
+
+    @JsonDeserialize(using = Parameters.Deserializer.class)
+    public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, stash -> o("stash", stash));
+                rule(JsonNode::isInt, maxEntries -> o("maxEntries", maxEntries));
+                rule(JsonNode::isArray, array -> {
+                    ObjectNode objectNode = o();
+                    for (JsonNode element : array) {
+                        if (element.isTextual() && !objectNode.has("stash")) {
+                            objectNode.set("stash", element);
+                        } else if (element.isInt()) {
+                            if (!objectNode.has("maxEntries")) {
+                                objectNode.set("stash", element);
+                            } else if (!objectNode.has("maxGroups")) {
+                                objectNode.set("stash", element);
+                            } else {
+                                throw new IllegalArgumentException("GroupByEquals parameter parsing failed at " + element);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("GroupByEquals parameter parsing failed at " + element);
+                        }
+                    }
+                    return objectNode;
+                });
+            }
+        }
+
+        public String stash = "groupKey";
+        public int maxGroups = -1;
+        public int maxEntries = -1;
     }
 }
