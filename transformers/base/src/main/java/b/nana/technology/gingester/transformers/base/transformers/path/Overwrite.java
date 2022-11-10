@@ -1,7 +1,8 @@
 package b.nana.technology.gingester.transformers.base.transformers.path;
 
-import b.nana.technology.gingester.core.template.TemplateParameters;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.nio.file.StandardOpenOption;
 
@@ -11,17 +12,17 @@ public final class Overwrite extends Write {
         super(parameters);
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters extends Write.Parameters {
-
-        @JsonCreator
-        public Parameters() {
-            openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING };
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, path -> o("path", path));
+            }
         }
 
-        @JsonCreator
-        public Parameters(TemplateParameters path) {
-            this.path = path;
-            this.openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING };
+        public Parameters() {
+            openOptions = new StandardOpenOption[] { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING };
         }
     }
 }

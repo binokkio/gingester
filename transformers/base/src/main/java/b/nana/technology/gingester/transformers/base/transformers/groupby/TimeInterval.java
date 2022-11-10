@@ -27,15 +27,17 @@ import static java.util.Objects.requireNonNull;
 @Passthrough
 @Stashes(stash = "interval", type = Integer.class)
 @Stashes(stash = "intervalStart", type = ZonedDateTime.class)
-@Example(example = "PT10M", description = "Group items per 10 minutes starting when the first item of a group arrives")
-@Example(example = "PT10M fixedRate", description = "Group items in a new group every 10 minutes, omit empty groups")
-@Example(example = "PT10M fixedRate yieldEmpty", description = "Group items in a new group every 10 minutes, yield empty groups")
+@Example(example = "PT5M", description = "Group items per 5 minutes starting when the first item of a group arrives")
+@Example(example = "PT5M fixedRate", description = "Group items in a new group every 5 minutes, omit empty groups")
+@Example(example = "PT5M fixedRate yieldEmpty", description = "Group items in a new group every 5 minutes, yield empty groups")
+@Example(example = "PT5M inactivity", description = "Group items together as long as they arrive within 5 minutes of each other")
 public final class TimeInterval implements Transformer<Object, Object> {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
     private final long intervalNanos;
     private final boolean fixedRate;
     private final boolean yieldEmpty;
+    private final boolean inactivity;
     private final ZoneId zoneId;
 
     private ScheduledExecutorService scheduledExecutorService;
@@ -45,10 +47,14 @@ public final class TimeInterval implements Transformer<Object, Object> {
         intervalNanos = Duration.parse(requireNonNull(parameters.interval, "GroupByTimeInterval must be given `interval` parameter")).toNanos();
         fixedRate = parameters.fixedRate;
         yieldEmpty = parameters.yieldEmpty;
+        inactivity = parameters.inactivity;
         zoneId = parameters.zone != null ? ZoneId.of(parameters.zone) : ZoneId.systemDefault();
 
         if (!fixedRate && yieldEmpty)
             throw new IllegalArgumentException("Combination of fixedRate=false and yieldEmpty=true not supported");
+
+        if (fixedRate && inactivity)
+            throw new IllegalArgumentException("Combination of fixedRate=true and inactivity=true not supported");
     }
 
     @Override
@@ -75,44 +81,6 @@ public final class TimeInterval implements Transformer<Object, Object> {
     @Override
     public void close() {
         scheduledExecutorService.shutdown();
-    }
-
-    @JsonDeserialize(using = Parameters.Deserializer.class)
-    public static class Parameters {
-        public static class Deserializer extends NormalizingDeserializer<Parameters> {
-            public Deserializer() {
-                super(Parameters.class);
-                rule(JsonNode::isTextual, interval -> o("interval", interval));
-                rule(JsonNode::isArray, array -> {
-                    boolean fixedRate = false;
-                    boolean yieldEmpty = false;
-                    String zone = null;
-                    for (int i = 1; i < array.size(); i++) {
-                        JsonNode element = array.get(i);
-                        if (element.asText().equals("fixedRate")) {
-                            fixedRate = true;
-                        } else if (element.asText().equals("yieldEmpty")) {
-                            yieldEmpty = true;
-                        } else if (zone == null) {
-                            zone = element.asText();
-                        } else {
-                            throw new IllegalArgumentException("GroupByTimeInterval parameter parsing failed at " + element);
-                        }
-                    }
-                    return o(
-                            "interval", array.get(0),
-                            "fixedRate", fixedRate,
-                            "yieldEmpty", yieldEmpty,
-                            "zone", zone
-                    );
-                });
-            }
-        }
-
-        public String interval;
-        public boolean fixedRate;
-        public boolean yieldEmpty;
-        public String zone;
     }
 
     private class State {
@@ -145,6 +113,15 @@ public final class TimeInterval implements Transformer<Object, Object> {
 
         private synchronized void withCurrentGroup(Consumer<Context> consumer) {
             consumer.accept(getCurrentGroup());
+
+            if (inactivity) {
+                scheduledFuture.cancel(false);
+                scheduledFuture = scheduledExecutorService.schedule(
+                        this::closeCurrentGroup,
+                        intervalNanos,
+                        TimeUnit.NANOSECONDS
+                );
+            }
         }
 
         private synchronized Context getCurrentGroup() {
@@ -184,5 +161,48 @@ public final class TimeInterval implements Transformer<Object, Object> {
                 scheduledFuture.cancel(false);
             }
         }
+    }
+
+    @JsonDeserialize(using = Parameters.Deserializer.class)
+    public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, interval -> o("interval", interval));
+                rule(JsonNode::isArray, array -> {
+                    boolean fixedRate = false;
+                    boolean yieldEmpty = false;
+                    boolean inactivity = false;
+                    String zone = null;
+                    for (int i = 1; i < array.size(); i++) {
+                        JsonNode element = array.get(i);
+                        if (element.asText().equals("fixedRate")) {
+                            fixedRate = true;
+                        } else if (element.asText().equals("yieldEmpty")) {
+                            yieldEmpty = true;
+                        } else if (element.asText().equals("inactivity")) {
+                            inactivity = true;
+                        } else if (zone == null) {
+                            zone = element.asText();
+                        } else {
+                            throw new IllegalArgumentException("GroupByTimeInterval parameter parsing failed at " + element);
+                        }
+                    }
+                    return o(
+                            "interval", array.get(0),
+                            "fixedRate", fixedRate,
+                            "yieldEmpty", yieldEmpty,
+                            "inactivity", inactivity,
+                            "zone", zone
+                    );
+                });
+            }
+        }
+
+        public String interval;
+        public boolean fixedRate;
+        public boolean yieldEmpty;
+        public boolean inactivity;
+        public String zone;
     }
 }

@@ -41,19 +41,6 @@ public final class CountModulo implements Transformer<Object, Object> {
         contextMap.remove(context).close(out);
     }
 
-    public static class Parameters {
-
-        public int divisor;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(int divisor) {
-            this.divisor = divisor;
-        }
-    }
-
     private class State {
 
         private final AtomicLong counter = new AtomicLong();
@@ -78,6 +65,19 @@ public final class CountModulo implements Transformer<Object, Object> {
             for (Context group : groups) {
                 out.closeGroup(group);
             }
+        }
+    }
+
+    public static class Parameters {
+
+        public int divisor;
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(int divisor) {
+            this.divisor = divisor;
         }
     }
 }

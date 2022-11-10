@@ -41,19 +41,6 @@ public final class CountLimit implements Transformer<Object, Object> {
         contextMap.remove(context).close();
     }
 
-    public static class Parameters {
-
-        public long limit;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(long limit) {
-            this.limit = limit;
-        }
-    }
-
     private class State {
 
         private final Context groupParent;
@@ -85,6 +72,19 @@ public final class CountLimit implements Transformer<Object, Object> {
             if (group != null) {
                 out.closeGroup(group);
             }
+        }
+    }
+
+    public static class Parameters {
+
+        public long limit;
+
+        @JsonCreator
+        public Parameters() {}
+
+        @JsonCreator
+        public Parameters(long limit) {
+            this.limit = limit;
         }
     }
 }

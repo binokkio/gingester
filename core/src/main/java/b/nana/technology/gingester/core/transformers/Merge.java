@@ -14,10 +14,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,7 +66,7 @@ public final class Merge implements Transformer<Object, Object> {
                     context.fetch(instruction.fetch).ifPresent(
                             object -> {
                                 Object collision = state.singles.put(instruction.stash, object);
-                                if (collision != null && collision != object) {
+                                if (collision != null && !Objects.equals(collision, object)) {
                                     throw new IllegalStateException("Multiple values for " + instruction.stash);
                                 }
                             });
