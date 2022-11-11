@@ -160,7 +160,7 @@ public final class ControllerConfiguration<I, O> {
                         .map(c -> c.getStashType((FetchKey) outputType))
                         .collect(Collectors.toList()));
             } else {
-                return (Class<O>) transformer.getOutputType();
+                return (Class<O>) outputType;
             }
         }
     }

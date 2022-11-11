@@ -38,7 +38,7 @@ public final class FetchKey {
         if (isSingleName) {
             isOrdinal = false;
             ordinal = 0;
-            if (fetch.charAt(0) == '$') {  // TODO refer to central SCOPE_DELIMITER
+            if (fetch.charAt(0) == Id.SCOPE_DELIMITER) {
                 id = fetch;
                 isLocalId = false;
                 names = EMPTY_NAMES;
