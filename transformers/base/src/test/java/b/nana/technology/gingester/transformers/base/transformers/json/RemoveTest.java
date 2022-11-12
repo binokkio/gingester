@@ -91,7 +91,7 @@ class RemoveTest {
     }
 
     @Test
-    void testRemoveEmptyNotDefiniteDoesNotThrow() {
+    void testRemoveEmptyIndefiniteDoesNotThrow() {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 

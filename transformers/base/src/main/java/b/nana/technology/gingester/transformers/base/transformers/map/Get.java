@@ -40,7 +40,7 @@ public final class Get implements Transformer<Object, Object> {
             public Deserializer() {
                 super(Parameters.class);
                 rule(JsonNode::isTextual, map -> o("map", map));
-                rule(JsonNode::isArray, array -> o("map", array.get(0), "optional", f("optional", array.get(1))));
+                rule(JsonNode::isArray, array -> flags(array, 1, o("map", array.get(0))));
             }
         }
 

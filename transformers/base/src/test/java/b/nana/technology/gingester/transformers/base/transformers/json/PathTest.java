@@ -80,7 +80,7 @@ class PathTest {
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t JsonDef '{hello:\"world\"}' " +
-                "-t JsonPath '$.**.missing.path.should.throw' " +
+                "-t JsonPath '$..missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
                 .add(result::set)
@@ -97,9 +97,54 @@ class PathTest {
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t JsonDef '{hello:\"world\"}' " +
-                "-t JsonPath '$.**.missing.path.should.not.throw' optional " +
+                "-t JsonPath '$..missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
+                .add(result::set)
+                .run();
+
+        assertNull(result.get());
+    }
+
+    @Test
+    void testNullValueIsNotYieldedByDefault() {
+
+        AtomicReference<Exception> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-e Exceptions " +
+                "-t JsonDef '{hello:null}' " +
+                "-t JsonPath '$.hello' " +
+                "-- " +
+                "-t Exceptions:Passthrough")
+                .add(result::set)
+                .run();
+
+        assertEquals("$.hello", result.get().getMessage());
+    }
+
+    @Test
+    void testNullValueIsYieldedWhenYieldNullIsGiven() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t JsonDef '{hello:null}' " +
+                "-t JsonPath '$.hello' yieldNull ")
+                .add(result::set)
+                .run();
+
+        assertTrue(result.get().isNull());
+    }
+
+    @Test
+    void testNullValueIsIgnoredWhenOptionalIsGiven() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t JsonDef '{hello:null}' " +
+                "-t JsonPath '$.hello' optional ")
                 .add(result::set)
                 .run();
 
