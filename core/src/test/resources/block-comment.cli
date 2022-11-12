@@ -1,0 +1,8 @@
+-t StringDef 'Hello, World'
+-s
+++++++
+Hello, block comment!
+
+This [=freemarker] interpolation should not cause any issues.
+++++++
+-t StringDef '${stash}!'
