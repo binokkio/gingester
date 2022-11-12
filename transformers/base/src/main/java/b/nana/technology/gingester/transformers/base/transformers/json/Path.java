@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 
 @Example(example = "$.hello", description = "Yield the JsonNode at key \"hello\", throw if missing")
 @Example(example = "$.hello optional", description = "Yield the JsonNode at key \"hello\", ignore if missing")
+@Example(example = "$.hello yieldNull", description = "Yield the JsonNode at key \"hello\", don't treat null as missing")
 public class Path implements Transformer<JsonNode, JsonNode> {
 
     private static final Configuration CONFIGURATION = Configuration.builder()
