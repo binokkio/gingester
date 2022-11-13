@@ -39,8 +39,8 @@ public final class FilterOut implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        String string = input == null ? (String) in : input.render(context);
-        if (!pattern.render(context).matcher(string).find()) {
+        String string = input == null ? (String) in : input.render(context, in);
+        if (!pattern.render(context, in).matcher(string).find()) {
             out.accept(context, in);
         }
     }

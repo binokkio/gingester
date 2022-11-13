@@ -21,7 +21,7 @@ public final class Def implements Transformer<Object, Path> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Path> out) {
-        Path path = Paths.get(pathTemplate.render(context));
+        Path path = Paths.get(pathTemplate.render(context, in));
         out.accept(
                 context.stash(Map.of(
                         "description", path,

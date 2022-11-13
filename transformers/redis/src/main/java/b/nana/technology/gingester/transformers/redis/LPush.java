@@ -14,7 +14,7 @@ public final class LPush extends KeyTransformer<byte[], byte[]> {
 
     @Override
     protected void transform(Context context, byte[] in, Receiver<byte[]> out, Jedis jedis) {
-        jedis.lpush(getKeyTemplate().render(context).getBytes(StandardCharsets.UTF_8), in);
+        jedis.lpush(getKeyTemplate().render(context, in).getBytes(StandardCharsets.UTF_8), in);
         out.accept(context, in);
     }
 }

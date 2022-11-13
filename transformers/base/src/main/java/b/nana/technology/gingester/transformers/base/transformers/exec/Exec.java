@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
+import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,11 +26,11 @@ public final class Exec implements Transformer<InputStream, InputStream> {
     private final ExecutorService errDrainer = Executors.newCachedThreadPool();
 
     private final Template commandTemplate;
-    private final Template workDirTemplate;
+    private final TemplateMapper<File> workDirTemplate;
 
     public Exec(Parameters parameters) {
         commandTemplate = Context.newTemplate(parameters.command);
-        workDirTemplate = Context.newTemplate(parameters.workDir);
+        workDirTemplate = Context.newTemplateMapper(parameters.workDir, s -> new File(s).getAbsoluteFile());
     }
 
     @Override
@@ -40,11 +41,11 @@ public final class Exec implements Transformer<InputStream, InputStream> {
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
 
-        String command = commandTemplate.render(context);
+        String command = commandTemplate.render(context, in);
         String[] args = CliSplitter.split(command);
 
         Runtime runtime = Runtime.getRuntime();
-        Process process = runtime.exec(args, null, new File(workDirTemplate.render(context)).getAbsoluteFile());
+        Process process = runtime.exec(args, null, workDirTemplate.render(context, in));
 
         out.accept(context.stash("description", command), process.getInputStream());
 

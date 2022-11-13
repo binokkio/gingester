@@ -26,7 +26,7 @@ public final class Move implements Transformer<Path, Path> {
     @Override
     public void transform(Context context, Path in, Receiver<Path> out) throws Exception {
         
-        Path target = Path.of(pathTemplate.render(context));
+        Path target = Path.of(pathTemplate.render(context, in));
 
         if (mkdirs) {
             Path parent = target.getParent();

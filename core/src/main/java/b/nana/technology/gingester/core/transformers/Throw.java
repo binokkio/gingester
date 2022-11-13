@@ -19,7 +19,7 @@ public final class Throw implements Transformer<Object, Void> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Void> out) throws Exception {
-        throw new FlowException(messageTemplate.render(context));
+        throw new FlowException(messageTemplate.render(context, in));
     }
 
     public static class FlowException extends Exception {

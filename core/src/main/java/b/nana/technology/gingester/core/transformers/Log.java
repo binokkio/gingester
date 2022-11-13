@@ -45,7 +45,7 @@ public final class Log implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        log.accept(messageTemplate.render(context));
+        log.accept(messageTemplate.render(context, in));
         out.accept(context, in);
     }
 

@@ -71,7 +71,7 @@ public final class Route implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        String input = inputTemplate == null ? (String) in : inputTemplate.render(context);
+        String input = inputTemplate == null ? (String) in : inputTemplate.render(context, in);
         for (Map.Entry<Pattern, String> route : routes.entrySet()) {
             Pattern pattern = route.getKey();
             Matcher matcher = pattern.matcher(input);

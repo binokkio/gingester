@@ -19,7 +19,7 @@ public final class Append implements Transformer<String, String> {
 
     @Override
     public void transform(Context context, String in, Receiver<String> out) {
-        out.accept(context, in + append.render(context));
+        out.accept(context, in + append.render(context, in));
     }
 
     public static class Parameters {

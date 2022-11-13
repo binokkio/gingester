@@ -24,8 +24,8 @@ public final class Replace implements Transformer<String, String> {
 
     @Override
     public void transform(Context context, String in, Receiver<String> out) {
-        Pattern pattern = patternTemplate.render(context);
-        String replacement = replacementTemplate.render(context);
+        Pattern pattern = patternTemplate.render(context, in);
+        String replacement = replacementTemplate.render(context, in);
         out.accept(context, pattern.matcher(in).replaceAll(replacement));
     }
 

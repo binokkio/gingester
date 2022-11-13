@@ -77,7 +77,7 @@ public final class Proxy implements Transformer<InputStream, InputStream> {
             });
 
         extraHeaders.forEach(
-                (name, value) -> proxyRequestBuilder.setHeader(name, value.render(context)));
+                (name, value) -> proxyRequestBuilder.setHeader(name, value.render(context, in)));
 
         // proxy the request, TODO look into HttpClient thread safety
         HttpClient httpClient = HttpClient.newHttpClient();

@@ -43,9 +43,9 @@ public final class Get implements Transformer<Object, InputStream> {
     @Override
     public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
 
-        String uri = uriTemplate.render(context);
+        String uri = uriTemplate.render(context, in);
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(uri));
-        headers.forEach((name, template) -> requestBuilder.header(name, template.render(context)));
+        headers.forEach((name, template) -> requestBuilder.header(name, template.render(context, in)));
 
         // TODO look into HttpClient thread safety
         HttpClient httpClient = HttpClient.newBuilder().followRedirects(followRedirects).build();

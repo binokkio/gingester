@@ -25,7 +25,7 @@ public abstract class SimpleScriptTransformer implements Transformer<Object, Obj
         binding.setProperty("context", context);
         binding.setProperty("in", in);
 
-        Script script = scripts.get().render(context);
+        Script script = scripts.get().render(context, in);
         script.setBinding(binding);
         Object result = script.run();
         script.setBinding(null);

@@ -14,7 +14,7 @@ public final class Set extends KeyTransformer<byte[], byte[]> {
 
     @Override
     protected void transform(Context context, byte[] in, Receiver<byte[]> out, Jedis jedis) {
-        jedis.set(getKeyTemplate().render(context).getBytes(StandardCharsets.UTF_8), in);
+        jedis.set(getKeyTemplate().render(context, in).getBytes(StandardCharsets.UTF_8), in);
         out.accept(context, in);
     }
 }
