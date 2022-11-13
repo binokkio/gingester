@@ -50,7 +50,7 @@ public class TemplateMapper<T> {
 
     /**
      * Render this template.
-     *
+     * <p>
      * If the template is invariant a pre-made T is returned, otherwise the template is rendered with the given context
      * and mapped to T by the mapper Function given during construction.
      *
@@ -63,7 +63,7 @@ public class TemplateMapper<T> {
 
     /**
      * Check if this template is invariant.
-     *
+     * <p>
      * An invariant template is rendered and mapped only once during construction the same resulting T is returned for
      * every call to {@link #render(Context)}.
      *
