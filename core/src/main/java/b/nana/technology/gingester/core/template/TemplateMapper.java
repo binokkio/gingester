@@ -31,11 +31,13 @@ public class TemplateMapper<T> {
             // try to render the template without a data model, if that does not throw then
             // assume the template is invariant
 
-            String render;
-            try {
-                render = templateWrapper.render();
-            } catch (Exception e) {
-                render = null;
+            String render = null;
+            if (!templateParameters.getTemplateString().contains("${") && !templateParameters.getTemplateString().contains("<#")) {
+                try {
+                    render = templateWrapper.render();
+                } catch (Exception e) {
+                    // ignore, render stays null and we assume this template is not invariant
+                }
             }
 
             invariant = render != null ?
