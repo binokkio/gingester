@@ -104,6 +104,7 @@ public final class Server implements Transformer<Object, InputStream> {
                 Map<String, Object> httpStash = new HashMap<>();
 
                 httpStash.put("request", Map.of(
+                        "object", request,
                         "method", jettyRequest.getMethod(),
                         "path", target
                 ));
