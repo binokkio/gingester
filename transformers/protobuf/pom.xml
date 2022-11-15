@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.21.10-SNAPSHOT</version>
+        <version>0.22.0</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
