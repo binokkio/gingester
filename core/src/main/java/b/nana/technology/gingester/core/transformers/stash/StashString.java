@@ -32,7 +32,7 @@ public final class StashString implements Transformer<Object, Object>  {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws InterruptedException {
-        out.accept(context.stash(stash, template.render(context)), in);
+        out.accept(context.stash(stash, template.render(context, in)), in);
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)

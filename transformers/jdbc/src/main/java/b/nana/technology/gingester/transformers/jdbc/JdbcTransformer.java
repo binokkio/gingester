@@ -71,8 +71,8 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
                 this::onConnectionMoribund));
     }
 
-    protected final ConnectionWith<T> acquireConnection(Context context) throws SQLException, InterruptedException {
-        return state.get(context).acquire(urlTemplate.render(context));
+    protected final ConnectionWith<T> acquireConnection(Context context, Object in) throws SQLException, InterruptedException {
+        return state.get(context).acquire(urlTemplate.render(context, in));
     }
 
     protected final void releaseConnection(Context context, ConnectionWith<T> connection) {

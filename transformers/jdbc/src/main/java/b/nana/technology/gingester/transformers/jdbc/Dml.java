@@ -28,7 +28,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws InterruptedException, SQLException {
 
-        ConnectionWith<DmlStatement> connection = acquireConnection(context);
+        ConnectionWith<DmlStatement> connection = acquireConnection(context, in);
         try {
 
             for (int i = 0; i < dml.size(); i++) {
@@ -36,7 +36,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
                 Template dmlTemplate = dmlTemplates.get(i);
                 DmlStatement dmlStatement;
 
-                String raw = dmlTemplate.render(context);
+                String raw = dmlTemplate.render(context, in);
                 dmlStatement = connection.getObject(raw);
                 if (dmlStatement == null) {
                     dmlStatement = new DmlStatement(connection.getConnection(), raw, dml.get(i).parameters);

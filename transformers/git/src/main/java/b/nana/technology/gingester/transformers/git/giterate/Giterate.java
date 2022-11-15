@@ -46,11 +46,11 @@ public final class Giterate implements Transformer<Object, Path> {
     public void transform(Context context, Object in, Receiver<Path> out) throws IOException, InterruptedException {
 
         Runtime runtime = Runtime.getRuntime();
-        Path scratch = Files.createTempDirectory(scratchTemplate.render(context), "giterate-");
+        Path scratch = Files.createTempDirectory(scratchTemplate.render(context, in), "giterate-");
 
         // clone
         Path clone = scratch.resolve("clone");
-        Process cloneProcess = runtime.exec(new String[] { "git", "clone", originTemplate.render(context), clone.toString() });
+        Process cloneProcess = runtime.exec(new String[] { "git", "clone", originTemplate.render(context, in), clone.toString() });
         int cloneResult = cloneProcess.waitFor();
         if (cloneResult != 0) throw new IllegalStateException("git clone did not exit with 0");
 
@@ -62,7 +62,7 @@ public final class Giterate implements Transformer<Object, Path> {
             int branchResult = branchProcess.waitFor();
             if (branchResult != 0) throw new IllegalStateException("git branch did not exit with 0 but " + branchResult);
 
-            String targetBranch = branchTemplate.render(context);
+            String targetBranch = branchTemplate.render(context, in);
 
             if (!currentBranch.equals(targetBranch)) {
                 Process checkoutProcess = runtime.exec(new String[] { "git", "checkout", targetBranch }, null, clone.toFile());

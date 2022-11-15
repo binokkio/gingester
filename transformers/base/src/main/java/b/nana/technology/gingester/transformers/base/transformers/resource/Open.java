@@ -25,7 +25,7 @@ public final class Open implements Transformer<Object, InputStream> {
 
     @Override
     public void transform(Context context, Object in, Receiver<InputStream> out) throws Exception {
-        String resourcePath = pathTemplate.render(context);
+        String resourcePath = pathTemplate.render(context, in);
         InputStream inputStream = getClass().getResourceAsStream(resourcePath);
         if (inputStream == null) throw new NullPointerException("getResourceAsStream(\"" + resourcePath + "\") returned null");
         out.accept(context.stash("description", resourcePath), inputStream);

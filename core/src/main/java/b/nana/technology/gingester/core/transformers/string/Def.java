@@ -24,7 +24,7 @@ public final class Def implements Transformer<Object, String> {
 
     @Override
     public void transform(Context context, Object in, Receiver<String> out) throws InterruptedException {
-        out.accept(context, template.render(context));
+        out.accept(context, template.render(context, in));
     }
 
     public static class Parameters {

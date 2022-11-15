@@ -17,7 +17,7 @@ public final class Generate implements Transformer<Object, String> {
 
     @Override
     public void transform(Context context, Object in, Receiver<String> out) {
-        out.accept(context, string.render(context));
+        out.accept(context, string.render(context, in));
     }
 
     private static class Parameters {

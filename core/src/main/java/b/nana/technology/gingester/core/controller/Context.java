@@ -323,7 +323,7 @@ public final class Context implements Iterable<Context> {
             prettyEntries(indentation, '{', '}', size, limit, stream, stringBuilder);
         } else {
 
-            String string = object.toString();
+            String string = Objects.toString(object);
             String truncated = string.substring(0, Math.min(string.length(), limit * 100));
             String[] lines = truncated.split("\\r?\\n");
 

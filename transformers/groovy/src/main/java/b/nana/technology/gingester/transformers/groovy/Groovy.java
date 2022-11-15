@@ -29,7 +29,7 @@ public final class Groovy implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
-        ScriptWithYield script = scripts.get().render(context);
+        ScriptWithYield script = scripts.get().render(context, in);
         script.context = context;
         script.out = out;
 

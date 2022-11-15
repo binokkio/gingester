@@ -30,7 +30,7 @@ public final class Watch implements Transformer<Object, Path> {
     @Override
     public void transform(Context context, Object in, Receiver<Path> out) throws Exception {
 
-        List<Path> targets = this.targets.stream().map(t -> t.render(context)).collect(Collectors.toList());
+        List<Path> targets = this.targets.stream().map(t -> t.render(context, in)).collect(Collectors.toList());
         Set<Path> register = new HashSet<>();
 
         for (Path target : targets) {

@@ -7,16 +7,19 @@ import com.fasterxml.jackson.databind.deser.BeanDeserializerFactory;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Iffy deserializer that allows for some rule based normalization before
@@ -27,11 +30,13 @@ import java.util.function.Predicate;
 public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
 
     private final List<Rule> rules = new ArrayList<>();
+    private final Class<T> target;
     private final JavaType javaType;
 
     public NormalizingDeserializer(Class<T> target) {
         super(target);
-        javaType = TypeFactory.defaultInstance().constructType(target);
+        this.target = target;
+        this.javaType = TypeFactory.defaultInstance().constructType(target);
     }
 
     protected void rule(Predicate<JsonNode> predicate, Function<JsonNode, JsonNode> normalizer) {
@@ -95,12 +100,22 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
         return objectNode;
     }
 
-    public static BooleanNode f(String expected, JsonNode jsonNode) {
-        if (expected.equals(jsonNode.asText())) {
-            return BooleanNode.TRUE;
-        } else {
-            throw new IllegalArgumentException("Unexpected value for \"" + expected + "\" flag: \"" + jsonNode + "\"");
+    public ObjectNode flags(JsonNode source, int from, ObjectNode destination) {
+
+        Set<String> fields = Arrays.stream(this.target.getFields())
+                .filter(f -> f.getType().equals(Boolean.TYPE))
+                .map(Field::getName)
+                .collect(Collectors.toSet());
+
+        for (int i = from; i < source.size(); i++) {
+
+            if (!fields.contains(source.get(i).asText()))
+                throw new IllegalArgumentException("Unexpected flag: " + source.get(i));
+
+            destination.put(source.get(i).asText(), true);
         }
+
+        return destination;
     }
 
     private static JsonNode v(Object o) {

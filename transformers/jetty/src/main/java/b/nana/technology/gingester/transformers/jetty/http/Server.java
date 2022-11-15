@@ -230,7 +230,7 @@ public final class Server implements Transformer<Object, InputStream> {
 
         /**
          * Returns the underlying HttpServletResponse.
-         *
+         * <p>
          * Note that `respond` or `respondEmpty` must be called on `this` regardless of
          * any interactions directly on the HttpServletResponse returned by this method.
          */

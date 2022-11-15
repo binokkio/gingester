@@ -20,7 +20,7 @@ public final class Find implements Transformer<String, Matcher> {
 
     @Override
     public void transform(Context context, String in, Receiver<Matcher> out) {
-        Matcher matcher = pattern.render(context).matcher(in);
+        Matcher matcher = pattern.render(context, in).matcher(in);
         while (matcher.find()) {
             out.accept(context, matcher);
         }

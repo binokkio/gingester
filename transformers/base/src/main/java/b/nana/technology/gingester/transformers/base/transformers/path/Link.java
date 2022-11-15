@@ -24,7 +24,7 @@ public final class Link implements Transformer<Path, Path> {
     @Override
     public void transform(Context context, Path in, Receiver<Path> out) throws Exception {
 
-        Path target = Path.of(pathTemplate.render(context));
+        Path target = Path.of(pathTemplate.render(context, in));
 
         Path parent = target.getParent();
         if (mkdirs && parent != null && !Files.exists(parent)) {

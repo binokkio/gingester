@@ -72,7 +72,7 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
     @Override
     public void transform(Context context, byte[] in, Receiver<Void> out) throws Exception {
 
-        String index = indexTemplate.render(context);
+        String index = indexTemplate.render(context, in);
 
         if (mapping != null) {
             if (!indicesSeen.contains(index)) {
@@ -86,7 +86,7 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
         }
 
         IndexRequest indexRequest = new IndexRequest(index);
-        if (idTemplate != null) indexRequest.id(idTemplate.render(context));
+        if (idTemplate != null) indexRequest.id(idTemplate.render(context, in));
         indexRequest.source(in, XContentType.JSON);
         bulkProcessor.add(indexRequest);
     }

@@ -29,14 +29,14 @@ public final class Tables extends JdbcTransformer<Object, String, Void> {
     @Override
     public void transform(Context context, Object in, Receiver<String> out) throws Exception {
 
-        ConnectionWith<Void> connection = acquireConnection(context);
+        ConnectionWith<Void> connection = acquireConnection(context, in);
         try {
 
             try (ResultSet resultSet = connection.getConnection().getMetaData().getTables(
-                    catalog != null ? catalog.render(context) : null,
-                    schemaPattern != null ? schemaPattern.render(context) : null,
-                    tableNamePattern != null ? tableNamePattern.render(context) : null,
-                    types != null ? types.stream().map(t -> t.render(context)).toArray(String[]::new) : null
+                    catalog != null ? catalog.render(context, in) : null,
+                    schemaPattern != null ? schemaPattern.render(context, in) : null,
+                    tableNamePattern != null ? tableNamePattern.render(context, in) : null,
+                    types != null ? types.stream().map(t -> t.render(context, in)).toArray(String[]::new) : null
             )) {
 
                 while (resultSet.next()) {

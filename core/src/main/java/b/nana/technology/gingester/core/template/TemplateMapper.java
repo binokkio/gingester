@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.template;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -30,11 +31,13 @@ public class TemplateMapper<T> {
             // try to render the template without a data model, if that does not throw then
             // assume the template is invariant
 
-            String render;
-            try {
-                render = templateWrapper.render();
-            } catch (Exception e) {
-                render = null;
+            String render = null;
+            if (!templateParameters.getTemplateString().contains("${") && !templateParameters.getTemplateString().contains("<#")) {
+                try {
+                    render = templateWrapper.render();
+                } catch (Exception e) {
+                    // ignore, render stays null and we assume this template is not invariant
+                }
             }
 
             invariant = render != null ?
@@ -50,22 +53,51 @@ public class TemplateMapper<T> {
 
     /**
      * Render this template.
-     *
-     * If the template is invariant a pre-made T is returned, otherwise the template is rendered with the given context
-     * and mapped to T by the mapper Function given during construction.
+     * <p>
+     * If the template is invariant a pre-made T is returned, otherwise the template is rendered and mapped to T
+     * by the mapper Function given during construction.
      *
      * @param context the context to use for rendering this template if rendering is necessary
      * @return the resulting T
      */
     public T render(Context context) {
-        return invariant != null ? invariant : map(templateWrapper.render(context));
+        return invariant != null ? invariant : map(templateWrapper.render(new ContextPlus(context)));
+    }
+
+    /**
+     * Render this template.
+     * <p>
+     * If the template is invariant a pre-made T is returned, otherwise the template is rendered and mapped to T
+     * by the mapper Function given during construction.
+     *
+     * @param context the context to use for rendering this template if rendering is necessary
+     * @param in the in to use for rendering this template if rendering is necessary
+     * @return the resulting T
+     */
+    public T render(Context context, Object in) {
+        return invariant != null ? invariant : map(templateWrapper.render(new ContextPlus(context, in)));
+    }
+
+    /**
+     * Render this template.
+     * <p>
+     * If the template is invariant a pre-made T is returned, otherwise the template is rendered and mapped to T
+     * by the mapper Function given during construction.
+     *
+     * @param context the context to use for rendering this template if rendering is necessary
+     * @param in the in to use for rendering this template if rendering is necessary
+     * @param extras the extras to use for rendering this template if rendering is necessary
+     * @return the resulting T
+     */
+    public T render(Context context, Object in, Map<String, Object> extras) {
+        return invariant != null ? invariant : map(templateWrapper.render(new ContextPlus(context, in, extras)));
     }
 
     /**
      * Check if this template is invariant.
-     *
-     * An invariant template is rendered and mapped only once during construction the same resulting T is returned for
-     * every call to {@link #render(Context)}.
+     * <p>
+     * An invariant template is rendered and mapped only once during construction and the same resulting T is
+     * returned for every call to {@link #render(Context, Object)}.
      *
      * @return true if this template is invariant, false otherwise
      */

@@ -46,8 +46,8 @@ public final class ReplaceBytesWithPaths implements Transformer<JsonNode, JsonNo
     }
 
     private void transform(Context context, JsonNode jsonNode, String jsonPointer, Set<Path> usedPaths) throws IOException {
-        Path directory = directoryTemplate.render(context);
-        Path pathRelativeTo = pathsRelativeToTemplate != null ? pathsRelativeToTemplate.render(context) : null;
+        Path directory = directoryTemplate.render(context, jsonNode);
+        Path pathRelativeTo = pathsRelativeToTemplate != null ? pathsRelativeToTemplate.render(context, jsonNode) : null;
         if (jsonNode.isObject()) {
             Iterator<String> keys = jsonNode.fieldNames();
             while (keys.hasNext()) {

@@ -22,7 +22,7 @@ public final class Prepend implements Transformer<InputStream, InputStream> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) {
-        out.accept(context, new SequenceInputStream(new ByteArrayInputStream(prepend.render(context)), in));
+        out.accept(context, new SequenceInputStream(new ByteArrayInputStream(prepend.render(context, in)), in));
     }
 
     public static class Parameters {

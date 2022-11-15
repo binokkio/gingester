@@ -38,7 +38,7 @@ public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
 
     @Override
     public void transform(Context context, byte[] in, Receiver<OutputStreamWrapper> out) throws Exception {
-        TarArchiveEntry entry = new TarArchiveEntry(entryTemplate.render(context));
+        TarArchiveEntry entry = new TarArchiveEntry(entryTemplate.render(context, in));
         entry.setSize(in.length);
         contextMap.act(context, tar -> {
             tar.putArchiveEntry(entry);

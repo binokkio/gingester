@@ -1,6 +1,84 @@
 package b.nana.technology.gingester.core.cli;
 
+import b.nana.technology.gingester.core.FlowBuilder;
+import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 class CliParserTest {
+
+    @Test
+    void testBlockComment() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder()
+                .cli(getClass().getResource("/block-comment.cli"))
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testCommentedBlockComment() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder()
+                .cli(getClass().getResource("/commented-block-comment.cli"))
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World", result.get());
+    }
+
+    @Test
+    void testBlockCommentInArgs() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        FlowBuilder flowBuilder = new FlowBuilder();
+        CliParser.parse(flowBuilder, new String[] {
+                "-t", "StringDef", "Hello, World",
+                "-s",
+                "++++++",
+                "[=missing]",
+                "++++++",
+                "-t", "StringDef", "${stash}!"
+        });
+
+        flowBuilder
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testCommentedBlockCommentInArgs() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        FlowBuilder flowBuilder = new FlowBuilder();
+        CliParser.parse(flowBuilder, new String[] {
+                "-t", "StringDef", "Hello, World",
+                "-s",
+                "++++++++",
+                "++++++",
+                "[=missing]",
+                "++++++",
+                "-t", "StringDef", "${stash}!"
+        });
+
+        flowBuilder
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World", result.get());
+    }
 
 //    private DummyTarget parse(String cli) {
 //        DummyTarget dummyTarget = new DummyTarget();

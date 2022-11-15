@@ -36,7 +36,7 @@ public final class ThrowIf extends SimpleScriptTransformer {
         }
 
         if (asBoolean)
-            throw new Throw.FlowException(messageTemplate.render(context));
+            throw new Throw.FlowException(messageTemplate.render(context, in));
 
         out.accept(context, in);
     }

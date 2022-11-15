@@ -20,6 +20,6 @@ public final class Subscribe extends KeyTransformer<Object, byte[]> {
             public void onMessage(byte[] channel, byte[] message) {
                 out.accept(context.stash("description", new String(channel)), message);
             }
-        }, getKeyTemplate().render(context).getBytes(StandardCharsets.UTF_8));
+        }, getKeyTemplate().render(context, in).getBytes(StandardCharsets.UTF_8));
     }
 }

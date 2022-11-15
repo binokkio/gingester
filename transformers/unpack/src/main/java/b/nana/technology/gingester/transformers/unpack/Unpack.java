@@ -56,7 +56,7 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
-        unpack(context, in, out, new ArrayDeque<>(Collections.singleton(descriptionTemplate.render(context))));
+        unpack(context, in, out, new ArrayDeque<>(Collections.singleton(descriptionTemplate.render(context, in))));
     }
 
     private void unpack(Context context, InputStream in, Receiver<InputStream> out, Deque<String> descriptions) throws Exception {

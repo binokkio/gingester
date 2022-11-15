@@ -22,7 +22,7 @@ public final class Append implements Transformer<InputStream, InputStream> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) {
-        out.accept(context, new SequenceInputStream(in, new ByteArrayInputStream(append.render(context))));
+        out.accept(context, new SequenceInputStream(in, new ByteArrayInputStream(append.render(context, in))));
     }
 
     public static class Parameters {

@@ -29,7 +29,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlS
     @Override
     public void transform(Context context, Object in, Receiver<Map<String, Object>> out) throws Exception {
 
-        ConnectionWith<DqlStatement> connection = acquireConnection(context);
+        ConnectionWith<DqlStatement> connection = acquireConnection(context, in);
         try {
 
             DqlStatement tempDqlStatement;
@@ -41,7 +41,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlS
                     connection.setSingleton(tempDqlStatement);
                 }
             } else {
-                String raw = dqlTemplate.render(context);
+                String raw = dqlTemplate.render(context, in);
                 tempDqlStatement = connection.getObject(raw);
                 if (tempDqlStatement == null) {
                     tempDqlStatement = new DqlStatement(connection.getConnection(), raw, dql.parameters, fetchSize, columnsOnly);

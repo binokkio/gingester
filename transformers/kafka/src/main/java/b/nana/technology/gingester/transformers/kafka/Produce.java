@@ -46,7 +46,7 @@ public final class Produce implements Transformer<byte[], byte[]> {
         if (fetchKey == null) {
 
             record = new ProducerRecord<>(
-                    topicTemplate.render(context),
+                    topicTemplate.render(context, in),
                     in
             );
 
@@ -55,7 +55,7 @@ public final class Produce implements Transformer<byte[], byte[]> {
             byte[] key = (byte[]) context.require(fetchKey);
 
             record = new ProducerRecord<>(
-                    topicTemplate.render(context),
+                    topicTemplate.render(context, in),
                     key,
                     in
             );

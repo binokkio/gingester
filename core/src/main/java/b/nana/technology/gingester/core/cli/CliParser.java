@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static b.nana.technology.gingester.core.cli.BlockCommentRemover.removeBlockComments;
+
 public final class CliParser {
 
     static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
@@ -39,14 +41,14 @@ public final class CliParser {
     private CliParser() {}
 
     public static void parse(FlowBuilder target, String template, Object parameters) {
-        String cli = FreemarkerTemplateFactory.createCliTemplate("string", template).render(parameters);
+        String cli = FreemarkerTemplateFactory.createCliTemplate("string", removeBlockComments(template)).render(parameters);
         parse(target, CliSplitter.split(cli));
     }
 
     public static void parse(FlowBuilder target, URL template, Object parameters) {
         try (InputStream templateStream = template.openStream()) {
             String templateName = template.toString();
-            String templateSource = new String(templateStream.readAllBytes(), StandardCharsets.UTF_8);
+            String templateSource = removeBlockComments(new String(templateStream.readAllBytes(), StandardCharsets.UTF_8));
             String cli = FreemarkerTemplateFactory.createCliTemplate(templateName, templateSource).render(parameters);
             parse(target, CliSplitter.split(cli));
         } catch (IOException e) {
@@ -55,6 +57,8 @@ public final class CliParser {
     }
 
     public static void parse(FlowBuilder target, String[] args) {
+
+        args = removeBlockComments(args);
 
         for (int i = 0; i < args.length; i++) {
 
@@ -66,12 +70,6 @@ public final class CliParser {
 
                 case "+":
                     i++;
-                    break;
-
-                case "++":
-                    // ignore all args until the next occurrence of "++"
-                    // noinspection StatementWithEmptyBody
-                    while (++i < args.length && !args[i].equals("++"));
                     break;
 
                 case "-r":

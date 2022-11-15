@@ -35,7 +35,7 @@ public class WriteSync implements Transformer<InputStream, Path> {
     @Override
     public void transform(Context context, InputStream in, Receiver<Path> out) throws Exception {
 
-        Path path = Paths.get(pathTemplate.render(context));
+        Path path = Paths.get(pathTemplate.render(context, in));
 
         Path parent = path.getParent();
         if (mkdirs && parent != null && !Files.exists(parent)) {
