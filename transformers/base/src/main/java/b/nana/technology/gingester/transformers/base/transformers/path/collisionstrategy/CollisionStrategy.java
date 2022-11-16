@@ -10,8 +10,8 @@ import java.nio.file.Path;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes({
         @JsonSubTypes.Type(name = "none", value = NoCollisionStrategy.class),
-        @JsonSubTypes.Type(name = "re-render", value = ReRenderCollisionStrategy.class),
-        @JsonSubTypes.Type(name = "stem-counter", value = StemCounterCollisionStrategy.class)
+        @JsonSubTypes.Type(name = "rerender", value = RerenderCollisionStrategy.class),
+        @JsonSubTypes.Type(name = "stemCounter", value = StemCounterCollisionStrategy.class)
 })
 public interface CollisionStrategy {
 

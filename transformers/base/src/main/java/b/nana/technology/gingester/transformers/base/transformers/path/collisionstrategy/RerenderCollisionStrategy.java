@@ -7,7 +7,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.util.Map;
 
-public final class ReRenderCollisionStrategy implements CollisionStrategy {
+public final class RerenderCollisionStrategy implements CollisionStrategy {
 
     @Override
     public Path apply(Context context, Object in, Path target, TemplateMapper<Path> targetTemplate, Action action) throws Exception {

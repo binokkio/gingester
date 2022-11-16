@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.core.configuration;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.*;
@@ -55,6 +56,8 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
             }
         }
 
+        wrapPolymorphicTypes(json);
+
         DeserializationConfig config = context.getConfig();
         JsonDeserializer<Object> defaultDeserializer = BeanDeserializerFactory.instance.buildBeanDeserializer(context, javaType, config.introspect(javaType));
 
@@ -71,6 +74,42 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
 
         // noinspection unchecked
         return (T) defaultDeserializer.deserialize(treeParser, context);
+    }
+
+    public ObjectNode flags(JsonNode source, int from, ObjectNode destination) {
+
+        Set<String> booleanFields = Arrays.stream(this.target.getFields())
+                .filter(f -> f.getType().equals(Boolean.TYPE))
+                .map(Field::getName)
+                .collect(Collectors.toSet());
+
+        for (int i = from; i < source.size(); i++) {
+
+            if (!booleanFields.contains(source.get(i).asText()))
+                throw new IllegalArgumentException("Unexpected flag: " + source.get(i));
+
+            destination.put(source.get(i).asText(), true);
+        }
+
+        return destination;
+    }
+
+    private void wrapPolymorphicTypes(JsonNode jsonNode) {
+        for (Field field : target.getFields()) {
+            JsonTypeInfo jsonTypeInfo = field.getType().getAnnotation(JsonTypeInfo.class);
+            if (jsonTypeInfo != null) {
+                String fieldName = field.getName();
+                if (jsonNode.path(fieldName).isTextual()) {
+                    String propertyName = jsonTypeInfo.property().isEmpty() ?
+                            jsonTypeInfo.use().getDefaultPropertyName() :
+                            jsonTypeInfo.property();
+                    ((ObjectNode) jsonNode).set(
+                            fieldName,
+                            o(propertyName, jsonNode.get(fieldName).textValue())
+                    );
+                }
+            }
+        }
     }
 
     public static ObjectNode o(Object... entries) {
@@ -98,24 +137,6 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
             objectNode.set(keys[i], array.get(i));
         }
         return objectNode;
-    }
-
-    public ObjectNode flags(JsonNode source, int from, ObjectNode destination) {
-
-        Set<String> fields = Arrays.stream(this.target.getFields())
-                .filter(f -> f.getType().equals(Boolean.TYPE))
-                .map(Field::getName)
-                .collect(Collectors.toSet());
-
-        for (int i = from; i < source.size(); i++) {
-
-            if (!fields.contains(source.get(i).asText()))
-                throw new IllegalArgumentException("Unexpected flag: " + source.get(i));
-
-            destination.put(source.get(i).asText(), true);
-        }
-
-        return destination;
     }
 
     private static JsonNode v(Object o) {
