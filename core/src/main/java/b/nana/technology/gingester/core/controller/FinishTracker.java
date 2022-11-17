@@ -12,6 +12,14 @@ public interface FinishTracker {
     boolean isFullyIndicated();
 
     /**
+     * Check if this FinishTracker is awaiting acknowledgment from a worker.
+     *
+     * @param worker the worker for which to check
+     * @return true if the given worker has now acknowledged this FinishTracker
+     */
+    boolean awaits(Worker worker);
+
+    /**
      * Acknowledge finish signal.
      *
      * @param worker the worker who is acknowledging

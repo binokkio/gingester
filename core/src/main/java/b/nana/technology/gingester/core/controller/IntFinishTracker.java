@@ -23,6 +23,11 @@ final class IntFinishTracker implements FinishTracker {
     }
 
     @Override
+    public boolean awaits(Worker worker) {
+        return (acknowledged & worker.mask) == 0;
+    }
+
+    @Override
     public boolean acknowledge(Worker worker) {
         int before = acknowledged;
         acknowledged |= worker.mask;

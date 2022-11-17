@@ -77,16 +77,25 @@ public final class Worker extends Thread {
 
     private void handleFinishingContexts() throws InterruptedException {
 
+        boolean flushed = false;
+
         Map<Context, FinishTracker> copy = new LinkedHashMap<>(controller.finishing);
         for (Map.Entry<Context, FinishTracker> entry : copy.entrySet()) {
 
             Context context = entry.getKey();
             FinishTracker finishTracker = entry.getValue();
 
-            if (finishTracker.isFullyIndicated()) {
+            if (finishTracker.isFullyIndicated() && finishTracker.awaits(this)) {
+
+                if (!flushed) {
+                    controller.lock.unlock();
+                    flush();
+                    controller.lock.lock();
+                    flushed = true;
+                }
+
                 if (finishTracker.acknowledge(this)) {
                     controller.finishing.remove(context);
-                    unlockFlushLock();
                     controller.queue.add(() -> {  // not checking max queue size, worker is adding to their own queue
                         if (context.controller.syncs.contains(controller)) {
                             context.controller.receiver.onFinishSignalReachedTarget(context);
@@ -107,6 +116,7 @@ public final class Worker extends Thread {
 
     public <O> void accept(Context context, O value, Controller<O, ?> target) {
 
+        // noinspection unchecked
         Batch<O> batch = (Batch<O>) batches.get(target);
 
         if (batch == null) {
@@ -122,13 +132,8 @@ public final class Worker extends Thread {
         }
     }
 
-    void unlockFlushLock() {
-        controller.lock.unlock();
-        flush();
-        controller.lock.lock();
-    }
-
     <T> void flush() {
+        // noinspection unchecked
         batches.forEach((target, batch) -> ((Controller<T, ?>) target).accept((Batch<T>) batch));
         batches.clear();
     }

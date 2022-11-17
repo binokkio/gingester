@@ -223,8 +223,6 @@ public final class Context implements Iterable<Context> {
         return fetchReverse(new FetchKey(String.join(".", fetchKey)));
     }
 
-
-
     @Override
     public Iterator<Context> iterator() {
         return new Iterator<>() {
@@ -369,6 +367,11 @@ public final class Context implements Iterable<Context> {
                 .append(" ".repeat(indentation))
                 .append(end)
                 .append('\n');
+    }
+
+    @Override
+    public String toString() {
+        return '[' + controller.id.toString() + " context]";
     }
 
     /**

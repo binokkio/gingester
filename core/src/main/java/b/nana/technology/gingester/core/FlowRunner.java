@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.core;
 
-import b.nana.technology.gingester.core.batch.Batch;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
@@ -302,8 +301,7 @@ public final class FlowRunner {
         @SuppressWarnings("unchecked")
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get(Id.SEED);
         Context seed = Context.newSeedContext(seedController);
-        seedController.accept(new Batch<>(seed, "seed signal"));
-        seedController.finish(null, seed);
+        seedController.transform(seed, "seed signal");
 
         phaser.awaitAdvance(1);
         phaser.awaitAdvance(2);

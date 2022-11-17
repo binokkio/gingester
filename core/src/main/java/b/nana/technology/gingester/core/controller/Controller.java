@@ -60,7 +60,7 @@ public final class Controller<I, O> {
         transformer = configuration.getTransformer();
         receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
         async = configuration.getMaxWorkers().orElse(0) > 0;
-        maxWorkers = configuration.getMaxWorkers().orElse(1);
+        maxWorkers = configuration.getMaxWorkers().orElse(id == Id.SEED ? 0 : 1);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
         report = configuration.getReport();
@@ -341,6 +341,11 @@ public final class Controller<I, O> {
         } catch (Exception e) {
             receiver.except("finish", context, e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return '[' + id.toString() + " controller]";
     }
 
 
