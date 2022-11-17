@@ -27,6 +27,11 @@ final class SetFinishTracker implements FinishTracker {
     }
 
     @Override
+    public boolean awaits(Worker worker) {
+        return !acknowledged.contains(worker);
+    }
+
+    @Override
     public boolean acknowledge(Worker worker) {
         return acknowledged.add(worker) && acknowledged.size() == tracker.workers.size();
     }
