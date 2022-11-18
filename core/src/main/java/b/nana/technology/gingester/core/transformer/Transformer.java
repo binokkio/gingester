@@ -100,13 +100,13 @@ public interface Transformer<I, O> {
     /**
      * Transformer prepare.
      * <p>
-     * Called only when this transformer is "synced" with another transformer. Everything done by this method
-     * "happens-before" the first call to {@code transform} for the given {@code context}. If this transformer
-     * is in sync with a transformer called Foo, {@code prepare} will be called once for every output of Foo.
+     * Called before the first transform call within the given synchronization context. Everything done by this
+     * method "happens-before" that transform call. If this transformer is in sync with a transformer called
+     * Foo, this method will be called once for every output of Foo.
      * <p>
      * The default implementation does nothing.
      *
-     * @param context the context from the synced transformer
+     * @param context the context from the synced-from transformer
      * @param out output receiver
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
      */
@@ -128,9 +128,9 @@ public interface Transformer<I, O> {
     /**
      * Transformer finish.
      * <p>
-     * Called only when this transformer is "synced" with another transformer. Everything done by this method
-     * "happens-after" the last call to {@code transform} for the given {@code context}. If this transformer is
-     * in sync with a transformer called Foo, {@code finish} will be called once for every output of Foo.
+     * Called after the last transform call within the given synchronization context. Everything done by this
+     * method "happens-after" that transform call. If this transformer is in sync with a transformer called
+     * Foo, this method will be called once for every output of Foo.
      * <p>
      * The default implementation does nothing.
      *
