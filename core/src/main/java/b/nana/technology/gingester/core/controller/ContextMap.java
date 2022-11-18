@@ -26,7 +26,7 @@ public final class ContextMap<T> {
                 if (entry != null) return entry;
             }
         }
-        throw new IllegalStateException("ContextMap has no value for  " + context);
+        throw new IllegalStateException("ContextMap has no value for " + context);
     }
 
     public T get(Context context) {

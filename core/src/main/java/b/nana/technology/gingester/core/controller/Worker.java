@@ -13,7 +13,7 @@ public final class Worker extends Thread {
     final int id;
     final int mask;
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
-    public boolean done;
+    private boolean done;
 
     Worker(Controller<?, ?> controller, int id) {
         this.controller = controller;

@@ -35,7 +35,7 @@ public final class Controller<I, O> {
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     final Set<Controller<?, ?>> indicatesCoarse = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> indicates = new HashMap<>();
-    public final Set<Controller<?, ?>> incoming = new HashSet<>();
+    private final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
     public final boolean isExceptionHandler;
 
@@ -122,9 +122,7 @@ public final class Controller<I, O> {
             }
         });
 
-        if (incoming.isEmpty()) {  // special handling of the seed controller
-            syncedThrough.put(this, Collections.singleton(this));
-        } else {
+        if (!incoming.isEmpty()) {
             for (Controller<?, ?> controller : gingester.getControllers()) {
                 if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
                     if (controller.downstream.contains(this)) {
@@ -238,7 +236,6 @@ public final class Controller<I, O> {
 
 
 
-    //
     // NOTE: some duplicate try-catch blocks in the following methods to keep the call stack smaller, makes for nicer profiling
 
     public void prepare(Context context) {
