@@ -92,7 +92,9 @@ public interface Transformer<I, O> {
      * The default implementation does nothing.
      *
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
+     * @deprecated use {@link #prepare(Context, Receiver)} instead
      */
+    @Deprecated
     default void open() throws Exception {}
 
     /**
@@ -147,7 +149,9 @@ public interface Transformer<I, O> {
      * The default implementation does nothing.
      *
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
+     * @deprecated use {@link #finish(Context, Receiver)} instead
      */
+    @Deprecated
     default void close() throws Exception {}
 
     default String onReport() {
