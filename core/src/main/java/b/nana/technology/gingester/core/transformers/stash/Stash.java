@@ -4,13 +4,13 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Names(1)
 @Passthrough
-public final class Stash implements Transformer<Object, Object>, InputStasher {
+public final class Stash implements Transformer<Object, Object> {
 
     private final String name;
 
@@ -23,8 +23,8 @@ public final class Stash implements Transformer<Object, Object>, InputStasher {
     }
 
     @Override
-    public String getInputStashName() {
-        return name;
+    public StashDetails getStashDetails() {
+        return StashDetails.ofExplicit(name, "__input__");
     }
 
     @Override

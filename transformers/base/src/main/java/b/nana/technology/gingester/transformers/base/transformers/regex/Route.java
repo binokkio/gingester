@@ -7,6 +7,7 @@ import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -52,8 +53,8 @@ public final class Route implements Transformer<Object, Object> {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(
+    public StashDetails getStashDetails() {
+        return StashDetails.of(
                 "route", String.class,
                 "match", Matcher.class
         );

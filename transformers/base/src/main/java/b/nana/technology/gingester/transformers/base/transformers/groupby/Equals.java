@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Passthrough
-public final class Equals implements Transformer<Object, Object>, InputStasher {
+public final class Equals implements Transformer<Object, Object> {
 
     private final ContextMap<State> contextMap = new ContextMap<>();
     private final String stash;
@@ -30,8 +30,8 @@ public final class Equals implements Transformer<Object, Object>, InputStasher {
     }
 
     @Override
-    public String getInputStashName() {
-        return stash;
+    public StashDetails getStashDetails() {
+        return StashDetails.of(stash, "__input__");
     }
 
     @Override

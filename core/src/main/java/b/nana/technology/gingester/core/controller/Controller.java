@@ -7,6 +7,7 @@ import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
@@ -21,6 +22,7 @@ public final class Controller<I, O> {
     final FlowRunner.ControllerInterface gingester;
     public final Id id;
     public final Transformer<I, O> transformer;
+    public final StashDetails stashDetails;
     final Phaser phaser;
 
     final boolean async;
@@ -58,6 +60,7 @@ public final class Controller<I, O> {
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
+        stashDetails = configuration.getStashDetails();
         receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
         async = configuration.getMaxWorkers().orElse(0) > 0;
         maxWorkers = configuration.getMaxWorkers().orElse(id == Id.SEED ? 0 : 1);
@@ -352,6 +355,7 @@ public final class Controller<I, O> {
         gingester = null;
         id = controllerId;
         transformer = null;
+        stashDetails = StashDetails.of();
         receiver = null;
         phaser = null;
         async = false;

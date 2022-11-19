@@ -52,17 +52,17 @@ public interface Transformer<I, O> {
     }
 
     @SuppressWarnings("unchecked")
-    default Map<String, Object> getStashDetails() {
-        Map<String, Object> stashDetails = new HashMap<>();
+    default StashDetails getStashDetails() {
+        Map<String, Object> types = new HashMap<>();
         Stashes[] stashes = getClass().getAnnotationsByType(Stashes.class);
         for (Stashes stash : stashes) {
-            Map<String, Object> pointer = stashDetails;
+            Map<String, Object> pointer = types;
             String[] parts = stash.stash().split("\\.");
             for (int i = 0; i < parts.length - 1; i++)
                 pointer = (Map<String, Object>) pointer.computeIfAbsent(parts[i], p -> new HashMap<>());
             pointer.put(parts[parts.length - 1], stash.type());
         }
-        return stashDetails;
+        return StashDetails.of(types);
     }
 
     /**
