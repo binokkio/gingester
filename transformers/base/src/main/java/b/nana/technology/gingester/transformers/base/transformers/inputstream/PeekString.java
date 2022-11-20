@@ -32,7 +32,7 @@ public final class PeekString extends CharsetTransformer<InputStream, String> {
 
     @Override
     public StashDetails getStashDetails() {
-        return StashDetails.ofExplicit(stashName, "__input__");
+        return StashDetails.ofOrdinal(stashName, "__input__");
     }
 
     @Override

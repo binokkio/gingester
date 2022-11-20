@@ -26,7 +26,7 @@ public final class Swap implements Transformer<Object, Object> {
 
     @Override
     public StashDetails getStashDetails() {
-        return StashDetails.ofExplicit(name, "__input__");
+        return StashDetails.ofOrdinal(name, "__input__");
     }
 
     @Override

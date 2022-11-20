@@ -12,8 +12,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 @Description("Add input to target array and yield target")
-@Example(example = "", description = "Add input at the end of the most recent explicit stash")
-@Example(example = "0", description = "Add input at the beginning of the most recent explicit stash")
+@Example(example = "", description = "Add input at the end of the most recent ordinal stash")
+@Example(example = "0", description = "Add input at the beginning of the most recent ordinal stash")
 @Example(example = "target", description = "Add input at the end of the array stashed as \"target\"")
 @Example(example = "1 target", description = "Add input at index 1 of the array stashed as \"target\"")
 public final class Add implements Transformer<JsonNode, JsonNode> {

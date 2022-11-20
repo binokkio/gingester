@@ -185,9 +185,9 @@ public final class ControllerConfiguration<I, O> {
 
         if (fetchKey.isOrdinal()) {
             if (fetchKey.ordinal() == 1) {
-                Optional<FetchKey> explicitStash = stashDetails.getExplicit();
-                if (explicitStash.isPresent()) {
-                    return getStashType(explicitStash.get());
+                Optional<FetchKey> ordinalStashEntry = stashDetails.getOrdinal();
+                if (ordinalStashEntry.isPresent()) {
+                    return getStashType(ordinalStashEntry.get());
                 }
             } else {
                 fetchKey = fetchKey.decrement();

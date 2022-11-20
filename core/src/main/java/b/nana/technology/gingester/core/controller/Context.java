@@ -146,10 +146,20 @@ public final class Context implements Iterable<Context> {
      */
     public Stream<Object> fetchAll(FetchKey fetchKey) {
         if (fetchKey.isOrdinal()) {
-            return stream()
-                    .filter(c -> c.controller.stashDetails.getExplicit().isPresent())
-                    .flatMap(c -> c.fetchAll(c.controller.stashDetails.getExplicit().get()).limit(1))
-                    .skip(fetchKey.ordinal() - 1);  // should actually have a .limit(1) here as well but assuming it will only be used with findFirst() for now
+            int ordinal = 1;
+            Controller<?, ?> last = null;
+            for (Context context : this) {
+                Optional<FetchKey> ordinalFetchKey = context.controller.stashDetails.getOrdinal();
+                if (ordinalFetchKey.isPresent()) {
+                    if (ordinal == fetchKey.ordinal()) {
+                        return context.fetchAll(ordinalFetchKey.get()).limit(1);
+                    } else if (context.controller != last) {  // prevent counting grouped contexts twice
+                        ordinal++;
+                        last = context.controller;
+                    }
+                }
+            }
+            return Stream.empty();
         } else {
             return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller.id)) : stream())
                     .map(c -> c.stash)

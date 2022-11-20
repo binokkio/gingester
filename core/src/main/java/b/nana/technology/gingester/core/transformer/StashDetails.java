@@ -5,10 +5,15 @@ import b.nana.technology.gingester.core.controller.FetchKey;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Objects.requireNonNull;
+
 public final class StashDetails {
 
-    public static StashDetails ofExplicit(String name, Object type) {
-        return new StashDetails(Map.of(name, type)).markExplicit(name);
+    /**
+     * Create StashDetails for the given name and type and mark that entry for ordinal fetch inclusion.
+     */
+    public static StashDetails ofOrdinal(String name, Object type) {
+        return new StashDetails(Map.of(name, type)).ordinal(name);
     }
 
     public static StashDetails of() {
@@ -32,14 +37,24 @@ public final class StashDetails {
     }
 
     private final Map<String, Object> types;
-    private FetchKey explicit;
+    private FetchKey ordinal;
 
     private StashDetails(Map<String, Object> types) {
-        this.types = types;
+        this.types = requireNonNull(types);
     }
 
-    public StashDetails markExplicit(String explicit) {
-        this.explicit = new FetchKey(explicit);
+    /**
+     * Mark the entry at the given key for inclusion in ordinal fetches.
+     *
+     * @param key the key of the entry to mark
+     * @return this StashDetails
+     */
+    public StashDetails ordinal(String key) {
+
+        if (ordinal != null)
+            throw new IllegalStateException("An entry was already marked for ordinal fetch inclusion");
+
+        ordinal = new FetchKey(key);
         return this;
     }
 
@@ -47,7 +62,7 @@ public final class StashDetails {
         return types;
     }
 
-    public Optional<FetchKey> getExplicit() {
-        return Optional.ofNullable(explicit);
+    public Optional<FetchKey> getOrdinal() {
+        return Optional.ofNullable(ordinal);
     }
 }

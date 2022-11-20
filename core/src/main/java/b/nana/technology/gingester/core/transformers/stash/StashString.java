@@ -26,7 +26,7 @@ public final class StashString implements Transformer<Object, Object>  {
 
     @Override
     public StashDetails getStashDetails() {
-        return StashDetails.ofExplicit(stash, String.class);
+        return StashDetails.ofOrdinal(stash, String.class);
     }
 
     @Override

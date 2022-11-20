@@ -33,7 +33,7 @@ public final class PeekBytes implements Transformer<InputStream, byte[]> {
 
     @Override
     public StashDetails getStashDetails() {
-        return StashDetails.ofExplicit(stashName, "__input__");
+        return StashDetails.ofOrdinal(stashName, "__input__");
     }
 
     @Override
