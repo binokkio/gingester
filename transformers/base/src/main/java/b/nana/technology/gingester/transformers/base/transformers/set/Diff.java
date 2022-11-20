@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers.set;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
@@ -20,8 +21,8 @@ public final class Diff implements Transformer<Set<?>, Set<?>> {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(
+    public StashDetails getStashDetails() {
+        return StashDetails.of(
                 "added", Set.class,
                 "removed", Set.class
         );

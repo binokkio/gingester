@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.git.giterate;
 
 import java.time.ZonedDateTime;
 
-class Commit {
+final class Commit {
 
     final String hash;
     final ZonedDateTime time;

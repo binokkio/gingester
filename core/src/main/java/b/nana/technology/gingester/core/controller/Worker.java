@@ -13,7 +13,7 @@ public final class Worker extends Thread {
     final int id;
     final int mask;
     private final Map<Controller<?, ?>, Batch<?>> batches = new HashMap<>();
-    public boolean done;
+    private boolean done;
 
     Worker(Controller<?, ?> controller, int id) {
         this.controller = controller;
@@ -41,17 +41,16 @@ public final class Worker extends Thread {
             controller.lock.lock();
             try {
                 while (true) {
-                    handleFinishingContexts();
+                    while (handleFinishingContexts());
                     if (done) break main;
-                    while (controller.queue.isEmpty()) {
+                    if (controller.queue.isEmpty()) {
                         controller.queueNotEmpty.await();
-                        handleFinishingContexts();
-                        if (done) break main;
+                    } else {
+                        job = controller.queue.removeFirst();
+                        controller.queueNotFull.signal();
+                        if (job instanceof SyncJob) job.perform();
+                        else break;
                     }
-                    job = controller.queue.removeFirst();
-                    controller.queueNotFull.signal();
-                    if (job instanceof SyncJob) job.perform();
-                    else break;
                 }
             } catch (InterruptedException e) {
                 continue;  // the seed finish signal should arrive soon, continue, so we can pass it on
@@ -75,7 +74,7 @@ public final class Worker extends Thread {
         controller.phaser.arriveAndAwaitAdvance();
     }
 
-    private void handleFinishingContexts() throws InterruptedException {
+    private boolean handleFinishingContexts() throws InterruptedException {
 
         boolean flushed = false;
 
@@ -95,23 +94,27 @@ public final class Worker extends Thread {
                 }
 
                 if (finishTracker.acknowledge(this)) {
+
                     controller.finishing.remove(context);
-                    controller.queue.add(() -> {  // not checking max queue size, worker is adding to their own queue
-                        if (context.controller.syncs.contains(controller)) {
-                            context.controller.receiver.onFinishSignalReachedTarget(context);
-                            controller.finish(context);
-                            flush();
-                        }
-                        Set<Controller<?, ?>> targets = controller.indicates.get(context.controller);
-                        if (targets != null) targets.forEach(target -> target.finish(controller, context));
-                        if (context.isSeed()) done = true;
-                    });
-                    controller.queueNotEmpty.signal();
-                } else if (context.isSeed()) {
-                    done = true;
+                    controller.lock.unlock();
+
+                    if (context.controller.syncs.contains(controller)) {
+                        context.controller.receiver.onFinishSignalReachedTarget(context);
+                        controller.finish(context);
+                        flush();
+                    }
+
+                    Set<Controller<?, ?>> targets = controller.indicates.get(context.controller);
+                    if (targets != null) targets.forEach(target -> target.finish(controller, context));
+
+                    controller.lock.lock();
                 }
+
+                done = context.isSeed();
             }
         }
+
+        return flushed;
     }
 
     public <O> void accept(Context context, O value, Controller<O, ?> target) {

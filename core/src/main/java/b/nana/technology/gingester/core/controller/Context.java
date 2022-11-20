@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.Id;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
-import b.nana.technology.gingester.core.transformer.InputStasher;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
@@ -147,10 +146,20 @@ public final class Context implements Iterable<Context> {
      */
     public Stream<Object> fetchAll(FetchKey fetchKey) {
         if (fetchKey.isOrdinal()) {
-            return stream()
-                    .filter(c -> c.stash != null && c.controller.transformer instanceof InputStasher)  // stash can be null even for InputStashers, e.g. GroupByEquals, TODO maybe only consider the Stash transformer
-                    .flatMap(c -> c.stash.values().stream())  // fine as long as InputStashers stash exactly 1 thing, .limit(1) otherwise and ensure they stash LinkedHashMap
-                    .skip(fetchKey.ordinal() - 1);  // should actually have a .limit(1) here as well but assuming it will only be used with findFirst() for now
+            int ordinal = 1;
+            Controller<?, ?> last = null;
+            for (Context context : this) {
+                Optional<FetchKey> ordinalFetchKey = context.controller.stashDetails.getOrdinal();
+                if (ordinalFetchKey.isPresent()) {
+                    if (ordinal == fetchKey.ordinal()) {
+                        return context.fetchAll(ordinalFetchKey.get()).limit(1);
+                    } else if (context.controller != last) {  // prevent counting grouped contexts twice
+                        ordinal++;
+                        last = context.controller;
+                    }
+                }
+            }
+            return Stream.empty();
         } else {
             return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller.id)) : stream())
                     .map(c -> c.stash)

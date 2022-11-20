@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -17,7 +17,7 @@ import java.io.Reader;
 
 @Names(1)
 @Example(example = "1000", description = "Yield the first 1000 characters, stash complete inputstream as `stash`")
-public final class PeekString extends CharsetTransformer<InputStream, String> implements InputStasher {
+public final class PeekString extends CharsetTransformer<InputStream, String> {
 
     private final int bufferSize;
     private final String stashName;
@@ -31,8 +31,8 @@ public final class PeekString extends CharsetTransformer<InputStream, String> im
     }
 
     @Override
-    public String getInputStashName() {
-        return stashName;
+    public StashDetails getStashDetails() {
+        return StashDetails.ofOrdinal(stashName, "__input__");
     }
 
     @Override

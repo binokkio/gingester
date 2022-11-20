@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.Id;
 import b.nana.technology.gingester.core.IdFactory;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.reporting.Counter;
-import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
@@ -18,6 +18,7 @@ public final class ControllerConfiguration<I, O> {
 
     private final Id id;
     private final Transformer<I, O> transformer;
+    private final StashDetails stashDetails;
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
@@ -30,6 +31,7 @@ public final class ControllerConfiguration<I, O> {
     public ControllerConfiguration(Id id, Transformer<I, O> transformer, FlowRunner.ControllerConfigurationInterface gingester) {
         this.id = id;
         this.transformer = transformer;
+        this.stashDetails = transformer.getStashDetails();
         this.gingester = gingester;
     }
 
@@ -110,6 +112,10 @@ public final class ControllerConfiguration<I, O> {
         return transformer;
     }
 
+    public StashDetails getStashDetails() {
+        return stashDetails;
+    }
+
     public Optional<Integer> getMaxWorkers() {
         return Optional.ofNullable(maxWorkers);
     }
@@ -178,28 +184,32 @@ public final class ControllerConfiguration<I, O> {
     private Class<?> getStashType(FetchKey fetchKey) {
 
         if (fetchKey.isOrdinal()) {
-            if (transformer instanceof InputStasher) {
-                if (fetchKey.ordinal() == 1) return getActualInputType();
+            if (fetchKey.ordinal() == 1) {
+                Optional<FetchKey> ordinalStashEntry = stashDetails.getOrdinal();
+                if (ordinalStashEntry.isPresent()) {
+                    return getStashType(ordinalStashEntry.get());
+                }
+            } else {
                 fetchKey = fetchKey.decrement();
             }
         } else {
             if (fetchKey.getNames().length == 0) return Map.class;
             if (!fetchKey.hasTarget() || fetchKey.matchesTarget(id)) {
-                if (fetchKey.getNames().length == 1 && transformer instanceof InputStasher && ((InputStasher) transformer).getInputStashName().equals(fetchKey.getNames()[0])) {
-                    return getActualInputType();
-                } else {
-                    Map<?, ?> pointer = transformer.getStashDetails();
-                    for (int i = 0; i < fetchKey.getNames().length - 1; i++) {
-                        Object value = pointer.get(fetchKey.getNames()[i]);
-                        if (!(value instanceof Map)) {
-                            pointer = Map.of();
-                            break;
-                        }
-                        pointer = (Map<?, ?>) value;
+                Map<?, ?> pointer = stashDetails.getTypes();
+                for (int i = 0; i < fetchKey.getNames().length - 1; i++) {
+                    Object value = pointer.get(fetchKey.getNames()[i]);
+                    if (!(value instanceof Map)) {
+                        pointer = Map.of();
+                        break;
                     }
-                    Object type = pointer.get(fetchKey.getNames()[fetchKey.getNames().length - 1]);
+                    pointer = (Map<?, ?>) value;
+                }
+                Object type = pointer.get(fetchKey.getNames()[fetchKey.getNames().length - 1]);
+                if (type != null) {
+                    if (type.equals("__input__")) return getActualInputType();
                     if (type instanceof Map) return Map.class;
                     else if (type instanceof Class) return (Class<?>) type;
+                    else throw new IllegalArgumentException("Unexpected stash detail descriptor: " + type);
                 }
             }
         }

@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Description("Set input on target and yield target")
-@Example(example = "key", description = "Set input as \"key\" on the most recent explicit stash")
+@Example(example = "key", description = "Set input as \"key\" on the most recent ordinal stash")
 @Example(example = "key target", description = "Set input as \"key\" on what is stashed as \"target\"")
 public final class Set implements Transformer<JsonNode, JsonNode> {
 

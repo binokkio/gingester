@@ -4,12 +4,12 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.transformer.InputStasher;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Names(1)
-public final class Swap implements Transformer<Object, Object>, InputStasher {
+public final class Swap implements Transformer<Object, Object> {
 
     private final String name;
     private final FetchKey fetchKey;
@@ -25,8 +25,8 @@ public final class Swap implements Transformer<Object, Object>, InputStasher {
     }
 
     @Override
-    public String getInputStashName() {
-        return name;
+    public StashDetails getStashDetails() {
+        return StashDetails.ofOrdinal(name, "__input__");
     }
 
     @Override

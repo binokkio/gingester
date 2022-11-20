@@ -22,7 +22,7 @@ class TransformerTest {
 
     @Test
     void testGetStashDetails() {
-        Map<String, Object> stashDetails = new TestTransformer().getStashDetails();
+        Map<String, Object> stashDetails = new TestTransformer().getStashDetails().getTypes();
         assertEquals(Integer.class, stashDetails.get("hello"));
         assertEquals(Long.class, ((Map<?, ?>) stashDetails.get("bye")).get("world"));
     }

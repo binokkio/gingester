@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.git.giterate;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -12,7 +13,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.List;
 import java.util.Map;
 
-class TimeIntervalGiterator implements Giterator {
+final class TimeIntervalGiterator implements Giterator {
 
     private final Runtime runtime = Runtime.getRuntime();
     private final TemporalAmount interval;
@@ -26,8 +27,8 @@ class TimeIntervalGiterator implements Giterator {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(
+    public StashDetails getStashDetails() {
+        return StashDetails.of(
                 "commit", String.class,
                 "actual", ZonedDateTime.class,
                 "target", ZonedDateTime.class

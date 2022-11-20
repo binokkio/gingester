@@ -7,11 +7,10 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
-import java.util.Map;
 
 @Names(1)
 @Passthrough
@@ -26,8 +25,8 @@ public final class StashString implements Transformer<Object, Object>  {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(stash, String.class);
+    public StashDetails getStashDetails() {
+        return StashDetails.ofOrdinal(stash, String.class);
     }
 
     @Override

@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.kafka;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import net.jodah.typetools.TypeResolver;
 import org.apache.kafka.clients.consumer.*;
@@ -44,8 +45,8 @@ public final class Consume implements Transformer<Object, Object> {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
-        return Map.of(
+    public StashDetails getStashDetails() {
+        return StashDetails.of(
                 "key", TypeResolver.resolveRawArguments(Deserializer.class, keyDeserializer)[0]
         );
     }

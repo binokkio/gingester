@@ -7,6 +7,7 @@ import b.nana.technology.gingester.core.batch.Item;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.*;
@@ -21,6 +22,7 @@ public final class Controller<I, O> {
     final FlowRunner.ControllerInterface gingester;
     public final Id id;
     public final Transformer<I, O> transformer;
+    public final StashDetails stashDetails;
     final Phaser phaser;
 
     final boolean async;
@@ -35,7 +37,7 @@ public final class Controller<I, O> {
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     final Set<Controller<?, ?>> indicatesCoarse = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> indicates = new HashMap<>();
-    public final Set<Controller<?, ?>> incoming = new HashSet<>();
+    private final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
     public final boolean isExceptionHandler;
 
@@ -58,6 +60,7 @@ public final class Controller<I, O> {
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
+        stashDetails = configuration.getStashDetails();
         receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
         async = configuration.getMaxWorkers().orElse(0) > 0;
         maxWorkers = configuration.getMaxWorkers().orElse(id == Id.SEED ? 0 : 1);
@@ -122,9 +125,7 @@ public final class Controller<I, O> {
             }
         });
 
-        if (incoming.isEmpty()) {  // special handling of the seed controller
-            syncedThrough.put(this, Collections.singleton(this));
-        } else {
+        if (!incoming.isEmpty()) {
             for (Controller<?, ?> controller : gingester.getControllers()) {
                 if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
                     if (controller.downstream.contains(this)) {
@@ -238,7 +239,6 @@ public final class Controller<I, O> {
 
 
 
-    //
     // NOTE: some duplicate try-catch blocks in the following methods to keep the call stack smaller, makes for nicer profiling
 
     public void prepare(Context context) {
@@ -355,6 +355,7 @@ public final class Controller<I, O> {
         gingester = null;
         id = controllerId;
         transformer = null;
+        stashDetails = StashDetails.of();
         receiver = null;
         phaser = null;
         async = false;

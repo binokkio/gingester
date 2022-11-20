@@ -52,17 +52,17 @@ public interface Transformer<I, O> {
     }
 
     @SuppressWarnings("unchecked")
-    default Map<String, Object> getStashDetails() {
-        Map<String, Object> stashDetails = new HashMap<>();
+    default StashDetails getStashDetails() {
+        Map<String, Object> types = new HashMap<>();
         Stashes[] stashes = getClass().getAnnotationsByType(Stashes.class);
         for (Stashes stash : stashes) {
-            Map<String, Object> pointer = stashDetails;
+            Map<String, Object> pointer = types;
             String[] parts = stash.stash().split("\\.");
             for (int i = 0; i < parts.length - 1; i++)
                 pointer = (Map<String, Object>) pointer.computeIfAbsent(parts[i], p -> new HashMap<>());
             pointer.put(parts[parts.length - 1], stash.type());
         }
-        return stashDetails;
+        return StashDetails.of(types);
     }
 
     /**
@@ -92,19 +92,21 @@ public interface Transformer<I, O> {
      * The default implementation does nothing.
      *
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
+     * @deprecated use {@link #prepare(Context, Receiver)} instead
      */
+    @Deprecated
     default void open() throws Exception {}
 
     /**
      * Transformer prepare.
      * <p>
-     * Called only when this transformer is "synced" with another transformer. Everything done by this method
-     * "happens-before" the first call to {@code transform} for the given {@code context}. If this transformer
-     * is in sync with a transformer called Foo, {@code prepare} will be called once for every output of Foo.
+     * Called before the first transform call within the given synchronization context. Everything done by this
+     * method "happens-before" that transform call. If this transformer is in sync with a transformer called
+     * Foo, this method will be called once for every output of Foo.
      * <p>
      * The default implementation does nothing.
      *
-     * @param context the context from the synced transformer
+     * @param context the context from the synced-from transformer
      * @param out output receiver
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
      */
@@ -126,9 +128,9 @@ public interface Transformer<I, O> {
     /**
      * Transformer finish.
      * <p>
-     * Called only when this transformer is "synced" with another transformer. Everything done by this method
-     * "happens-after" the last call to {@code transform} for the given {@code context}. If this transformer is
-     * in sync with a transformer called Foo, {@code finish} will be called once for every output of Foo.
+     * Called after the last transform call within the given synchronization context. Everything done by this
+     * method "happens-after" that transform call. If this transformer is in sync with a transformer called
+     * Foo, this method will be called once for every output of Foo.
      * <p>
      * The default implementation does nothing.
      *
@@ -147,7 +149,9 @@ public interface Transformer<I, O> {
      * The default implementation does nothing.
      *
      * @throws Exception anything, see {@link Transformer} javadoc for exception handling details
+     * @deprecated use {@link #finish(Context, Receiver)} instead
      */
+    @Deprecated
     default void close() throws Exception {}
 
     default String onReport() {

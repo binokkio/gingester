@@ -90,7 +90,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private void prepare(Context context) {
         if (context.controller == controller && context.isSynced()) {
-            for (Controller<?, ?> target : controller.syncs) {
+            for (Controller<?, ?> target : controller.syncs) {  // TODO reverse?
                 target.prepare(context);
             }
         }

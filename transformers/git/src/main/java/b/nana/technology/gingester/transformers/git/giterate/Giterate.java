@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.io.BufferedReader;
@@ -18,7 +19,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 @Names(1)
@@ -38,7 +38,7 @@ public final class Giterate implements Transformer<Object, Path> {
     }
 
     @Override
-    public Map<String, Object> getStashDetails() {
+    public StashDetails getStashDetails() {
         return giteratorSupplier.get().getStashDetails();
     }
 
