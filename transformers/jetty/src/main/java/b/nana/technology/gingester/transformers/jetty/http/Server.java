@@ -187,6 +187,10 @@ public final class Server implements Transformer<Object, InputStream> {
             servlet.addHeader(name, value);
         }
 
+        public boolean hasHeader(String name) {
+            return servlet.containsHeader(name);
+        }
+
         public void respondEmpty() {
             if (responded.get()) {
                 throw new IllegalStateException("Already responded");
