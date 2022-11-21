@@ -36,6 +36,19 @@ class CliParserTest {
     }
 
     @Test
+    void testLeadingBlockComment() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder()
+                .cli(getClass().getResource("/leading-block-comment.cli"))
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
     void testBlockCommentInArgs() {
 
         AtomicReference<String> result = new AtomicReference<>();
