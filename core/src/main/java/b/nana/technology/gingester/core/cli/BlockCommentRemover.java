@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 final class BlockCommentRemover {
 
-    private static final Pattern BLOCK_COMMENT = Pattern.compile("\\s(\\+{2,})\\s");
+    private static final Pattern BLOCK_COMMENT = Pattern.compile("(?:^|\\s)(\\+{2,})(?:\\s|$)");
     private static final Pattern BLOCK_COMMENT_ARG = Pattern.compile("\\+{2,}");
 
     static String removeBlockComments(String source) {

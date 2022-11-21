@@ -48,6 +48,7 @@ public final class Keycloak implements Transformer<Object, Object> {
     private final String redirectUrl;
     private final String cookieName;
     private final String tokenRequestStart;
+    private final boolean optional;
 
     public Keycloak(Parameters parameters) {
 
@@ -62,6 +63,7 @@ public final class Keycloak implements Transformer<Object, Object> {
         tokenUrl = baseUrl + "/token";
         redirectUrl = stripTrailingSlash(parameters.redirectUrl);
         cookieName = parameters.cookieName;
+        optional = parameters.optional;
 
         fetchHttpRequestCookiesCookieName = new FetchKey("http.request.cookies." + cookieName);
 
@@ -120,6 +122,8 @@ public final class Keycloak implements Transformer<Object, Object> {
 
             if (session.hasAccess(now)) {
                 out.accept(context.stash(session.stash), in);
+            } else if (optional) {
+                out.accept(context, in);
             } else if (context.require(fetchHttpRequestMethod).equals("GET")) {
                 response.setStatus(302);
                 response.addHeader("Location", authUrl + "&redirect_uri=" + getRedirectUrl(context));
@@ -147,15 +151,6 @@ public final class Keycloak implements Transformer<Object, Object> {
         } else {
             return input;
         }
-    }
-
-    public static class Parameters {
-        public String authUrl;
-        public String redirectUrl;
-        public String realm;
-        public String clientId;
-        public String clientSecret;
-        public String cookieName = "gingester-keycloak";
     }
 
     private static class Session {
@@ -205,5 +200,15 @@ public final class Keycloak implements Transformer<Object, Object> {
                     "claims", claims
             );
         }
+    }
+
+    public static class Parameters {
+        public String authUrl;
+        public String redirectUrl;
+        public String realm;
+        public String clientId;
+        public String clientSecret;
+        public String cookieName = "gingester-keycloak";
+        public boolean optional;
     }
 }
