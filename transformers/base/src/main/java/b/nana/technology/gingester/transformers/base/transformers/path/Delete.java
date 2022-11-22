@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -75,13 +74,5 @@ public final class Delete implements Transformer<Path, Path> {
         }
 
         public boolean recursive;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(boolean recursive) {
-            this.recursive = recursive;
-        }
     }
 }
