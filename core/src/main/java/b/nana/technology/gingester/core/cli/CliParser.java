@@ -216,11 +216,20 @@ public final class CliParser {
 
                     ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
                     while (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
-                        i++;
-                        try {
-                            parameters.add(OBJECT_READER.readTree(args[i]));
-                        } catch (JsonProcessingException e) {
-                            parameters.add(JsonNodeFactory.instance.textNode(args[i]));
+                        if (args[++i].equals("%") && !args[i + 1].matches("[+-].*") && !parameters.isEmpty()) {
+                            try {
+                                OBJECT_MAPPER
+                                        .readerForUpdating(parameters.get(parameters.size() - 1))
+                                        .readValue(args[++i]);
+                            } catch (JsonProcessingException e) {
+                                throw new IllegalArgumentException(e);
+                            }
+                        } else {
+                            try {
+                                parameters.add(OBJECT_READER.readTree(args[i]));
+                            } catch (JsonProcessingException e) {
+                                parameters.add(JsonNodeFactory.instance.textNode(args[i]));
+                            }
                         }
                     }
 

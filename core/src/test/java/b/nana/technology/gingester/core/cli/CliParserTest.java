@@ -93,6 +93,20 @@ class CliParserTest {
         assertEquals("Hello, World", result.get());
     }
 
+    @Test
+    void testMergeParameters() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                        "-t StashString '{stash:\"hello\"}' % '{template:\"world\"}' " +
+                        "-f hello")
+                .add(result::set)
+                .run();
+
+        assertEquals("world", result.get());
+    }
+
 //    private DummyTarget parse(String cli) {
 //        DummyTarget dummyTarget = new DummyTarget();
 //        CliParser.parse(dummyTarget, CliSplitter.split(cli));
