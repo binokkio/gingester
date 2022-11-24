@@ -134,7 +134,7 @@ class RouteTest {
         new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World!' " +
                 "-t RegexRoute '{\"\\\\\\\\w+.*?(\\\\\\\\w+)\": \"Target\"}' 'null' " +
-                "-t Target:Fetch match " +
+                "-t Target:Fetch route " +
                 "-t RegexGroup 1")
                 .add(result::set)
                 .run();
@@ -150,7 +150,7 @@ class RouteTest {
         new FlowBuilder().cli("" +
                 "-t StringDef 'Hello, World' " +
                 "-t RegexRoute '{\"\\\\\\\\w+.*?(\\\\\\\\w+)\": \"Target\"}' 'null' " +
-                "-t Target:Fetch match " +
+                "-t Target:Fetch route " +
                 "-t StringAppend '!'")
                 .add(result::set)
                 .run();
