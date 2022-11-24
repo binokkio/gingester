@@ -1,10 +1,13 @@
 package b.nana.technology.gingester.core;
 
+import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformers.primitive.LongDef;
 import b.nana.technology.gingester.core.transformers.stash.Fetch;
 import b.nana.technology.gingester.core.transformers.stash.Stash;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,5 +38,20 @@ class FlowBuilderTest {
                 .run();
 
         assertEquals(10, result.get());
+    }
+
+    @Test
+    void testReplace() {
+
+        Deque<String> results = new ArrayDeque<>();
+
+        new FlowBuilder()
+                .cli(getClass().getResource("/hello-world-diamond.cli"))
+                .replace("Emphasize", (Transformer<String, String>) (context, in, out) -> out.accept(context, (in + "!!!")))
+                .add(results::add)
+                .run();
+
+        assertEquals("Hello, World!!!", results.remove());
+        assertEquals("Hello, World?", results.remove());
     }
 }

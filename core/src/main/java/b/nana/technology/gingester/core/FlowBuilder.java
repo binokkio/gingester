@@ -262,6 +262,25 @@ public final class FlowBuilder {
     }
 
     /**
+     * Replace a transformer.
+     *
+     * @param targetId the id of the node whose transformer to replace
+     * @param transformer the transformer
+     */
+    public FlowBuilder replace(String targetId, Transformer<?, ?> transformer) {
+
+        Id id = idFactory.getId(targetId, scopes);
+
+        Node node = nodes.get(id);
+        if (node == null)
+            throw new IllegalArgumentException("No transformer has id " + id);
+
+        node.transformer(transformer);
+
+        return this;
+    }
+
+    /**
      * Add cli instructions.
      *
      * @param cli cli instructions template
