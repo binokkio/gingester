@@ -55,8 +55,8 @@ public final class Route implements Transformer<Object, Object> {
     @Override
     public StashDetails getStashDetails() {
         return StashDetails.of(
-                "route", String.class,
-                "match", Matcher.class
+                "route", Matcher.class,
+                "pattern", String.class
         );
     }
 
@@ -78,7 +78,7 @@ public final class Route implements Transformer<Object, Object> {
             Matcher matcher = pattern.matcher(input);
             if (matcher.find()) {
                 out.accept(
-                        context.stash(Map.of("route", pattern.pattern(), "match", matcher)),
+                        context.stash(Map.of("route", matcher, "pattern", pattern.pattern())),
                         fetch != null ? context.require(fetch) : in,
                         route.getValue()
                 );
