@@ -1,5 +1,5 @@
 + 'Generate the string "Hello, World", link it to Emphasize and Question'
--t Generate 'Hello, World'
+-t StringDef 'Hello, World'
 -l Emphasize Question
 
 + 'Emphasize the incoming value, link through to the ResultsCollector'

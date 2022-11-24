@@ -16,7 +16,7 @@ class CycleRouteTest {
 
         new FlowBuilder().cli("" +
                 "-t Repeat 3 " +
-                "-t Generate '${description}' " +
+                "-t StringDef '${description}' " +
                 "-t CycleRoute A B " +
                 "-t B:Void -- " +
                 "-t A:Passthrough")

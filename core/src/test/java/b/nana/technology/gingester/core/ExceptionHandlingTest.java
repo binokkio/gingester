@@ -17,7 +17,7 @@ class ExceptionHandlingTest {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
-                "-t Generate 'Hello, World!' " +
+                "-t StringDef 'Hello, World!' " +
                 "-t Repeat 2 " +
                 "-t Monkey -- " +
                 "-t ExceptionHandler:Passthrough");
@@ -65,7 +65,7 @@ class ExceptionHandlingTest {
 
         new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
-                "-t Generate hello " +
+                "-t StringDef hello " +
                 "-t Monkey 1 -- " +
                 "-t ExceptionHandler:Void")
                 .addTo((context, object) -> result.set(context), "__seed__")

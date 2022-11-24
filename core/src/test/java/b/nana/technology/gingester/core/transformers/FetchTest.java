@@ -54,9 +54,9 @@ class FetchTest {
         AtomicReference<String> resultUp2 = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t Generate hello " +
+                "-t StringDef hello " +
                 "-s " +
-                "-t Generate world " +
+                "-t StringDef world " +
                 "-s " +
                 "-f ^1 " +
                 "-f ^2")

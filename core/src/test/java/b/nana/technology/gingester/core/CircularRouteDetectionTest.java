@@ -8,9 +8,9 @@ class CircularRouteDetectionTest {
 
     @Test
     void test() {
-        FlowBuilder flowBuilder = new FlowBuilder().cli("-t Generate 'Hello, World!' -t Stash -t Fetch -l Generate");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("-t StringDef 'Hello, World!' -t Stash -t Fetch -l StringDef");
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
-        assertEquals("Circular route detected: Generate -> Stash -> Fetch -> Generate", e.getMessage());
+        assertEquals("Circular route detected: StringDef -> Stash -> Fetch -> StringDef", e.getMessage());
     }
 
     @Test
@@ -22,9 +22,9 @@ class CircularRouteDetectionTest {
 
     @Test
     void testCircularRouteThroughExceptionHandler() {
-        FlowBuilder flowBuilder = new FlowBuilder().cli("-e ExceptionHandler -t Generate 'Hello, World!' -- -t ExceptionHandler:Stash -l Generate");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("-e ExceptionHandler -t StringDef 'Hello, World!' -- -t ExceptionHandler:Stash -l StringDef");
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
-        assertEquals("Circular route detected: Generate -> ExceptionHandler -> Generate", e.getMessage());
+        assertEquals("Circular route detected: StringDef -> ExceptionHandler -> StringDef", e.getMessage());
     }
 
     @Test

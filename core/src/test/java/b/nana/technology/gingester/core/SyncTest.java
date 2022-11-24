@@ -14,9 +14,9 @@ class SyncTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-stt OnPrepare " +
-                "-t Generate 'Message from OnPrepare'");
+                "-t StringDef 'Message from OnPrepare'");
 
         flowBuilder.add(result::set);
         flowBuilder.run();
@@ -30,9 +30,9 @@ class SyncTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-stt OnFinish " +
-                "-t Generate 'Message from OnFinish'");
+                "-t StringDef 'Message from OnFinish'");
 
         flowBuilder.add(result::set);
         flowBuilder.run();
@@ -46,7 +46,7 @@ class SyncTest {
         AtomicReference<Integer> result = new AtomicReference<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-stt OnPrepare " +
                 "-stt SyncCounter");
 
@@ -63,10 +63,10 @@ class SyncTest {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-t Throw 'Exception!' -- " +
                 "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish'");
+                "-t StringDef 'Message from OnFinish'");
 
         flowBuilder.add(result::set);
         flowBuilder.run();
@@ -82,12 +82,12 @@ class SyncTest {
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-s " +
                 "-t Monkey 1 " +
                 "-s -- " +
                 "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
+                "-t StringDef 'Message from OnFinish' " +
                 "-s");
 
         flowBuilder.add(result::set);
@@ -104,12 +104,12 @@ class SyncTest {
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-s " +
                 "-t Monkey 1 -- " +
                 "-s " +
                 "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
+                "-t StringDef 'Message from OnFinish' " +
                 "-s");
 
         flowBuilder.add(result::set);
@@ -126,12 +126,12 @@ class SyncTest {
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-s " +
                 "-t Monkey 1 " +
                 "-s -- " +
                 "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
+                "-t StringDef 'Message from OnFinish' " +
                 "-s");
 
         flowBuilder.add(result::set);
@@ -148,12 +148,12 @@ class SyncTest {
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-s " +
                 "-t Monkey 1 -- " +
                 "-s -- " +
                 "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
+                "-t StringDef 'Message from OnFinish' " +
                 "-s");
 
         flowBuilder.add(result::set);
@@ -170,12 +170,12 @@ class SyncTest {
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-s " +
                 "-e ExceptionHandler " +
-                "-t Generate \"Hello, World!\" " +
-                "-sf Generate " +
+                "-t StringDef \"Hello, World!\" " +
+                "-sf StringDef " +
                 "-t Monkey 1 -- " +
                 "-s -- " +
                 "-stt ExceptionHandler:OnFinish " +
-                "-t Generate 'Message from OnFinish' " +
+                "-t StringDef 'Message from OnFinish' " +
                 "-s");
 
         flowBuilder.add(result::set);
@@ -190,12 +190,12 @@ class SyncTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-l A B " +
                 "-t A:Stash -l C " +
                 "-t B:Stash -l C " +
                 "-stt C:OnFinish " +
-                "-t Generate 'Message from OnFinish'");
+                "-t StringDef 'Message from OnFinish'");
 
         flowBuilder.add(result::set);
         flowBuilder.run();
@@ -210,12 +210,12 @@ class SyncTest {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
                 "-e C " +
-                "-sft Generate \"Hello, World!\" " +
+                "-sft StringDef \"Hello, World!\" " +
                 "-l A B " +
                 "-t A:Stash -- " +
                 "-t B:Stash -- " +
                 "-stt C:OnFinish " +
-                "-t Generate 'Message from OnFinish'");
+                "-t StringDef 'Message from OnFinish'");
 
         flowBuilder.add(result::set);
         flowBuilder.run();
