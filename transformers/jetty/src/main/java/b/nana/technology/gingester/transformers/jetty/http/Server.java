@@ -1,10 +1,12 @@
 package b.nana.technology.gingester.transformers.jetty.http;
 
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +20,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Server implements Transformer<Object, InputStream> {
 
@@ -105,7 +106,7 @@ public final class Server implements Transformer<Object, InputStream> {
 
                 Map<String, Object> httpRequestStash = new HashMap<>();
                 httpStash.put("request", httpRequestStash);
-                httpRequestStash.put("object", request);
+                httpRequestStash.put("object", new HttpRequestWrapper(request));
                 httpRequestStash.put("method", jettyRequest.getMethod());
                 httpRequestStash.put("path", target);
 
@@ -136,7 +137,7 @@ public final class Server implements Transformer<Object, InputStream> {
                     httpRequestStash.put("cookies", cookieMap);
                 }
 
-                ResponseWrapper responseWrapper = new ResponseWrapper(response);
+                HttpResponseWrapper responseWrapper = new HttpResponseWrapper(response);
 
                 httpStash.put("response", responseWrapper);
 
@@ -146,7 +147,7 @@ public final class Server implements Transformer<Object, InputStream> {
                 ));
 
                 out.accept(contextBuilder, jettyRequest.getInputStream());
-                responseWrapper.awaitResponse();
+                responseWrapper.await();
             }
         };
 
@@ -166,84 +167,14 @@ public final class Server implements Transformer<Object, InputStream> {
         server.join();
     }
 
-    public static class ResponseWrapper {
-
-        public final HttpServletResponse servlet;
-        public final AtomicBoolean responded = new AtomicBoolean();
-
-        public ResponseWrapper(HttpServletResponse servlet) {
-            this.servlet = servlet;
-        }
-
-        public void setStatus(int status) {
-            servlet.setStatus(status);
-        }
-
-        public void addCookie(Cookie cookie) {
-            servlet.addCookie(cookie);
-        }
-
-        public void addHeader(String name, String value) {
-            servlet.addHeader(name, value);
-        }
-
-        public boolean hasHeader(String name) {
-            return servlet.containsHeader(name);
-        }
-
-        public void respondEmpty() {
-            if (responded.get()) {
-                throw new IllegalStateException("Already responded");
-            }
-            finish();
-        }
-
-        public void respond(Responder responder) throws Exception {
-            if (!responded.getAndSet(true)) {
-                responder.respond(servlet);
-            } else {
-                throw new IllegalStateException("Already responded");
-            }
-            finish();
-        }
-
-        private void finish() {
-            responded.set(true);
-            synchronized (responded) {
-                responded.notifyAll();
-            }
-        }
-
-        public void awaitResponse() {
-            if (!responded.get()) {
-                synchronized (responded) {
-                    while (!responded.get()) {
-                        try {
-                            responded.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();  // TODO
-                        }
-                    }
-                }
-            }
-        }
-
-        /**
-         * Returns the underlying HttpServletResponse.
-         * <p>
-         * Note that `respond` or `respondEmpty` must be called on `this` regardless of
-         * any interactions directly on the HttpServletResponse returned by this method.
-         */
-        public HttpServletResponse getServlet() {
-            return servlet;
-        }
-    }
-
-    public interface Responder {
-        void respond(HttpServletResponse servlet) throws Exception;
-    }
-
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isInt, port -> o("port", port));
+            }
+        }
 
         public int port = 8080;
         public boolean stashHeaders = true;
@@ -255,14 +186,6 @@ public final class Server implements Transformer<Object, InputStream> {
         public String[] gzipMethods = new String[] { "GET" };
         public String[] gzipMimeTypes = new String[0];
         public String[] gzipPaths = new String[] { "/*" };
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(int port) {
-            this.port = port;
-        }
     }
 
     public static class StoreParameters {

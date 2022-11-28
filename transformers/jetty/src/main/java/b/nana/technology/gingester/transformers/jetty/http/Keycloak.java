@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -82,7 +81,7 @@ public final class Keycloak implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse)
+        HttpResponse response = (HttpResponse) context.fetch(fetchHttpResponse)
                 .orElseThrow(() -> new IllegalStateException("Context did not come from HttpServer"));
 
         Cookie cookie = (Cookie) context.fetch(fetchHttpRequestCookiesCookieName)
@@ -106,7 +105,7 @@ public final class Keycloak implements Transformer<Object, Object> {
 
             response.setStatus(302);
             response.addHeader("Location", getRedirectUrl(context));
-            response.respondEmpty();
+            response.finish();
 
         } else {
 
@@ -127,7 +126,7 @@ public final class Keycloak implements Transformer<Object, Object> {
             } else if (context.require(fetchHttpRequestMethod).equals("GET")) {
                 response.setStatus(302);
                 response.addHeader("Location", authUrl + "&redirect_uri=" + getRedirectUrl(context));
-                response.respondEmpty();
+                response.finish();
             } else {
                 throw new IllegalStateException("No access token available");
             }
@@ -138,7 +137,7 @@ public final class Keycloak implements Transformer<Object, Object> {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(tokenUrl));
         requestBuilder.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
         requestBuilder.POST(HttpRequest.BodyPublishers.ofString(requestBody));
-        return HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString()).body();
+        return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
     }
 
     private String getRedirectUrl(Context context) {
