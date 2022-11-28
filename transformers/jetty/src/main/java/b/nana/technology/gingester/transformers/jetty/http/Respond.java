@@ -22,7 +22,7 @@ public final class Respond implements Transformer<InputStream, String> {
     @Override
     public void transform(Context context, InputStream in, Receiver<String> out) throws Exception {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse)
+        HttpResponse response = (HttpResponse) context.fetch(fetchHttpResponse)
                 .orElseThrow(() -> new IllegalStateException("Context did not come from HttpServer"));
 
         if (!response.hasHeader("Content-Type")) {
@@ -35,12 +35,13 @@ public final class Respond implements Transformer<InputStream, String> {
             }
         }
 
-        response.respond(servlet -> in.transferTo(servlet.getOutputStream()));
+        in.transferTo(response.getOutputStream());
+        response.finish();
 
         out.accept(context, "http respond signal");
     }
 
     public static class Parameters {
-        public TemplateParameters detectContentTypeFrom = new TemplateParameters("${description}", false);
+        public TemplateParameters detectContentTypeFrom = new TemplateParameters("${description!''}", false);
     }
 }

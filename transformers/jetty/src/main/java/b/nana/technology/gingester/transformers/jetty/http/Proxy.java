@@ -15,7 +15,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,13 +80,13 @@ public final class Proxy implements Transformer<InputStream, InputStream> {
 
         // proxy the request, TODO look into HttpClient thread safety
         HttpClient httpClient = HttpClient.newHttpClient();
-        HttpResponse<InputStream> proxyResponse = httpClient.send(proxyRequestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+        java.net.http.HttpResponse<InputStream> proxyResponse = httpClient.send(proxyRequestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofInputStream());
         int proxyResponseStatus = proxyResponse.statusCode();
         Map<String, List<String>> proxyResponseHeaders = proxyResponse.headers().map();
 
         if (prepareProxyResponse) {
             // transfer proxy response status and headers to upstream response
-            Server.ResponseWrapper response = (Server.ResponseWrapper) http.get("response");
+            HttpResponse response = (HttpResponse) http.get("response");
             response.setStatus(proxyResponseStatus);
             proxyResponseHeaders.forEach((name, values) -> values.forEach(value -> response.addHeader(name, value)));
         }

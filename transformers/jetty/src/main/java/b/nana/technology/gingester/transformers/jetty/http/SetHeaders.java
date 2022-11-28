@@ -23,7 +23,7 @@ public final class SetHeaders implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
-        Server.ResponseWrapper response = (Server.ResponseWrapper) context.fetch(fetchHttpResponse)
+        HttpResponse response = (HttpResponse) context.fetch(fetchHttpResponse)
                 .orElseThrow(() -> new IllegalStateException("Context did not come from HttpServer"));
 
         headers.forEach(response::addHeader);
