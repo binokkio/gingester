@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
 import b.nana.technology.gingester.core.FlowBuilder;
+import b.nana.technology.gingester.core.Node;
+import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 
@@ -65,5 +67,42 @@ class CollectAndGetTest {
         assertEquals("{\"name\":\"foo\",\"reference\":\"123\",\"lookup\":{\"id\":123,\"message\":\"Hello, World 1!\"}}", results.remove().toString());
         assertEquals("{\"name\":\"bar\",\"reference\":\"345\",\"lookup\":{\"id\":345,\"message\":\"Hello, World 3!\"}}", results.remove().toString());
         assertEquals("{\"name\":\"baz\",\"reference\":\"234\",\"lookup\":{\"id\":234,\"message\":\"Hello, World 2!\"}}", results.remove().toString());
+    }
+
+    @Test
+    void testMapCollectThrowsOnCollisionByDefault() {
+
+        AtomicReference<Exception> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-e ExceptionHandler " +
+                "-t Repeat 3 " +
+                "-t Cycle A B " +
+                "-s " +
+                "-t MapCollect " +
+                "--")
+                .add(new Node()
+                        .id("ExceptionHandler")
+                        .transformer(new ConsumerPassthrough<>(result::set)))
+                .run();
+
+        assertEquals("MapCollect collision for key: A", result.get().getMessage());
+    }
+
+    @Test
+    void testMapCollectDisableThrowOnCollision() {
+
+        AtomicReference<Map<String, Integer>> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 3 " +
+                "-t Cycle A B " +
+                "-s " +
+                "-t MapCollect Repeat.description !throwOnCollision")
+                .add(result::set)
+                .run();
+
+        assertEquals(2, result.get().get("A"));
+        assertEquals(1, result.get().get("B"));
     }
 }
