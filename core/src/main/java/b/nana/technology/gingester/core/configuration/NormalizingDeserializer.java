@@ -85,10 +85,17 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
 
         for (int i = from; i < source.size(); i++) {
 
-            if (!booleanFields.contains(source.get(i).asText()))
+            boolean value = true;
+            String field = source.get(i).asText();
+            if (field.startsWith("!")) {
+                value = false;
+                field = field.substring(1);
+            }
+
+            if (!booleanFields.contains(field))
                 throw new IllegalArgumentException("Unexpected flag: " + source.get(i));
 
-            destination.put(source.get(i).asText(), true);
+            destination.put(field, value);
         }
 
         return destination;
