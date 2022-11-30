@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-public enum Type {
+public enum SetType {
 
     @JsonProperty("hash")
     HASH_SET(HashSet::new),
@@ -19,9 +19,14 @@ public enum Type {
     @JsonProperty("tree")
     TREE_SET(TreeSet::new);
 
-    final Supplier<Set<Object>> setSupplier;
+    private final Supplier<Set<Object>> setSupplier;
 
-    Type(Supplier<Set<Object>> setSupplier) {
+    SetType(Supplier<Set<Object>> setSupplier) {
         this.setSupplier = setSupplier;
+    }
+
+    public <T> Set<T> newSet() {
+        // noinspection unchecked
+        return (Set<T>) setSupplier.get();
     }
 }

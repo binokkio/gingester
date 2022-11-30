@@ -9,15 +9,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public final class Diff implements Transformer<Set<?>, Set<?>> {
 
     private final ContextMap<State> states = new ContextMap<>();
-    private final Supplier<Set<Object>> setSupplier;
+    private final SetType setType;
 
     public Diff(Parameters parameters) {
-        setSupplier = parameters.type.setSupplier;
+        setType = parameters.type;
     }
 
     @Override
@@ -42,11 +41,11 @@ public final class Diff implements Transformer<Set<?>, Set<?>> {
             return result;
         });
 
-        Set<Object> added = setSupplier.get();
+        Set<Object> added = setType.newSet();
         added.addAll(in);
         added.removeAll(previous);
 
-        Set<Object> removed = setSupplier.get();
+        Set<Object> removed = setType.newSet();
         removed.addAll(previous);
         removed.removeAll(in);
 
@@ -70,13 +69,13 @@ public final class Diff implements Transformer<Set<?>, Set<?>> {
 
     public static class Parameters {
 
-        public Type type = Type.HASH_SET;
+        public SetType type = SetType.HASH_SET;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(Type type) {
+        public Parameters(SetType type) {
             this.type = type;
         }
     }

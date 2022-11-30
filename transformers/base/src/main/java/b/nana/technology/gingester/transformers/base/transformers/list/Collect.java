@@ -5,25 +5,21 @@ import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Supplier;
 
 public final class Collect implements Transformer<Object, List<?>> {
 
     private final ContextMap<List<Object>> contextMap = new ContextMap<>();
-    private final Supplier<List<Object>> listSupplier;
+    private final ListType listType;
 
     public Collect(Collect.Parameters parameters) {
-        listSupplier = parameters.type.listSupplier;
+        listType = parameters.type;
     }
 
     @Override
     public void prepare(Context context, Receiver<List<?>> out) {
-        contextMap.put(context, listSupplier.get());
+        contextMap.put(context, listType.newList());
     }
 
     @Override
@@ -38,29 +34,14 @@ public final class Collect implements Transformer<Object, List<?>> {
 
     public static class Parameters {
 
-        public Type type = Type.ARRAY_LIST;
+        public ListType type = ListType.ARRAY_LIST;
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(Type type) {
+        public Parameters(ListType type) {
             this.type = type;
-        }
-
-        public enum Type {
-
-            @JsonProperty("hash")
-            ARRAY_LIST(ArrayList::new),
-
-            @JsonProperty("linked")
-            LINKED_LIST(LinkedList::new);
-
-            private final Supplier<List<Object>> listSupplier;
-
-            Type(Supplier<List<Object>> listSupplier) {
-                this.listSupplier = listSupplier;
-            }
         }
     }
 }
