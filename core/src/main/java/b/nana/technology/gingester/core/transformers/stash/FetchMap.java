@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,7 +28,7 @@ public final class FetchMap implements Transformer<Object, Map<String, Object>> 
 
     @Override
     public void transform(Context context, Object in, Receiver<Map<String, Object>> out) {
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         for (Instruction instruction : instructions) {
             Optional<Object> value = context.fetch(instruction.fetch);
             if (value.isEmpty()) {
