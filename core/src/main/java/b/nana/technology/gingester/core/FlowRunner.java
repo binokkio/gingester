@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.Controller;
-import b.nana.technology.gingester.core.controller.Worker;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -32,6 +31,8 @@ public final class FlowRunner {
 
     private final FlowBuilder flowBuilder;
     private final IdFactory idFactory;
+
+    private Thread mainThread;
 
     public FlowRunner(FlowBuilder flowBuilder) {
         this.flowBuilder = flowBuilder;
@@ -86,14 +87,8 @@ public final class FlowRunner {
 
         phaser.awaitAdvance(0);
 
-        if (!stopping.getAndSet(true)) {
-            Controller<?, ?> seedController = controllers.get(Id.SEED);
-            Stream.of(List.of(seedController), seedController.links.values())
-                    .flatMap(Collection::stream)
-                    .map(c -> c.workers)
-                    .flatMap(Collection::stream)
-                    .forEach(Worker::interrupt);  // TODO instead of always interrupting allow transformers to override a callback and only interrupt if it returns false
-        }
+        if (!stopping.getAndSet(true))
+            mainThread.interrupt();  // TODO improve
 
         phaser.awaitAdvance(1);
         phaser.awaitAdvance(2);
@@ -284,6 +279,8 @@ public final class FlowRunner {
     }
 
     private void start() {
+
+        mainThread = Thread.currentThread();
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
