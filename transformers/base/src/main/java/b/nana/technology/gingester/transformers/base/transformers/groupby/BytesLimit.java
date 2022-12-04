@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.base.common.ByteSizeParser;
+import b.nana.technology.gingester.core.common.ByteCountFormat;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 @Passthrough
@@ -15,7 +15,7 @@ public final class BytesLimit implements Transformer<byte[], byte[]> {
     private final long limit;
 
     public BytesLimit(Parameters parameters) {
-        limit = ByteSizeParser.parse(parameters.limit);
+        limit = new ByteCountFormat().parse(parameters.limit);
     }
 
     @Override

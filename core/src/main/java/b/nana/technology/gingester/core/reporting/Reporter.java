@@ -24,6 +24,8 @@ public final class Reporter {
         return thread;
     };
 
+    private final SamplerFormatter samplerFormatter = new SamplerFormatter("processed");
+
     private final int intervalMillis;
     private final Map<Controller<?, ?>, Sampler> targets;
 
@@ -58,13 +60,9 @@ public final class Reporter {
                 String customMessage = controller.transformer.onReport();
 
                 LOGGER.info(String.format(
-                        "%s: %,d processed at %,.2f/s (%s), %,.2f/s (%s)",
+                        "%s: %s",
                         controller.id,
-                        sampler.getValue(),
-                        sampler.getCurrentChangePerSecond(),
-                        humanize(sampler.getCurrentNanos()),
-                        sampler.getEpochChangePerSecond(),
-                        humanize(sampler.getEpochNanos())
+                        samplerFormatter.format(sampler)
                 ));
 
                 if (!customMessage.isEmpty()) {
@@ -72,22 +70,5 @@ public final class Reporter {
                 }
             }
         });
-    }
-
-    private String humanize(long nanos) {
-        long asSeconds = Math.round(nanos / 1_000_000_000d);
-        long days = asSeconds / 86400;
-        long hours = asSeconds % 86400 / 3600;
-        long minutes = asSeconds % 86400 % 3600 / 60;
-        long seconds = asSeconds % 86400 % 3600 % 60;
-        if (days != 0) {
-            return days + "d" + hours + "h" + minutes + "m" + seconds + "s";
-        } else if (hours != 0) {
-            return hours + "h" + minutes + "m" + seconds + "s";
-        } else if (minutes != 0) {
-            return minutes + "m" + seconds + "s";
-        } else {
-            return seconds + "s";
-        }
     }
 }

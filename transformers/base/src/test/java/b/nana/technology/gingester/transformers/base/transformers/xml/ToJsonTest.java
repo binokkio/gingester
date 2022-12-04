@@ -34,7 +34,7 @@ class ToJsonTest {
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
                 "-t ResourceOpen /data/xml/with-attributes.xml " +
-                "-t XmlToJson '{maxAttributeSize: \"2b\"}' " +
+                "-t XmlToJson '{maxAttributeSize: \"2B\"}' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
                 .add(result::set)
