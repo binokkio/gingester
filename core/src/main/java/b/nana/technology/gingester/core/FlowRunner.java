@@ -32,7 +32,7 @@ public final class FlowRunner {
     private final FlowBuilder flowBuilder;
     private final IdFactory idFactory;
 
-    private Thread mainThread;
+    private Thread seedThread;
 
     public FlowRunner(FlowBuilder flowBuilder) {
         this.flowBuilder = flowBuilder;
@@ -88,7 +88,7 @@ public final class FlowRunner {
         phaser.awaitAdvance(0);
 
         if (!stopping.getAndSet(true))
-            mainThread.interrupt();  // TODO improve
+            seedThread.interrupt();  // TODO improve
 
         phaser.awaitAdvance(1);
         phaser.awaitAdvance(2);
@@ -280,7 +280,7 @@ public final class FlowRunner {
 
     private void start() {
 
-        mainThread = Thread.currentThread();
+        seedThread = Thread.currentThread();
 
         controllers.values().forEach(Controller::open);
         phaser.awaitAdvance(0);
