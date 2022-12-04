@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers.xml;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.base.common.ByteSizeParser;
+import b.nana.technology.gingester.core.common.ByteCountFormat;
 import com.ctc.wstx.api.WstxInputProperties;
 import com.ctc.wstx.stax.WstxInputFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,7 +20,7 @@ public final class ToJson implements Transformer<InputStream, JsonNode> {
     public ToJson(Parameters parameters) {
 
         XMLInputFactory xmlInputFactory = new WstxInputFactory();
-        xmlInputFactory.setProperty(WstxInputProperties.P_MAX_ATTRIBUTE_SIZE, ByteSizeParser.parse(parameters.maxAttributeSize));
+        xmlInputFactory.setProperty(WstxInputProperties.P_MAX_ATTRIBUTE_SIZE, new ByteCountFormat().parse(parameters.maxAttributeSize));
 
         XmlFactory xmlFactory = XmlFactory.builder()
                 .inputFactory(xmlInputFactory)
