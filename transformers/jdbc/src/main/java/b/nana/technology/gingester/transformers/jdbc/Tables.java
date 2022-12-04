@@ -68,7 +68,6 @@ public final class Tables extends JdbcTransformer<Object, String, Void> {
 
                     String table = resultSet.getString("TABLE_NAME");
                     if (table != null) {
-                        System.out.println(table);
                         if (excludeTables.contains(table))
                             continue;
                         stash.put("table", table);
