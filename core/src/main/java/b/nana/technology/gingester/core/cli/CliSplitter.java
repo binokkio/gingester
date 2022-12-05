@@ -24,8 +24,8 @@ public final class CliSplitter {
                 continue;
             }
 
-            if (arg.length() == 0) {
-                if (quote == 0 && (c == '"' || c == '\'') && !escape) {
+            if (arg.length() == 0 && quote == 0) {
+                if ((c == '"' || c == '\'') && !escape) {
                     quote = c;
                 } else if (!Character.isWhitespace(c)) {
                     arg.append(c);

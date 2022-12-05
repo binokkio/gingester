@@ -79,14 +79,14 @@ class CollectAndGetTest {
                 "-t Repeat 3 " +
                 "-t Cycle A B " +
                 "-s " +
-                "-t MapCollect " +
+                "-t MapCollect Repeat.description " +
                 "--")
                 .add(new Node()
                         .id("ExceptionHandler")
                         .transformer(new ConsumerPassthrough<>(result::set)))
                 .run();
 
-        assertEquals("MapCollect collision for key: A", result.get().getMessage());
+        assertEquals("Collision for key: A", result.get().getMessage());
     }
 
     @Test
@@ -102,7 +102,26 @@ class CollectAndGetTest {
                 .add(result::set)
                 .run();
 
+        assertEquals(2, result.get().size());
         assertEquals(2, result.get().get("A"));
         assertEquals(1, result.get().get("B"));
+    }
+
+    @Test
+    void testMapCollectDoesNotThrowOnCollisionForEqualValues() {
+
+        AtomicReference<Map<String, String>> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 3 " +
+                "-t Cycle A B " +
+                "-s " +
+                "-t MapCollect")
+                .add(result::set)
+                .run();
+
+        assertEquals(2, result.get().size());
+        assertEquals("A", result.get().get("A"));
+        assertEquals("B", result.get().get("B"));
     }
 }

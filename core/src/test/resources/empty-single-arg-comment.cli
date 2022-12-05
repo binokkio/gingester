@@ -1,0 +1,4 @@
++ ''
+-t StringDef 'Empty single argument comments, like the ones above and below, should not cause issues'
++ ''
+-t StringDef '${__in__}!'
