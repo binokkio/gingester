@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
@@ -34,8 +35,8 @@ public final class Collect implements Transformer<Object, Map<Object, Object>> {
         Object value = context.require(fetchValue);
         Map<Object, Object> map = maps.get(context);
         Object collision = map.put(in, value);
-        if (collision != null && throwOnCollision) {
-            throw new IllegalStateException("MapCollect collision for key: " + in);
+        if (throwOnCollision && collision != null && !Objects.equals(in, collision)) {
+            throw new IllegalStateException("Collision for key: " + in);
         }
     }
 
