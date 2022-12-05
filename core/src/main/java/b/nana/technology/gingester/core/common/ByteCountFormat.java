@@ -40,6 +40,7 @@ public class ByteCountFormat {
     }
 
     private String format(BigDecimal byteCount, boolean binary) {
+        if (byteCount.signum() == 0) return "0.00B";
         BigDecimal base = binary ? BD1024 : BD1000;
         BigDecimal quotient;
         int exponent = -1;

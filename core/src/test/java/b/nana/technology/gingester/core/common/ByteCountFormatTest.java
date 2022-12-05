@@ -38,6 +38,8 @@ class ByteCountFormatTest {
 
     @Test
     void testFormat() {
+        assertEquals("0.00B",  byteCountFormat.format(0d));
+        assertEquals("0.100B", byteCountFormat.format(0.1d));
         assertEquals("1.00B",  byteCountFormat.format(1d));
         assertEquals("10.0B",  byteCountFormat.format(10d));
         assertEquals("100B",   byteCountFormat.format(100d));
@@ -76,6 +78,10 @@ class ByteCountFormatTest {
 
     @Test
     void testFormatBinary() {
+        assertEquals("0.00B",    byteCountFormat.formatBinary(0d));
+        assertEquals("0.100B",   byteCountFormat.formatBinary(0.1d));
+        assertEquals("0.0100B",  byteCountFormat.formatBinary(0.01d));
+        assertEquals("0.00100B", byteCountFormat.formatBinary(0.001d));
         assertEquals("1.00B",    byteCountFormat.formatBinary(1d));
         assertEquals("10.0B",    byteCountFormat.formatBinary(10d));
         assertEquals("100B",     byteCountFormat.formatBinary(100d));
