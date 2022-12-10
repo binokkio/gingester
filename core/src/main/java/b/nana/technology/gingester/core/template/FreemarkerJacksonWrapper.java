@@ -12,11 +12,15 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
     }
 
     @Override
-    public TemplateModel wrap(Object object) throws TemplateModelException {
+    public TemplateModel wrap(Object object) {
         if (object instanceof JsonNode) {
             return handleJsonNode((JsonNode) object);
         } else {
-            return super.wrap(object);
+            try {
+                return super.wrap(object);
+            } catch (TemplateModelException e) {
+                throw new RuntimeException(e);  // TODO
+            }
         }
     }
 

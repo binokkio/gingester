@@ -7,13 +7,18 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
+
+import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.JACKSON_WRAPPER;
 
 public final class TemplateParameters {
 
     public String template;
     public Interpretation is = Interpretation.STRING;
     public Boolean invariant;
+    public Map<String, Object> kwargs = Map.of();
+
     // TODO add a syntax enum with the different Freemarker options and "OFF"/"NONE"
 
     public TemplateParameters() {
@@ -29,14 +34,35 @@ public final class TemplateParameters {
         this.invariant = invariant;
     }
 
-    public TemplateParameters(String template, boolean invariant, Interpretation is) {
-        this.template = template;
-        this.invariant = invariant;
-        this.is = is;
+    FreemarkerTemplateWrapper createTemplateWrapper() {
+        return FreemarkerTemplateFactory.createTemplate(
+                getTemplateName(),
+                getTemplateString()
+        );
     }
 
     @JsonIgnore
     public String getTemplateString() {
+        return FreemarkerTemplateFactory.createCliTemplate(
+                getTemplateName(),
+                getRawTemplateString()
+        ).render(JACKSON_WRAPPER.wrap(kwargs));
+    }
+
+    private String getTemplateName() {
+
+        switch (is) {
+
+            case FILE: return "FILE:" + template;
+            case RESOURCE: return "RESOURCE:" + template;
+            case STRING: return "STRING";
+
+            default:
+                throw new IllegalStateException("No case for " + is);
+        }
+    }
+
+    private String getRawTemplateString() {
 
         switch (is) {
 
@@ -49,10 +75,6 @@ public final class TemplateParameters {
         }
     }
 
-    FreemarkerTemplateWrapper createTemplateWrapper() {
-        return FreemarkerTemplateFactory.createTemplate(getTemplateString());
-    }
-
     public enum Interpretation {
         FILE,
         RESOURCE,
@@ -63,7 +85,7 @@ public final class TemplateParameters {
         Path path = Paths.get(template);
         if (!Files.exists(path)) return Optional.empty();
         try {
-            return Optional.of(Files.readString(Paths.get(template)));
+            return Optional.of(Files.readString(path));
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read template file", e);
         }

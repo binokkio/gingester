@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import freemarker.template.TemplateHashModel;
 import freemarker.template.TemplateModel;
-import freemarker.template.TemplateModelException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -32,8 +31,8 @@ final class ContextPlus implements TemplateHashModel {
     }
 
     @Override
-    public TemplateModel get(String key) throws TemplateModelException {
-        if (key.equals("__in__") && in != null) {
+    public TemplateModel get(String key) {
+        if (key.equals("__in__")) {
             return JACKSON_WRAPPER.wrap(in);
         } else {
             Object extra = extras.get(key);
