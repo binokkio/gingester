@@ -70,7 +70,6 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters extends JdbcTransformer.Parameters {
-
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);

@@ -12,7 +12,7 @@ public final class ConnectionWith<T> {
     private final Connection connection;
 
     private T singleton;
-    private final Map<String, T> map = new LinkedHashMap<>(16, .75f, true);
+    private final Map<String, T> map = new LinkedHashMap<>(16, .75f, true);  // TODO use LruMap?
     private final int maxMapSize;
 
     public ConnectionWith(String url, Connection connection, int maxMapSize) {
@@ -42,6 +42,8 @@ public final class ConnectionWith<T> {
     }
 
     public T setObject(String raw, T object) {
+
+        // TODO is the order of put and containsKey the wrong way around here?
 
         map.put(raw, object);
 
