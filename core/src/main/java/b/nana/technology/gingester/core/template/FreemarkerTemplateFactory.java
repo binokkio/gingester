@@ -13,8 +13,8 @@ public final class FreemarkerTemplateFactory {
 
     private FreemarkerTemplateFactory() {}
 
-    public static FreemarkerTemplateWrapper createTemplate(String templateString) {
-        return createTemplate("", templateString, Configuration.ANGLE_BRACKET_TAG_SYNTAX, Configuration.DOLLAR_INTERPOLATION_SYNTAX);
+    public static FreemarkerTemplateWrapper createTemplate(String name, String templateString) {
+        return createTemplate(name, templateString, Configuration.ANGLE_BRACKET_TAG_SYNTAX, Configuration.DOLLAR_INTERPOLATION_SYNTAX);
     }
 
     public static FreemarkerTemplateWrapper createCliTemplate(String name, String templateString) {

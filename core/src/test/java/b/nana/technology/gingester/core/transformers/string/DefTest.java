@@ -73,4 +73,17 @@ class DefTest {
 
         assertEquals("Hello, true!", result.get());
     }
+
+    @Test
+    void testStringDefResourceWithKwargs() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef '{template: \"/template.ftl\", is: \"RESOURCE\", kwargs: {\"target\": \"World\"}}'")
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
 }

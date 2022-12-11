@@ -14,8 +14,10 @@ public abstract class Statement {
     private final PreparedStatement preparedStatement;
     private final List<Parameter> parameters;
 
-    public Statement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters) throws SQLException {
-        preparedStatement = connection.prepareStatement(statement);
+    public Statement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters, boolean returnGeneratedKeys) throws SQLException {
+        preparedStatement = returnGeneratedKeys ?
+                connection.prepareStatement(statement, java.sql.Statement.RETURN_GENERATED_KEYS) :
+                connection.prepareStatement(statement);
         this.parameters = new ArrayList<>();
         for (int i = 0; i < parameters.size(); i++) {
             this.parameters.add(new Parameter(preparedStatement, i + 1, parameters.get(i)));

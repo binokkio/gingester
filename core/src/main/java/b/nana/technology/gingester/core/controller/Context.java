@@ -497,6 +497,16 @@ public final class Context implements Iterable<Context> {
             return new Context(this);
         }
 
+        /**
+         * Build context with a dummy controller, must not be passed to a {@link b.nana.technology.gingester.core.receiver.Receiver}!
+         *
+         * @return the context
+         */
+        public Context buildForSelf() {
+            this.controller = new Controller<>(Id.newTestId("$__self__"));
+            return new Context(this);
+        }
+
         Context build(Controller<?, ?> controller) {
             this.controller = controller;
             return new Context(this);

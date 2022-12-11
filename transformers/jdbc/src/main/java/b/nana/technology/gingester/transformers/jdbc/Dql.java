@@ -72,6 +72,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlS
             public Deserializer() {
                 super(Parameters.class);
                 rule(JsonNode::isTextual, text -> o("dql", text));
+                rule(JsonNode::isArray, array -> flags(array, 1, o("dql", array.get(0))));
             }
         }
 

@@ -12,7 +12,7 @@ public final class ConnectionWith<T> {
     private final Connection connection;
 
     private T singleton;
-    private final Map<String, T> map = new LinkedHashMap<>(16, .75f, true);
+    private final Map<String, T> map = new LinkedHashMap<>(16, .75f, true);  // TODO use LruMap?
     private final int maxMapSize;
 
     public ConnectionWith(String url, Connection connection, int maxMapSize) {
@@ -43,16 +43,17 @@ public final class ConnectionWith<T> {
 
     public T setObject(String raw, T object) {
 
-        map.put(raw, object);
+        T returnValue = null;
 
         if (!map.containsKey(raw) && map.size() == maxMapSize) {
             Iterator<T> iterator = map.values().iterator();
-            T removed = iterator.next();
+            returnValue = iterator.next();
             iterator.remove();
-            return removed;
         }
 
-        return null;
+        map.put(raw, object);
+
+        return returnValue;
     }
 
     public void close() throws SQLException {

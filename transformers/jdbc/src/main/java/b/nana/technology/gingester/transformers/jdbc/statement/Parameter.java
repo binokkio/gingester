@@ -20,7 +20,7 @@ public final class Parameter {
     private final int index;
     private final FetchKey fetchValue;
 
-    public Parameter(PreparedStatement preparedStatement, int index, JdbcTransformer.Parameters.Statement.Parameter parameter) throws SQLException {
+    public Parameter(PreparedStatement preparedStatement, int index, JdbcTransformer.Parameters.Statement.Parameter parameter) {
         this.preparedStatement = preparedStatement;
         this.index = index;
         this.fetchValue = new FetchKey(parameter.stash);

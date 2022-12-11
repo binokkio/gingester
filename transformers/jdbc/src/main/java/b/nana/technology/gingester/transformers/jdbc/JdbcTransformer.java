@@ -97,7 +97,6 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
 
         @JsonDeserialize(using = Statement.Deserializer.class)
         public static class Statement {
-
             public static class Deserializer extends NormalizingDeserializer<Statement> {
                 public Deserializer() {
                     super(Statement.class);
@@ -111,7 +110,6 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
 
             @JsonDeserialize(using = Parameter.Deserializer.class)
             public static class Parameter {
-
                 public static class Deserializer extends NormalizingDeserializer<Parameter> {
                     public Deserializer() {
                         super(Parameter.class);

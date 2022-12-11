@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Names(1)
 @Passthrough
-public final class StashString implements Transformer<Object, Object>  {
+public final class StashString implements Transformer<Object, Object> {
 
     private final String stash;
     private final Template template;

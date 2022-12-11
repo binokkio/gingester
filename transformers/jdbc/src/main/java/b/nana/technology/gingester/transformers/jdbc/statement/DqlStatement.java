@@ -13,10 +13,9 @@ import java.util.Map;
 public final class DqlStatement extends Statement {
 
     private final ResultStructure resultStructure;
-    private final boolean[] booleans;
 
     public DqlStatement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters, Integer fetchSize, boolean columnsOnly) throws SQLException {
-        super(connection, statement, parameters);
+        super(connection, statement, parameters, false);
 
         PreparedStatement preparedStatement = getPreparedStatement();
         if (fetchSize != null)
@@ -25,15 +24,8 @@ public final class DqlStatement extends Statement {
         ResultSetMetaData resultSetMetaData = preparedStatement.getMetaData();
 
         resultStructure = columnsOnly ?
-                new FlatResultStructure(this) :
-                new TabledResultStructure(this);
-
-        booleans = new boolean[resultSetMetaData.getColumnCount() + 1];
-        for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-            if (resultSetMetaData.getColumnTypeName(i).equals("BOOLEAN")) {
-                booleans[i] = true;
-            }
-        }
+                new FlatResultStructure(resultSetMetaData) :
+                new TabledResultStructure(resultSetMetaData);
     }
 
     public ResultSet execute(Context context) throws SQLException {
@@ -43,17 +35,5 @@ public final class DqlStatement extends Statement {
 
     public Map<String, Object> readRow(ResultSet resultSet) {
         return resultStructure.readRow(resultSet);
-    }
-
-    public Object getColumnValue(ResultSet resultSet, int i) {
-        try {
-            return booleans[i] ? resultSet.getBoolean(i) : resultSet.getObject(i);
-        } catch (SQLException e) {
-            try {
-                return resultSet.getString(i);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);  // TODO
-            }
-        }
     }
 }
