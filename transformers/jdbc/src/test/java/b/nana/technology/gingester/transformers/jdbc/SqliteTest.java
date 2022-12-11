@@ -47,4 +47,25 @@ class SqliteTest {
         assertEquals("Hello, World!", result.remove().get("b").textValue());
         assertTrue(result.remove().get("c").booleanValue());
     }
+
+    @Test
+    void testChainedInsert() {
+
+        ArrayDeque<Map<String, Map<String, Object>>> result = new ArrayDeque<>();
+
+        new FlowBuilder()
+                .cli(getClass().getResource("/repeated_chained_insert.cli"), Map.of(
+                        "autoIncrementKeyword", AUTO_INCREMENT_KEYWORD,
+                        "generatedKeyOverride", "last_insert_rowid()"
+                ))
+                .add(result::add)
+                .run();
+
+        assertEquals(1, result.getFirst().get("data").get("last_insert_rowid()"));
+        assertEquals(1, result.remove().get("refs").get("last_insert_rowid()"));
+        assertEquals(2, result.getFirst().get("data").get("last_insert_rowid()"));
+        assertEquals(2, result.remove().get("refs").get("last_insert_rowid()"));
+        assertEquals(3, result.getFirst().get("data").get("last_insert_rowid()"));
+        assertEquals(3, result.remove().get("refs").get("last_insert_rowid()"));
+    }
 }

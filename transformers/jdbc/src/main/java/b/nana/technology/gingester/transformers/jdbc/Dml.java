@@ -55,6 +55,8 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
         ConnectionWith<DmlStatement> connection = acquireConnection(context, in);
         try {
 
+            Context dmlContext = context;
+
             for (int i = 0; i < dml.size(); i++) {
 
                 Parameters.NamedStatement namedStatement = dml.get(i);
@@ -62,7 +64,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
                 Template dmlTemplate = dmlTemplates.get(i);
                 DmlStatement dmlStatement;
 
-                String raw = dmlTemplate.render(context, in);
+                String raw = dmlTemplate.render(dmlContext, in);
                 dmlStatement = connection.getObject(raw);
                 if (dmlStatement == null) {
                     dmlStatement = new DmlStatement(connection.getConnection(), raw, namedStatement.parameters, yieldGeneratedKeys);
@@ -70,7 +72,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
                     if (removed != null) removed.close();
                 }
 
-                dmlStatement.execute(context);
+                dmlStatement.execute(dmlContext);
 
                 if (commitMode == CommitMode.PER_STATEMENT)
                     connection.getConnection().commit();
@@ -90,6 +92,7 @@ public final class Dml extends JdbcTransformer<Object, Object, DmlStatement> {
                                 resultStructure.readRowInto(generatedKeys, result);
                             } else {
                                 result.put(namedStatement.name, resultStructure.readRow(generatedKeys));
+                                dmlContext = context.stash(result).buildForSelf();
                             }
                         }
                     }

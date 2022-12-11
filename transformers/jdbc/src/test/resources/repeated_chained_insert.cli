@@ -1,0 +1,36 @@
+-t JsonDef '{
+        "a": 123,
+        "b": "Hello, World!",
+        "c": true
+    }'
+
+-s data
+
+-t Repeat 3
+
+-t JdbcDml '{
+        [#if url??] "url": "[=url]", [/#if]
+        "ddl": [
+            "CREATE TABLE data (id INTEGER PRIMARY KEY [=autoIncrementKeyword], a INTEGER, b TEXT, c BOOLEAN)",
+            "CREATE TABLE refs (id INTEGER PRIMARY KEY [=autoIncrementKeyword], data_id INTEGER, data_a INTEGER, FOREIGN KEY (data_id) REFERENCES data(id))"
+        ],
+        "dml": [
+            {
+                "name": "data",
+                "statement": "INSERT INTO data (a, b, c) VALUES (?, ?, ?)",
+                "parameters": [
+                    "data.a",
+                    "data.b",
+                    "data.c"
+                ]
+            },
+            {
+                "name": "refs",
+                "statement": "INSERT INTO refs (data_id, data_a) VALUES (?, ?)",
+                "parameters": [
+                    "data.[=generatedKeyOverride!"id"]",
+                    "data.a"
+                ]
+            }
+        ]
+    }'
