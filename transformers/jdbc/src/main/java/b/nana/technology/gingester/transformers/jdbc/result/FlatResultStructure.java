@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class FlatResultStructure extends ResultStructure {
@@ -27,9 +26,7 @@ public final class FlatResultStructure extends ResultStructure {
     }
 
     @Override
-    public Map<String, Object> readRow(ResultSet resultSet) {
-        Map<String, Object> result = new LinkedHashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
-        resultStructure.forEach((index, name) -> result.put(name, getColumnValue(resultSet, index)));
-        return result;
+    public void readRowInto(ResultSet resultSet, Map<String, Object> destination) {
+        resultStructure.forEach((index, name) -> destination.put(name, getColumnValue(resultSet, index)));
     }
 }

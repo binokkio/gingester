@@ -3,6 +3,7 @@ package b.nana.technology.gingester.transformers.jdbc.result;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class ResultStructure {
@@ -30,5 +31,11 @@ public abstract class ResultStructure {
         }
     }
 
-    public abstract Map<String, Object> readRow(ResultSet resultSet);
+    public final Map<String, Object> readRow(ResultSet resultSet) {
+        Map<String, Object> result = new LinkedHashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
+        readRowInto(resultSet, result);
+        return result;
+    }
+
+    public abstract void readRowInto(ResultSet resultSet, Map<String, Object> destination);
 }

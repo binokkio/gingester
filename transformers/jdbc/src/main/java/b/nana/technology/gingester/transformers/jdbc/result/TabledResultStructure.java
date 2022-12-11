@@ -37,14 +37,13 @@ public final class TabledResultStructure extends ResultStructure {
                 throw new IllegalArgumentException("Multiple columns map to " + tableName + "." + columnName);
         }
     }
+
     @Override
-    public Map<String, Object> readRow(ResultSet resultSet) {
-        Map<String, Object> result = new LinkedHashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
+    public void readRowInto(ResultSet resultSet, Map<String, Object> destination) {
         resultStructure.forEach((tableName, columns) -> {
             Map<String, Object> table = new LinkedHashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
-            result.put(tableName, table);
+            destination.put(tableName, table);
             columns.forEach((index, name) -> table.put(name, getColumnValue(resultSet, index)));
         });
-        return result;
     }
 }

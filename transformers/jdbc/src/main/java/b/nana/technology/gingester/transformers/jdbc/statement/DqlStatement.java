@@ -15,7 +15,7 @@ public final class DqlStatement extends Statement {
     private final ResultStructure resultStructure;
 
     public DqlStatement(Connection connection, String statement, List<JdbcTransformer.Parameters.Statement.Parameter> parameters, Integer fetchSize, boolean columnsOnly) throws SQLException {
-        super(connection, statement, parameters);
+        super(connection, statement, parameters, false);
 
         PreparedStatement preparedStatement = getPreparedStatement();
         if (fetchSize != null)
