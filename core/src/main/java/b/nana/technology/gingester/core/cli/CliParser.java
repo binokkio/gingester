@@ -321,11 +321,11 @@ public final class CliParser {
             }
 
             target.cli(url, parameters);
-            returnValue =  i + 1;
+            returnValue = i + 1;
 
         } else {
             target.cli(url);
-            returnValue =  i;
+            returnValue = i;
         }
 
         if (scopedSource.scope != null)

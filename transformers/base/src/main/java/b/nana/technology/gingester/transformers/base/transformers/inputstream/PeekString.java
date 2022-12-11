@@ -58,7 +58,7 @@ public final class PeekString extends CharsetTransformer<InputStream, String> {
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
-    public static class Parameters  extends CharsetTransformer.Parameters {
+    public static class Parameters extends CharsetTransformer.Parameters {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);

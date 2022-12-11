@@ -164,7 +164,7 @@ public final class Statistics implements Transformer<JsonNode, JsonNode> {
                         if (arrayChildren.isEmpty()) {
                             nodeStatistics = new NodeStatistics(root, this, pointer + "[*]");
                             arrayChildren.add(nodeStatistics);
-                        }  else {
+                        } else {
                             nodeStatistics = arrayChildren.get(0);
                         }
                         nodeStatistics.accept(jsonNode.get(i));
