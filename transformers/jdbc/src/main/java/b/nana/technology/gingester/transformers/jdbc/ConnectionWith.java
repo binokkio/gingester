@@ -43,18 +43,17 @@ public final class ConnectionWith<T> {
 
     public T setObject(String raw, T object) {
 
-        // TODO is the order of put and containsKey the wrong way around here?
-
-        map.put(raw, object);
+        T returnValue = null;
 
         if (!map.containsKey(raw) && map.size() == maxMapSize) {
             Iterator<T> iterator = map.values().iterator();
-            T removed = iterator.next();
+            returnValue = iterator.next();
             iterator.remove();
-            return removed;
         }
 
-        return null;
+        map.put(raw, object);
+
+        return returnValue;
     }
 
     public void close() throws SQLException {
