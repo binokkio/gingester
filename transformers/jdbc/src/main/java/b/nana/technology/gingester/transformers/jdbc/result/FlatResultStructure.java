@@ -1,22 +1,19 @@
 package b.nana.technology.gingester.transformers.jdbc.result;
 
-import b.nana.technology.gingester.transformers.jdbc.statement.DqlStatement;
-
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class FlatResultStructure implements ResultStructure {
+public final class FlatResultStructure extends ResultStructure {
 
-    private final DqlStatement dqlStatement;
     private final Map<Integer, String> resultStructure;
 
-    public FlatResultStructure(DqlStatement dqlStatement) throws SQLException {
+    public FlatResultStructure(ResultSetMetaData resultSetMetaData) throws SQLException {
+        super(resultSetMetaData);
 
-        this.dqlStatement = dqlStatement;
-        ResultSetMetaData resultSetMetaData = dqlStatement.getPreparedStatement().getMetaData();
         resultStructure = new HashMap<>();
 
         for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
@@ -31,8 +28,8 @@ public final class FlatResultStructure implements ResultStructure {
 
     @Override
     public Map<String, Object> readRow(ResultSet resultSet) {
-        Map<String, Object> result = new HashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
-        resultStructure.forEach((index, name) -> result.put(name, dqlStatement.getColumnValue(resultSet, index)));
+        Map<String, Object> result = new LinkedHashMap<>();  // TODO allow map implementation to be specified (hash, link, tree)
+        resultStructure.forEach((index, name) -> result.put(name, getColumnValue(resultSet, index)));
         return result;
     }
 }
