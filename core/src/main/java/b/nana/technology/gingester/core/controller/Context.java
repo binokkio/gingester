@@ -14,6 +14,7 @@ import java.util.stream.StreamSupport;
 public final class Context implements Iterable<Context> {
 
     private static final int INDENT = 2;
+    private static final Object FETCH_MISS = new Object();
 
     /**
      * Create a new Template.
@@ -168,25 +169,26 @@ public final class Context implements Iterable<Context> {
                         Object result = s;
                         for (String n : fetchKey.getNames()) {
                             if (result instanceof Map) {
-                                result = ((Map<?, ?>) result).get(n);
+                                // noinspection unchecked
+                                result = ((Map<?, Object>) result).getOrDefault(n, FETCH_MISS);
                             } else if (result instanceof List) {
-                                result = ((List<?>) result).get(Integer.parseInt(n));
+                                result = ((List<?>) result).get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
                             } else if (result instanceof JsonNode) {
                                 JsonNode jsonNode = (JsonNode) result;
                                 if (jsonNode.isObject()) {
                                     result = jsonNode.get(n);
                                 } else if (jsonNode.isArray()) {
-                                    result = jsonNode.get(Integer.parseInt(n));
+                                    result = jsonNode.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
                                 } else {
-                                    result = null;
+                                    return FETCH_MISS;
                                 }
                             } else {
-                                return null;
+                                return FETCH_MISS;
                             }
                         }
                         return result;
                     })
-                    .filter(Objects::nonNull);
+                    .filter(o -> o != FETCH_MISS);  // TODO support filtering out nulls as well?
         }
     }
 
@@ -472,7 +474,7 @@ public final class Context implements Iterable<Context> {
          * @return this builder
          */
         public Builder stash(String key, Object value) {
-            this.stash = Map.of(key, value);
+            this.stash = Collections.singletonMap(key, value);
             return this;
         }
 
