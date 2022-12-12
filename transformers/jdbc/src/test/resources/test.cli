@@ -1,20 +1,26 @@
--r 0
+[#assign tableName="test"]
 
 -t JsonDef '{
-    "a": 123,
-    "b": "Hello, World!",
-    "c": true
-  }'
+        "a": 123,
+        "b": "Hello, World!",
+        "c": true
+    }'
 -s
 -t JdbcDml '{
-    "url": "[=url]",
-    "ddl": "CREATE TABLE test (a INTEGER, b TEXT, c BOOLEAN)",
-    "dml": {
-      "statement": "INSERT INTO test VALUES (?, ?, ?)",
-      "parameters": [
-        "stash.a",
-        "stash.b",
-        "stash.c"
-      ]
-    }
-  }'
+        "url": "[=url]",
+        "ddl": {
+            "template": "/create-table.sql",
+            "is": "RESOURCE",
+            "kwargs": {
+                "tableName": "[=tableName]"
+            }
+        },
+        "dml": {
+            "statement": "INSERT INTO [=tableName] VALUES (?, ?, ?)",
+            "parameters": [
+                "stash.a",
+                "stash.b",
+                "stash.c"
+            ]
+        }
+    }'

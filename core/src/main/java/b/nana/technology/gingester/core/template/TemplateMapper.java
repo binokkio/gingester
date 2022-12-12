@@ -18,11 +18,13 @@ import java.util.Optional;
  */
 public class TemplateMapper<T> {
 
+    private final String templateString;
     private final FreemarkerTemplateWrapper templateWrapper;
     private final Mapper<T> mapper;
     private final T invariant;
 
     public TemplateMapper(TemplateParameters templateParameters, Mapper<T> mapper) {
+        this.templateString = templateParameters.getTemplateString();
         this.templateWrapper = templateParameters.createTemplateWrapper();
         this.mapper = mapper;
 
@@ -49,6 +51,10 @@ public class TemplateMapper<T> {
         } else {
             invariant = null;
         }
+    }
+
+    public String getTemplateString() {
+        return templateString;
     }
 
     /**

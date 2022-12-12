@@ -83,7 +83,6 @@ public final class TemplateParameters {
 
     private static Optional<String> readTemplateFile(String template) {
         Path path = Paths.get(template);
-        if (!Files.exists(path)) return Optional.empty();
         try {
             return Optional.of(Files.readString(path));
         } catch (IOException e) {
@@ -92,9 +91,9 @@ public final class TemplateParameters {
     }
 
     private static Optional<String> readTemplateResource(String template) {
-        InputStream inputStream = TemplateParameters.class.getResourceAsStream(template);
-        if (inputStream == null) return Optional.empty();
-        try {
+        try (InputStream inputStream = TemplateParameters.class.getResourceAsStream(template)) {
+            if (inputStream == null)
+                throw new IllegalArgumentException("Resource not found: " + template);
             return Optional.of(new String(inputStream.readAllBytes()));
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read template resource", e);

@@ -1,0 +1,1 @@
+CREATE TABLE [=tableName] (a INTEGER, b TEXT, c BOOLEAN)
