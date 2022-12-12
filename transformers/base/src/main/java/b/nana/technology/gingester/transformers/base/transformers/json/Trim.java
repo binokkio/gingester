@@ -17,7 +17,7 @@ public final class Trim implements Transformer<JsonNode, JsonNode> {
 
     private final boolean emptyArrays;
     private final boolean emptyObjects;
-    private final boolean emptyValues;
+    private final boolean emptyText;
     private final boolean keyWhitespace;
     private final boolean valueWhitespace;
     private final boolean nulls;
@@ -25,7 +25,7 @@ public final class Trim implements Transformer<JsonNode, JsonNode> {
     public Trim(Parameters parameters) {
         emptyArrays = parameters.emptyArrays;
         emptyObjects = parameters.emptyObjects;
-        emptyValues = parameters.emptyValues;
+        emptyText = parameters.emptyText;
         keyWhitespace = parameters.keyWhitespace;
         valueWhitespace = parameters.valueWhitespace;
         nulls = parameters.nulls;
@@ -51,31 +51,47 @@ public final class Trim implements Transformer<JsonNode, JsonNode> {
                 if (value.isObject()) {
                     trim(value);
                     if (emptyObjects && value.isEmpty()) {
-                        objectNode.remove(key);
-                        continue;
+                        if (nulls) {
+                            objectNode.remove(key);
+                            continue;
+                        } else {
+                            objectNode.replace(key, JsonNodeFactory.instance.nullNode());
+                        }
                     }
                 } else if (value.isArray()) {
                     trim(value);
                     if (emptyArrays && value.isEmpty()) {
-                        objectNode.remove(key);
-                        continue;
+                        if (nulls) {
+                            objectNode.remove(key);
+                            continue;
+                        } else {
+                            objectNode.replace(key, JsonNodeFactory.instance.nullNode());
+                        }
                     }
                 } else if (nulls && value.isNull()) {
                     objectNode.remove(key);
                     continue;
-                } else if ((valueWhitespace || emptyValues) && value.isTextual()) {
+                } else if ((valueWhitespace || emptyText) && value.isTextual()) {
                     if (valueWhitespace) {
                         String text = value.asText();
                         String trimmed = text.trim();
-                        if (emptyValues && trimmed.isEmpty()) {
-                            objectNode.remove(key);
-                            continue;
+                        if (emptyText && trimmed.isEmpty()) {
+                            if (nulls) {
+                                objectNode.remove(key);
+                                continue;
+                            } else {
+                                objectNode.replace(key, JsonNodeFactory.instance.nullNode());
+                            }
                         } else if (trimmed.length() != text.length()) {
                             objectNode.set(key, JsonNodeFactory.instance.textNode(trimmed));
                         }
                     } else if (value.asText().isEmpty()) {
-                        objectNode.remove(key);
-                        continue;
+                        if (nulls) {
+                            objectNode.remove(key);
+                            continue;
+                        } else {
+                            objectNode.replace(key, JsonNodeFactory.instance.nullNode());
+                        }
                     }
                 }
 
@@ -97,26 +113,38 @@ public final class Trim implements Transformer<JsonNode, JsonNode> {
                 if (value.isObject()) {
                     trim(value);
                     if (emptyObjects && value.isEmpty()) {
-                        arrayNode.remove(i--);
+                        if (nulls)
+                            arrayNode.remove(i--);
+                        else
+                            arrayNode.set(i, JsonNodeFactory.instance.nullNode());
                     }
                 } else if (value.isArray()) {
                     trim(value);
                     if (emptyArrays && value.isEmpty()) {
-                        arrayNode.remove(i--);
+                        if (nulls)
+                            arrayNode.remove(i--);
+                        else
+                            arrayNode.set(i, JsonNodeFactory.instance.nullNode());
                     }
                 } else if (nulls && value.isNull()) {
                     arrayNode.remove(i--);
-                } else if ((valueWhitespace || emptyValues) && value.isTextual()) {
+                } else if ((valueWhitespace || emptyText) && value.isTextual()) {
                     if (valueWhitespace) {
                         String text = value.asText();
                         String trimmed = text.trim();
-                        if (emptyValues && trimmed.isEmpty()) {
-                            arrayNode.remove(i--);
+                        if (emptyText && trimmed.isEmpty()) {
+                            if (nulls)
+                                arrayNode.remove(i--);
+                            else
+                                arrayNode.set(i, JsonNodeFactory.instance.nullNode());
                         } else if (trimmed.length() != text.length()) {
                             arrayNode.set(i, JsonNodeFactory.instance.textNode(trimmed));
                         }
                     } else if (value.asText().isEmpty()) {
-                        arrayNode.remove(i--);
+                        if (nulls)
+                            arrayNode.remove(i--);
+                        else
+                            arrayNode.set(i, JsonNodeFactory.instance.nullNode());
                     }
                 }
             }
@@ -129,41 +157,13 @@ public final class Trim implements Transformer<JsonNode, JsonNode> {
             public Deserializer() {
                 super(Parameters.class);
                 rule(JsonNode::isTextual, NormalizingDeserializer::a);
-                rule(JsonNode::isArray, array -> {
-                    boolean emptyArrays = false;
-                    boolean emptyObjects = false;
-                    boolean emptyValues = false;
-                    boolean keyWhitespace = false;
-                    boolean valueWhitespace = false;
-                    boolean nulls = false;
-                    for (JsonNode jsonNode : array) {
-                        if (jsonNode.isTextual()) {
-                            switch (jsonNode.asText()) {
-                                case "emptyArrays": emptyArrays = true; continue;
-                                case "emptyObjects": emptyObjects = true; continue;
-                                case "emptyValues": emptyValues = true; continue;
-                                case "keyWhitespace": keyWhitespace = true; continue;
-                                case "valueWhitespace": valueWhitespace = true; continue;
-                                case "nulls": nulls = true; continue;
-                            }
-                        }
-                        throw new IllegalArgumentException("JsonTrim parameter parsing failed at " + jsonNode);
-                    }
-                    return o(
-                        "emptyArrays", emptyArrays,
-                        "emptyObjects", emptyObjects,
-                        "emptyValues", emptyValues,
-                        "keyWhitespace", keyWhitespace,
-                        "valueWhitespace", valueWhitespace,
-                        "nulls", nulls
-                    );
-                });
+                rule(JsonNode::isArray, array -> flags(array, 0, o()));
             }
         }
 
         public boolean emptyArrays = true;
         public boolean emptyObjects = true;
-        public boolean emptyValues = true;
+        public boolean emptyText = true;
         public boolean keyWhitespace = true;
         public boolean valueWhitespace = true;
         public boolean nulls = true;

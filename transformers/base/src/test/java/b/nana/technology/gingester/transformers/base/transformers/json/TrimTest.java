@@ -34,7 +34,7 @@ class TrimTest {
         new FlowBuilder()
                 .cli("" +
                         "-t ResourceOpen '/data/json/trim-test.json' " +
-                        "-t JsonTrim emptyObjects emptyValues valueWhitespace keyWhitespace nulls")
+                        "-t JsonTrim !emptyArrays")
                 .add(result::set)
                 .run();
 
@@ -44,5 +44,20 @@ class TrimTest {
         assertEquals("[[]]", result.get().get("array").toString());
         assertEquals("{\"a\":[]}", result.get().get("object").toString());
         assertEquals("[{\"a\":[]}]", result.get().get("deep").toString());
+    }
+
+    @Test
+    void testTrimToNull() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new FlowBuilder()
+                .cli("" +
+                        "-t ResourceOpen '/data/json/trim-test.json' " +
+                        "-t JsonTrim !nulls")
+                .add(result::set)
+                .run();
+
+        assertTrue(result.get().get("whitespace").isNull());
     }
 }
