@@ -55,7 +55,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlS
             try (ResultSet resultSet = dqlStatement.execute(context)) {
                 for (long i = 0; resultSet.next(); i++) {
                     out.accept(
-                            context.stash("description", dql.statement + " :: " + i),
+                            context.stash("description", dqlTemplate.getTemplateString() + " :: " + i),
                             dqlStatement.readRow(resultSet)
                     );
                 }
