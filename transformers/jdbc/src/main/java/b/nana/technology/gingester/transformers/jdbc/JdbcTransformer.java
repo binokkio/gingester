@@ -15,20 +15,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
 
     private final ContextMap<MixedConnectionsPool<T>> state = new ContextMap<>();
 
     private final Template urlTemplate;
-    private final List<String> ddl;
+    private final List<Template> ddl;
     private final int connectionPoolSize;
     private final int statementPoolSize;
     private final boolean autoCommit;
 
     public JdbcTransformer(Parameters parameters, boolean autoCommit) {
         this.urlTemplate = Context.newTemplate(parameters.url);
-        this.ddl = parameters.ddl;
+        this.ddl = parameters.ddl.stream().map(Context::newTemplate).collect(Collectors.toList());
         this.connectionPoolSize = parameters.connectionPoolSize;
         this.statementPoolSize = parameters.statementPoolSize;
         this.autoCommit = autoCommit;
@@ -52,9 +53,9 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
                         connection.setAutoCommit(false);
 
                         try {
-                            for (String statement : ddl) {
+                            for (Template statement : ddl) {
                                 try (Statement s = connection.createStatement()) {
-                                    s.execute(statement);
+                                    s.execute(statement.render(context));
                                 }
                             }
                             connection.commit();
@@ -91,7 +92,7 @@ public abstract class JdbcTransformer<I, O, T> implements Transformer<I, O> {
     public static class Parameters {
 
         public TemplateParameters url = new TemplateParameters("jdbc:sqlite:file::memory:?cache=shared", true);
-        public List<String> ddl = Collections.emptyList();
+        public List<TemplateParameters> ddl = Collections.emptyList();
         public int connectionPoolSize = 10;
         public int statementPoolSize = 100;
 
