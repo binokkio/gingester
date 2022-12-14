@@ -10,17 +10,61 @@ import static org.junit.jupiter.api.Assertions.*;
 class ExecTest {
 
     @Test
-    void test() {
-
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World!' " +
-                "-t Exec '/bin/cat' " +
-                "-t InputStreamToString");
+    void testCommandString() {
 
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.add(result::set);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("" +
+                "-t StringDef 'Hello, World!' " +
+                "-t Exec '/bin/cat' " +
+                "-t InputStreamToString")
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testCommandTemplate() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef 'Hello, World!' " +
+                "-t Exec '{template: \"/bin/cat\", is: \"STRING\"}' " +
+                "-t InputStreamToString")
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testCommandStringWithWorkDir() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef 'Hello, World!' " +
+                "-t Exec '{command: \"/bin/cat\", workDir: \"/\"}' " +
+                "-t InputStreamToString")
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
+
+    @Test
+    void testCommandTemplateWithWorkDir() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef 'Hello, World!' " +
+                "-t Exec '{command: {template: \"/bin/cat\", is: \"STRING\"}, workDir: \"/\"}' " +
+                "-t InputStreamToString")
+                .add(result::set)
+                .run();
 
         assertEquals("Hello, World!", result.get());
     }

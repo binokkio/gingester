@@ -14,7 +14,6 @@ import java.util.stream.StreamSupport;
 public final class Context implements Iterable<Context> {
 
     private static final int INDENT = 2;
-    private static final Object FETCH_MISS = new Object();
 
     /**
      * Create a new Template.
@@ -169,8 +168,7 @@ public final class Context implements Iterable<Context> {
                         Object result = s;
                         for (String n : fetchKey.getNames()) {
                             if (result instanceof Map) {
-                                // noinspection unchecked
-                                result = ((Map<?, Object>) result).getOrDefault(n, FETCH_MISS);
+                                result = ((Map<?, ?>) result).get(n);
                             } else if (result instanceof List) {
                                 result = ((List<?>) result).get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
                             } else if (result instanceof JsonNode) {
@@ -180,15 +178,15 @@ public final class Context implements Iterable<Context> {
                                 } else if (jsonNode.isArray()) {
                                     result = jsonNode.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
                                 } else {
-                                    return FETCH_MISS;
+                                    return null;
                                 }
                             } else {
-                                return FETCH_MISS;
+                                return null;
                             }
                         }
                         return result;
                     })
-                    .filter(o -> o != FETCH_MISS);  // TODO support filtering out nulls as well?
+                    .filter(Objects::nonNull);
         }
     }
 

@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +29,7 @@ import static java.util.Objects.requireNonNull;
 @Example(example = "hello 'world > worlds[]'", description = "Same as example 1 but place all `world` stashes in a list `worlds`")
 @Example(example = "hello 'world > worlds[]?'", description = "Same as above but without an exception if `worlds` ends up empty")
 @Example(example = "'hello > world'", description = "Collect `hello` and stash it as `world` on finish")
+@Example(example = "'^1 > stashes{tree}'", description = "Collect most recently stashed items in a TreeSet stashed as `stashes`")
 public final class Merge implements Transformer<Object, Object> {
 
     private final ContextMap<State> states = new ContextMap<>();
@@ -45,11 +48,24 @@ public final class Merge implements Transformer<Object, Object> {
     }
 
     @Override
+    public StashDetails getStashDetails() {
+        Map<String, Object> types = new HashMap<>();
+        for (Instruction instruction : instructions) {
+            if (instruction.collect != null) {
+                types.put(instruction.stash, instruction.collect.getCollectionType());
+            } else {
+                types.put(instruction.stash, instruction.fetch);
+            }
+        }
+        return StashDetails.of(types);
+    }
+
+    @Override
     public void prepare(Context context, Receiver<Object> out) {
         State state = new State();
         for (Instruction instruction : instructions) {
-            if (instruction.list) {
-                state.lists.put(instruction.stash, new ArrayList<>());
+            if (instruction.collect != null) {
+                state.collections.put(instruction.stash, instruction.collect.collectionSupplier.get());
             }
         }
         states.put(context, state);
@@ -59,9 +75,9 @@ public final class Merge implements Transformer<Object, Object> {
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         states.act(context, state -> {
             for (Instruction instruction : instructions) {
-                if (instruction.list) {
+                if (instruction.collect != null) {
                     context.fetch(instruction.fetch).ifPresent(
-                            object -> state.lists.get(instruction.stash).add(object));
+                            object -> state.collections.get(instruction.stash).add(object));
                 } else {
                     context.fetch(instruction.fetch).ifPresent(
                             object -> {
@@ -82,12 +98,12 @@ public final class Merge implements Transformer<Object, Object> {
         Map<String, Object> stash = new HashMap<>(instructions.size());
 
         for (Instruction instruction : instructions) {
-            if (instruction.list) {
-                List<Object> values = state.lists.get(instruction.stash);
+            if (instruction.collect != null) {
+                Collection<Object> values = state.collections.get(instruction.stash);
                 if (!instruction.optional && values.isEmpty()) {
                     throw new IllegalStateException("No values for \"" + instruction + "\"");
                 }
-                stash.put(instruction.stash, state.lists.get(instruction.stash));
+                stash.put(instruction.stash, state.collections.get(instruction.stash));
             } else {
                 Object value = state.singles.get(instruction.stash);
                 if (!instruction.optional && value == null) {
@@ -98,6 +114,11 @@ public final class Merge implements Transformer<Object, Object> {
         }
 
         out.accept(context.stash(stash), "merge signal");
+    }
+
+    private static class State {
+        final Map<String, Object> singles = new HashMap<>();
+        final Map<String, Collection<Object>> collections = new HashMap<>();
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
@@ -116,12 +137,11 @@ public final class Merge implements Transformer<Object, Object> {
 
     public static class Instruction {
 
-        // TODO could put initialCapacity inside the []
-        private static final Pattern INSTRUCTION = Pattern.compile("(.+?) ?(?:> ?(.+?)(\\[])?)?(\\?)?");
+        private static final Pattern INSTRUCTION = Pattern.compile("([a-zA-Z^0-9.]+?) ?(?:> ?([a-zA-Z0-9]+?)(\\[[a-z]*?]|\\{[a-z]*?})?)?(\\?)?");
 
         public FetchKey fetch;
         public String stash;
-        public boolean list;
+        public CollectInstruction collect;
         public boolean optional;
 
         @JsonCreator
@@ -135,7 +155,7 @@ public final class Merge implements Transformer<Object, Object> {
 
             fetch = new FetchKey(matcher.group(1));
             if (matcher.group(2) != null) stash = matcher.group(2);
-            list = matcher.group(3) != null;
+            collect = matcher.group(3) != null ? new CollectInstruction(matcher.group(3)) : null;
             optional = matcher.group(4) != null;
         }
 
@@ -145,13 +165,42 @@ public final class Merge implements Transformer<Object, Object> {
             StringBuilder stringBuilder = new StringBuilder(fetch.toString());
             if (optional) stringBuilder.append('?');
             if (stash != null) stringBuilder.append(" > ").append(stash);
-            if (list) stringBuilder.append("[]");
+            if (collect != null) stringBuilder.append(collect);
             return stringBuilder.toString();
         }
     }
 
-    private static class State {
-        final Map<String, Object> singles = new HashMap<>();
-        final Map<String, List<Object>> lists = new HashMap<>();
+    public static class CollectInstruction {
+
+        private final String description;
+        private final Supplier<Collection<Object>> collectionSupplier;
+
+        public CollectInstruction(String description) {
+            this.description = description;
+            this.collectionSupplier = getCollectionSupplier(description);
+        }
+
+        private Class<?> getCollectionType() {
+            return description.startsWith("[") ? List.class : Set.class;
+        }
+
+        private Supplier<Collection<Object>> getCollectionSupplier(String description) {
+            switch (description) {
+                case "[]":
+                case "[array]": return ArrayList::new;
+                case "[linked]": return LinkedList::new;
+                case "{}":
+                case "{hash}": return HashSet::new;
+                case "{Linked}": return LinkedHashSet::new;
+                case "{tree}": return TreeSet::new;
+                default: throw new IllegalArgumentException("Invalid collect instruction: " + description);
+            }
+        }
+
+        @JsonValue
+        @Override
+        public String toString() {
+            return description;
+        }
     }
 }
