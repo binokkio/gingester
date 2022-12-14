@@ -121,4 +121,21 @@ class MergeTest {
 
         assertEquals("hello", result.get());
     }
+
+    @Test
+    void testBridgingAfterMerge() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef hello " +
+                "-s " +
+                "-t Merge stash " +
+                "-f " +
+                "-t BytesToString")
+                .add(result::set)
+                .run();
+
+        assertEquals("hello", result.get());
+    }
 }

@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -42,6 +43,19 @@ public final class Merge implements Transformer<Object, Object> {
                 instruction.stash = instruction.fetch.toString();
             }
         }
+    }
+
+    @Override
+    public StashDetails getStashDetails() {
+        Map<String, Object> types = new HashMap<>();
+        for (Instruction instruction : instructions) {
+            if (instruction.list) {
+                types.put(instruction.stash, List.class);
+            } else {
+                types.put(instruction.stash, instruction.fetch);
+            }
+        }
+        return StashDetails.of(types);
     }
 
     @Override

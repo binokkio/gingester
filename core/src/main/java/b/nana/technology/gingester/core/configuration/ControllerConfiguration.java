@@ -209,6 +209,7 @@ public final class ControllerConfiguration<I, O> {
                     if (type.equals("__input__")) return getActualInputType();
                     if (type instanceof Map) return Map.class;
                     else if (type instanceof Class) return (Class<?>) type;
+                    else if (type instanceof FetchKey) fetchKey = (FetchKey) type;
                     else throw new IllegalArgumentException("Unexpected stash detail descriptor: " + type);
                 }
             }
