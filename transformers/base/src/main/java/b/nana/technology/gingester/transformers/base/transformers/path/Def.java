@@ -22,16 +22,29 @@ public final class Def implements Transformer<Object, Path> {
     @Override
     public void transform(Context context, Object in, Receiver<Path> out) {
         Path path = Paths.get(pathTemplate.render(context, in));
-        out.accept(
-                context.stash(Map.of(
-                        "description", path,
-                        "path", Map.of(
-                                "absolute", path.toAbsolutePath(),
-                                "tail", path.getFileName()
-                        )
-                )),
-                path
-        );
+        Path fileName = path.getFileName();
+        if (fileName != null) {
+            out.accept(
+                    context.stash(Map.of(
+                            "description", path,
+                            "path", Map.of(
+                                    "absolute", path.toAbsolutePath(),
+                                    "tail", path.getFileName()
+                            )
+                    )),
+                    path
+            );
+        } else {
+            out.accept(
+                    context.stash(Map.of(
+                            "description", path,
+                            "path", Map.of(
+                                    "absolute", path.toAbsolutePath()
+                            )
+                    )),
+                    path
+            );
+        }
     }
 
     public static class Parameters {
