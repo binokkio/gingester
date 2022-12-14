@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.elasticsearch;
 
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -7,7 +8,8 @@ import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.elasticsearch.action.bulk.*;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
@@ -37,7 +39,6 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
     private final Counter acksCounter = new SimpleCounter();
 
     public Write(Parameters parameters) {
-
         super(parameters);
 
         indexTemplate = Context.newTemplate(parameters.index);
@@ -56,7 +57,6 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
 
     @Override
     public void open() {
-        super.open();
 
         BulkProcessor.Builder builder = BulkProcessor.builder(
                 (request, bulkListener) -> restClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
@@ -94,7 +94,6 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
     @Override
     public void close() throws Exception {
         bulkProcessor.awaitClose(1, TimeUnit.HOURS);
-        super.close();
     }
 
     @Override
@@ -124,18 +123,18 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
         LOGGER.warn("Bulk request failed", throwable);
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters extends ElasticsearchTransformer.Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, mapping -> o("mapping", mapping));
+                rule(JsonNode::isObject, o -> o.has("template") ? o("mapping", o) : o);
+            }
+        }
 
         public TemplateParameters index;
         public TemplateParameters id;
         public String mapping;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(TemplateParameters index) {
-            this.index = index;
-        }
     }
 }

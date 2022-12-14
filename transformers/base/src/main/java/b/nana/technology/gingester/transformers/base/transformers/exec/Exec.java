@@ -2,6 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.exec;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.cli.CliSplitter;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -9,7 +10,8 @@ import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,17 +78,17 @@ public final class Exec implements Transformer<InputStream, InputStream> {
         errDrainer.shutdown();
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, command -> o("command", command));
+                rule(JsonNode::isObject, o -> o.has("template") ? o("command", o) : o);
+            }
+        }
 
         public TemplateParameters command;
         public TemplateParameters workDir = new TemplateParameters("", true);
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(TemplateParameters command) {
-            this.command = command;
-        }
     }
 }
