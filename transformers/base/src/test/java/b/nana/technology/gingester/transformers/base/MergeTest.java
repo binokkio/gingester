@@ -3,7 +3,9 @@ package b.nana.technology.gingester.transformers.base;
 import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +39,7 @@ class MergeTest {
                 "-l A B " +
                 "-t A:StringDef HelloWorld -s message -l Merge " +
                 "-t B:StringDef ByeWorld -s message -l Merge " +
-                "-t Merge [{fetch:'message',stash:'messages',list:true}] " +
+                "-t Merge [{fetch:'message',stash:'messages',collect:\"[array]\"}] " +
                 "-f messages " +
                 "-t ListStream " +
                 "-t StringToInputStream " +
@@ -137,5 +139,25 @@ class MergeTest {
                 .run();
 
         assertEquals("hello", result.get());
+    }
+
+    @Test
+    void testTreeSet() {
+
+        AtomicReference<Set<String>> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 3 " +
+                "-t Cycle B B A " +
+                "-s letter " +
+                "-t Merge 'letter > letters{tree}' " +
+                "-f letters")
+                .add(result::set)
+                .run();
+
+        Iterator<String> iterator = result.get().iterator();
+        assertEquals("A", iterator.next());
+        assertEquals("B", iterator.next());
+        assertFalse(iterator.hasNext());
     }
 }
