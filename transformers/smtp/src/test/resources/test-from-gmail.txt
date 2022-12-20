@@ -1,0 +1,57 @@
+MIME-Version: 1.0
+From: Tester 1 <tester1@example.com>
+Date: Tue, 20 Dec 2022 21:36:32 +0100
+Message-ID: <123>
+Subject: Test mail from Gmail
+To: tester2@example.com
+Content-Type: multipart/mixed; boundary="000000000000d7977205f0486441"
+
+--000000000000d7977205f0486441
+Content-Type: multipart/alternative; boundary="000000000000d7977005f048643f"
+
+--000000000000d7977005f048643f
+Content-Type: text/plain; charset="UTF-8"
+
+This is a test mail from Gmail <https://gmail.com>.
+
+--000000000000d7977005f048643f
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">This is a test mail from <a href="https://gmail.com">Gmail</a>.<br></div>
+
+--000000000000d7977005f048643f--
+--000000000000d7977205f0486441
+Content-Type: text/xml; charset="US-ASCII"; name="pom.xml"
+Content-Disposition: attachment; filename="pom.xml"
+Content-Transfer-Encoding: base64
+Content-ID: <f_lbwos0wv0>
+X-Attachment-Id: f_lbwos0wv0
+
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KCjxwcm9qZWN0IHhtbG5zPSJo
+dHRwOi8vbWF2ZW4uYXBhY2hlLm9yZy9QT00vNC4wLjAiCiAgICAgICAgIHhtbG5zOnhzaT0iaHR0
+cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiCiAgICAgICAgIHhzaTpzY2hl
+bWFMb2NhdGlvbj0iaHR0cDovL21hdmVuLmFwYWNoZS5vcmcvUE9NLzQuMC4wIGh0dHA6Ly9tYXZl
+bi5hcGFjaGUub3JnL3hzZC9tYXZlbi00LjAuMC54c2QiPgoKICAgIDxtb2RlbFZlcnNpb24+NC4w
+LjA8L21vZGVsVmVyc2lvbj4KCiAgICA8cGFyZW50PgogICAgICAgIDxncm91cElkPmIubmFuYS50
+ZWNobm9sb2d5Lmdpbmdlc3RlcjwvZ3JvdXBJZD4KICAgICAgICA8YXJ0aWZhY3RJZD50cmFuc2Zv
+cm1lcnM8L2FydGlmYWN0SWQ+CiAgICAgICAgPHZlcnNpb24+MC4yMy4xMy1TTkFQU0hPVDwvdmVy
+c2lvbj4KICAgIDwvcGFyZW50PgoKICAgIDxncm91cElkPmIubmFuYS50ZWNobm9sb2d5Lmdpbmdl
+c3Rlci50cmFuc2Zvcm1lcnM8L2dyb3VwSWQ+CiAgICA8YXJ0aWZhY3RJZD5zbXRwPC9hcnRpZmFj
+dElkPgoKICAgIDxkZXBlbmRlbmNpZXM+CgogICAgICAgIDxkZXBlbmRlbmN5PgogICAgICAgICAg
+ICA8Z3JvdXBJZD5iLm5hbmEudGVjaG5vbG9neS5naW5nZXN0ZXI8L2dyb3VwSWQ+CiAgICAgICAg
+ICAgIDxhcnRpZmFjdElkPmNvcmU8L2FydGlmYWN0SWQ+CiAgICAgICAgICAgIDx2ZXJzaW9uPiR7
+cHJvamVjdC5wYXJlbnQudmVyc2lvbn08L3ZlcnNpb24+CiAgICAgICAgPC9kZXBlbmRlbmN5Pgog
+ICAgICAgIDxkZXBlbmRlbmN5PgogICAgICAgICAgICA8Z3JvdXBJZD5jb20uZ2l0aHViLmRhdmlk
+bW90ZW48L2dyb3VwSWQ+CiAgICAgICAgICAgIDxhcnRpZmFjdElkPnN1YmV0aGFzbXRwPC9hcnRp
+ZmFjdElkPgogICAgICAgICAgICA8dmVyc2lvbj42LjAuNTwvdmVyc2lvbj4KICAgICAgICA8L2Rl
+cGVuZGVuY3k+CiAgICAgICAgPGRlcGVuZGVuY3k+CiAgICAgICAgICAgIDxncm91cElkPmNvbS5z
+dW4ubWFpbDwvZ3JvdXBJZD4KICAgICAgICAgICAgPGFydGlmYWN0SWQ+bWFpbGFwaTwvYXJ0aWZh
+Y3RJZD4KICAgICAgICAgICAgPHZlcnNpb24+Mi4wLjE8L3ZlcnNpb24+CiAgICAgICAgPC9kZXBl
+bmRlbmN5PgoKICAgICAgICA8ZGVwZW5kZW5jeT4KICAgICAgICAgICAgPGdyb3VwSWQ+b3JnLmp1
+bml0Lmp1cGl0ZXI8L2dyb3VwSWQ+CiAgICAgICAgICAgIDxhcnRpZmFjdElkPmp1bml0LWp1cGl0
+ZXI8L2FydGlmYWN0SWQ+CiAgICAgICAgICAgIDxzY29wZT50ZXN0PC9zY29wZT4KICAgICAgICA8
+L2RlcGVuZGVuY3k+CiAgICAgICAgPGRlcGVuZGVuY3k+CiAgICAgICAgICAgIDxncm91cElkPm9y
+Zy5zbGY0ajwvZ3JvdXBJZD4KICAgICAgICAgICAgPGFydGlmYWN0SWQ+c2xmNGotc2ltcGxlPC9h
+cnRpZmFjdElkPgogICAgICAgICAgICA8c2NvcGU+dGVzdDwvc2NvcGU+CiAgICAgICAgPC9kZXBl
+bmRlbmN5PgoKICAgIDwvZGVwZW5kZW5jaWVzPgoKPC9wcm9qZWN0Pgo=
+--000000000000d7977205f0486441--

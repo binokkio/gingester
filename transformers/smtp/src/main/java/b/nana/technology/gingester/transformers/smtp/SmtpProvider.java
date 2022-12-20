@@ -11,6 +11,7 @@ public final class SmtpProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                Parse.class,
                 SendText.class,
                 Server.class
         );
