@@ -79,6 +79,11 @@
         </dependency>
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>smtp</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>statistics</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
