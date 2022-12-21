@@ -4,7 +4,9 @@ import org.apache.james.mime4j.stream.Field;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MimeTreeNode {
 
@@ -20,6 +22,28 @@ public class MimeTreeNode {
     MimeTreeNode(String type, MimeTreeNode parent) {
         this.type = type;
         this.parent = parent;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Stream<String> getHeaderValues(String name) {
+        return headers.stream()
+                .filter(header -> header.getName().equalsIgnoreCase(name))
+                .map(Field::getBody);
+    }
+
+    public byte[] getBody() {
+        return body;
+    }
+
+    public void walk(Function<MimeTreeNode, Boolean> visitor) {
+        if (visitor.apply(this)) {
+            for (MimeTreeNode child : children) {
+                child.walk(visitor);
+            }
+        }
     }
 
     @Override

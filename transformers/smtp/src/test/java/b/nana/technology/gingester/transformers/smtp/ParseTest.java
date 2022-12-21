@@ -1,38 +1,41 @@
 package b.nana.technology.gingester.transformers.smtp;
 
 import b.nana.technology.gingester.core.FlowBuilder;
-import b.nana.technology.gingester.transformers.smtp.mimetree.MimeTreeNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 class ParseTest {
 
     @Test
-    void testParseFromGmail() {
+    void testParsePlainTextFromGmail() {
 
-        AtomicReference<MimeTreeNode> result = new AtomicReference<>();
+        AtomicReference<String> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
                 "-t ResourceOpen '/test-from-gmail.txt' " +
-                "-t SmtpParse")
+                "-t SmtpParse " +
+                "-t SmtpGetInlinePlainText")
                 .add(result::set)
                 .run();
 
-        System.out.println(result.get());
+        assertEquals("This is a test mail from Gmail <https://gmail.com>.", result.get().trim());
     }
 
     @Test
     void testParseFromClawsMail() {
 
-        AtomicReference<MimeTreeNode> result = new AtomicReference<>();
+        AtomicReference<String> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
                 "-t ResourceOpen '/test-from-claws-mail.txt' " +
-                "-t SmtpParse")
+                "-t SmtpParse " +
+                "-t SmtpGetInlinePlainText")
                 .add(result::set)
                 .run();
 
-        System.out.println(result.get());
+        assertEquals("This is a test mail from Claws Mail.", result.get().trim());
     }
 }
