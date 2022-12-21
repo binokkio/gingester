@@ -23,13 +23,14 @@ public final class Server implements Transformer<Object, byte[]> {
 
         SMTPServer server = SMTPServer
                 .port(port)
-                .messageHandler((messageContext, from, to, data) ->
+                .messageHandler((messageContext, from, to, message) ->
                         out.accept(
                                 context.stash(Map.of(
                                         "from", from,
-                                        "to", to
+                                        "to", to,
+                                        "message", message
                                 )),
-                                data
+                                message
                         )
                 )
                 .build();

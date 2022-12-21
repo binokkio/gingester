@@ -13,7 +13,7 @@ public final class SmtpProvider implements Provider {
         return List.of(
                 GetInlinePlainText.class,
                 Parse.class,
-                SendText.class,
+                Send.class,
                 Server.class
         );
     }
