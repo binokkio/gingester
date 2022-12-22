@@ -28,6 +28,7 @@
         <module>protobuf</module>
         <module>rabbitmq</module>
         <module>redis</module>
+        <module>smtp</module>
         <module>statistics</module>
         <module>unpack</module>
     </modules>
