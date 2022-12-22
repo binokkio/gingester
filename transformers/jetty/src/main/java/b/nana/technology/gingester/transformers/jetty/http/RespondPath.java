@@ -101,6 +101,8 @@ public final class RespondPath implements Transformer<Path, String> {
                 response.addHeader("Content-Type", contentType);
             }
 
+            response.addHeader("Content-Length", Long.toString(Files.size(in)));
+
             try (InputStream inputStream = Files.newInputStream(in)) {
                 inputStream.transferTo(response.getOutputStream());
             }
