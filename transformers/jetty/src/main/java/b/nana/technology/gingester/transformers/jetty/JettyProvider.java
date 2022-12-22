@@ -16,6 +16,7 @@ public final class JettyProvider implements Provider {
                 Keycloak.class,
                 Proxy.class,
                 Respond.class,
+                RespondPath.class,
                 Server.class,
                 SetHeaders.class,
                 SetStatus.class,
