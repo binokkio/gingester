@@ -1,28 +1,45 @@
 package b.nana.technology.gingester.transformers.smtp;
 
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.subethamail.smtp.server.SMTPServer;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 
 public final class Server implements Transformer<Object, byte[]> {
 
-    private final int port;
+    private final Parameters parameters;
 
     public Server(Parameters parameters) {
-        port = parameters.port;
+        this.parameters = parameters;
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<byte[]> out) {
+    public void setup(SetupControls controls) {
+        controls.requireOutgoingAsync();
+    }
 
-        SMTPServer server = SMTPServer
-                .port(port)
+    @Override
+    public StashDetails getStashDetails() {
+        return StashDetails.of(
+                "from", String.class,
+                "to", String.class,
+                "message", byte[].class
+        );
+    }
+
+    @Override
+    public void transform(Context context, Object in, Receiver<byte[]> out) throws UnknownHostException {
+
+        SMTPServer.Builder builder = new SMTPServer.Builder()
                 .messageHandler((messageContext, from, to, message) ->
                         out.accept(
                                 context.stash(Map.of(
@@ -32,9 +49,12 @@ public final class Server implements Transformer<Object, byte[]> {
                                 )),
                                 message
                         )
-                )
-                .build();
+                );
 
+        if (parameters.ip != null) builder.bindAddress(InetAddress.getByName(parameters.ip));
+        if (parameters.port != null) builder.port(parameters.port);
+
+        SMTPServer server = builder.build();
         server.start();
 
         synchronized (this) {
@@ -57,6 +77,7 @@ public final class Server implements Transformer<Object, byte[]> {
             }
         }
 
-        public int port;
+        public String ip;
+        public Integer port;
     }
 }

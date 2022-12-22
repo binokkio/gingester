@@ -7,14 +7,10 @@ import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import jakarta.mail.*;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.*;
 
 import java.io.ByteArrayInputStream;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public final class Send implements Transformer<Object, Object> {
 
@@ -80,17 +76,54 @@ public final class Send implements Transformer<Object, Object> {
 
         if (inline.size() == 1 && attachments.isEmpty()) {
             Map.Entry<String, Template> body = inline.entrySet().stream().findFirst().orElseThrow();
-            message.setContent(body.getValue().render(context, in), body.getKey());
+            message.setContent(body.getValue().render(context, in), body.getKey() + "; charset=UTF-8");
+        } else if (attachments.isEmpty()) {
+            message.setContent(createAlternativeMultipart(context, in));
         } else {
-            // TODO Multipart multipart = new MimeMultipart();
-            // TODO inline
-            // TODO attachments
-            // TODO include replyTo if present?
+            MimeBodyPart inlinePart = new MimeBodyPart();
+            if (inline.size() == 1) {
+                Map.Entry<String, Template> body = inline.entrySet().stream().findFirst().orElseThrow();
+                inlinePart.setContent(body.getValue().render(context, in), body.getKey() + "; charset=UTF-8");
+            } else {
+                inlinePart.setContent(createAlternativeMultipart(context, in));
+            }
+            Multipart mixedMultipart = new MimeMultipart("mixed");
+            mixedMultipart.addBodyPart(inlinePart);
+            addAttachments(context, mixedMultipart);
+            message.setContent(mixedMultipart);
         }
+
+        // TODO include replyTo if present?
 
         Transport.send(message);
 
         // TODO output raw message, align with SmtpServer output
+    }
+
+    private Multipart createAlternativeMultipart(Context context, Object in) throws MessagingException {
+        Multipart alternativeMultipart = new MimeMultipart("alternative");
+        for (Map.Entry<String, Template> entry : inline.entrySet()) {
+            MimeBodyPart mimeBodyPart = new MimeBodyPart();
+            mimeBodyPart.setContent(entry.getValue().render(context, in), entry.getKey() + "; charset=UTF-8");
+            alternativeMultipart.addBodyPart(mimeBodyPart);
+        }
+        return alternativeMultipart;
+    }
+
+    private void addAttachments(Context context, Multipart multipart) throws MessagingException {
+        for (Parameters.Attachment attachment : attachments) {
+            Optional<Object> optionalBytes = context.fetch(attachment.bytes);
+            if (optionalBytes.isPresent()) {
+                InternetHeaders headers = new InternetHeaders();
+                headers.addHeader("Content-Type", attachment.type + "; name=\"" + attachment.name + "\"");
+                headers.addHeader("Content-Disposition", "attachment; filename=\"" + attachment.name + "\"");
+                headers.addHeader("Content-Transfer-Encoding", "base64");
+                byte[] bytes = Base64.getMimeEncoder().encode((byte[]) optionalBytes.get());
+                multipart.addBodyPart(new MimeBodyPart(headers, bytes));
+            } else if (!attachment.optional) {
+                throw new IllegalStateException("Missing non-optional attachment " + attachment.name);
+            }
+        }
     }
 
     public static class Parameters {
@@ -112,9 +145,13 @@ public final class Send implements Transformer<Object, Object> {
         }
 
         public static class Attachment {
+
+            // TODO support String syntax, e.g. '^3 text/plain > name.txt?'
+
             public String name;
             public String type;
             public FetchKey bytes;
+            public boolean optional;
         }
     }
 }
