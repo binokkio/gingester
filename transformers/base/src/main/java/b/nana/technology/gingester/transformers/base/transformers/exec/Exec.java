@@ -34,6 +34,7 @@ public final class Exec implements Transformer<Object, Object> {
     private final Parameters.StreamHandling stderr;
     private final boolean stdin;
     private final boolean logPid;
+    private final boolean ignoreExitCode;
 
     public Exec(Parameters parameters) {
         commandTemplate = Context.newTemplate(parameters.command);
@@ -42,6 +43,7 @@ public final class Exec implements Transformer<Object, Object> {
         stderr = parameters.stderr;
         stdin = parameters.stdin;
         logPid = parameters.logPid;
+        ignoreExitCode = parameters.ignoreExitCode;
     }
 
     private boolean yieldsStream() {
@@ -85,8 +87,9 @@ public final class Exec implements Transformer<Object, Object> {
         if (stdin) ((InputStream) in).transferTo(processStdIn);
         processStdIn.close();
 
-        int resultCode = process.waitFor();
-        // TODO throw an exception on non-zero resultCode?
+        int exitCode = process.waitFor();
+        if (exitCode != 0 && !ignoreExitCode)
+            throw new IllegalStateException("Process " + pid + " finished with non-zero exit code: " + exitCode);
 
         if (!yieldsStream())
             out.accept(context, "exec finish signal");
@@ -146,6 +149,7 @@ public final class Exec implements Transformer<Object, Object> {
         public StreamHandling stderr = StreamHandling.LOG;
         public boolean stdin = true;
         public boolean logPid = false;
+        public boolean ignoreExitCode = false;
 
         public enum StreamHandling {
             YIELD,
