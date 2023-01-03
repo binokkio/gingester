@@ -44,7 +44,8 @@ class GiterateTest {
                 "2022-01-08,121,16,2\n" +
                 "2022-02-08,128,8,1\n" +
                 "2022-03-08,128,0,0\n" +
-                "2022-04-08,135,9,2", result.get());
+                "2022-04-08,135,9,2\n" +
+                "2022-05-08,135,0,0", result.get());
 
         new FlowBuilder().cli("-t PathDef " + tempDir + " -t PathDelete recursive").run();
     }
