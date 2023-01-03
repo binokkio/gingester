@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -123,5 +124,21 @@ class CollectAndGetTest {
         assertEquals(2, result.get().size());
         assertEquals("A", result.get().get("A"));
         assertEquals("B", result.get().get("B"));
+    }
+
+    @Test
+    void testTreeMapCollect() {
+
+        AtomicReference<Map<String, String>> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 3 " +
+                "-t Cycle A B " +
+                "-s " +
+                "-t MapCollect ^ tree")
+                .add(result::set)
+                .run();
+
+        assertTrue(result.get() instanceof TreeMap);
     }
 }
