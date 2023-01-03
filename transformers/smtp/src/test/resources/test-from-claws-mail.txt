@@ -1,0 +1,10 @@
+Date: Tue, 20 Dec 2022 22:58:07 +0100
+From: Tester 1 <tester1@example.com>
+To: tester2@example.com
+Subject: Test mail from Claws Mail
+Message-ID: <123>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+This is a test mail from Claws Mail.

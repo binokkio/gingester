@@ -184,7 +184,7 @@ public final class Server implements Transformer<Object, InputStream> {
         public StoreParameters keyStore;
         public int inflateBufferSize = 8192;
         public String[] gzipMethods = new String[] { "GET" };
-        public String[] gzipMimeTypes = new String[0];
+        public String[] gzipMimeTypes = new String[] { "!application/gzip", "!audio/*", "!video/*" };
         public String[] gzipPaths = new String[] { "/*" };
     }
 

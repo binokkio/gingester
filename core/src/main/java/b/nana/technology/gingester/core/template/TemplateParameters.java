@@ -34,6 +34,17 @@ public final class TemplateParameters {
         this.invariant = invariant;
     }
 
+    public TemplateParameters(String template, Interpretation is) {
+        this.template = template;
+        this.is = is;
+    }
+
+    public TemplateParameters(String template, Interpretation is, boolean invariant) {
+        this.template = template;
+        this.is = is;
+        this.invariant = invariant;
+    }
+
     FreemarkerTemplateWrapper createTemplateWrapper() {
         return FreemarkerTemplateFactory.createTemplate(
                 getTemplateName(),

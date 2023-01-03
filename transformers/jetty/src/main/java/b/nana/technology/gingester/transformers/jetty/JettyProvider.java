@@ -12,9 +12,11 @@ public final class JettyProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                BasicAuth.class,
                 Keycloak.class,
                 Proxy.class,
                 Respond.class,
+                RespondPath.class,
                 Server.class,
                 SetHeaders.class,
                 SetStatus.class,

@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
+@Deprecated
 public final class Pipe implements Transformer<InputStream, InputStream> {
 
     private final int pipeSize;
