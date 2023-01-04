@@ -1,11 +1,13 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
+import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
+import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMapReduce;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,9 +19,11 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
     private final ContextMapReduce<Map<Object, T>> maps = new ContextMapReduce<>();
 
     private final FetchKey fetchValue;
+    private final MapType mapType;
 
     public CollectCollections(Parameters parameters) {
         fetchValue = parameters.value;
+        mapType = parameters.mapType;
     }
 
     protected abstract T supply();
@@ -28,7 +32,7 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
 
     @Override
     public void prepare(Context context, Receiver<Map<Object, T>> out) {
-        maps.put(context, HashMap::new);
+        maps.put(context, mapType::newMap);
     }
 
     @Override
@@ -51,16 +55,10 @@ public abstract class CollectCollections<T extends Collection<?>> implements Tra
                 )));
     }
 
+    @JsonDeserialize(using = FlagOrderDeserializer.class)
+    @Order({ "value", "mapType" })
     public static class Parameters {
-
         public FetchKey value = new FetchKey(1);
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(FetchKey value) {
-            this.value = value;
-        }
+        public MapType mapType = MapType.HASH_MAP;
     }
 }
