@@ -4,7 +4,6 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.cli.CliSplitter;
 import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
 import b.nana.technology.gingester.core.configuration.Order;
-import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
@@ -26,7 +25,7 @@ public final class Exec implements Transformer<Object, Object> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Exec.class);
 
-    private final ExecutorService drainers = Executors.newCachedThreadPool();
+    private final ExecutorService workers = Executors.newCachedThreadPool();
 
     private final Template commandTemplate;
     private final TemplateMapper<File> workDirTemplate;
@@ -48,12 +47,6 @@ public final class Exec implements Transformer<Object, Object> {
 
     private boolean yieldsStream() {
         return stdout == Parameters.StreamHandling.YIELD || stderr == Parameters.StreamHandling.YIELD;
-    }
-
-    @Override
-    public void setup(SetupControls controls) {
-        if (yieldsStream())
-            controls.requireOutgoingAsync();
     }
 
     @Override
@@ -80,12 +73,23 @@ public final class Exec implements Transformer<Object, Object> {
         if (logPid)
             LOGGER.info("Process {} started: {}", pid, command);
 
+        if (stdin) {
+            workers.submit(() -> {
+                try {
+                    OutputStream processStdIn = process.getOutputStream();
+                    ((InputStream) in).transferTo(processStdIn);
+                    processStdIn.close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Writing stdin of " + pid + " threw", e);
+                }
+            });
+        } else {
+            OutputStream processStdIn = process.getOutputStream();
+            processStdIn.close();
+        }
+
         handleStream(pid, command, "stdout", stdout, process.getInputStream(), context, out);
         handleStream(pid, command, "stderr", stderr, process.getErrorStream(), context, out);
-
-        OutputStream processStdIn = process.getOutputStream();
-        if (stdin) ((InputStream) in).transferTo(processStdIn);
-        processStdIn.close();
 
         int exitCode = process.waitFor();
         if (exitCode != 0 && !ignoreExitCode)
@@ -107,7 +111,7 @@ public final class Exec implements Transformer<Object, Object> {
                 break;
 
             case LOG:
-                drainers.submit(() -> {
+                workers.submit(() -> {
                     try {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
                         String prefix = pid + " " + streamName + ": ";
@@ -117,13 +121,13 @@ public final class Exec implements Transformer<Object, Object> {
                         }
                     } catch (IOException e) {
                         // TODO
-                        throw new RuntimeException("Reading " + command + " stderr threw", e);
+                        throw new RuntimeException("Reading " + command + " " + streamName + " threw", e);
                     }
                 });
                 break;
 
             case IGNORE:
-                drainers.submit(() -> {
+                workers.submit(() -> {
                     try {
                         while (stream.skip(Long.MAX_VALUE) > 0) ;
                     } catch (IOException e) {
@@ -136,7 +140,7 @@ public final class Exec implements Transformer<Object, Object> {
 
     @Override
     public void close() {
-        drainers.shutdown();
+        workers.shutdown();
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)
