@@ -5,10 +5,10 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.ELog;
+import b.nana.technology.gingester.core.transformers.Seed;
 import b.nana.technology.gingester.core.transformers.Void;
 import b.nana.technology.gingester.core.transformers.passthrough.BiConsumerPassthrough;
 import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
-import b.nana.technology.gingester.core.transformers.passthrough.Passthrough;
 
 import java.net.URL;
 import java.util.*;
@@ -20,6 +20,7 @@ public final class FlowBuilder {
 
     private final IdFactory idFactory = new IdFactory();
     private final Deque<String> scopes = new ArrayDeque<>();
+    private final Seed seedTransformer = new Seed();
 
     final Map<Id, Node> nodes = new LinkedHashMap<>();
     FlowRunner.Goal goal = FlowRunner.Goal.RUN;
@@ -39,7 +40,7 @@ public final class FlowBuilder {
         nodes.put(Id.ELOG, elog);
 
         Node seed = new Node();
-        seed.transformer(new Passthrough());
+        seed.transformer(seedTransformer);
         seed.addExcept(Id.ELOG.getGlobalId());
         nodes.put(Id.SEED, seed);
 
@@ -62,6 +63,11 @@ public final class FlowBuilder {
 
     public Node node() {
         return new Node(this);
+    }
+
+    public FlowBuilder seed(Object in) {
+        seedTransformer.setValue(in);
+        return this;
     }
 
     public FlowBuilder add(Node node) {
