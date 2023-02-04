@@ -12,9 +12,9 @@ import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactor
 
 final class ContextPlus implements TemplateHashModel {
 
-    final Context context;
-    final Object in;
-    final Map<String, Object> extras;
+    private final Context context;
+    private final Object in;
+    private final Map<String, Object> extras;
 
     ContextPlus(Context context) {
         this(context, null, Collections.emptyMap());
