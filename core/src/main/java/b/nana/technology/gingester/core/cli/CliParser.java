@@ -40,25 +40,27 @@ public final class CliParser {
 
     private CliParser() {}
 
-    public static void parse(FlowBuilder target, String template, Object parameters) {
-        String cli = FreemarkerTemplateFactory.createCliTemplate("string", removeBlockComments(template)).render(parameters);
-        parse(target, CliSplitter.split(cli));
+    public static void parse(FlowBuilder target, String template, Object kwargs) {
+        String cli = FreemarkerTemplateFactory.createCliTemplate("string", removeBlockComments(template)).render(kwargs);
+        parseCleanArgs(target, CliSplitter.split(cli));
     }
 
-    public static void parse(FlowBuilder target, URL template, Object parameters) {
+    public static void parse(FlowBuilder target, URL template, Object kwargs) {
         try (InputStream templateStream = template.openStream()) {
             String templateName = template.toString();
             String templateSource = removeBlockComments(new String(templateStream.readAllBytes(), StandardCharsets.UTF_8));
-            String cli = FreemarkerTemplateFactory.createCliTemplate(templateName, templateSource).render(parameters);
-            parse(target, CliSplitter.split(cli));
+            String cli = FreemarkerTemplateFactory.createCliTemplate(templateName, templateSource).render(kwargs);
+            parseCleanArgs(target, CliSplitter.split(cli));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public static void parse(FlowBuilder target, String[] args) {
+        parseCleanArgs(target, removeBlockComments(args));
+    }
 
-        args = removeBlockComments(args);
+    private static void parseCleanArgs(FlowBuilder target, String[] args) {
 
         for (int i = 0; i < args.length; i++) {
 
@@ -309,29 +311,30 @@ public final class CliParser {
         if (scopedSource.scope != null)
             target.enterScope(scopedSource.scope);
 
-        int returnValue;
-
         if (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
 
-            JsonNode parameters;
+            JsonNode kwargs;
             try {
-                parameters = OBJECT_READER.readTree(args[i + 1]);
+                kwargs = OBJECT_READER.readTree(args[++i]);
+                while (args.length > i + 1 && args[i + 1].equals("%")) {
+                    OBJECT_MAPPER
+                            .readerForUpdating(kwargs)
+                            .readValue(args[i += 2]);
+                }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
 
-            target.cli(url, parameters);
-            returnValue = i + 1;
+            target.cli(url, kwargs);
 
         } else {
             target.cli(url);
-            returnValue = i;
         }
 
         if (scopedSource.scope != null)
             target.exitScope();
 
-        return returnValue;
+        return i;
     }
 
     private static String[] splice(String[] target, String[] items, int index, int lose) {

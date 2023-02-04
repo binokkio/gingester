@@ -316,10 +316,10 @@ public final class FlowBuilder {
      * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
-     * @param parameters the parameters for the template, e.g. a Java Map
+     * @param kwargs the kwargs for the template, e.g. a Java Map
      */
-    public FlowBuilder cli(String cli, Object parameters) {
-        CliParser.parse(this, cli, parameters);
+    public FlowBuilder cli(String cli, Object kwargs) {
+        CliParser.parse(this, cli, kwargs);
         return this;
     }
 
@@ -343,10 +343,10 @@ public final class FlowBuilder {
      * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
-     * @param parameters the parameters for the template, e.g. a Java Map
+     * @param kwargs the kwargs for the template, e.g. a Java Map
      */
-    public FlowBuilder cli(URL cli, Object parameters) {
-        CliParser.parse(this, cli, parameters);
+    public FlowBuilder cli(URL cli, Object kwargs) {
+        CliParser.parse(this, cli, kwargs);
         return this;
     }
 

@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import freemarker.template.*;
 
 import java.util.Iterator;
+import java.util.Map;
 
-public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
+import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.JACKSON_WRAPPER;
 
-    public FreemarkerJacksonWrapper(Version freemarkerVersion) {
+final class ObjectWrapper extends DefaultObjectWrapper {
+
+    ObjectWrapper(Version freemarkerVersion) {
         super(freemarkerVersion);
     }
 
@@ -15,6 +18,8 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
     public TemplateModel wrap(Object object) {
         if (object instanceof JsonNode) {
             return handleJsonNode((JsonNode) object);
+        } else if (object instanceof Map) {
+            return DefaultMapAdapter.adapt((Map<?, ?>) object, JACKSON_WRAPPER);
         } else {
             try {
                 return super.wrap(object);
@@ -123,11 +128,11 @@ public class FreemarkerJacksonWrapper extends DefaultObjectWrapper {
         }
     }
 
-    public interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel {
+    private interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel {
 
     }
 
-    public interface TemplateJsonArrayModel extends TemplateSequenceModel, TemplateScalarModel {
+    private interface TemplateJsonArrayModel extends TemplateSequenceModel, TemplateScalarModel {
 
     }
 }
