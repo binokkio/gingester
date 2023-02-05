@@ -6,19 +6,19 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 public final class Seed implements Transformer<Object, Object> {
 
-    private Object value;
+    private Class<?> outputType = Object.class;
 
-    public void setValue(Object value) {
-        this.value = value;
+    public void setOutputType(Class<?> outputType) {
+        this.outputType = outputType;
     }
 
     @Override
     public Object getOutputType() {
-        return value != null ? value.getClass() : Object.class;
+        return outputType;
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        out.accept(context, value == null ? in : value);
+        out.accept(context, in);
     }
 }

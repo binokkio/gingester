@@ -298,7 +298,7 @@ public final class FlowRunner {
         @SuppressWarnings("unchecked")
         Controller<Object, Object> seedController = (Controller<Object, Object>) controllers.get(Id.SEED);
         Context seed = Context.newSeedContext(seedController);
-        seedController.transform(seed, "seed signal");
+        seedController.transform(seed, flowBuilder.seed);
 
         phaser.awaitAdvance(1);
         phaser.awaitAdvance(2);

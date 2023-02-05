@@ -27,6 +27,7 @@ public final class FlowBuilder {
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
+    Object seed = "seed signal";
 
     private Node last;
     private List<Id> linkFrom = List.of();
@@ -65,8 +66,9 @@ public final class FlowBuilder {
         return new Node(this);
     }
 
-    public FlowBuilder seed(Object in) {
-        seedTransformer.setValue(in);
+    public FlowBuilder seed(Object seed) {
+        this.seed = seed;
+        this.seedTransformer.setOutputType(seed.getClass());
         return this;
     }
 
