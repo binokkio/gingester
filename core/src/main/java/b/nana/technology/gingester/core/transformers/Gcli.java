@@ -22,7 +22,7 @@ public final class Gcli implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
         new FlowBuilder()
-                .seed(in)
+                .seed(context, in)
                 .cli(Context.newTemplate(gcliTemplateParameters).render(context, in))
                 .add(o -> out.accept(context, o))
                 .run();

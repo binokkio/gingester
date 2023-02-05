@@ -27,7 +27,8 @@ public final class FlowBuilder {
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
-    Object seed = "seed signal";
+    Context seedContext = null;
+    Object seedValue = "seed signal";
 
     private Node last;
     private List<Id> linkFrom = List.of();
@@ -48,6 +49,17 @@ public final class FlowBuilder {
         last = seed;
     }
 
+    public FlowBuilder seed(Object seedValue) {
+        this.seedValue = seedValue;
+        this.seedTransformer.setOutputType(seedValue.getClass());
+        return this;
+    }
+
+    public FlowBuilder seed(Context seedContext, Object seedValue) {
+        this.seedContext = seedContext;
+        return seed(seedValue);
+    }
+
     public FlowBuilder enterScope(String scope) {
 
         if (!Id.ID_PART.matcher(scope).matches())
@@ -64,12 +76,6 @@ public final class FlowBuilder {
 
     public Node node() {
         return new Node(this);
-    }
-
-    public FlowBuilder seed(Object seed) {
-        this.seed = seed;
-        this.seedTransformer.setOutputType(seed.getClass());
-        return this;
     }
 
     public FlowBuilder add(Node node) {
