@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 @Pure
-public final class Open implements Transformer<Path, InputStream> {
+public final class ToInputStream implements Transformer<Path, InputStream> {
 
     private final FetchKey fetchMonitor = new FetchKey("monitor");
 
