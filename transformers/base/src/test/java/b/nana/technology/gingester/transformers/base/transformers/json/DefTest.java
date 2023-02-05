@@ -18,7 +18,7 @@ class DefTest {
 
         new FlowBuilder().cli("" +
                 "-t Repeat 2 " +
-                "-t JsonDef '[]' " +
+                "-t JsonDef @ '[]' " +
                 "-s " +
                 "-t StringDef 'Hello, World ${description}!' " +
                 "-t StringAsJsonNode " +

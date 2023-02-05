@@ -82,7 +82,7 @@ class RouteTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +
                 "-t RegexRoute '{\".\":\"Target\"}' " +
@@ -99,7 +99,7 @@ class RouteTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-s record " +
                 "-t JsonToString " +
                 "-t RegexRoute '{\".\":\"Target\"}' " +
@@ -116,7 +116,7 @@ class RouteTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-s " +
                 "-t RegexRoute '${stash.hello}' '{\"world\": \"Target\"}' " +
                 "-t Target:StringAppend '!'")

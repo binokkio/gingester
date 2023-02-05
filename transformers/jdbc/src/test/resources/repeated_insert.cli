@@ -1,4 +1,4 @@
--t JsonDef '{
+-t JsonDef @ '{
         "a": 123,
         "b": "Hello, World!",
         "c": true

@@ -45,7 +45,7 @@ class PathTest {
 
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -62,7 +62,7 @@ class PathTest {
 
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-t JsonPath '$.missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -79,7 +79,7 @@ class PathTest {
 
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-t JsonPath '$..missing.path.should.throw' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -96,7 +96,7 @@ class PathTest {
 
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-t JsonPath '$..missing.path.should.not.throw' optional " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -113,7 +113,7 @@ class PathTest {
 
         new FlowBuilder().cli("" +
                 "-e Exceptions " +
-                "-t JsonDef '{hello:null}' " +
+                "-t JsonDef @ '{hello:null}' " +
                 "-t JsonPath '$.hello' " +
                 "-- " +
                 "-t Exceptions:Passthrough")
@@ -129,7 +129,7 @@ class PathTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:null}' " +
+                "-t JsonDef @ '{hello:null}' " +
                 "-t JsonPath '$.hello' yieldNull ")
                 .add(result::set)
                 .run();
@@ -143,7 +143,7 @@ class PathTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:null}' " +
+                "-t JsonDef @ '{hello:null}' " +
                 "-t JsonPath '$.hello' optional ")
                 .add(result::set)
                 .run();

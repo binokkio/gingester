@@ -28,15 +28,13 @@ import static b.nana.technology.gingester.core.cli.BlockCommentRemover.removeBlo
 
 public final class CliParser {
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-    static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader();
 
     private CliParser() {}
 
@@ -218,7 +216,8 @@ public final class CliParser {
 
                     ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
                     while (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
-                        if (args[++i].equals("%") && !args[i + 1].matches("[+-].*") && !parameters.isEmpty()) {
+                        i++;
+                        if (args[i].equals("%") && !args[i + 1].matches("[+-].*") && !parameters.isEmpty()) {
                             try {
                                 OBJECT_MAPPER
                                         .readerForUpdating(parameters.get(parameters.size() - 1))
@@ -226,9 +225,11 @@ public final class CliParser {
                             } catch (JsonProcessingException e) {
                                 throw new IllegalArgumentException(e);
                             }
+                        } else if (args[i].equals("@") && !args[i + 1].matches("[+-].*")) {
+                            parameters.add(JsonNodeFactory.instance.textNode(args[++i]));
                         } else {
                             try {
-                                parameters.add(OBJECT_READER.readTree(args[i]));
+                                parameters.add(OBJECT_MAPPER.readTree(args[i]));
                             } catch (JsonProcessingException e) {
                                 parameters.add(JsonNodeFactory.instance.textNode(args[i]));
                             }
@@ -280,7 +281,7 @@ public final class CliParser {
 
         ScopedSource scopedSource = new ScopedSource(args[++i]);
         URL url = Stream.of(scopedSource.source, "/" + scopedSource.source, "/gingester/" + scopedSource.source)
-                .flatMap(s -> Stream.of(s, s + ".cli"))
+                .flatMap(s -> Stream.of(s, s + ".gcli", s + ".cli"))
                 .map(Main.class::getResource)
                 .filter(Objects::nonNull)
                 .findFirst()
@@ -315,7 +316,7 @@ public final class CliParser {
 
             JsonNode kwargs;
             try {
-                kwargs = OBJECT_READER.readTree(args[++i]);
+                kwargs = OBJECT_MAPPER.readTree(args[++i]);
                 while (args.length > i + 1 && args[i + 1].equals("%")) {
                     OBJECT_MAPPER
                             .readerForUpdating(kwargs)
