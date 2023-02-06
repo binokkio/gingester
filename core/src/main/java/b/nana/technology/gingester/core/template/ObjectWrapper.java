@@ -1,12 +1,11 @@
 package b.nana.technology.gingester.core.template;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import freemarker.template.*;
 
 import java.util.Iterator;
 import java.util.Map;
-
-import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.JACKSON_WRAPPER;
 
 final class ObjectWrapper extends DefaultObjectWrapper {
 
@@ -15,18 +14,62 @@ final class ObjectWrapper extends DefaultObjectWrapper {
     }
 
     @Override
-    public TemplateModel wrap(Object object) {
-        if (object instanceof JsonNode) {
+    public TemplateModel wrap(Object object) throws TemplateModelException {
+        if (object instanceof Map) {
+            return handleMapNode((Map<?, ?>) object);
+        } else if (object instanceof JsonNode) {
             return handleJsonNode((JsonNode) object);
-        } else if (object instanceof Map) {
-            return DefaultMapAdapter.adapt((Map<?, ?>) object, JACKSON_WRAPPER);
         } else {
             try {
                 return super.wrap(object);
             } catch (TemplateModelException e) {
-                throw new RuntimeException(e);  // TODO
+                throw new TemplateModelException(e);
             }
         }
+    }
+
+    private TemplateModel handleMapNode(Map<?, ?> map) {
+        return new TemplateMapModel() {
+
+            @Override
+            public String getAsString() throws TemplateModelException {
+                try {
+                    return FreemarkerTemplateFactory.OBJECT_MAPPER.writeValueAsString(map);
+                } catch (JsonProcessingException e) {
+                    throw new TemplateModelException(e);
+                }
+            }
+
+            @Override
+            public TemplateModel get(String key) throws TemplateModelException {
+                return wrap(map.get(key));
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return map.isEmpty();
+            }
+
+            @Override
+            public int size() {
+                return map.size();
+            }
+
+            @Override
+            public TemplateCollectionModel keys() {
+                return new SimpleCollection(map.keySet(), ObjectWrapper.this);
+            }
+
+            @Override
+            public TemplateCollectionModel values() {
+                return new SimpleCollection(map.values(), ObjectWrapper.this);
+            }
+
+            @Override
+            public KeyValuePairIterator keyValuePairIterator() {
+                return new MapKeyValuePairIterator(map, ObjectWrapper.this);
+            }
+        };
     }
 
     private TemplateModel handleJsonNode(JsonNode jsonNode) {
@@ -126,6 +169,10 @@ final class ObjectWrapper extends DefaultObjectWrapper {
         } else {
             return (TemplateScalarModel) jsonNode::asText;
         }
+    }
+
+    private interface TemplateMapModel extends TemplateHashModelEx2, TemplateScalarModel {
+
     }
 
     private interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel {

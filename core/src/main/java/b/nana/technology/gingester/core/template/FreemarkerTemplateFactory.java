@@ -14,12 +14,12 @@ import java.util.Set;
 public final class FreemarkerTemplateFactory {
 
     private static final Version FREEMARKER_VERSION = Configuration.VERSION_2_3_31;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String DEFAULT_DIRECTIVE = "default";
     private static final String KWARGS_DIRECTIVE = "kwargs";
     private static final Set<String> NOT_KWARGS = Set.of(DEFAULT_DIRECTIVE, KWARGS_DIRECTIVE, "capture_output", "compress", "html_escape", "normalize_newlines", "xml_escape");
 
-    static final ObjectWrapper JACKSON_WRAPPER = new ObjectWrapper(FREEMARKER_VERSION);
+    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    static final ObjectWrapper OBJECT_WRAPPER = new ObjectWrapper(FREEMARKER_VERSION);
 
     private static final Configuration CONFIGURATION;
     private static final Configuration CLI_CONFIGURATION;
@@ -30,7 +30,7 @@ public final class FreemarkerTemplateFactory {
         CONFIGURATION.setInterpolationSyntax(Configuration.DOLLAR_INTERPOLATION_SYNTAX);
         CONFIGURATION.setNumberFormat("computer");
         CONFIGURATION.setBooleanFormat("c");
-        CONFIGURATION.setObjectWrapper(JACKSON_WRAPPER);
+        CONFIGURATION.setObjectWrapper(OBJECT_WRAPPER);
 
         CLI_CONFIGURATION = new Configuration(FREEMARKER_VERSION);
         CLI_CONFIGURATION.setLogTemplateExceptions(false);
@@ -38,7 +38,7 @@ public final class FreemarkerTemplateFactory {
         CLI_CONFIGURATION.setInterpolationSyntax(Configuration.SQUARE_BRACKET_INTERPOLATION_SYNTAX);
         CLI_CONFIGURATION.setNumberFormat("computer");
         CLI_CONFIGURATION.setBooleanFormat("c");
-        CLI_CONFIGURATION.setObjectWrapper(JACKSON_WRAPPER);
+        CLI_CONFIGURATION.setObjectWrapper(OBJECT_WRAPPER);
         CLI_CONFIGURATION.setSharedVariable(DEFAULT_DIRECTIVE, (TemplateDirectiveModel) (env, params, loopVars, body) -> {
             // noinspection unchecked
             ((Map<String, TemplateModel>) params).forEach((variableName, defaultValue) -> {
