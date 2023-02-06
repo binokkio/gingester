@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,19 +14,19 @@ class WriteTest {
     @Test
     void test() throws Exception {
 
-        Path tempFile = Files.createTempFile("gingester-", ".txt");
+        Path tempDir = Files.createTempDirectory("gingester-");
 
         new FlowBuilder().cli(
+                "-t PathDef '[=tempDir]/dir-to-be-made/logs.txt' " +
                 "-s tempFile " +
                 "-t PathToOutputStream " +
                 "-s logs " +
                 "-t Write logs 'Writing to ${tempFile}' !newline " +
-                "-t Close logs")
-                .seed(tempFile)
+                "-t Close logs", Map.of("tempDir", tempDir))
                 .run();
 
-        assertEquals("Writing to " + tempFile, Files.readString(tempFile));
+        Path expected = tempDir.resolve("dir-to-be-made/logs.txt");
 
-        Files.delete(tempFile);
+        assertEquals("Writing to " + expected, Files.readString(expected));
     }
 }
