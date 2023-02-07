@@ -32,9 +32,12 @@ public final class Write implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
         OutputStream outputStream = (OutputStream) context.require(fetchTarget);
-        outputStream.write(messageTemplate.render(context, in).getBytes(StandardCharsets.UTF_8));
-        if (newline) outputStream.write('\n');
-        out.accept(context, in);
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter, TODO think of something nicer
+        synchronized (outputStream) {
+            outputStream.write(messageTemplate.render(context, in).getBytes(StandardCharsets.UTF_8));
+            if (newline) outputStream.write('\n');
+            out.accept(context, in);
+        }
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)

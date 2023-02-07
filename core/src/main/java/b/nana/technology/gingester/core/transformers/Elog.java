@@ -8,10 +8,14 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public final class ELog implements Transformer<Exception, Exception> {
+public final class Elog implements Transformer<Exception, Exception> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FlowRunner.class);
 
@@ -19,10 +23,32 @@ public final class ELog implements Transformer<Exception, Exception> {
     private final FetchKey fetchDescription = new FetchKey("description");
     private final FetchKey fetchCaughtBy = new FetchKey("caughtBy");
 
+    private final FetchKey fetchTarget;
+    private final Function<Context, BiConsumer<String, Exception>> targetSupplier;
+
+    public Elog() {
+        fetchTarget = null;
+        targetSupplier = context -> LOGGER::warn;
+    }
+
+    public Elog(String target) {
+        fetchTarget = new FetchKey(target);
+        targetSupplier = context -> (message, exception) -> {
+            OutputStream outputStream = (OutputStream) context.require(fetchTarget);
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter, TODO think of something nicer
+            synchronized (outputStream) {
+                PrintStream printStream = new PrintStream(outputStream, false);
+                printStream.println(message);
+                exception.printStackTrace(printStream);
+                printStream.flush();
+            }
+        };
+    }
+
     @Override
     public void transform(Context context, Exception in, Receiver<Exception> out) {
 
-        if (LOGGER.isWarnEnabled()) {
+        if (fetchTarget != null || LOGGER.isWarnEnabled()) {
 
             StringBuilder message = new StringBuilder()
                     .append(in.getClass().getSimpleName())
@@ -54,7 +80,7 @@ public final class ELog implements Transformer<Exception, Exception> {
                     .filter(e -> !e.getClassName().startsWith("b.nana.technology.gingester.core.controller."))
                     .toArray(StackTraceElement[]::new));
 
-            LOGGER.warn(message.toString(), in);
+            targetSupplier.apply(context).accept(message.toString(), in);
         }
 
         out.accept(context, in);

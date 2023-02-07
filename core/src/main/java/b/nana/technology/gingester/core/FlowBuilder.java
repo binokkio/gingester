@@ -4,7 +4,7 @@ import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
-import b.nana.technology.gingester.core.transformers.ELog;
+import b.nana.technology.gingester.core.transformers.Elog;
 import b.nana.technology.gingester.core.transformers.Seed;
 import b.nana.technology.gingester.core.transformers.Void;
 import b.nana.technology.gingester.core.transformers.passthrough.BiConsumerPassthrough;
@@ -38,7 +38,7 @@ public final class FlowBuilder {
     public FlowBuilder() {
 
         Node elog = new Node();
-        elog.transformer(new ELog());
+        elog.transformer(new Elog());
         nodes.put(Id.ELOG, elog);
 
         Node seed = new Node();
@@ -153,6 +153,13 @@ public final class FlowBuilder {
     public FlowBuilder sync() {
         last.setSyncs(syncFrom.stream().map(Id::getGlobalId).collect(Collectors.toList()));
         return this;
+    }
+
+    public String getElog(String target) {
+        Id id = idFactory.getId("$__elog_" + target + "__");
+        if (!nodes.containsKey(id))
+            nodes.put(id, node().transformer(new Elog(target)));
+        return id.getGlobalId();
     }
 
     /**

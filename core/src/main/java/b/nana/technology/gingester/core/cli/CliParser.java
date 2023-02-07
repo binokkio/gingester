@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
@@ -133,8 +132,12 @@ public final class CliParser {
                 case "-e":
                 case "--excepts":
                     List<String> excepts = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*"))
-                        excepts.add(args[++i]);
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                        String arg = args[++i];
+                        if (Character.isLowerCase(arg.charAt(0)))
+                            arg = target.getElog(arg);
+                        excepts.add(arg);
+                    }
                     if (excepts.isEmpty()) excepts.add(Id.ELOG.getGlobalId());
                     target.exceptTo(excepts);
                     break;
