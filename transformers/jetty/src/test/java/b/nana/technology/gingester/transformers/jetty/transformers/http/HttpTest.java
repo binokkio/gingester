@@ -1,14 +1,10 @@
 package b.nana.technology.gingester.transformers.jetty.transformers.http;
 
 import b.nana.technology.gingester.core.FlowBuilder;
-import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.jetty.http.HttpRequest;
-import b.nana.technology.gingester.transformers.jetty.http.HttpResponseDummy;
+import b.nana.technology.gingester.transformers.jetty.http.mock.MockRequest;
+import b.nana.technology.gingester.transformers.jetty.http.mock.MockResponse;
+import b.nana.technology.gingester.transformers.jetty.http.mock.MockServer;
 import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,7 +13,10 @@ public class HttpTest {
     @Test
     void testHttpServerFlowCanBeTested() {
 
-        HttpResponseDummy response = new HttpResponseDummy();
+        MockServer mockServer = new MockServer();
+        MockResponse response = mockServer.addRequest(new MockRequest
+                .Builder("POST /")
+                .setRequestBody("Hello, World!"));
 
         new FlowBuilder().cli("" +
                 "-sft HttpServer " +
@@ -26,21 +25,7 @@ public class HttpTest {
                 "-t StringDef '${http.request.object.remoteAddress}: ${__in__}' " +
                 "-stt InputStreamJoin " +
                 "-t HttpRespond")
-                .replace("HttpServer", (Transformer<Object, InputStream>) (context, in, out) -> {
-
-                    Map<String, Object> stash = Map.of(
-                            "http", Map.of(
-                                    "request", Map.of(
-                                            "object", (HttpRequest) () -> "127.0.0.1"
-                                    ),
-                                    "response", response
-                            )
-                    );
-
-                    ByteArrayInputStream requestBody = new ByteArrayInputStream("Hello, World!".getBytes());
-
-                    out.accept(context.stash(stash), requestBody);
-                })
+                .replace("HttpServer", mockServer)
                 .run();
 
         assertEquals(
