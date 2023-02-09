@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.cli;
 import b.nana.technology.gingester.core.FlowBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -118,6 +119,48 @@ class CliParserTest {
                 .run();
 
         assertEquals("Empty single argument comments, like the ones above and below, should not cause issues!", result.get());
+    }
+
+    @Test
+    void testPassKwargs() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-cr hello-target '[@kwargs /]'",
+                Map.of("target", "kwarg World"))
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, kwarg World!", result.get());
+    }
+
+    @Test
+    void testPassAssignedKwarg() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "[#assign target='assigned kwarg World'] -cr hello-target '[@kwargs /]'",
+                Map.of("target", "this value should be \"re-assigned\""))
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, assigned kwarg World!", result.get());
+    }
+
+    @Test
+    void testMergeKwargs() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-cr hello-target '[@kwargs /]' % '{target: \"merged kwarg World\"}' % '{baz: 123}'",
+                Map.of("target", "this value should be \"re-assigned\""))
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, merged kwarg World!", result.get());
     }
 
 //    private DummyTarget parse(String cli) {

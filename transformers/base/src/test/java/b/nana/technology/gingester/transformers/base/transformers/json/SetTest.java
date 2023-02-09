@@ -16,11 +16,11 @@ class SetTest {
         AtomicReference<JsonNode> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{}' " +
+                "-t JsonDef @ '{}' " +
                 "-s record " +
-                "-t JsonDef '{hello:123}' " +
+                "-t JsonDef @ '{hello:123}' " +
                 "-t JsonSet greeting " +
-                "-t JsonDef '{world:234}' " +
+                "-t JsonDef @ '{world:234}' " +
                 "-t JsonSet greeted")
                 .add(result::set)
                 .run();
@@ -36,13 +36,13 @@ class SetTest {
         AtomicReference<JsonNode> resultB = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t JsonDef '{}' " +
+                "-t JsonDef @ '{}' " +
                 "-s a " +
-                "-t JsonDef '{}' " +
+                "-t JsonDef @ '{}' " +
                 "-s b " +
-                "-t JsonDef '{hello:123}' " +
+                "-t JsonDef @ '{hello:123}' " +
                 "-t JsonSet greeting a " +
-                "-t JsonDef '{world:234}' " +
+                "-t JsonDef @ '{world:234}' " +
                 "-t JsonSet greeted b " +
                 "-t FetchA:Fetch a " +
                 "-t FetchB:Fetch b")
@@ -61,9 +61,9 @@ class SetTest {
 
         new FlowBuilder().cli("" +
                 "-ss key hello " +
-                "-t JsonDef '{}' " +
+                "-t JsonDef @ '{}' " +
                 "-s result " +
-                "-t JsonDef '\"world\"' " +
+                "-t JsonDef @ '\"world\"' " +
                 "-t JsonSet '${key}'")
                 .add(result::set)
                 .run();

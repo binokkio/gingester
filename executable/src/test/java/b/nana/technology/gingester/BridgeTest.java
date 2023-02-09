@@ -59,7 +59,7 @@ class BridgeTest {
     void testLongBridge() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:1,world:2}' " +
+                "-t JsonDef @ '{hello:1,world:2}' " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");
 
@@ -75,7 +75,7 @@ class BridgeTest {
     void testLongBridgeWithPassthroughs() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:1,world:2}' " +
+                "-t JsonDef @ '{hello:1,world:2}' " +
                 "-s -t Passthrough " +
                 "-t InputStreamAppend '!!!' " +
                 "-t InputStreamToString");

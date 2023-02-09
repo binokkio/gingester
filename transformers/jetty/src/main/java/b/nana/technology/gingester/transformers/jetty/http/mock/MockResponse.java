@@ -1,5 +1,6 @@
-package b.nana.technology.gingester.transformers.jetty.http;
+package b.nana.technology.gingester.transformers.jetty.http.mock;
 
+import b.nana.technology.gingester.transformers.jetty.http.HttpResponse;
 import jakarta.servlet.http.Cookie;
 
 import java.io.ByteArrayOutputStream;
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public final class HttpResponseDummy implements HttpResponse {
+public final class MockResponse implements HttpResponse {
 
     private int status;
     private final Map<String, String> headers = new HashMap<>();

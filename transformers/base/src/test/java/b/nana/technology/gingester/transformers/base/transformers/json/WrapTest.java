@@ -17,7 +17,7 @@ class WrapTest {
 
         new FlowBuilder().cli("" +
                         "-ss key message " +
-                        "-t JsonDef '{\"hello\":\"world\"}' " +
+                        "-t JsonDef @ '{\"hello\":\"world\"}' " +
                         "-t JsonWrap '${key}'")
                 .add(result::set)
                 .run();

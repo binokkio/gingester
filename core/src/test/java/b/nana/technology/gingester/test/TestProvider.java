@@ -3,6 +3,7 @@ package b.nana.technology.gingester.test;
 import b.nana.technology.gingester.core.provider.Provider;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.test.transformers.Emphasize;
+import b.nana.technology.gingester.test.transformers.Foo;
 import b.nana.technology.gingester.test.transformers.Question;
 import b.nana.technology.gingester.test.transformers.SyncCounter;
 
@@ -15,6 +16,7 @@ public class TestProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 Emphasize.class,
+                Foo.class,
                 Question.class,
                 SyncCounter.class,
                 b.nana.technology.gingester.test.transformers.a.NameCollision.class,

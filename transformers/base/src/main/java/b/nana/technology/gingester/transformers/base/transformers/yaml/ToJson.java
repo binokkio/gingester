@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.transformers.base.transformers.yml;
+package b.nana.technology.gingester.transformers.base.transformers.yaml;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;

@@ -4,11 +4,11 @@ import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
-import b.nana.technology.gingester.core.transformers.ELog;
+import b.nana.technology.gingester.core.transformers.Elog;
+import b.nana.technology.gingester.core.transformers.Seed;
 import b.nana.technology.gingester.core.transformers.Void;
 import b.nana.technology.gingester.core.transformers.passthrough.BiConsumerPassthrough;
 import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
-import b.nana.technology.gingester.core.transformers.passthrough.Passthrough;
 
 import java.net.URL;
 import java.util.*;
@@ -20,12 +20,15 @@ public final class FlowBuilder {
 
     private final IdFactory idFactory = new IdFactory();
     private final Deque<String> scopes = new ArrayDeque<>();
+    private final Seed seedTransformer = new Seed();
 
     final Map<Id, Node> nodes = new LinkedHashMap<>();
     FlowRunner.Goal goal = FlowRunner.Goal.RUN;
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
+    Context seedContext = null;
+    Object seedValue = "seed signal";
 
     private Node last;
     private List<Id> linkFrom = List.of();
@@ -35,15 +38,26 @@ public final class FlowBuilder {
     public FlowBuilder() {
 
         Node elog = new Node();
-        elog.transformer(new ELog());
+        elog.transformer(new Elog());
         nodes.put(Id.ELOG, elog);
 
         Node seed = new Node();
-        seed.transformer(new Passthrough());
+        seed.transformer(seedTransformer);
         seed.addExcept(Id.ELOG.getGlobalId());
         nodes.put(Id.SEED, seed);
 
         last = seed;
+    }
+
+    public FlowBuilder seed(Object seedValue) {
+        this.seedValue = seedValue;
+        this.seedTransformer.setOutputType(seedValue.getClass());
+        return this;
+    }
+
+    public FlowBuilder seed(Context seedContext, Object seedValue) {
+        this.seedContext = seedContext;
+        return seed(seedValue);
     }
 
     public FlowBuilder enterScope(String scope) {
@@ -139,6 +153,13 @@ public final class FlowBuilder {
     public FlowBuilder sync() {
         last.setSyncs(syncFrom.stream().map(Id::getGlobalId).collect(Collectors.toList()));
         return this;
+    }
+
+    public String getElog(String target) {
+        Id id = idFactory.getId("$__elog_" + target + "__");
+        if (!nodes.containsKey(id))
+            nodes.put(id, node().transformer(new Elog(target)));
+        return id.getGlobalId();
     }
 
     /**
@@ -310,10 +331,10 @@ public final class FlowBuilder {
      * square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli cli instructions template
-     * @param parameters the parameters for the template, e.g. a Java Map
+     * @param kwargs the kwargs for the template, e.g. a Java Map
      */
-    public FlowBuilder cli(String cli, Object parameters) {
-        CliParser.parse(this, cli, parameters);
+    public FlowBuilder cli(String cli, Object kwargs) {
+        CliParser.parse(this, cli, kwargs);
         return this;
     }
 
@@ -337,10 +358,10 @@ public final class FlowBuilder {
      * the square-bracket-tag and square-bracket-interpolation syntax.
      *
      * @param cli URL for the cli instructions
-     * @param parameters the parameters for the template, e.g. a Java Map
+     * @param kwargs the kwargs for the template, e.g. a Java Map
      */
-    public FlowBuilder cli(URL cli, Object parameters) {
-        CliParser.parse(this, cli, parameters);
+    public FlowBuilder cli(URL cli, Object kwargs) {
+        CliParser.parse(this, cli, kwargs);
         return this;
     }
 

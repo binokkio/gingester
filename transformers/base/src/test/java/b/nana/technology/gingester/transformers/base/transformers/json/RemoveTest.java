@@ -16,7 +16,7 @@ class RemoveTest {
     void testJsonRemoveOutputsRemovedJsonNode() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef \"{hello:'world a',bye:'world b'}\" " +
+                "-t JsonDef @ \"{hello:'world a',bye:'world b'}\" " +
                 "-t JsonRemove $.bye");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
@@ -30,7 +30,7 @@ class RemoveTest {
     void testRemoveModifiesStashedInput() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef {hello:'world',bye:'world'} " +
+                "-t JsonDef @ {hello:'world',bye:'world'} " +
                 "-s -t JsonRemove $.bye -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
@@ -45,7 +45,7 @@ class RemoveTest {
     void testNested() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef \"{hello:'world',bye:'world',nested:{foo:123,bar:234}}\" " +
+                "-t JsonDef @ \"{hello:'world',bye:'world',nested:{foo:123,bar:234}}\" " +
                 "-s -t JsonRemove $.nested.bar -f");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();
@@ -66,7 +66,7 @@ class RemoveTest {
 
         new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
-                "-t JsonDef \"{hello:'world'}\" " +
+                "-t JsonDef @ \"{hello:'world'}\" " +
                 "-t JsonRemove $.bye --")
                 .node().id("ExceptionHandler").transformer(new ConsumerPassthrough<>(result::set)).add()
                 .run();
@@ -82,7 +82,7 @@ class RemoveTest {
 
         new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
-                "-t JsonDef \"{hello:'world'}\" " +
+                "-t JsonDef @ \"{hello:'world'}\" " +
                 "-t JsonRemove $.bye optional --")
                 .node().id("ExceptionHandler").transformer(new ConsumerPassthrough<>(result::set)).add()
                 .run();
@@ -97,7 +97,7 @@ class RemoveTest {
 
         new FlowBuilder().cli("" +
                 "-e ExceptionHandler " +
-                "-t JsonDef \"{hello:'world'}\" " +
+                "-t JsonDef @ \"{hello:'world'}\" " +
                 "-t JsonRemove $..bye optional --")
                 .node().id("ExceptionHandler").transformer(new ConsumerPassthrough<>(result::set)).add()
                 .run();

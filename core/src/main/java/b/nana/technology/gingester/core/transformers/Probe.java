@@ -10,7 +10,10 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Names(1)
@@ -18,41 +21,58 @@ import java.util.stream.Collectors;
 public final class Probe implements Transformer<Object, Object> {
 
     private final FetchKey fetchDescription = new FetchKey("description");
-    private final PrintStream target;
     private final int limit;
+    private final FetchKey fetchTarget;
+    private final Function<Context, Consumer<String>> targetSupplier;
 
     public Probe(Parameters parameters) {
-        target = getTarget(parameters.target);
         limit = parameters.limit;
-    }
 
-    private PrintStream getTarget(String target) {
-        switch (target) {
-            case "out": return System.out;
-            case "err": return System.err;
-            default: throw new IllegalArgumentException("Unexpected value for target: " + target);
+        if (parameters.target.equals("stdout")) {
+            fetchTarget = null;
+            targetSupplier = context -> System.out::print;
+        } else if (parameters.target.equals("stderr")) {
+            fetchTarget = null;
+            targetSupplier = context -> System.err::print;
+        } else {
+            fetchTarget = new FetchKey(parameters.target);
+            targetSupplier = context -> message -> {
+                OutputStream outputStream = (OutputStream) context.require(fetchTarget);
+                //noinspection SynchronizationOnLocalVariableOrMethodParameter, TODO think of something nicer
+                synchronized (outputStream) {
+                    PrintStream printStream = new PrintStream(outputStream, false);
+                    printStream.print(message);
+                    printStream.flush();
+                }
+            };
         }
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
+        Consumer<String> target = targetSupplier.apply(context);
+
         String description = context.fetchReverse(fetchDescription)
                 .map(Object::toString)
                 .collect(Collectors.joining(" :: "));
 
+        String trace = context.streamReverse().map(Context::getTransformerId).collect(Collectors.joining(" > "));
+
         if (limit > 0) {
-            target.print(
-                    "---- " + description + " ----\n" +
+            target.accept(
+                    "---- " + description + " ----\nTrace " +
+                    trace + "\n\n" +
                     context.prettyStash(limit) + '\n' +
                     in + '\n' +
-                    "-".repeat(description.length() + 10) + "\n\n"
+                    "-".repeat(description.length() + 10) + '\n'
             );
         } else {
-            target.print(
-                    "---- " + description + " ----\n" +
+            target.accept(
+                    "---- " + description + " ----\nTrace" +
+                    trace + "\n\n" +
                     in + '\n' +
-                    "-".repeat(description.length() + 10) + "\n\n"
+                    "-".repeat(description.length() + 10) + '\n'
             );
         }
 
@@ -71,7 +91,7 @@ public final class Probe implements Transformer<Object, Object> {
             }
         }
 
-        public String target = "out";
+        public String target = "stdout";
         public int limit = 10;
     }
 }

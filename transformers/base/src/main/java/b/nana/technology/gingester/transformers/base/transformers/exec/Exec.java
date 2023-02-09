@@ -114,7 +114,7 @@ public final class Exec implements Transformer<Object, Object> {
                 workers.submit(() -> {
                     try {
                         BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-                        String prefix = pid + " " + streamName + ": ";
+                        String prefix = pid + " " + streamName;
                         String line;
                         while ((line = reader.readLine()) != null) {
                             LOGGER.info("{}: {}", prefix, line);

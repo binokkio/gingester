@@ -10,8 +10,6 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
-import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.JACKSON_WRAPPER;
-
 public final class TemplateParameters {
 
     public String template;
@@ -57,7 +55,7 @@ public final class TemplateParameters {
         return FreemarkerTemplateFactory.createCliTemplate(
                 getTemplateName(),
                 getRawTemplateString()
-        ).render(JACKSON_WRAPPER.wrap(kwargs));
+        ).render(kwargs);
     }
 
     private String getTemplateName() {

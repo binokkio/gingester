@@ -17,7 +17,7 @@ class NdjsonTest {
     void test() throws IOException {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef '{hello:\"world\"}' " +
+                "-t JsonDef @ '{hello:\"world\"}' " +
                 "-t Repeat 3 " +
                 "-t InputStreamJoin " +
                 "-t InputStreamAppend " +

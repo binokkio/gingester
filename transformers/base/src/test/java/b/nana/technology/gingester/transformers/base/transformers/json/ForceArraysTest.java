@@ -36,7 +36,7 @@ class ForceArraysTest {
     void testForceArraysOnRoot() {
 
         FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef {hello:123} " +
+                "-t JsonDef @ {hello:123} " +
                 "-t JsonForceArrays $");
 
         AtomicReference<JsonNode> result = new AtomicReference<>();

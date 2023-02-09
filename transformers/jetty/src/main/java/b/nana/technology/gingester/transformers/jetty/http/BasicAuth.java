@@ -1,11 +1,14 @@
 package b.nana.technology.gingester.transformers.jetty.http;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -64,7 +67,16 @@ public final class BasicAuth implements Transformer<Object, Object> {
         response.finish();
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isObject, o ->
+                        o.has("credentials") ? o : o("credentials", o));
+            }
+        }
+
         public String realm = "site";
         public Map<String, String> credentials;
     }

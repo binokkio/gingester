@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.test.transformers;
 
+import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -7,6 +8,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Names(1)
 public final class SyncCounter implements Transformer<Object, Integer> {
 
     private final ContextMap<AtomicInteger> state = new ContextMap<>();

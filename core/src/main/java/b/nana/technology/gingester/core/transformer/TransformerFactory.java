@@ -66,7 +66,29 @@ public final class TransformerFactory {
                 getTransformersByName(name).collect(Collectors.toList());
 
         if (transformerClasses.isEmpty()) {
-            throw new IllegalArgumentException("No transformer named " + name);
+            List<String> options = getTransformers()
+                    .map(TransformerFactory::getUniqueName)
+                    .filter(s -> s.endsWith(name))
+                    .sorted()
+                    .collect(Collectors.toList());
+            if (options.isEmpty()) {
+                throw new IllegalArgumentException(String.format(
+                        "No transformer named %s",
+                        name
+                ));
+            } else if (options.size() == 1) {
+                throw new IllegalArgumentException(String.format(
+                        "No transformer named %s, maybe %s?",
+                        name,
+                        options.get(0)
+                ));
+            } else {
+                throw new IllegalArgumentException(String.format(
+                        "No transformer named %s, maybe one of %s?",
+                        name,
+                        String.join(", ", options)
+                ));
+            }
         } else if (transformerClasses.size() > 1) {
             String uniqueNames = transformerClasses.stream()
                     .map(TransformerFactory::getUniqueName)
@@ -181,9 +203,7 @@ public final class TransformerFactory {
 
     public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
         if (transformer.getCanonicalName() == null) return "__anonymous__";
-        int names = transformer.getAnnotation(Names.class) != null ? transformer.getAnnotation(Names.class).value() : 2;
         return getNames(transformer)
-                .skip(names - 1)
                 .filter(name -> getTransformersByName(name).skip(1).findFirst().isEmpty())
                 .findFirst().orElseThrow(() -> new IllegalStateException("No unique name for " + transformer.getCanonicalName()));
     }
@@ -193,12 +213,15 @@ public final class TransformerFactory {
     }
 
     private static Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
+        Names names = transformer.getAnnotation(Names.class);
+        int skip = names == null ? 1 : names.value() - 1;
         String[] parts = transformer.getCanonicalName().split("\\.");
         StringBuilder nameBuilder = new StringBuilder();
         return IntStream.range(1, parts.length - 1)
                 .mapToObj(i -> parts[parts.length - i])
                 .filter(s -> !s.equalsIgnoreCase("transformers"))
-                .map(s -> nameBuilder.insert(0, camelCase(s)).toString());
+                .map(s -> nameBuilder.insert(0, camelCase(s)).toString())
+                .skip(skip);
     }
 
     public static Stream<Class<? extends Transformer<?, ?>>> getTransformers() {

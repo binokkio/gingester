@@ -39,32 +39,39 @@ public final class Context implements Iterable<Context> {
         return new TemplateMapper<>(templateParameters, mapper);
     }
 
-    public static Context newSeedContext(Controller<?, ?> seedController) {
-        return new Context(null, null, true, seedController, null);
+    public static Context newSeedContext(Controller<?, ?> seedController, Context parent) {
+        return new Context(seedController, parent);
     }
 
     public static Context newTestContext() {
-        return new Context(null, null, true, new Controller<>(Id.newTestId("$__test_seed__")), null);
+        return new Context(new Controller<>(Id.newTestId("$__test_seed__")), null);
     }
 
+    final Controller<?, ?> controller;
 
     private final Context parent;
     private final Context group;
-    private final boolean synced;
-    final Controller<?, ?> controller;
     private final Map<String, Object> stash;
+    private final boolean isSynced;
+    private final boolean isSeed;
     private volatile boolean isFlawed;
 
-    private Context(Context parent, Context group, boolean synced, Controller<?, ?> controller, Map<String, Object> stash) {
-        this.parent = parent;
-        this.group = group;
-        this.synced = synced;
+    private Context(Controller<?, ?> controller, Context parent) {
         this.controller = controller;
-        this.stash = stash;
+        this.parent = parent;
+        this.group = null;
+        this.stash = null;
+        this.isSynced = true;
+        this.isSeed = true;
     }
 
-    private Context(Builder builder) {
-        this(builder.parent, builder.group, builder.synced, builder.controller, builder.stash);
+    private Context(Controller<?, ?> controller, Context parent, Context group, boolean isSynced, Map<String, Object> stash) {
+        this.controller = controller;
+        this.parent = parent;
+        this.group = group;
+        this.stash = stash;
+        this.isSynced = isSynced;
+        this.isSeed = false;
     }
 
     public String getTransformerId() {
@@ -72,7 +79,7 @@ public final class Context implements Iterable<Context> {
     }
 
     public boolean isSeed() {
-        return parent == null;
+        return isSeed;
     }
 
     public boolean hasGroup() {
@@ -80,7 +87,7 @@ public final class Context implements Iterable<Context> {
     }
 
     public boolean isSynced() {
-        return synced;
+        return isSynced;
     }
 
     /**
@@ -494,7 +501,7 @@ public final class Context implements Iterable<Context> {
          */
         public Context buildForTesting() {
             this.controller = new Controller<>(Id.newTestId("$__test__"));
-            return new Context(this);
+            return new Context(controller, parent, group, synced, stash);
         }
 
         /**
@@ -504,12 +511,12 @@ public final class Context implements Iterable<Context> {
          */
         public Context buildForSelf() {
             this.controller = new Controller<>(Id.newTestId("$__self__"));
-            return new Context(this);
+            return new Context(controller, parent, group, synced, stash);
         }
 
         Context build(Controller<?, ?> controller) {
             this.controller = controller;
-            return new Context(this);
+            return new Context(controller, parent, group, synced, stash);
         }
     }
 
