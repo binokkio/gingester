@@ -25,10 +25,10 @@ public final class Controller<I, O> {
     public final StashDetails stashDetails;
     final Phaser phaser;
 
-    final boolean async;
     private final int maxWorkers;
     final int maxQueueSize;
     private final int maxBatchSize;
+    final boolean async;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links = new LinkedHashMap<>();
@@ -62,10 +62,10 @@ public final class Controller<I, O> {
         transformer = configuration.getTransformer();
         stashDetails = configuration.getStashDetails();
         receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
-        async = configuration.getMaxWorkers().orElse(0) > 0;
-        maxWorkers = configuration.getMaxWorkers().orElse(id == Id.SEED ? 0 : 1);
+        maxWorkers = configuration.getMaxWorkers().orElse(0);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
+        async = maxWorkers > 0;
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         dealt = new SimpleCounter(acks != null || report);
@@ -202,38 +202,69 @@ public final class Controller<I, O> {
 
 
     public void open() {
-        for (int i = 0; i < maxWorkers; i++) {
-            Worker worker = new Worker(this, i);
-            workers.add(worker);
-            worker.start();
+        if (async) {
+            for (int i = 0; i < maxWorkers; i++) {
+                Worker worker = new Worker(this, i);
+                workers.add(worker);
+                worker.start();
+            }
+        } else {
+            try {
+                transformer.open();
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
         }
     }
 
     public void accept(Batch<I> batch) {
         lock.lock();
-        try {
-            while (queue.size() >= maxQueueSize) queueNotFull.awaitUninterruptibly();
-            queue.add(() -> transform(batch));
-            queueNotEmpty.signal();
-        } finally {
-            lock.unlock();
-        }
+        while (queue.size() >= maxQueueSize) queueNotFull.awaitUninterruptibly();
+        queue.add(() -> transform(batch));
+        queueNotEmpty.signal();
+        lock.unlock();
     }
 
-    public void finish(Controller<?, ?> from, Context context) {
+    public void finish(Controller<?, ?> from, Context context, Worker worker) {
         lock.lock();
-        try {
-            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
-            if (finishTracker.indicate(from)) {
+        FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
+        if (finishTracker.indicate(from)) {
+            if (async) {
                 // not checking if the queue is full, finish signals have their own backpressure system
                 queue.add((Worker.SyncJob) () -> {
                     finishTracker.indicate(this);
                     queueNotEmpty.signalAll();
                 });
                 queueNotEmpty.signal();
+            } else {
+                finishing.remove(context);
+                lock.unlock();
+                finishFinish(context, worker);
+                return;  // return early because we have already unlocked
             }
-        } finally {
-            lock.unlock();
+        }
+        lock.unlock();
+    }
+
+    void finishFinish(Context context, Worker worker) {
+
+        if (context.controller.syncs.contains(this)) {
+            context.controller.receiver.onFinishSignalReachedTarget(context);
+            finish(context);
+            if (worker != null) worker.flush();
+        }
+
+        Set<Controller<?, ?>> targets = indicates.get(context.controller);
+        if (targets != null) targets.forEach(target -> target.finish(this, context, worker));
+    }
+
+    public void close() {
+        if (!async) {
+            try {
+                transformer.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
         }
     }
 
@@ -358,10 +389,10 @@ public final class Controller<I, O> {
         stashDetails = StashDetails.of();
         receiver = null;
         phaser = null;
-        async = false;
         maxWorkers = 0;
         maxQueueSize = 0;
         maxBatchSize = 0;
+        async = false;
         report = false;
         dealt = null;
         acks = null;

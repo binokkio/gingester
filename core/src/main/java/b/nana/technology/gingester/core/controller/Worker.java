@@ -5,7 +5,6 @@ import b.nana.technology.gingester.core.batch.Batch;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public final class Worker extends Thread {
 
@@ -94,19 +93,9 @@ public final class Worker extends Thread {
                 }
 
                 if (finishTracker.acknowledge(this)) {
-
                     controller.finishing.remove(context);
                     controller.lock.unlock();
-
-                    if (context.controller.syncs.contains(controller)) {
-                        context.controller.receiver.onFinishSignalReachedTarget(context);
-                        controller.finish(context);
-                        flush();
-                    }
-
-                    Set<Controller<?, ?>> targets = controller.indicates.get(context.controller);
-                    if (targets != null) targets.forEach(target -> target.finish(controller, context));
-
+                    controller.finishFinish(context, this);
                     controller.lock.lock();
                 }
 

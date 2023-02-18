@@ -82,8 +82,8 @@ class EqualsTest {
                 .run();
         assertEquals("hello, hello!", resultsWithMaxEntries.remove());
         assertEquals("bye", resultsWithMaxEntries.remove());
+        assertEquals("bye, bye!", resultsWithMaxEntries.remove());
         assertEquals("bye", resultsWithMaxEntries.remove());
-        assertEquals("bye, bye!", resultsWithMaxEntries.getFirst());
     }
 
     @Test

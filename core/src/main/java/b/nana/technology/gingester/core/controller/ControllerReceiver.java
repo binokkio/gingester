@@ -114,11 +114,13 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
             Set<Controller<?, ?>> targets = controller.indicates.get(controller);
             if (targets != null) {
                 startFinishSignal(context);
+                Worker worker = null;
                 if (Thread.currentThread() instanceof Worker) {
-                    ((Worker) Thread.currentThread()).flush();
+                    worker = ((Worker) Thread.currentThread());
+                    worker.flush();
                 }
                 for (Controller<?, ?> target : targets) {
-                    target.finish(controller, context);
+                    target.finish(controller, context, worker);
                 }
             }
         }
