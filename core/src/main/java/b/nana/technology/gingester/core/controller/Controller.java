@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public final class Controller<I, O> {
 
     private final ControllerConfiguration<I, O> configuration;
-    final FlowRunner.ControllerInterface gingester;
+    final FlowRunner.ControllerInterface flowRunner;
     public final Id id;
     public final Transformer<I, O> transformer;
     public final StashDetails stashDetails;
@@ -53,15 +53,15 @@ public final class Controller<I, O> {
     public final Counter dealt;
     public final Counter acks;
 
-    public Controller(ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface gingester) {
+    public Controller(ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface flowRunner) {
 
         this.configuration = configuration;
-        this.gingester = gingester;
+        this.flowRunner = flowRunner;
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
         stashDetails = configuration.getStashDetails();
-        receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
+        receiver = new ControllerReceiver<>(this, flowRunner.isDebugModeEnabled());
         maxWorkers = configuration.getMaxWorkers().orElse(0);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
@@ -69,21 +69,21 @@ public final class Controller<I, O> {
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         dealt = new SimpleCounter(acks != null || report);
-        isExceptionHandler = gingester.isExceptionHandler();
+        isExceptionHandler = flowRunner.isExceptionHandler();
 
-        phaser = gingester.getPhaser();
+        phaser = flowRunner.getPhaser();
         phaser.bulkRegister(maxWorkers);
     }
 
     @SuppressWarnings("unchecked")
     public void initialize() {
-        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) gingester.getController(id).orElseThrow()));
-        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) gingester.getController(id).orElseThrow()));
-        configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
+        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) flowRunner.getController(id)));
+        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) flowRunner.getController(id)));
+        configuration.getSyncs().forEach(syncId -> flowRunner.getController(syncId).syncs.add(this));
     }
 
     public void discoverIncoming() {
-        for (Controller<?, ?> controller : gingester.getControllers()) {
+        for (Controller<?, ?> controller : flowRunner.getControllers()) {
             if (controller.links.containsValue(this)) {
                 incoming.add(controller);
                 controller.indicatesCoarse.add(this);
@@ -126,7 +126,7 @@ public final class Controller<I, O> {
         });
 
         if (!incoming.isEmpty()) {
-            for (Controller<?, ?> controller : gingester.getControllers()) {
+            for (Controller<?, ?> controller : flowRunner.getControllers()) {
                 if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
                     if (controller.downstream.contains(this)) {
                         Set<Controller<?, ?>> downstreamCopy = new HashSet<>(controller.downstream);
@@ -139,7 +139,7 @@ public final class Controller<I, O> {
         }
 
         // refine `indicatesCoarse`
-        for (Controller<?, ?> controller : gingester.getControllers()) {
+        for (Controller<?, ?> controller : flowRunner.getControllers()) {
             if (!controller.syncs.isEmpty() && (controller == this || controller.downstream.contains(this))) {
                 Set<Controller<?, ?>> targets = indicatesCoarse.stream()
                         .filter(c -> controller.syncs.contains(c) || c.downstream.stream().anyMatch(controller.syncs::contains))
@@ -149,7 +149,7 @@ public final class Controller<I, O> {
         }
 
         // seed finish signal is always propagated to whole `indicatesCoarse`
-        indicates.put(gingester.getController(Id.SEED).orElseThrow(), indicatesCoarse);
+        indicates.put(flowRunner.getController(Id.SEED), indicatesCoarse);
 
         receiver.examineController();
     }
@@ -383,7 +383,7 @@ public final class Controller<I, O> {
 
     Controller(Id controllerId) {
         configuration = null;
-        gingester = null;
+        flowRunner = null;
         id = controllerId;
         transformer = null;
         stashDetails = StashDetails.of();

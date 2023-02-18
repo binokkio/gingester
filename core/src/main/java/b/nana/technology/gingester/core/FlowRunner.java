@@ -331,10 +331,10 @@ public final class FlowRunner {
             return controllers.values();
         }
 
-        public Optional<Controller<?, ?>> getController(Id id) {
+        public Controller<?, ?> getController(Id id) {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
-            return Optional.of(controller);
+            return controller;
         }
 
         public boolean isDebugModeEnabled() {
