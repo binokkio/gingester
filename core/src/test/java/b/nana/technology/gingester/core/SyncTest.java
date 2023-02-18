@@ -2,6 +2,8 @@ package b.nana.technology.gingester.core;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Deque;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -231,5 +233,20 @@ class SyncTest {
 
         Exception e = assertThrows(IllegalArgumentException.class, flowBuilder::run);
         assertEquals("StringDef is synced with __seed__ but is not sync-aware", e.getMessage());
+    }
+
+    @Test
+    void testSequentialSync() {
+
+        Deque<Object> result = new LinkedBlockingDeque<>();
+
+        new FlowBuilder().cli("" +
+                "-sft Repeat 1000 " +
+                "-stt 1 Merge 'description > descriptions[]' " +
+                "-stt 1 Merge 'description > descriptions[]'")
+                .add(result::add)
+                .run();
+
+        assertEquals(1000, result.size());
     }
 }

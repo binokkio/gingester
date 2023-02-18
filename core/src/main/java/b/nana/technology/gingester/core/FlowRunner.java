@@ -327,6 +327,10 @@ public final class FlowRunner {
             return phaser;
         }
 
+        public Collection<ControllerConfiguration<?, ?>> getConfigurations() {
+            return configurations.values();
+        }
+
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
         }

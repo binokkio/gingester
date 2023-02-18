@@ -61,7 +61,7 @@ public final class Controller<I, O> {
         id = configuration.getId();
         transformer = configuration.getTransformer();
         stashDetails = configuration.getStashDetails();
-        receiver = new ControllerReceiver<>(this, flowRunner.isDebugModeEnabled());
+        receiver = new ControllerReceiver<>(this, configuration, flowRunner);
         maxWorkers = configuration.getMaxWorkers().orElse(0);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
@@ -150,8 +150,6 @@ public final class Controller<I, O> {
 
         // seed finish signal is always propagated to whole `indicatesCoarse`
         indicates.put(flowRunner.getController(Id.SEED), indicatesCoarse);
-
-        receiver.examineController();
     }
 
     /**
@@ -249,7 +247,7 @@ public final class Controller<I, O> {
     void finishFinish(Context context, Worker worker) {
 
         if (context.controller.syncs.contains(this)) {
-            context.controller.receiver.onFinishSignalReachedTarget(context);
+            context.controller.receiver.onFinishSignalReachedSyncTo(context);
             finish(context);
             if (worker != null) worker.flush();
         }
