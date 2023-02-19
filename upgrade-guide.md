@@ -1,6 +1,11 @@
 # Upgrading Gingester from a previous version
 This document describes changes between Gingester versions that need to be taken into account when updating Gingester.
 
+## From 0.25 to 0.26
+
+### Finish signal handling
+Finish signals are now processed and propagated by an upstream worker for transformers that do not have dedicated workers. Previously every transformer had at least one worker processing and propagating finish signals even if the transformer was not explicitly assigned any workers. This change might slowdown some flows that previously benefited from the parallel processing provided by the finish handling workers. To mitigate such slowdowns put the workers back in the flow by explicitly assigning a worker downstream of each of the sync-to transformers in the flow. Another effect of this change is that some things that previously had an undetermined order now have a possibly different determined order. This can show up in broken unit tests that expect the previous undetermined order that just happened to be consistent over multiple runs.
+
 ## From 0.24 to 0.25
 
 ### Stricter transformer name matching
