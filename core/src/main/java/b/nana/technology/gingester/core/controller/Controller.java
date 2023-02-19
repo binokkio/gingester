@@ -19,16 +19,16 @@ import java.util.stream.Collectors;
 public final class Controller<I, O> {
 
     private final ControllerConfiguration<I, O> configuration;
-    final FlowRunner.ControllerInterface gingester;
+    final FlowRunner.ControllerInterface flowRunner;
     public final Id id;
     public final Transformer<I, O> transformer;
     public final StashDetails stashDetails;
     final Phaser phaser;
 
-    final boolean async;
     private final int maxWorkers;
     final int maxQueueSize;
     private final int maxBatchSize;
+    final boolean async;
     volatile int batchSize = 1;
 
     public final Map<String, Controller<O, ?>> links = new LinkedHashMap<>();
@@ -53,37 +53,37 @@ public final class Controller<I, O> {
     public final Counter dealt;
     public final Counter acks;
 
-    public Controller(ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface gingester) {
+    public Controller(ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface flowRunner) {
 
         this.configuration = configuration;
-        this.gingester = gingester;
+        this.flowRunner = flowRunner;
 
         id = configuration.getId();
         transformer = configuration.getTransformer();
         stashDetails = configuration.getStashDetails();
-        receiver = new ControllerReceiver<>(this, gingester.isDebugModeEnabled());
-        async = configuration.getMaxWorkers().orElse(0) > 0;
-        maxWorkers = configuration.getMaxWorkers().orElse(id == Id.SEED ? 0 : 1);
+        receiver = new ControllerReceiver<>(this, configuration, flowRunner);
+        maxWorkers = configuration.getMaxWorkers().orElse(0);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
+        async = maxWorkers > 0;
         report = configuration.getReport();
         acks = configuration.getAcksCounter();
         dealt = new SimpleCounter(acks != null || report);
-        isExceptionHandler = gingester.isExceptionHandler();
+        isExceptionHandler = flowRunner.isExceptionHandler();
 
-        phaser = gingester.getPhaser();
+        phaser = flowRunner.getPhaser();
         phaser.bulkRegister(maxWorkers);
     }
 
     @SuppressWarnings("unchecked")
     public void initialize() {
-        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) gingester.getController(id).orElseThrow()));
-        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) gingester.getController(id).orElseThrow()));
-        configuration.getSyncs().forEach(syncId -> gingester.getController(syncId).orElseThrow().syncs.add(this));
+        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) flowRunner.getController(id)));
+        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) flowRunner.getController(id)));
+        configuration.getSyncs().forEach(syncId -> flowRunner.getController(syncId).syncs.add(this));
     }
 
     public void discoverIncoming() {
-        for (Controller<?, ?> controller : gingester.getControllers()) {
+        for (Controller<?, ?> controller : flowRunner.getControllers()) {
             if (controller.links.containsValue(this)) {
                 incoming.add(controller);
                 controller.indicatesCoarse.add(this);
@@ -126,7 +126,7 @@ public final class Controller<I, O> {
         });
 
         if (!incoming.isEmpty()) {
-            for (Controller<?, ?> controller : gingester.getControllers()) {
+            for (Controller<?, ?> controller : flowRunner.getControllers()) {
                 if (!controller.syncs.isEmpty() || controller.incoming.isEmpty()) {
                     if (controller.downstream.contains(this)) {
                         Set<Controller<?, ?>> downstreamCopy = new HashSet<>(controller.downstream);
@@ -139,7 +139,7 @@ public final class Controller<I, O> {
         }
 
         // refine `indicatesCoarse`
-        for (Controller<?, ?> controller : gingester.getControllers()) {
+        for (Controller<?, ?> controller : flowRunner.getControllers()) {
             if (!controller.syncs.isEmpty() && (controller == this || controller.downstream.contains(this))) {
                 Set<Controller<?, ?>> targets = indicatesCoarse.stream()
                         .filter(c -> controller.syncs.contains(c) || c.downstream.stream().anyMatch(controller.syncs::contains))
@@ -149,9 +149,7 @@ public final class Controller<I, O> {
         }
 
         // seed finish signal is always propagated to whole `indicatesCoarse`
-        indicates.put(gingester.getController(Id.SEED).orElseThrow(), indicatesCoarse);
-
-        receiver.examineController();
+        indicates.put(flowRunner.getController(Id.SEED), indicatesCoarse);
     }
 
     /**
@@ -202,38 +200,69 @@ public final class Controller<I, O> {
 
 
     public void open() {
-        for (int i = 0; i < maxWorkers; i++) {
-            Worker worker = new Worker(this, i);
-            workers.add(worker);
-            worker.start();
+        if (async) {
+            for (int i = 0; i < maxWorkers; i++) {
+                Worker worker = new Worker(this, i);
+                workers.add(worker);
+                worker.start();
+            }
+        } else {
+            try {
+                transformer.open();
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
         }
     }
 
     public void accept(Batch<I> batch) {
         lock.lock();
-        try {
-            while (queue.size() >= maxQueueSize) queueNotFull.awaitUninterruptibly();
-            queue.add(() -> transform(batch));
-            queueNotEmpty.signal();
-        } finally {
-            lock.unlock();
-        }
+        while (queue.size() >= maxQueueSize) queueNotFull.awaitUninterruptibly();
+        queue.add(() -> transform(batch));
+        queueNotEmpty.signal();
+        lock.unlock();
     }
 
-    public void finish(Controller<?, ?> from, Context context) {
+    public void finish(Controller<?, ?> from, Context context, Worker worker) {
         lock.lock();
-        try {
-            FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
-            if (finishTracker.indicate(from)) {
+        FinishTracker finishTracker = finishing.computeIfAbsent(context, x -> FinishTracker.newInstance(this, context));
+        if (finishTracker.indicate(from)) {
+            if (async) {
                 // not checking if the queue is full, finish signals have their own backpressure system
                 queue.add((Worker.SyncJob) () -> {
                     finishTracker.indicate(this);
                     queueNotEmpty.signalAll();
                 });
                 queueNotEmpty.signal();
+            } else {
+                finishing.remove(context);
+                lock.unlock();
+                finishFinish(context, worker);
+                return;  // return early because we have already unlocked
             }
-        } finally {
-            lock.unlock();
+        }
+        lock.unlock();
+    }
+
+    void finishFinish(Context context, Worker worker) {
+
+        if (context.controller.syncs.contains(this)) {
+            context.controller.receiver.onFinishSignalReachedSyncTo(context);
+            finish(context);
+            if (worker != null) worker.flush();
+        }
+
+        Set<Controller<?, ?>> targets = indicates.get(context.controller);
+        if (targets != null) targets.forEach(target -> target.finish(this, context, worker));
+    }
+
+    public void close() {
+        if (!async) {
+            try {
+                transformer.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
         }
     }
 
@@ -352,16 +381,16 @@ public final class Controller<I, O> {
 
     Controller(Id controllerId) {
         configuration = null;
-        gingester = null;
+        flowRunner = null;
         id = controllerId;
         transformer = null;
         stashDetails = StashDetails.of();
         receiver = null;
         phaser = null;
-        async = false;
         maxWorkers = 0;
         maxQueueSize = 0;
         maxBatchSize = 0;
+        async = false;
         report = false;
         dealt = null;
         acks = null;

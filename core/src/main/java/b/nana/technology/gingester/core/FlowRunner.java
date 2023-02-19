@@ -26,7 +26,7 @@ public final class FlowRunner {
 
     private final LinkedHashMap<Id, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<Id, Controller<?, ?>> controllers = new LinkedHashMap<>();
-    private final Phaser phaser = new Phaser();
+    private final Phaser phaser = new Phaser(1);
     private final AtomicBoolean stopping = new AtomicBoolean();
 
     private final FlowBuilder flowBuilder;
@@ -283,7 +283,7 @@ public final class FlowRunner {
         seedThread = Thread.currentThread();
 
         controllers.values().forEach(Controller::open);
-        phaser.awaitAdvance(0);
+        phaser.arriveAndAwaitAdvance();
 
         if (flowBuilder.shutdownHook) {
             Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
@@ -300,8 +300,9 @@ public final class FlowRunner {
         Context seed = Context.newSeedContext(seedController, flowBuilder.seedContext);
         seedController.transform(seed, flowBuilder.seedValue);
 
-        phaser.awaitAdvance(1);
-        phaser.awaitAdvance(2);
+        phaser.arriveAndAwaitAdvance();
+        controllers.values().forEach(Controller::close);
+        phaser.arriveAndAwaitAdvance();
 
         if (reporter != null) reporter.stop();
 
@@ -326,14 +327,18 @@ public final class FlowRunner {
             return phaser;
         }
 
+        public Collection<ControllerConfiguration<?, ?>> getConfigurations() {
+            return configurations.values();
+        }
+
         public Collection<Controller<?, ?>> getControllers() {
             return controllers.values();
         }
 
-        public Optional<Controller<?, ?>> getController(Id id) {
+        public Controller<?, ?> getController(Id id) {
             Controller<?, ?> controller = controllers.get(id);
             if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
-            return Optional.of(controller);
+            return controller;
         }
 
         public boolean isDebugModeEnabled() {

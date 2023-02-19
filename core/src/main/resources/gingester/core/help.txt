@@ -78,11 +78,8 @@ General usage:
     --
         prevent the previous transformer from automatically being linked to the next transformer
 
-    + <comment>
-        has no effect, <comment> must be a single argument
-
     ++ <comment> ++
-        has no effect, <comment> may be multiple arguments
+        has no effect
 
     -h/--help
         print this help and exit

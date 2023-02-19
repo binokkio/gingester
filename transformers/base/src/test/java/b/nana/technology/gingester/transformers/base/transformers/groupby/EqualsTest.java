@@ -75,15 +75,15 @@ class EqualsTest {
                 "-t Repeat 2 -t StringDef hello -l GroupByEquals " +
                 "-t Delay 50 -t Repeat 2 -t Bye:StringDef bye -l GroupByEquals " +
                 "-sft GroupByEquals 2 " +
-                "-stt InputStreamJoin ', ' " +
-                "-t StringAppend '!'")
+                "-stt ListCollect " +
+                "-t Join:StringDef '${__in__?join(\", \")}!'")
                 .addTo(resultsWithMaxEntries::add, "Bye")
-                .addTo(resultsWithMaxEntries::add, "StringAppend")
+                .addTo(resultsWithMaxEntries::add, "Join")
                 .run();
         assertEquals("hello, hello!", resultsWithMaxEntries.remove());
         assertEquals("bye", resultsWithMaxEntries.remove());
+        assertEquals("bye, bye!", resultsWithMaxEntries.remove());
         assertEquals("bye", resultsWithMaxEntries.remove());
-        assertEquals("bye, bye!", resultsWithMaxEntries.getFirst());
     }
 
     @Test

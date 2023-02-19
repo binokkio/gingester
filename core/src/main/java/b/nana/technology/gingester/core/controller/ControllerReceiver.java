@@ -1,6 +1,8 @@
 package b.nana.technology.gingester.core.controller;
 
+import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.batch.Batch;
+import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.receiver.Receiver;
 
 import java.util.HashMap;
@@ -11,21 +13,19 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private final Controller<I, O> controller;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
+    private final int controllerSyncs;
+    private final boolean controllerHasSyncs;
+    private final boolean controllerHasSyncsOrExcepts;
     private final boolean debugMode;
 
-    private boolean controllerHasSyncs;
-    private boolean controllerHasSyncsOrExcepts;
-
-    ControllerReceiver(Controller<I, O> controller, boolean debugMode) {
+    ControllerReceiver(Controller<I, O> controller, ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface controllerInterface) {
         this.controller = controller;
-        this.debugMode = debugMode;
-    }
-
-    void examineController() {
-        controllerHasSyncs = !controller.syncs.isEmpty();
-        controllerHasSyncsOrExcepts =
-                controllerHasSyncs ||
-                !controller.excepts.isEmpty();
+        this.controllerSyncs = (int) controllerInterface.getConfigurations().stream()
+                .filter(c -> c.getSyncs().contains(controller.id))
+                .count();
+        this.controllerHasSyncs = controllerSyncs != 0;
+        this.controllerHasSyncsOrExcepts = controllerHasSyncs || !configuration.getExcepts().isEmpty();
+        this.debugMode = controllerInterface.isDebugModeEnabled();
     }
 
     @Override
@@ -114,11 +114,13 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
             Set<Controller<?, ?>> targets = controller.indicates.get(controller);
             if (targets != null) {
                 startFinishSignal(context);
+                Worker worker = null;
                 if (Thread.currentThread() instanceof Worker) {
-                    ((Worker) Thread.currentThread()).flush();
+                    worker = ((Worker) Thread.currentThread());
+                    worker.flush();
                 }
                 for (Controller<?, ?> target : targets) {
-                    target.finish(controller, context);
+                    target.finish(controller, context, worker);
                 }
             }
         }
@@ -137,16 +139,22 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
         }
     }
 
-    void onFinishSignalReachedTarget(Context context) {
+    void onFinishSignalReachedSyncTo(Context context) {
         if (context.isSeed()) return;
         synchronized (activeSyncs) {
-            int count = activeSyncs.remove(context);
-            if (++count == controller.syncs.size()) {
+            if (controllerSyncs == 1) {
+                activeSyncs.remove(context);
                 activeSyncs.notify();
-            } else {
-                activeSyncs.put(context, count);
+            } else if (activeSyncs.computeIfPresent(context, this::countFinishSignalReachedSyncTo) == null) {
+                activeSyncs.notify();
             }
         }
+    }
+
+    private Integer countFinishSignalReachedSyncTo(Context context, int count) {
+        // increment until we reach `controllerSyncs`, then return null so the context-count mapping
+        // gets removed from `activeSyncs`
+        return ++count == controllerSyncs ? null : count;
     }
 
     void except(String method, Context context, Exception cause) {
