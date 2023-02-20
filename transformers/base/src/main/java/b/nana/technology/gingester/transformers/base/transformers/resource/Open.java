@@ -18,10 +18,12 @@ public final class Open implements Transformer<Object, InputStream> {
 
     private final TemplateMapper<Path> trustedTemplate;
     private final TemplateMapper<Path> untrustedTemplate;
+    private final boolean optional;
 
     public Open(Parameters parameters) {
         trustedTemplate = Context.newTemplateMapper(parameters.trusted, Paths::get);
         untrustedTemplate = parameters.untrusted == null ? null : Context.newTemplateMapper(parameters.untrusted, Paths::get);
+        optional = parameters.optional;
     }
 
     @Override
@@ -47,8 +49,8 @@ public final class Open implements Transformer<Object, InputStream> {
 
         String resourcePath = path.toString();
         try (InputStream inputStream = getClass().getResourceAsStream(resourcePath)) {
-            if (inputStream == null) throw new NullPointerException("getResourceAsStream(\"" + resourcePath + "\") returned null");
-            out.accept(context.stash("description", resourcePath), inputStream);
+            if (inputStream != null) out.accept(context.stash("description", resourcePath), inputStream);
+            else if (!optional) throw new NullPointerException("getResourceAsStream(\"" + resourcePath + "\") returned null");
         }
     }
 
@@ -57,5 +59,6 @@ public final class Open implements Transformer<Object, InputStream> {
     public static class Parameters  {
         public TemplateParameters trusted;
         public TemplateParameters untrusted;
+        public boolean optional = false;
     }
 }
