@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
+import b.nana.technology.gingester.core.template.TemplateType;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 import java.io.IOException;
@@ -113,7 +114,7 @@ public final class RespondPath implements Transformer<Path, String> {
     }
 
     public static class Parameters {
-        public TemplateParameters directoryTemplate = new TemplateParameters("/http/directory.html", TemplateParameters.Interpretation.RESOURCE, false);
+        public TemplateParameters directoryTemplate = new TemplateParameters("/http/directory.html", TemplateType.RESOURCE, false);
         public boolean redirdir = true;
     }
 }

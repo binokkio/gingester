@@ -32,16 +32,18 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlS
         ConnectionWith<DqlStatement> connection = acquireConnection(context, in);
         try {
 
+            String raw;
             DqlStatement tempDqlStatement;
 
             if (dqlTemplate.isInvariant()) {
+                raw = dqlTemplate.requireInvariant();
                 tempDqlStatement = connection.getSingleton();
                 if (tempDqlStatement == null) {
-                    tempDqlStatement = new DqlStatement(connection.getConnection(), dqlTemplate.requireInvariant(), dql.parameters, fetchSize, columnsOnly);
+                    tempDqlStatement = new DqlStatement(connection.getConnection(), raw, dql.parameters, fetchSize, columnsOnly);
                     connection.setSingleton(tempDqlStatement);
                 }
             } else {
-                String raw = dqlTemplate.render(context, in);
+                raw = dqlTemplate.render(context, in);
                 tempDqlStatement = connection.getObject(raw);
                 if (tempDqlStatement == null) {
                     tempDqlStatement = new DqlStatement(connection.getConnection(), raw, dql.parameters, fetchSize, columnsOnly);
@@ -55,7 +57,7 @@ public final class Dql extends JdbcTransformer<Object, Map<String, Object>, DqlS
             try (ResultSet resultSet = dqlStatement.execute(context)) {
                 for (long i = 0; resultSet.next(); i++) {
                     out.accept(
-                            context.stash("description", dqlTemplate.getTemplateString() + " :: " + i),
+                            context.stash("description", raw + " :: " + i),
                             dqlStatement.readRow(resultSet)
                     );
                 }

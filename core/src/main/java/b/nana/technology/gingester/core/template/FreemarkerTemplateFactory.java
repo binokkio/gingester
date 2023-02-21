@@ -3,11 +3,9 @@ package b.nana.technology.gingester.core.template;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import freemarker.template.Template;
 import freemarker.template.*;
 import freemarker.template.utility.DeepUnwrap;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,10 +75,6 @@ public final class FreemarkerTemplateFactory {
     }
 
     private static FreemarkerTemplateWrapper createTemplate(String name, String templateString, Configuration configuration) {
-        try {
-            return new FreemarkerTemplateWrapper(new Template(name, templateString, configuration));
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // TODO
-        }
+        return new FreemarkerTemplateWrapper(name, templateString, configuration);
     }
 }

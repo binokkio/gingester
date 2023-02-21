@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,6 +38,12 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 public class Search implements Transformer<Object, Path> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
+    private static final List<Predicate<String>> BAD_GLOBS = List.of(
+            glob -> glob.startsWith("/"),
+            glob -> glob.startsWith("."),
+            glob -> glob.contains("//"),
+            glob -> glob.contains("/./"),
+            glob -> glob.contains("../"));
 
     private final FileSystem fileSystem = FileSystems.getDefault();
 
@@ -45,6 +52,7 @@ public class Search implements Transformer<Object, Path> {
     private final List<Template> regexTemplates;
     private final boolean findDirs;
     private final boolean checkRootIsDir;
+    private final boolean checkGlobs;
 
     public Search(Parameters parameters) {
         rootTemplate = Context.newTemplate(parameters.root);
@@ -52,13 +60,7 @@ public class Search implements Transformer<Object, Path> {
         regexTemplates = parameters.regexes.stream().map(Context::newTemplate).collect(Collectors.toList());
         findDirs = parameters.findDirs;
         checkRootIsDir = parameters.checkRootIsDir;
-
-        for (TemplateParameters globTemplateParameters : parameters.globs) {
-            String glob = globTemplateParameters.getTemplateString();
-            if (glob.startsWith("/") || glob.startsWith(".") || glob.contains("//") || glob.contains("/./") || glob.contains("/../")) {
-                LOGGER.warn("Glob '{}' will not match anything, use '{root:\"\",globs:\"\"}' to search outside of the working directory and use globs without \".\", \"..\", \"/\" as path elements", glob);
-            }
-        }
+        checkGlobs = parameters.checkGlobs;
     }
 
     @Override
@@ -66,13 +68,14 @@ public class Search implements Transformer<Object, Path> {
         Path root = Path.of(rootTemplate.render(context, in)).toAbsolutePath();
         if (checkRootIsDir && !Files.isDirectory(root)) LOGGER.warn("PathSearch root is not a directory: " + root);
         List<String> globs = globTemplates.stream().map(t -> t.render(context, in)).collect(Collectors.toList());
+        if (checkGlobs) globs.stream().filter(glob -> BAD_GLOBS.stream().anyMatch(bg -> bg.test(glob))).forEach(glob -> LOGGER.warn("Glob '{}' will not match anything, use '{root:\"\",globs:\"\"}' to search outside of the working directory and use globs without \".\", \"..\", \"/\" as path elements", glob));
         List<String> regexes = regexTemplates.stream().map(t -> t.render(context, in)).collect(Collectors.toList());
         Files.walkFileTree(root, new Visitor(root, globs, regexes, context, out));
     }
 
     /**
      * Enrich the PathSearch stash.
-     *
+     * <p>
      * Subclasses can implement this method to add information to the stash by mutating the
      * map passed to the `stash` parameter.
      *
@@ -177,5 +180,6 @@ public class Search implements Transformer<Object, Path> {
         public List<TemplateParameters> regexes = Collections.emptyList();
         public boolean findDirs;
         public boolean checkRootIsDir = true;
+        public boolean checkGlobs = true;
     }
 }

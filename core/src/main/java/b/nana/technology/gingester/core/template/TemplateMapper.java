@@ -3,6 +3,12 @@ package b.nana.technology.gingester.core.template;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,43 +24,94 @@ import java.util.Optional;
  */
 public class TemplateMapper<T> {
 
-    private final String templateString;
-    private final FreemarkerTemplateWrapper templateWrapper;
+    private final TemplateType is;
+    private final Template sourceTemplate;
+    private final FetchKey sourceStash;
+    private final Map<String, Object> kwargs;
+    private final FreemarkerTemplateWrapper template;
     private final Mapper<T> mapper;
     private final T invariant;
 
-    public TemplateMapper(TemplateParameters templateParameters, Mapper<T> mapper) {
-        this.templateString = templateParameters.getTemplateString();
-        this.templateWrapper = templateParameters.createTemplateWrapper();
+    public TemplateMapper(TemplateParameters parameters, Mapper<T> mapper) {
+
+        this.kwargs = parameters.kwargs;
         this.mapper = mapper;
 
-        if (templateParameters.invariant == null) {
+        switch (parameters.is) {
+
+            case STRING:
+                is = TemplateType.STRING;
+                sourceTemplate = null;
+                sourceStash = null;
+                template = FreemarkerTemplateFactory.createTemplate("STRING", parameters.template);
+                invariant = tryInvariant(parameters.invariant);
+                break;
+
+            case STASH:
+                is =  TemplateType.STASH;
+                sourceTemplate = null;
+                sourceStash = new FetchKey(parameters.template);
+                template = null;
+                invariant = null;
+                break;
+
+            case FILE:
+            case HOT_FILE:
+            case RESOURCE:
+                sourceTemplate = new Template(new TemplateParameters(parameters.template));
+                sourceStash = null;
+                if (parameters.is != TemplateType.HOT_FILE && sourceTemplate.isInvariant()) {
+                    is = TemplateType.STRING;
+                    template = createTemplateWrapper(
+                            is.name() + ":" + sourceTemplate.requireInvariant(),
+                            readSource(sourceTemplate.requireInvariant(), parameters.is),
+                            kwargs);
+                    invariant = tryInvariant(parameters.invariant);
+                } else {
+                    is = parameters.is;
+                    template = null;
+                    invariant = null;
+                }
+                break;
+
+            default: throw new IllegalStateException("No case for " + parameters.is);
+        }
+    }
+
+    private FreemarkerTemplateWrapper createTemplateWrapper(String name, String template, Map<String, Object> kwargs) {
+        return FreemarkerTemplateFactory.createTemplate(
+                name,
+                FreemarkerTemplateFactory.createCliTemplate(
+                        name,
+                        template
+                ).render(kwargs));
+    }
+
+    private T tryInvariant(Boolean hint) {
+
+        if (hint == null) {
 
             // try to render the template without a data model, if that does not throw then
             // assume the template is invariant
 
             String render = null;
-            if (!templateParameters.getTemplateString().contains("${") && !templateParameters.getTemplateString().contains("<#")) {
+            if (!template.getRaw().contains("${") && !template.getRaw().contains("<#")) {
                 try {
-                    render = templateWrapper.render();
+                    render = template.render();
                 } catch (Exception e) {
-                    // ignore, render stays null and we assume this template is not invariant
+                    // ignore, render stays null, and we assume this template is not invariant
                 }
             }
 
-            invariant = render != null ?
+            return render != null ?
                     map(render) :
                     null;
 
-        } else if (templateParameters.invariant) {
-            invariant = map(templateWrapper.render());
+        } else if (hint) {
+            return map(template.render());
         } else {
-            invariant = null;
+            return null;
         }
-    }
-
-    public String getTemplateString() {
-        return templateString;
     }
 
     /**
@@ -67,7 +124,7 @@ public class TemplateMapper<T> {
      * @return the resulting T
      */
     public T render(Context context) {
-        return invariant != null ? invariant : map(templateWrapper.render(new ContextPlus(context)));
+        return render(context, null, Collections.emptyMap());
     }
 
     /**
@@ -81,7 +138,7 @@ public class TemplateMapper<T> {
      * @return the resulting T
      */
     public T render(Context context, Object in) {
-        return invariant != null ? invariant : map(templateWrapper.render(new ContextPlus(context, in)));
+        return render(context, in, Collections.emptyMap());
     }
 
     /**
@@ -96,7 +153,32 @@ public class TemplateMapper<T> {
      * @return the resulting T
      */
     public T render(Context context, Object in, Map<String, Object> extras) {
-        return invariant != null ? invariant : map(templateWrapper.render(new ContextPlus(context, in, extras)));
+
+        if (invariant != null)
+            return invariant;
+
+        if (template != null)
+            return map(template.render(new ContextPlus(context, in, extras)));
+
+        switch (is) {
+
+            case STASH:
+                return map(createTemplateWrapper(
+                        is.name() + ":" + sourceStash,
+                        (String) context.require(sourceStash),
+                        kwargs).render(new ContextPlus(context, in, extras)));
+
+            case FILE:
+            case HOT_FILE:
+            case RESOURCE:
+                String source = sourceTemplate.render(context, in, extras);
+                return map(createTemplateWrapper(
+                        is.name() + ":" + source,
+                        readSource(source, is),
+                        kwargs).render(new ContextPlus(context, in, extras)));
+
+            default: throw new IllegalStateException("No case for " + is);
+        }
     }
 
     /**
@@ -136,6 +218,33 @@ public class TemplateMapper<T> {
             return mapper.map(string);
         } catch (Exception e) {
             throw new RuntimeException(e);  // TODO
+        }
+    }
+
+    private static String readSource(String source, TemplateType templateType) {
+        switch (templateType) {
+            case FILE: return readTemplateFile(source);
+            case RESOURCE: return readTemplateResource(source);
+            default: throw new IllegalArgumentException("No case for " + templateType);
+        }
+    }
+
+    private static String readTemplateFile(String template) {
+        Path path = Paths.get(template);
+        try {
+            return Files.readString(path);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read template file", e);
+        }
+    }
+
+    private static String readTemplateResource(String template) {
+        try (InputStream inputStream = TemplateParameters.class.getResourceAsStream(template)) {
+            if (inputStream == null)
+                throw new IllegalArgumentException("Resource not found: " + template);
+            return new String(inputStream.readAllBytes());
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to read template resource", e);
         }
     }
 
