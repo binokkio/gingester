@@ -29,6 +29,7 @@ public final class FreemarkerTemplateFactory {
         CONFIGURATION.setNumberFormat("computer");
         CONFIGURATION.setBooleanFormat("c");
         CONFIGURATION.setObjectWrapper(OBJECT_WRAPPER);
+        CONFIGURATION.setAPIBuiltinEnabled(true);
 
         CLI_CONFIGURATION = new Configuration(FREEMARKER_VERSION);
         CLI_CONFIGURATION.setLogTemplateExceptions(false);
@@ -37,6 +38,7 @@ public final class FreemarkerTemplateFactory {
         CLI_CONFIGURATION.setNumberFormat("computer");
         CLI_CONFIGURATION.setBooleanFormat("c");
         CLI_CONFIGURATION.setObjectWrapper(OBJECT_WRAPPER);
+        CLI_CONFIGURATION.setAPIBuiltinEnabled(true);
         CLI_CONFIGURATION.setSharedVariable(DEFAULT_DIRECTIVE, (TemplateDirectiveModel) (env, params, loopVars, body) -> {
             // noinspection unchecked
             ((Map<String, TemplateModel>) params).forEach((variableName, defaultValue) -> {
