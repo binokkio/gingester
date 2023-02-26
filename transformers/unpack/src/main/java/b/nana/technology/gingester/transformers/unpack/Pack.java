@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.transformers.unpack;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
@@ -9,18 +10,23 @@ import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.OutputStreamWrapper;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import b.nana.technology.gingester.transformers.unpack.packers.Packer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.io.IOException;
 
 @Names(1)
 public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
 
-    private final ContextMap<TarArchiveOutputStream> contextMap = new ContextMap<>();
-    private final Template entryTemplate;
+    private final ContextMap<Packer> contextMap = new ContextMap<>();
+
+    private final Packer.Type type;
+    private final Template entryNameTemplate;
 
     public Pack(Parameters parameters) {
-        entryTemplate = Context.newTemplate(parameters.entry);
+        type = parameters.type;
+        entryNameTemplate = Context.newTemplate(parameters.entry);
     }
 
     @Override
@@ -32,36 +38,32 @@ public final class Pack implements Transformer<byte[], OutputStreamWrapper> {
     public void prepare(Context context, Receiver<OutputStreamWrapper> out) {
         OutputStreamWrapper outputStreamWrapper = new OutputStreamWrapper();
         out.accept(context, outputStreamWrapper);
-        TarArchiveOutputStream tar = new TarArchiveOutputStream(outputStreamWrapper);
-        contextMap.put(context, tar);
+        Packer packer = type.create(outputStreamWrapper);
+        contextMap.put(context, packer);
     }
 
     @Override
     public void transform(Context context, byte[] in, Receiver<OutputStreamWrapper> out) throws Exception {
-        TarArchiveEntry entry = new TarArchiveEntry(entryTemplate.render(context, in));
-        entry.setSize(in.length);
-        contextMap.act(context, tar -> {
-            tar.putArchiveEntry(entry);
-            tar.write(in);
-            tar.closeArchiveEntry();
-        });
+        String entryName = entryNameTemplate.render(context, in);
+        contextMap.act(context, archiver -> archiver.add(entryName, in));
     }
 
     @Override
-    public void finish(Context context, Receiver<OutputStreamWrapper> out) throws Exception {
+    public void finish(Context context, Receiver<OutputStreamWrapper> out) throws IOException {
         contextMap.remove(context).close();
     }
 
+    @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
-
-        public TemplateParameters entry;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(TemplateParameters entry) {
-            this.entry = entry;
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, entry -> o("entry", entry));
+                rule(JsonNode::isArray, array -> o("type", array.get(0), "entry", array.get(1)));
+            }
         }
+
+        public Packer.Type type = Packer.Type.TAR;
+        public TemplateParameters entry;
     }
 }
