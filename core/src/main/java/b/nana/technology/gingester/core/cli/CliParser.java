@@ -228,7 +228,7 @@ public final class CliParser {
                             } catch (JsonProcessingException e) {
                                 throw new IllegalArgumentException(e);
                             }
-                        } else if (args[i].equals("@") && !args[i + 1].matches("[+-].*")) {
+                        } else if (args[i].equals("@")) {
                             parameters.add(JsonNodeFactory.instance.textNode(args[++i]));
                         } else {
                             try {
