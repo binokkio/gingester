@@ -1,13 +1,13 @@
-+ 'Unpack resource to workDir'
+++ Unpack resource to workDir ++
 -t ResourceOpen "[=resource]"
 -t Unpack
 -t UnpackedPaths:PathWrite "[=workDir]/${description?replace(' :: ', '/')}"
 
-+ 'When finished unpacking, search for the planets file'
+++ When finished unpacking, search for the planets file ++
 -t OnFinish
 -t PathSearch '{root:"[=workDir]",globs:"*/planets.csv"}'
 
-+ 'Build an index based with the planet index as key'
+++ Build an index based with the planet index as key ++
 -t DsvToJson -t JsonInternpret
 -s
 -t JsonPath $.name -s planetName
@@ -15,19 +15,19 @@
 -t JsonPath $.index
 -t MapCollect planetName -s planetMap
 
-+ 'When the index is complete, iterate through the moons'
+++ When the index is complete, iterate through the moons ++
 -t PathSearch '{root:"[=workDir]", globs:"*/*-moons.ndjson"}'
 -t InputStreamSplit
--t BytesFilterEmptyOut  + '(Filter out empty lines)'
+-t BytesFilterEmptyOut  ++ (Filter out empty lines) ++
 -t 4 BytesToJson '["ALLOW_UNQUOTED_FIELD_NAMES"]'
 
-+ 'Replace the planet index with the planet name'
+++ Replace the planet index with the planet name ++
 -s
 -t JsonPath $.planet
 -t MapGet planetMap
 -t JsonSet planet
 
-+ 'Join the results together in a new .ndjson.gz'
+++ Join the results together in a new .ndjson.gz ++
 -t InputStreamJoin
 -t Compress
 -t PathWrite '[=workDir]/results.ndjson.gz'

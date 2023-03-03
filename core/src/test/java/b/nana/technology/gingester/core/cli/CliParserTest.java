@@ -109,19 +109,6 @@ class CliParserTest {
     }
 
     @Test
-    void testEmptySingleArgCommentDoesNotCauseIssues() {
-
-        AtomicReference<String> result = new AtomicReference<>();
-
-        new FlowBuilder().cli("" +
-                "-cr empty-single-arg-comment")
-                .add(result::set)
-                .run();
-
-        assertEquals("Empty single argument comments, like the ones above and below, should not cause issues!", result.get());
-    }
-
-    @Test
     void testPassKwargs() {
 
         AtomicReference<String> result = new AtomicReference<>();
