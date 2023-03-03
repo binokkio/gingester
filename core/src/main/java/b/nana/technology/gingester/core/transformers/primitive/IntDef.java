@@ -14,7 +14,7 @@ public final class IntDef implements Transformer<Object, Integer> {
     private final Integer value;
 
     public IntDef(Parameters parameters) {
-        value = requireNonNull(parameters.value, "BooleanDef requires explicit value");
+        value = requireNonNull(parameters.value, "IntDef requires explicit value");
     }
 
     @Override
