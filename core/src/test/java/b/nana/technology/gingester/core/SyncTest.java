@@ -249,4 +249,37 @@ class SyncTest {
 
         assertEquals(1000, result.size());
     }
+
+    @Test
+    void testSyncFromPoint() {
+
+        Deque<Object> result = new LinkedBlockingDeque<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 1000 " +
+                "-sfpt " +
+                "-stt 1 Merge 'description > descriptions[]' " +
+                "-stt 1 Merge 'description > descriptions[]'")
+                .add(result::add)
+                .run();
+
+        assertEquals(1000, result.size());
+    }
+
+    @Test
+    void testSyncFromNamedAndReferencedPoint() {
+
+        Deque<Object> result = new LinkedBlockingDeque<>();
+
+        new FlowBuilder().cli("" +
+                "-t Repeat 1000 " +
+                "-pt 10.10.10 PointName " +
+                "-sf PointName " +
+                "-stt 1 Merge 'description > descriptions[]' " +
+                "-stt 1 Merge 'description > descriptions[]'")
+                .add(result::add)
+                .run();
+
+        assertEquals(1000, result.size());
+    }
 }

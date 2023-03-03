@@ -33,7 +33,7 @@ public class ParallelWriteReadTest {
                 "-stt InputStreamJoin " +
                 "-t Compress " +
                 "-t PathWrite '[=tempDir]/result-${groupKey}.txt.gz' " +
-                "-fg " +
+                "-stt FinishGate " +
                 "-s description " +
                 "-t Unpack " +
                 "-t InputStreamToString",
@@ -79,7 +79,7 @@ public class ParallelWriteReadTest {
                 .cli("-stt InputStreamJoin")
                 .cli("-t Compress")
                 .cli("-t PathWrite '[=tempDir]/result-${groupKey}.txt.gz'", Map.of("tempDir", tempDir))
-                .cli("-fg")
+                .cli("-stt FinishGate")
                 .cli("-s description")
                 .cli("-t Unpack")
                 .cli("-t InputStreamToString")

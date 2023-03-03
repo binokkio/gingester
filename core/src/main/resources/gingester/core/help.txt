@@ -4,12 +4,16 @@ General usage:
 
     <> mark placeholders, [] mark optionals
 
-    -cf/--cli-file <path/to/file> [<parameters>]
+    -cf/--cli-file [[<scope>]:]<path/to/file> [<parameters>]
         add cli from file, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
+        provide [[<scope>]:] to process the cli in a scope named <scope>
+        provide [:] to process the cli in a scope given the name of the most recently added id
         provide [<parameters>] in JSON syntax to be used as template data
 
-    -cr/--cli-resource <path/to/resource> [<parameters>]
+    -cr/--cli-resource [[<scope>]:]<path/to/resource> [<parameters>]
         add cli from resource, supports Freemarker square-bracket-tag/square-bracket-interpolation templating
+        provide [[<scope>]:] to process the cli in a scope named <scope>
+        provide [:] to process the cli in a scope given the name of the most recently added id
         provide [<parameters>] in JSON syntax to be used as template data
 
     -d/--divert <id1> [<id2> [...]]
@@ -41,6 +45,9 @@ General usage:
         provide "err" for [<target>] to print to stderr instead of stdout
         provide an integer for [<contextLimit>] to control the amount of context printed
 
+    -pt/--point/--passthrough [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>[!]]
+        add a passthrough transformer to the flow, see -t for further details
+
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
 
@@ -52,6 +59,9 @@ General usage:
 
     -sft/--sync-from-transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
         equal to -t but marks the transformer to be synced with when -stt or -stft is used later
+
+    -sfpt/--sync-from-point/--sync-from-passthrough [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>[!]]
+        equal to -pt but marks the transformer to be synced with when -stt or -stft is used later
 
     -stft/--sync-to-and-from-transformer
             [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
