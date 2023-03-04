@@ -11,6 +11,7 @@ final class ObjectWrapper extends DefaultObjectWrapper {
 
     ObjectWrapper(Version freemarkerVersion) {
         super(freemarkerVersion);
+        setExposeFields(true);
     }
 
     @Override
