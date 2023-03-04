@@ -16,18 +16,16 @@ import java.io.InputStream;
 @Pure
 public final class FromInputStream implements Transformer<InputStream, Document> {
 
-    private final DocumentBuilder documentBuilder;
-
-    public FromInputStream() {
+    private final ThreadLocal<DocumentBuilder> documentBuilders = ThreadLocal.withInitial(() -> {
         try {
-            documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            return DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new RuntimeException();
         }
-    }
+    });
 
     @Override
     public void transform(Context context, InputStream in, Receiver<Document> out) throws IOException, SAXException {
-        out.accept(context, documentBuilder.parse(in));
+        out.accept(context, documentBuilders.get().parse(in));
     }
 }
