@@ -165,7 +165,7 @@ public class TemplateMapper<T> {
             case STASH:
                 return map(createTemplateWrapper(
                         is.name() + ":" + sourceStash,
-                        (String) context.require(sourceStash),
+                        context.require(sourceStash).toString(),
                         kwargs).render(new ContextPlus(context, in, extras)));
 
             case FILE:
