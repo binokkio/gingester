@@ -34,7 +34,7 @@ public final class CliSplitter {
                 if (quote == 0 && Character.isWhitespace(c) && !escape) {
                     args.add(arg.toString());
                     arg = new StringBuilder();
-                } else if (c == quote && (i == cli.length() - 1 || Character.isWhitespace(cli.charAt(i + 1)))) {
+                } else if (c == quote && !escape) {
                     quote = 0;
                     args.add(arg.toString());
                     arg = new StringBuilder();
