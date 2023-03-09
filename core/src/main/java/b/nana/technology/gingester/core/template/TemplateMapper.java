@@ -48,7 +48,7 @@ public class TemplateMapper<T> {
                 break;
 
             case STASH:
-                is =  TemplateType.STASH;
+                is = TemplateType.STASH;
                 sourceTemplate = null;
                 sourceStash = new FetchKey(parameters.template);
                 template = null;
