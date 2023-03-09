@@ -6,6 +6,7 @@ import b.nana.technology.gingester.core.template.TemplateMapper;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -187,8 +188,39 @@ public final class Context implements Iterable<Context> {
                                 } else {
                                     return null;
                                 }
-                            } else {
-                                return null;
+                            } else if (result != null) {
+                                try {
+                                    Class<?> c = result.getClass();
+
+                                    // try and get value from field
+                                    try {
+                                        result = c.getField(n).get(result);
+                                        continue;
+                                    } catch (NoSuchFieldException e) {
+                                        // ignore
+                                    }
+
+                                    // try and get value from specific getter
+                                    try {
+                                        result = c.getMethod("get" + Character.toUpperCase(n.charAt(0)) + n.substring(1)).invoke(result);
+                                        continue;
+                                    } catch (NoSuchMethodException | InvocationTargetException e) {
+                                        // ignore
+                                    }
+
+                                    // try and get value from generic getter
+                                    try {
+                                        result = c.getMethod("get", new Class[] { String.class }).invoke(result, n);
+                                        continue;
+                                    } catch (NoSuchMethodException | InvocationTargetException e) {
+                                        // ignore
+                                    }
+
+                                    return null;
+
+                                } catch (IllegalAccessException e) {
+                                    return null;  // TODO
+                                }
                             }
                         }
                         return result;
