@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core.template;
 
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -163,9 +164,10 @@ public class TemplateMapper<T> {
         switch (is) {
 
             case STASH:
+                Object stash = context.require(sourceStash);
                 return map(createTemplateWrapper(
                         is.name() + ":" + sourceStash,
-                        context.require(sourceStash).toString(),
+                        stash instanceof TextNode ? ((TextNode) stash).textValue() : stash.toString(),
                         kwargs).render(new ContextPlus(context, in, extras)));
 
             case FILE:

@@ -11,6 +11,7 @@ import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.template.TemplateType;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -69,7 +70,10 @@ public final class Gcli implements Transformer<Object, Object> {
 
             case STASH:
                 FetchKey fk = new FetchKey(sourceParameters.source);
-                return c -> (String) c.require(fk);
+                return c -> {
+                    Object value = c.require(fk);
+                    return value instanceof TextNode ? ((TextNode) value).asText() : value.toString();
+                };
 
             case STRING:
                 return Context.newTemplate(new TemplateParameters(sourceParameters.source))::render;
