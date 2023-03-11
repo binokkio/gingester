@@ -27,6 +27,16 @@ public final class CliSplitter {
             if (arg.length() == 0 && quote == 0) {
                 if ((c == '"' || c == '\'') && !escape) {
                     quote = c;
+                } else if (c == '<' && !escape) {
+                    if (++i == cli.length() || cli.charAt(i) != '<') throw new IllegalArgumentException("Bad gcli syntax near EOF");
+                    if (++i == cli.length() || cli.charAt(i) != ' ') throw new IllegalArgumentException("Bad gcli syntax near EOF");
+                    StringBuilder delimiter = new StringBuilder();
+                    while (++i < cli.length() && !Character.isWhitespace(cli.charAt(i)))
+                        delimiter.append(cli.charAt(i));
+                    int end = cli.indexOf(delimiter.toString(), ++i);  // ignore the whitespace character following the delimiter
+                    if (end == -1) throw new IllegalArgumentException("Bad gcli syntax near EOF");
+                    args.add(cli.substring(i, end - 1));
+                    i = end + delimiter.length();
                 } else if (!Character.isWhitespace(c)) {
                     arg.append(c);
                 }
