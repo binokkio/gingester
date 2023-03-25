@@ -30,6 +30,7 @@
         <module>redis</module>
         <module>smtp</module>
         <module>statistics</module>
+        <module>tika</module>
         <module>unpack</module>
     </modules>
 
