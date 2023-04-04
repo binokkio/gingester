@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
@@ -17,10 +18,10 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Description("Parse input as delimiter-separated values and output a JSON object for each DSV record")
 public final class ToJson extends CharsetTransformer<InputStream, JsonNode> {
@@ -70,8 +71,7 @@ public final class ToJson extends CharsetTransformer<InputStream, JsonNode> {
         Reader reader = new InputStreamReader(in, getCharset());
         MappingIterator<MultiMap> iterator = objectReader.readValues(reader);
         while (iterator.hasNext()) {
-            MultiMap multiMap = iterator.next();
-            ObjectNode result = objectMapper.valueToTree(multiMap);
+            ObjectNode result = iterator.next().objectNode;
             if (extras != null && result.path(extras).isValueNode()) {
                 ArrayNode arrayNode = objectMapper.createArrayNode();
                 arrayNode.add(result.get(extras));
@@ -92,27 +92,79 @@ public final class ToJson extends CharsetTransformer<InputStream, JsonNode> {
         public String extras = "__extras__";
     }
 
-    private static class MultiMap extends LinkedHashMap<String, Object> {
+    private static class MultiMap implements Map<String, String> {
 
-        private final HashSet<String> upgraded = new HashSet<>();
+        private final ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 
         @Override
-        public Object put(String key, Object value) {
-            Object collision = super.put(key, value);
-            if (collision != null) {
-                if (upgraded.contains(key)) {
-                    // noinspection unchecked
-                    ((ArrayList<Object>) collision).add(value);
-                    super.put(key, collision);
-                } else {
-                    ArrayList<Object> values = new ArrayList<>();
-                    values.add(collision);
-                    values.add(value);
-                    super.put(key, values);
-                    upgraded.add(key);
-                }
+        public String put(String key, String value) {
+            JsonNode current = objectNode.get(key);
+            if (current == null) {
+                objectNode.put(key, value);
+            } else if (current.isArray()) {
+                ((ArrayNode) current).add(value);
+            } else {
+                ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+                arrayNode.add(current);
+                arrayNode.add(value);
+                objectNode.set(key, arrayNode);
             }
             return null;
+        }
+
+        @Override
+        public int size() {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public boolean isEmpty() {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public boolean containsKey(Object o) {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public boolean containsValue(Object o) {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public String get(Object o) {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public String remove(Object o) {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public void putAll(Map<? extends String, ? extends String> map) {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public void clear() {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public Set<String> keySet() {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public Collection<String> values() {
+            throw new UnsupportedOperationException("Not implemented");
+        }
+
+        @Override
+        public Set<Entry<String, String>> entrySet() {
+            throw new UnsupportedOperationException("Not implemented");
         }
     }
 }

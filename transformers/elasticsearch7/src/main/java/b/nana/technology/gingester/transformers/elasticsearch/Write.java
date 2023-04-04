@@ -15,8 +15,8 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +58,8 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
     @Override
     public void open() {
 
+        super.open();
+
         BulkProcessor.Builder builder = BulkProcessor.builder(
                 (request, bulkListener) -> restClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
                 this
@@ -94,6 +96,7 @@ public final class Write extends ElasticsearchTransformer<byte[], Void> implemen
     @Override
     public void close() throws Exception {
         bulkProcessor.awaitClose(1, TimeUnit.HOURS);
+        super.close();
     }
 
     @Override

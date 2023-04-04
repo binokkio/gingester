@@ -11,6 +11,7 @@ final class ObjectWrapper extends DefaultObjectWrapper {
 
     ObjectWrapper(Version freemarkerVersion) {
         super(freemarkerVersion);
+        setExposeFields(true);
     }
 
     @Override
@@ -31,7 +32,6 @@ final class ObjectWrapper extends DefaultObjectWrapper {
     private TemplateModel handleMapNode(Map<?, ?> map) {
         return new TemplateMapModel() {
 
-            @Override
             public String getAsString() throws TemplateModelException {
                 try {
                     return FreemarkerTemplateFactory.OBJECT_MAPPER.writeValueAsString(map);
@@ -40,34 +40,32 @@ final class ObjectWrapper extends DefaultObjectWrapper {
                 }
             }
 
-            @Override
             public TemplateModel get(String key) throws TemplateModelException {
                 return wrap(map.get(key));
             }
 
-            @Override
             public boolean isEmpty() {
                 return map.isEmpty();
             }
 
-            @Override
             public int size() {
                 return map.size();
             }
 
-            @Override
             public TemplateCollectionModel keys() {
                 return new SimpleCollection(map.keySet(), ObjectWrapper.this);
             }
 
-            @Override
             public TemplateCollectionModel values() {
                 return new SimpleCollection(map.values(), ObjectWrapper.this);
             }
 
-            @Override
             public KeyValuePairIterator keyValuePairIterator() {
                 return new MapKeyValuePairIterator(map, ObjectWrapper.this);
+            }
+
+            public TemplateModel getAPI() throws TemplateModelException {
+                return wrapAsAPI(map);
             }
         };
     }
@@ -144,6 +142,10 @@ final class ObjectWrapper extends DefaultObjectWrapper {
                         }
                     };
                 }
+
+                public TemplateModel getAPI() throws TemplateModelException {
+                    return wrapAsAPI(jsonNode);
+                }
             };
         } else if (jsonNode.isArray()) {
             return new TemplateJsonArrayModel() {
@@ -159,6 +161,10 @@ final class ObjectWrapper extends DefaultObjectWrapper {
                 public int size() {
                     return jsonNode.size();
                 }
+
+                public TemplateModel getAPI() throws TemplateModelException {
+                    return wrapAsAPI(jsonNode);
+                }
             };
         } else if (jsonNode.isNumber()) {
             return (TemplateNumberModel) jsonNode::doubleValue;
@@ -171,15 +177,15 @@ final class ObjectWrapper extends DefaultObjectWrapper {
         }
     }
 
-    private interface TemplateMapModel extends TemplateHashModelEx2, TemplateScalarModel {
+    private interface TemplateMapModel extends TemplateHashModelEx2, TemplateScalarModel, TemplateModelWithAPISupport {
 
     }
 
-    private interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel {
+    private interface TemplateJsonObjectModel extends TemplateHashModelEx2, TemplateScalarModel, TemplateModelWithAPISupport {
 
     }
 
-    private interface TemplateJsonArrayModel extends TemplateSequenceModel, TemplateScalarModel {
+    private interface TemplateJsonArrayModel extends TemplateSequenceModel, TemplateScalarModel, TemplateModelWithAPISupport {
 
     }
 }

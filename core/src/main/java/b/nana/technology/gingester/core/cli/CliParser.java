@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,8 @@ public final class CliParser {
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CliParser.class);
 
     private CliParser() {}
 
@@ -61,14 +65,17 @@ public final class CliParser {
 
         for (int i = 0; i < args.length; i++) {
 
-            boolean markSyncFrom = false;
-            boolean syncTo = false;
-            boolean fsw = false;
-
             switch (args[i]) {
 
-                case "+":
-                    i++;
+                case "-dm":
+                case "--debug":
+                case "--debug-mode":
+                    target.enableDebugMode();
+                    break;
+
+                case "-gs":
+                case "--graceful-sigint":
+                    target.enableShutdownHook();
                     break;
 
                 case "-r":
@@ -82,6 +89,16 @@ public final class CliParser {
                     target.setGoal(viewBridges ? FlowRunner.Goal.VIEW_BRIDGES : FlowRunner.Goal.VIEW);
                     break;
 
+                case "-cf":
+                case "--cli-file":
+                    i = handleCliFile(target, args, i);
+                    break;
+
+                case "-cr":
+                case "--cli-resource":
+                    i = handleCliResource(target, args, i);
+                    break;
+
                 case "-d":
                 case "--divert":
                     List<String> from = new ArrayList<>();
@@ -91,25 +108,17 @@ public final class CliParser {
                     target.divert(from);
                     break;
 
-                case "-dm":
-                case "--debug":
-                case "--debug-mode":
-                    target.enableDebugMode();
-                    break;
-
-                case "-gs":
-                case "--graceful-sigint":
-                    target.enableShutdownHook();
-                    break;
-
-                case "-cf":
-                case "--cli-file":
-                    i = handleCliFile(target, args, i);
-                    break;
-
-                case "-cr":
-                case "--cli-resource":
-                    i = handleCliResource(target, args, i);
+                case "-e":
+                case "--excepts":
+                    List<String> excepts = new ArrayList<>();
+                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
+                        String arg = args[++i];
+                        if (Character.isLowerCase(arg.charAt(0)))
+                            arg = target.getElog(arg);
+                        excepts.add(arg);
+                    }
+                    if (excepts.isEmpty()) excepts.add(Id.ELOG.getGlobalId());
+                    target.exceptTo(excepts);
                     break;
 
                 case "-l":
@@ -129,24 +138,6 @@ public final class CliParser {
                     target.linkFrom(linkFrom);
                     break;
 
-                case "-e":
-                case "--excepts":
-                    List<String> excepts = new ArrayList<>();
-                    while (i + 1 < args.length && !args[i + 1].matches("[+-].*")) {
-                        String arg = args[++i];
-                        if (Character.isLowerCase(arg.charAt(0)))
-                            arg = target.getElog(arg);
-                        excepts.add(arg);
-                    }
-                    if (excepts.isEmpty()) excepts.add(Id.ELOG.getGlobalId());
-                    target.exceptTo(excepts);
-                    break;
-
-                case "-p":
-                case "--probe":
-                    args = splice(args, new String[] { "-t", "Probe" }, i + 1, 0);
-                    break;
-
                 case "-sf":
                 case "--sync-from":
                     List<String> syncFrom = new ArrayList<>();
@@ -157,109 +148,91 @@ public final class CliParser {
 
                 case "-sft":
                 case "--sync-from-transformer":
-                    markSyncFrom = true;
+                    i = addNode(target.node(), args, i, true);
+                    target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
                 case "-stt":
                 case "--sync-to-transformer":
-                    syncTo = !markSyncFrom;  // a bit of trickery to basically skip this case if we fell through the -sft case
+                    i = addNode(target.node(), args, i, true);
+                    target.sync();
+                    break;
+
                 case "-stft":
                 case "--sync-to-and-from-transformer":
-                    if (!markSyncFrom && !syncTo) {
-                        markSyncFrom = true;
-                        syncTo = true;
-                    }
-                case "-f":
-                case "--fetch":
-                case "-fa":
-                case "--fetch-all":
-                case "-fg":
-                case "--finish-gate":
-                case "-sfg":
-                case "--seed-finish-gate":
-                case "-s":
-                case "--stash":
-                case "-w":
-                case "--swap":
-                    fsw = !markSyncFrom && !syncTo;  // same bit of trickery as above
+                    i = addNode(target.node(), args, i, true);
+                    target.sync();
+                    target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
+                case "-sfpt":
+                case "--sync-from-point":
+                case "--sync-from-passthrough":
+                    i = addNode(target.node().name("Passthrough"), args, i, true);
+                    target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
+                case "-pt":
+                case "--point":
+                case "--passthrough":
+                    i = addNode(target.node().name("Passthrough"), args, i, true);
+                    break;
+
                 case "-t":
                 case "--transformer":
+                    i = addNode(target.node(), args, i, true);
+                    break;
 
-                    Node transformer = new Node();
-                    String name;
+                case "-f":
+                case "--fetch":
+                    i = addNode(target.node().name("Fetch"), args, i, false);
+                    break;
 
-                    if (fsw) {
-                        if (args[i].matches(".*f.*a")) name = "FetchAll";
-                        else if (args[i].matches(".*f.*g")) {
-                            name = "FinishGate";
-                            syncTo = !args[i].contains("s");  // TODO this is broken right? --finish-gate contains "s"
-                        }
-                        else if (args[i].contains("f")) name = "Fetch";
-                        else if (args[i].contains("w")) name = "Swap";
-                        else name = "Stash";
-                    } else {
-                        String next = args[++i];
-                        if (next.matches("[\\d.]+")) {
-                            String[] parts = next.split("\\.");
-                            if (parts.length > 0 && !parts[0].isEmpty()) transformer.maxWorkers(Integer.parseInt(parts[0]));
-                            if (parts.length > 1 && !parts[1].isEmpty()) transformer.maxQueueSize(Integer.parseInt(parts[1]));
-                            if (parts.length > 2 && !parts[2].isEmpty()) transformer.maxBatchSize(Integer.parseInt(parts[2]));
-                            next = args[++i];
-                        }
-                        String[] parts = next.split(":");
-                        if (parts[parts.length - 1].endsWith("!")) {
-                            transformer.report(true);
-                            parts[parts.length - 1] = parts[parts.length - 1].substring(0, parts[parts.length - 1].length() - 1);
-                        }
-                        if (parts.length == 1) {
-                            name = parts[0];
-                        } else {
-                            transformer.id(parts[0]);
-                            name = parts[1];
-                        }
-                    }
+                case "-fa":
+                case "--fetch-all":
+                    i = addNode(target.node().name("FetchAll"), args, i, false);
+                    break;
 
-                    ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
-                    while (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
-                        i++;
-                        if (args[i].equals("%") && !args[i + 1].matches("[+-].*") && !parameters.isEmpty()) {
-                            try {
-                                OBJECT_MAPPER
-                                        .readerForUpdating(parameters.get(parameters.size() - 1))
-                                        .readValue(args[++i]);
-                            } catch (JsonProcessingException e) {
-                                throw new IllegalArgumentException(e);
-                            }
-                        } else if (args[i].equals("@") && !args[i + 1].matches("[+-].*")) {
-                            parameters.add(JsonNodeFactory.instance.textNode(args[++i]));
-                        } else {
-                            try {
-                                parameters.add(OBJECT_MAPPER.readTree(args[i]));
-                            } catch (JsonProcessingException e) {
-                                parameters.add(JsonNodeFactory.instance.textNode(args[i]));
-                            }
-                        }
-                    }
+                case "-p":
+                case "--probe":
+                    i = addNode(target.node().name("Probe"), args, i, false);
+                    break;
 
-                    if (parameters.size() > 1) {
-                        transformer.name(name).transformer(TransformerFactory.instance(name, parameters));
-                    } else if (!parameters.isEmpty()) {
-                        transformer.name(name).transformer(TransformerFactory.instance(name, parameters.get(0)));
-                    } else {
-                        transformer.name(name).transformer(TransformerFactory.instance(name));
-                    }
-
-                    target.add(transformer);
-                    if (syncTo) target.sync();
-                    if (markSyncFrom) target.syncFrom(target.getLastId().getGlobalId());
-
+                case "-s":
+                case "--stash":
+                    i = addNode(target.node().name("Stash"), args, i, false);
                     break;
 
                 case "-ss":
                 case "--stash-string":
-                    args = splice(args, new String[] { "-t", "StashString" }, i + 1, 0);
+                    i = addNode(target.node().name("StashString"), args, i, false);
+                    break;
+
+                case "-w":
+                case "--swap":
+                    i = addNode(target.node().name("Swap"), args, i, false);
                     break;
 
                 case "--":
                     target.linkFrom(List.of());
+                    break;
+
+                case "+":  // TODO remove, replace `.matches("[+-].*")` with ~ `.charAt(0) != '-'`
+                    LOGGER.warn("The CLI arg \"+\" will be removed in a future version, use block style comments instead");
+                    i++;
+                    break;
+
+                case "-fg":
+                case "--finish-gate":  // TODO remove
+                    LOGGER.warn("The CLI arg \"" + args[i] + "\" will be removed in a future version, use `-stt FinishGate` instead");
+                    i = addNode(target.node().name("FinishGate"), args, i, false);
+                    target.sync();
+                    break;
+
+                case "-sfg":
+                case "--seed-finish-gate":  // TODO remove
+                    LOGGER.warn("The CLI arg \"" + args[i] + "\" will be removed in a future version, use `-t FinishGate` instead");
+                    i = addNode(target.node().name("FinishGate"), args, i, false);
                     break;
 
                 default: throw new IllegalArgumentException("Unexpected argument: " + args[i]);
@@ -267,9 +240,71 @@ public final class CliParser {
         }
     }
 
+    private static int addNode(Node node, String[] args, int i, boolean maybeNamed) {
+
+        if (args.length > i + 1 && args[i + 1].matches("[\\d.]+")) {
+            String[] parts = args[++i].split("\\.");
+            if (parts.length > 0 && !parts[0].isEmpty()) node.maxWorkers(Integer.parseInt(parts[0]));
+            if (parts.length > 1 && !parts[1].isEmpty()) node.maxQueueSize(Integer.parseInt(parts[1]));
+            if (parts.length > 2 && !parts[2].isEmpty()) node.maxBatchSize(Integer.parseInt(parts[2]));
+        }
+
+        if (maybeNamed && args.length > i + 1 && Character.isUpperCase(args[i + 1].charAt(0))) {
+
+            String arg = args[++i];
+            if (arg.endsWith("!")) {
+                node.report(true);
+                arg = arg.substring(0, arg.length() - 1);
+            }
+
+            String[] parts = arg.split(":");
+            if (parts.length == 2) {
+                node.id(parts[0]);
+                node.name(parts[1]);
+            } else if (node.getName().isPresent()) {
+                node.id(parts[0]);
+            } else {
+                node.name(parts[0]);
+            }
+        }
+
+        ArrayNode parameters = JsonNodeFactory.instance.arrayNode();
+        while (args.length > i + 1 && !args[i + 1].matches("[+-].*")) {
+            i++;
+            if (args[i].equals("%") && !args[i + 1].matches("[+-].*") && !parameters.isEmpty()) {
+                try {
+                    OBJECT_MAPPER
+                            .readerForUpdating(parameters.get(parameters.size() - 1))
+                            .readValue(args[++i]);
+                } catch (JsonProcessingException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            } else if (args[i].equals("@")) {
+                parameters.add(JsonNodeFactory.instance.textNode(args[++i]));
+            } else {
+                try {
+                    parameters.add(OBJECT_MAPPER.readTree(args[i]));
+                } catch (JsonProcessingException e) {
+                    parameters.add(JsonNodeFactory.instance.textNode(args[i]));
+                }
+            }
+        }
+
+        if (parameters.size() > 1) {
+            node.transformer(TransformerFactory.instance(node.getName().orElseThrow(), parameters));
+        } else if (!parameters.isEmpty()) {
+            node.transformer(TransformerFactory.instance(node.getName().orElseThrow(), parameters.get(0)));
+        } else {
+            node.transformer(TransformerFactory.instance(node.getName().orElseThrow()));
+        }
+
+        node.add();
+        return i;
+    }
+
     private static int handleCliFile(FlowBuilder target, String[] args, int i) {
 
-        ScopedSource scopedSource = new ScopedSource(args[++i]);
+        ScopedSource scopedSource = new ScopedSource(target, args[++i]);
         URL url;
         try {
             url = Paths.get(scopedSource.source).toUri().toURL();
@@ -282,7 +317,7 @@ public final class CliParser {
 
     private static int handleCliResource(FlowBuilder target, String[] args, int i) {
 
-        ScopedSource scopedSource = new ScopedSource(args[++i]);
+        ScopedSource scopedSource = new ScopedSource(target, args[++i]);
         URL url = Stream.of(scopedSource.source, "/" + scopedSource.source, "/gingester/" + scopedSource.source)
                 .flatMap(s -> Stream.of(s, s + ".gcli", s + ".cli"))
                 .map(Main.class::getResource)
@@ -291,23 +326,6 @@ public final class CliParser {
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + scopedSource.source));
 
         return handleCliUrl(target, scopedSource, url, args, i);
-    }
-
-    private static class ScopedSource {
-
-        private final String scope;
-        private final String source;
-
-        private ScopedSource(String arg) {
-            if (arg.contains(":")) {
-                String[] parts = arg.split(":", 2);
-                scope = parts[0];
-                source = parts[1];
-            } else {
-                scope = null;
-                source = arg;
-            }
-        }
     }
 
     private static int handleCliUrl(FlowBuilder target, ScopedSource scopedSource, URL url, String[] args, int i) {
@@ -341,11 +359,23 @@ public final class CliParser {
         return i;
     }
 
-    private static String[] splice(String[] target, String[] items, int index, int lose) {
-        String[] result = new String[target.length + items.length - lose];
-        System.arraycopy(target, 0, result, 0, index);
-        System.arraycopy(items, 0, result, index, items.length);
-        System.arraycopy(target, index + lose, result, index + items.length, target.length - index - lose);
-        return result;
+    private static class ScopedSource {
+
+        private final String scope;
+        private final String source;
+
+        private ScopedSource(FlowBuilder target, String arg) {
+            if (arg.startsWith(":")) {
+                scope = target.getLastId().getLocalId();
+                source = arg.substring(1);
+            } else if (arg.contains(":")) {
+                String[] parts = arg.split(":", 2);
+                scope = parts[0];
+                source = parts[1];
+            } else {
+                scope = null;
+                source = arg;
+            }
+        }
     }
 }

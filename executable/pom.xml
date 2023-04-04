@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.26.0</version>
+        <version>0.26.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>executable</artifactId>
@@ -89,6 +89,11 @@
         </dependency>
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>tika</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>unpack</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -125,6 +130,9 @@
                                 <exclude>META-INF/versions/9/module-info.class</exclude>
                                 <exclude>META-INF/MANIFEST.MF</exclude>
                                 <exclude>META-INF/DEPENDENCIES</exclude>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
                             </excludes>
                         </filter>
                     </filters>

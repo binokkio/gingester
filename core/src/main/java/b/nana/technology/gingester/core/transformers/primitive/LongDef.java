@@ -14,7 +14,7 @@ public final class LongDef implements Transformer<Object, Long> {
     private final Long value;
 
     public LongDef(Parameters parameters) {
-        value = requireNonNull(parameters.value, "BooleanDef requires explicit value");
+        value = requireNonNull(parameters.value, "LongDef requires explicit value");
     }
 
     @Override
