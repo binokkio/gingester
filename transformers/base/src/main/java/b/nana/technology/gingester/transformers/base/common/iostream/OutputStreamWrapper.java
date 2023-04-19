@@ -2,11 +2,11 @@ package b.nana.technology.gingester.transformers.base.common.iostream;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class OutputStreamWrapper extends OutputStream implements OutputStreamMonitor {
 
-    private final AtomicBoolean closed = new AtomicBoolean();
+    private final Object lock = new Object();
+    private volatile boolean closed;
     private OutputStream destination;
     private Runnable onClose;
 
@@ -48,25 +48,29 @@ public final class OutputStreamWrapper extends OutputStream implements OutputStr
     @Override
     public void close() throws IOException {
 
+        synchronized (lock) {
+            if (closed) return;
+            closed = true;
+        }
+
         if (destination != null) destination.close();
         if (onClose != null) onClose.run();
 
-        synchronized (closed) {
-            closed.set(true);
-            closed.notifyAll();
+        synchronized (lock) {
+            lock.notifyAll();
         }
     }
 
     @Override
     public boolean isClosed() {
-        return closed.get();
+        return closed;
     }
 
     @Override
     public void awaitClose(long millis) throws InterruptedException {
-        synchronized (closed) {
-            if (!closed.get()) {
-                closed.wait(millis);
+        synchronized (lock) {
+            if (!closed) {
+                lock.wait(millis);
             }
         }
     }
