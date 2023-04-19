@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.27.0</version>
+        <version>0.27.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>transformers</artifactId>
@@ -25,6 +25,7 @@
         <module>jdbc</module>
         <module>jetty</module>
         <module>kafka</module>
+        <module>pdf</module>
         <module>protobuf</module>
         <module>rabbitmq</module>
         <module>redis</module>
