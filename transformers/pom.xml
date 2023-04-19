@@ -25,6 +25,7 @@
         <module>jdbc</module>
         <module>jetty</module>
         <module>kafka</module>
+        <module>pdf</module>
         <module>protobuf</module>
         <module>rabbitmq</module>
         <module>redis</module>
