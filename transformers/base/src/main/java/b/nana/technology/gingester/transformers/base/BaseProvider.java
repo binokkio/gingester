@@ -47,6 +47,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.html.Select.class,
                 b.nana.technology.gingester.transformers.base.transformers.html.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.http.Http.class,
+                b.nana.technology.gingester.transformers.base.transformers.http.ToFormData.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Append.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.Drain.class,
                 b.nana.technology.gingester.transformers.base.transformers.inputstream.FromOutputStream.class,
