@@ -9,13 +9,20 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.util.Map;
+
 @Names(1)
 public class ToFormData implements Transformer<JsonNode, String> {
 
     private final String boundary;
+    private final Map<String, String> stash;
 
     public ToFormData(Parameters parameters) {
         boundary = parameters.boundary;
+        stash = Map.of(
+                "boundary", boundary,
+                "mimeType", "multipart/formdata; boundary=" + boundary
+        );
     }
 
     @Override
@@ -38,7 +45,7 @@ public class ToFormData implements Transformer<JsonNode, String> {
                 .append(boundary)
                 .append("--\n\n");
 
-        out.accept(context.stash("boundary", boundary), formData.toString());
+        out.accept(context.stash(stash), formData.toString());
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)

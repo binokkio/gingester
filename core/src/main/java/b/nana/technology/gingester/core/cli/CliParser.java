@@ -242,7 +242,7 @@ public final class CliParser {
 
     private static int addNode(Node node, String[] args, int i, boolean maybeNamed) {
 
-        if (args.length > i + 1 && args[i + 1].matches("[\\d.]+")) {
+        if (maybeNamed && args.length > i + 1 && args[i + 1].matches("[\\d.]+")) {
             String[] parts = args[++i].split("\\.");
             if (parts.length > 0 && !parts[0].isEmpty()) node.maxWorkers(Integer.parseInt(parts[0]));
             if (parts.length > 1 && !parts[1].isEmpty()) node.maxQueueSize(Integer.parseInt(parts[1]));

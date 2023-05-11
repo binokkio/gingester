@@ -69,7 +69,7 @@ public final class Probe implements Transformer<Object, Object> {
             );
         } else {
             target.accept(
-                    "---- " + description + " ----\nTrace" +
+                    "---- " + description + " ----\nTrace " +
                     trace + "\n\n" +
                     in + '\n' +
                     "-".repeat(description.length() + 10) + '\n'
