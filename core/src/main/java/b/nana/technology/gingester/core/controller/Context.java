@@ -52,7 +52,7 @@ public final class Context implements Iterable<Context> {
 
     private final Context parent;
     private final Context group;
-    private final Map<String, Object> stash;
+    private final Map<String, ?> stash;
     private final boolean isSynced;
     private final boolean isSeed;
     private volatile boolean isFlawed;
@@ -66,7 +66,7 @@ public final class Context implements Iterable<Context> {
         this.isSeed = true;
     }
 
-    private Context(Controller<?, ?> controller, Context parent, Context group, boolean isSynced, Map<String, Object> stash) {
+    private Context(Controller<?, ?> controller, Context parent, Context group, boolean isSynced, Map<String, ?> stash) {
         this.controller = controller;
         this.parent = parent;
         this.group = group;
@@ -458,7 +458,7 @@ public final class Context implements Iterable<Context> {
      * @param stash the stash
      * @return the context builder
      */
-    public Builder stash(Map<String, Object> stash) {
+    public Builder stash(Map<String, ?> stash) {
         return new Builder(this).stash(stash);
     }
 
@@ -468,7 +468,7 @@ public final class Context implements Iterable<Context> {
         private Context group;
         private boolean synced;
         private Controller<?, ?> controller;
-        private Map<String, Object> stash;
+        private Map<String, ?> stash;
 
         private Builder(Context parent) {
             this.parent = parent;
@@ -499,7 +499,7 @@ public final class Context implements Iterable<Context> {
          *
          * @return the current stash, is any
          */
-        public Optional<Map<String, Object>> getStash() {
+        public Optional<Map<String, ?>> getStash() {
             return Optional.ofNullable(stash);
         }
 
@@ -521,7 +521,7 @@ public final class Context implements Iterable<Context> {
          * @param stash the stash
          * @return this builder
          */
-        public Builder stash(Map<String, Object> stash) {
+        public Builder stash(Map<String, ?> stash) {
             this.stash = stash;
             return this;
         }
