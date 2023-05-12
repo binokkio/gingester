@@ -1,0 +1,32 @@
+-r 0  ++ Turn off throughput reporting ++
+
+++ Get a random bit of advice, interpret the response JSON, and stash it as `advice` ++
+-sft Http GET 'https://api.adviceslip.com/advice'
+-t InputStreamToJson
+-s advice
+
+++ Define a string using the advice id and text, write it to stdout, and read it out loud ++
+-t StringDef '${advice.slip.id}: ${advice.slip.advice}'
+-t StdOut
+-t Speak
+
+++ Find distinct words of 7 or more characters in the advice text ++
+-t StringDef '${advice.slip.advice}'
+-t RegexFind '\\w{7,}'
+-t Lowercase  ++ Lowercase the words to prevent case differences from making otherwise equal words distinct ++
+-stt Distinct  ++ Distinct is in-sync with the random advice HTTP GET, so it tracks distinction per advice ++
+-s word
+
+++ Get the dictionary definition for `word`, iterate through the different meanings ++
+-t Http GET 'https://api.dictionaryapi.dev/api/v2/entries/en/${word}'
+-t JsonPath '$..meanings[*]' 'optional'
+-s meaning
+
+++ Get the first definition ++
+-t JsonPath '$.definitions[0]'
+-s definition
+
+++ Define a string, write it to stdout, and read it out loud ++
+-t StringDef '${word}, ${meaning.partOfSpeech}: ${definition.definition}'
+-t StdOut
+-t Speak
