@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.27.5</version>
+        <version>0.27.6-SNAPSHOT</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>11.0.10</version>
+            <version>11.0.15</version>
         </dependency>
         <dependency>
             <groupId>com.auth0</groupId>
