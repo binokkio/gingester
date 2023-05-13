@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.xml;
 
 import b.nana.technology.gingester.core.annotations.Names;
-import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
 import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.controller.Context;
@@ -18,7 +17,6 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-@Pure
 @Names(1)
 public final class XPath implements Transformer<Node, Node> {
 
