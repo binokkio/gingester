@@ -14,7 +14,7 @@ public final class Id {
     public static final char SCOPE_DELIMITER = '$';
     public static final String SCOPE_UP = "..";
 
-    public static Id newTestId(String id) {
+    public static Id newTransientId(String id) {
         return new Id(id);
     }
 
