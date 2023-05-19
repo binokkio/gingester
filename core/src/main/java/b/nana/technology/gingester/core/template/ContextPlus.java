@@ -15,20 +15,14 @@ public final class ContextPlus implements TemplateHashModel {
 
     private final Context context;
     private final Object in;
-    private final Map<String, Object> extras;
 
     public ContextPlus(Context context) {
-        this(context, null, Collections.emptyMap());
+        this(context, null);
     }
 
     public ContextPlus(Context context, Object in) {
-        this(context, in, Collections.emptyMap());
-    }
-
-    public ContextPlus(Context context, Object in, Map<String, Object> extras) {
         this.context = context;
         this.in = in;
-        this.extras = extras;
     }
 
     @Override
@@ -36,12 +30,7 @@ public final class ContextPlus implements TemplateHashModel {
         if (key.equals("__in__")) {
             return OBJECT_WRAPPER.wrap(in);
         } else {
-            Object extra = extras.get(key);
-            if (extra != null) {
-                return OBJECT_WRAPPER.wrap(extra);
-            } else {
-                return OBJECT_WRAPPER.wrap(context.fetch(new FetchKey(key, true)).orElse(null));
-            }
+            return OBJECT_WRAPPER.wrap(context.fetch(new FetchKey(key, true)).orElse(null));
         }
     }
 

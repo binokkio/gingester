@@ -89,7 +89,7 @@ public final class RespondPath implements Transformer<Path, String> {
                         return FileVisitResult.CONTINUE;
                     }
                 });
-                String render = directoryTemplate.render(context, in, Map.of("entries", entries));
+                String render = directoryTemplate.render(context.stash("entries", entries).buildForSelf(), in);
                 response.getOutputStream().write(render.getBytes(StandardCharsets.UTF_8));
             }
 

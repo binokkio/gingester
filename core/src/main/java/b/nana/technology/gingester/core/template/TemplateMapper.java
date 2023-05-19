@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -125,7 +124,7 @@ public class TemplateMapper<T> {
      * @return the resulting T
      */
     public T render(Context context) {
-        return render(context, null, Collections.emptyMap());
+        return render(context, null);
     }
 
     /**
@@ -139,27 +138,12 @@ public class TemplateMapper<T> {
      * @return the resulting T
      */
     public T render(Context context, Object in) {
-        return render(context, in, Collections.emptyMap());
-    }
-
-    /**
-     * Render this template.
-     * <p>
-     * If the template is invariant a pre-made T is returned, otherwise the template is rendered and mapped to T
-     * by the mapper Function given during construction.
-     *
-     * @param context the context to use for rendering this template if rendering is necessary
-     * @param in the in to use for rendering this template if rendering is necessary
-     * @param extras the extras to use for rendering this template if rendering is necessary
-     * @return the resulting T
-     */
-    public T render(Context context, Object in, Map<String, Object> extras) {
 
         if (invariant != null)
             return invariant;
 
         if (template != null)
-            return map(template.render(new ContextPlus(context, in, extras)));
+            return map(template.render(new ContextPlus(context, in)));
 
         switch (is) {
 
@@ -168,16 +152,16 @@ public class TemplateMapper<T> {
                 return map(createTemplateWrapper(
                         is.name() + ":" + sourceStash,
                         stash instanceof TextNode ? ((TextNode) stash).textValue() : stash.toString(),
-                        kwargs).render(new ContextPlus(context, in, extras)));
+                        kwargs).render(new ContextPlus(context, in)));
 
             case FILE:
             case HOT_FILE:
             case RESOURCE:
-                String source = sourceTemplate.render(context, in, extras);
+                String source = sourceTemplate.render(context, in);
                 return map(createTemplateWrapper(
                         is.name() + ":" + source,
                         readSource(source, is),
-                        kwargs).render(new ContextPlus(context, in, extras)));
+                        kwargs).render(new ContextPlus(context, in)));
 
             default: throw new IllegalStateException("No case for " + is);
         }
