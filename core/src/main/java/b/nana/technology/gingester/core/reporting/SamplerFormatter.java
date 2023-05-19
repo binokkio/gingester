@@ -34,7 +34,9 @@ public class SamplerFormatter {
 
     public String format(Sampler sampler) {
         return String.format(
-                "%s %s at %s/s (%s), %s/s (%s)",
+                sampler.isEpochInteresting() ?
+                        "%s %s at %s/s (%s), %s/s (%s)" :
+                        "%s %s at %s/s (%s)",
                 sampleFormatter.apply((double) sampler.getValue()),
                 subject,
                 sampleFormatter.apply(sampler.getCurrentChangePerSecond()),

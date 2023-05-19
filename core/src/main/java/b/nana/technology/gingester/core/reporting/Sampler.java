@@ -10,7 +10,7 @@ public final class Sampler {
     private final LongSupplier supplier;
     private Sample epoch;
     private final Sample[] samples = new Sample[SAMPLE_COUNT];
-    private int pointer = 1;
+    private int pointer;
 
     public Sampler(LongSupplier supplier) {
         this.supplier = supplier;
@@ -28,6 +28,10 @@ public final class Sampler {
 
     public long getValue() {
         return samples[(pointer - 1) % SAMPLE_COUNT].value;
+    }
+
+    public boolean isEpochInteresting() {
+        return samples[pointer % SAMPLE_COUNT] != epoch;
     }
 
     public double getCurrentChangePerSecond() {
