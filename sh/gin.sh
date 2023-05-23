@@ -2,8 +2,8 @@
 
 gin() {
 	directory="$HOME/.m2/repository/b/nana/technology/gingester/executable"
-	version=$(ls -t ${directory} | grep -v .xml | head -n 1)
-	java -jar ${directory}/${version}/executable-${version}.jar "$@"
+	jar=$(find ${directory} -iname '*.jar' -printf "%T@ %p\n" | sort -nr | cut -d ' ' -f2- | head -n 1)
+	java -jar ${jar} "$@"
 }
 
 ginpd() {
