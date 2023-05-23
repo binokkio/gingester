@@ -5,7 +5,6 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.core.template.ContextPlus;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.template.TemplateType;
@@ -85,7 +84,7 @@ public final class Gcli implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
         FlowBuilder flowBuilder = new FlowBuilder().seed(context, in);
-        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context), new ContextPlus(context.stash(gs.kwargs).buildForSelf(), in)));
+        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context), gs.kwargs));
         flowBuilder.add(o -> out.accept(context, o)).run();
     }
 
