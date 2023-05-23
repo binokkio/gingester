@@ -45,7 +45,7 @@ public final class Context implements Iterable<Context> {
     }
 
     public static Context newTestContext() {
-        return new Context(new Controller<>(Id.newTestId("$__test_seed__")), null);
+        return new Context(new Controller<>(Id.newTransientId("$__test_seed__")), null);
     }
 
     final Controller<?, ?> controller;
@@ -532,7 +532,7 @@ public final class Context implements Iterable<Context> {
          * @return the context
          */
         public Context buildForTesting() {
-            this.controller = new Controller<>(Id.newTestId("$__test__"));
+            this.controller = new Controller<>(Id.newTransientId("$__test__"));
             return new Context(controller, parent, group, synced, stash);
         }
 
@@ -542,7 +542,7 @@ public final class Context implements Iterable<Context> {
          * @return the context
          */
         public Context buildForSelf() {
-            this.controller = new Controller<>(Id.newTestId("$__self__"));
+            this.controller = new Controller<>(Id.newTransientId("$__self__"));
             return new Context(controller, parent, group, synced, stash);
         }
 

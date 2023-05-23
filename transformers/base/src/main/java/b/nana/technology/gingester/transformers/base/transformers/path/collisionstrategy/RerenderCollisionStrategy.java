@@ -19,7 +19,7 @@ public final class RerenderCollisionStrategy implements CollisionStrategy {
                 break;
             } catch (FileAlreadyExistsException e) {
                 tried = target;
-                target = targetTemplate.render(context, in, Map.of("collisions", ++collisions));
+                target = targetTemplate.render(context.stash("collisions", ++collisions).buildForSelf(), in);
                 if (target.equals(tried))
                     throw e;
             }
