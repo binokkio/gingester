@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
-import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
 import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.controller.Context;
