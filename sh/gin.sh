@@ -13,3 +13,7 @@ ginpd() {
 ginps() {
 	gin -t PathSearch "$@"
 }
+
+gind() {
+	curl -d "$*" http://localhost:8765
+}

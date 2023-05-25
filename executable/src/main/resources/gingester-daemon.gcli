@@ -1,0 +1,6 @@
+-r 0
+
+-t HttpServer [=port!8765]
+-t InputStreamToString
+-t Gcli '${__in__}' @ '-t As InputStream'
+-t HttpRespond
