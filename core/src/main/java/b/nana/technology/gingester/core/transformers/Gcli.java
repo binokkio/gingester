@@ -18,7 +18,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 @Names(1)
@@ -33,7 +33,7 @@ public final class Gcli implements Transformer<Object, Object> {
     }
 
     private static class GcliSegment {
-        final Function<Context, String> gcliSupplier;
+        final BiFunction<Context, Object, String> gcliSupplier;
         final Map<String, Object> kwargs;
 
         GcliSegment(SourceParameters sourceParameters) {
@@ -42,7 +42,7 @@ public final class Gcli implements Transformer<Object, Object> {
         }
     }
 
-    private static Function<Context, String> getGcliSupplier(SourceParameters sourceParameters) {
+    private static BiFunction<Context, Object, String> getGcliSupplier(SourceParameters sourceParameters) {
         switch (sourceParameters.is) {
 
             case FILE:
@@ -53,9 +53,9 @@ public final class Gcli implements Transformer<Object, Object> {
 
             case HOT_FILE:
                 Template pathTemplate = Context.newTemplate(new TemplateParameters(sourceParameters.source));
-                return c -> {
+                return (c, i) -> {
                     try {
-                        return Files.readString(Paths.get(pathTemplate.render(c)));
+                        return Files.readString(Paths.get(pathTemplate.render(c, i)));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -69,7 +69,7 @@ public final class Gcli implements Transformer<Object, Object> {
 
             case STASH:
                 FetchKey fk = new FetchKey(sourceParameters.source);
-                return c -> {
+                return (c, i) -> {
                     Object value = c.require(fk);
                     return value instanceof TextNode ? ((TextNode) value).asText() : value.toString();
                 };
@@ -84,7 +84,7 @@ public final class Gcli implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
         FlowBuilder flowBuilder = new FlowBuilder().seed(context, in);
-        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context), gs.kwargs));
+        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context, in), gs.kwargs));
         flowBuilder.add(o -> out.accept(context, o)).run();
     }
 
