@@ -10,26 +10,23 @@ import org.jsfr.json.compiler.JsonPathCompiler;
 import org.jsfr.json.path.JsonPath;
 
 import java.io.InputStream;
-import java.util.Iterator;
 
 public final class Stream implements Transformer<InputStream, JsonNode> {
 
-    private final String descriptionPrefix;
     private final JsonPath jsonPath;
 
     public Stream(Parameters parameters) {
-        descriptionPrefix = parameters.path + " :: ";
         jsonPath = JsonPathCompiler.compile(parameters.path);
     }
 
     @Override
     public void transform(Context context, InputStream in, Receiver<JsonNode> out) {
-        long counter = 0;
-        Iterator<Object> iterator = JsonSurferJackson.INSTANCE.iterator(in, jsonPath);
-        while (iterator.hasNext()) {
-            JsonNode jsonNode = (JsonNode) iterator.next();
-            out.accept(context.stash("description", descriptionPrefix + counter++), jsonNode);
-        }
+        JsonSurferJackson.INSTANCE.configBuilder()
+                .bind(jsonPath, (o, parsingContext) ->
+                        out.accept(
+                                context.stash("description", parsingContext.getJsonPath()),
+                                (JsonNode) o))
+                .buildAndSurf(in);
     }
 
     public static class Parameters {
