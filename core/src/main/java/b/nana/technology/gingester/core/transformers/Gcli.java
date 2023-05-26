@@ -84,7 +84,7 @@ public final class Gcli implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
         FlowBuilder flowBuilder = new FlowBuilder().seed(context, in);
-        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context, in), gs.kwargs));
+        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context, in), context.stash(gs.kwargs).buildForSelf()));
         flowBuilder.add(o -> out.accept(context, o)).run();
     }
 
