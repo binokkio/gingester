@@ -11,12 +11,12 @@ import java.util.Map;
 
 import static b.nana.technology.gingester.core.template.FreemarkerTemplateFactory.OBJECT_WRAPPER;
 
-final class ContextPlus implements TemplateHashModel {
+public final class ContextPlus implements TemplateHashModel {
 
     final Context context;
     final Object in;
 
-    ContextPlus(Context context, Object in) {
+    public ContextPlus(Context context, Object in) {
         this.context = context;
         this.in = in;
     }

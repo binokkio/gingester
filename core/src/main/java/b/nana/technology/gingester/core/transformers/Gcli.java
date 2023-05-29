@@ -2,20 +2,24 @@ package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.ContextPlus;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.template.TemplateType;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -24,22 +28,19 @@ import java.util.stream.Collectors;
 @Names(1)
 public final class Gcli implements Transformer<Object, Object> {
 
-    private final List<GcliSegment> gcliSegments;
+    private final List<BiFunction<Context, Object, String>> segments;
+    private final Map<String, Object> kwargs;
 
     public Gcli(Parameters parameters) {
-        gcliSegments = parameters.stream()
-                .map(GcliSegment::new)
+
+        if (parameters.segments.isEmpty())
+            throw new IllegalArgumentException("Gcli transformer needs at least 1 segment");
+
+        segments = parameters.segments.stream()
+                .map(Gcli::getGcliSupplier)
                 .collect(Collectors.toList());
-    }
 
-    private static class GcliSegment {
-        final BiFunction<Context, Object, String> gcliSupplier;
-        final Map<String, Object> kwargs;
-
-        GcliSegment(SourceParameters sourceParameters) {
-            gcliSupplier = getGcliSupplier(sourceParameters);
-            kwargs = sourceParameters.kwargs;
-        }
+        kwargs = parameters.kwargs;
     }
 
     private static BiFunction<Context, Object, String> getGcliSupplier(SourceParameters sourceParameters) {
@@ -83,19 +84,46 @@ public final class Gcli implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        FlowBuilder flowBuilder = new FlowBuilder().seed(context, in);
-        gcliSegments.forEach(gs -> flowBuilder.cli(gs.gcliSupplier.apply(context, in), context.stash(gs.kwargs).buildForSelf()));
-        flowBuilder.add(o -> out.accept(context, o)).run();
+        if (kwargs.isEmpty()) {
+            ContextPlus contextPlus = new ContextPlus(context, in);
+            FlowBuilder flowBuilder = new FlowBuilder().seed(context, in);
+            segments.forEach(gs -> flowBuilder.cli(gs.apply(context, in), contextPlus));
+            flowBuilder.add(o -> out.accept(context, o)).run();
+        } else {
+            Context.Builder contextBuilder = context.stash(kwargs);
+            Context gcliContext = contextBuilder.buildForSelf();
+            ContextPlus contextPlus = new ContextPlus(gcliContext, in);
+            FlowBuilder flowBuilder = new FlowBuilder().seed(gcliContext, in);
+            segments.forEach(gs -> flowBuilder.cli(gs.apply(gcliContext, in), contextPlus));
+            flowBuilder.add(o -> out.accept(contextBuilder, o)).run();
+        }
     }
 
-    public static class Parameters extends ArrayList<SourceParameters> {
+    @JsonDeserialize(using = Parameters.Deserializer.class)
+    public static class Parameters {
+        public static class Deserializer extends NormalizingDeserializer<Parameters> {
+            public Deserializer() {
+                super(Parameters.class);
+                rule(JsonNode::isTextual, NormalizingDeserializer::a);
+                rule(JsonNode::isArray, array -> {
+                    JsonNode last = array.get(array.size() - 1);
+                    if (last.isObject() && !last.has("source")) {
+                        ((ArrayNode) array).remove(array.size() - 1);
+                        return o("segments", array, "kwargs", last);
+                    } else {
+                        return o("segments", array);
+                    }
+                });
+            }
+        }
 
+        public List<SourceParameters> segments;
+        public Map<String, Object> kwargs = Map.of();
     }
 
     public static class SourceParameters {
         public String source;
         public TemplateType is = TemplateType.STRING;
-        public Map<String, Object> kwargs = Map.of();
 
         @JsonCreator
         public SourceParameters() {
