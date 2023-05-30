@@ -106,12 +106,16 @@ public final class Gcli implements Transformer<Object, Object> {
                 super(Parameters.class);
                 rule(JsonNode::isTextual, NormalizingDeserializer::a);
                 rule(JsonNode::isArray, array -> {
-                    JsonNode last = array.get(array.size() - 1);
-                    if (last.isObject() && !last.has("source")) {
-                        ((ArrayNode) array).remove(array.size() - 1);
-                        return o("segments", array, "kwargs", last);
-                    } else {
+                    if (array.size() <= 1) {
                         return o("segments", array);
+                    } else {
+                        JsonNode last = array.get(array.size() - 1);
+                        if (last.isObject() && !last.has("source")) {
+                            ((ArrayNode) array).remove(array.size() - 1);
+                            return o("segments", array, "kwargs", last);
+                        } else {
+                            return o("segments", array);
+                        }
                     }
                 });
             }
