@@ -21,7 +21,7 @@ class DefTest {
                 "-t JsonDef @ '[]' " +
                 "-s " +
                 "-t StringDef 'Hello, World ${description}!' " +
-                "-t StringAsJsonNode " +
+                "-t StringToJsonNode " +
                 "-t JsonAdd")
                 .add(results::add)
                 .run();

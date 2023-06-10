@@ -8,7 +8,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.math.BigDecimal;
 
 @Pure
-public final class AsBigDecimal implements Transformer<String, BigDecimal> {
+public final class ToBigDecimal implements Transformer<String, BigDecimal> {
 
     @Override
     public void transform(Context context, String in, Receiver<BigDecimal> out) {

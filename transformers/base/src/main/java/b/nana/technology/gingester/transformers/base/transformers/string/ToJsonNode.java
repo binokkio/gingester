@@ -6,7 +6,7 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
-public final class AsJsonNode implements Transformer<String, JsonNode> {
+public final class ToJsonNode implements Transformer<String, JsonNode> {
 
     @Override
     public void transform(Context context, String in, Receiver<JsonNode> out) {
