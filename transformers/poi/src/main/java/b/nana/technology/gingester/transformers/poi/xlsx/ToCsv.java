@@ -18,7 +18,7 @@ public class ToCsv implements Transformer<InputStream, OutputStreamWrapper> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<OutputStreamWrapper> out) throws IOException, OpenXML4JException, SAXException {
-        try (PrintStream printStream = new PrintStream(new SheetSplittingOutputStream(
+        try (PrintStream printStream = new PrintStream(new SheetSplittingOutputStream(false,
                 (sheetName, sheet) -> out.accept(context.stash("description", sheetName), sheet)))) {
             new XLSX2CSV(OPCPackage.open(in), printStream, -1).process();
         }

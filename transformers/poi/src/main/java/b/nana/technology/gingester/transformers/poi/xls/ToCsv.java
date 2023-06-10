@@ -17,7 +17,7 @@ public class ToCsv implements Transformer<InputStream, OutputStreamWrapper> {
     @Override
     public void transform(Context context, InputStream in, Receiver<OutputStreamWrapper> out) throws IOException {
 
-        try (PrintStream printStream = new PrintStream(new SheetSplittingOutputStream(
+        try (PrintStream printStream = new PrintStream(new SheetSplittingOutputStream(true,
                 (sheetName, sheet) -> out.accept(context.stash("description", sheetName), sheet)))) {
             new XLS2CSVmra(new POIFSFileSystem(in), printStream, -1).process();
         }

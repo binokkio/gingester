@@ -10,11 +10,13 @@ public class SheetSplittingOutputStream extends OutputStream {
 
     private static final byte[] ESCAPED_QUOTE = new byte[] { '"', '"'};
 
+    private final boolean escapeQuotes;
     private final BiConsumer<String, OutputStreamWrapper> sheetConsumer;
     private OutputStream current;
     private boolean skipNewline = true;
 
-    public SheetSplittingOutputStream(BiConsumer<String, OutputStreamWrapper> sheetConsumer) {
+    public SheetSplittingOutputStream(boolean escapeQuotes, BiConsumer<String, OutputStreamWrapper> sheetConsumer) {
+        this.escapeQuotes = escapeQuotes;
         this.sheetConsumer = sheetConsumer;
         this.current = nullOutputStream();
     }
@@ -57,7 +59,7 @@ public class SheetSplittingOutputStream extends OutputStream {
             }
 
             // if this is a quoted string, write it out with nested double quotes escaped
-            if (bytes[off] == '"' && bytes[off + len - 1] == '"') {
+            if (escapeQuotes && bytes[off] == '"' && bytes[off + len - 1] == '"') {
                 current.write('"');
                 for (int i = 1; i < len - 1; i++) {
                     byte b = bytes[off + i];
