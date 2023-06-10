@@ -41,7 +41,9 @@ public class SheetSplittingOutputStream extends OutputStream {
         } else if (len > 1) {
 
             // if this is a new sheet
-            if (bytes[off + len - 2] == ':' && bytes[off + len - 1] == '\n') {
+            boolean isSheetName1 = bytes[off + len - 2] == ':' && bytes[off + len - 1] == '\n';
+            boolean isSheetName2 = bytes[off + len - 2] == ']' && bytes[off + len - 1] == ':';
+            if (isSheetName1 || isSheetName2) {
 
                 // extract sheet name
                 int lastIndexOf = len - 1;

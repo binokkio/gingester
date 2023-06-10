@@ -32,9 +32,9 @@ class ToCsvTest {
         Deque<String> results = new LinkedBlockingDeque<>();
 
         new FlowBuilder().cli(
-                        "-t ResourceOpen /data.xlsx " +
-                                "-t XlsxToCsv " +
-                                "-t ToLines")
+                "-t ResourceOpen /data.xlsx " +
+                "-t XlsxToCsv " +
+                "-t ToLines")
                 .add(results::add)
                 .run();
 
