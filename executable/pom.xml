@@ -69,6 +69,11 @@
         </dependency>
         <dependency>
             <groupId>b.nana.technology.gingester.transformers</groupId>
+            <artifactId>poi</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>b.nana.technology.gingester.transformers</groupId>
             <artifactId>protobuf</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
