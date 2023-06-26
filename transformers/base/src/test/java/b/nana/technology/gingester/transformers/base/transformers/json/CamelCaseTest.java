@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.json;
 
+import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,5 +37,19 @@ class CamelCaseTest {
         new CamelCase().transform(null, in, (UniReceiver<JsonNode>) result::set);
         String resultJson = OBJECT_MAPPER.writeValueAsString(result.get());
         assertEquals("{\"objectNode\":{\"arrayNode\":[{\"helloWorld\":\"i_am_a_value\",\"iAmAKey\":\"i_am_a_different_value\"}]}}", resultJson);
+    }
+
+    @Test
+    void testSpaces() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t JsonDef @ '{\"Here are Spaces\": 123}' " +
+                "-t JsonCamelCase")
+                .add(result::set)
+                .run();
+
+        assertEquals(123, result.get().get("HereAreSpaces").intValue());
     }
 }
