@@ -17,12 +17,7 @@
         "dml": [
             {
                 "name": "data",
-                "statement": "INSERT INTO data (a, b, c) VALUES (?, ?, ?)",
-                "parameters": [
-                    "data.a",
-                    "data.b",
-                    "data.c"
-                ]
+                "statement": "INSERT INTO data (a, b, c) VALUES (:data.a, :data.b, :data.c)"
             },
             {
                 "name": "refs",
