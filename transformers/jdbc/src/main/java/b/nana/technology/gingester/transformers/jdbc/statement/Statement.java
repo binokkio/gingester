@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 public abstract class Statement {
 
-    private static final Pattern PARAMETER = Pattern.compile(":([0-9a-zA-Z.]+)");
+    private static final Pattern PARAMETER = Pattern.compile(":([0-9a-zA-Z._-]+)");
 
     private final PreparedStatement preparedStatement;
     private final List<Parameter> parameters;

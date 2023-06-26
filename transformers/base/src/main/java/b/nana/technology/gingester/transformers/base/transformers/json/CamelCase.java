@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 
 public final class CamelCase implements Transformer<JsonNode, JsonNode> {
 
-    private static final Pattern SNAKE_CASE_PATTERN = Pattern.compile("_([a-z])");
+    private static final Pattern PATTERN = Pattern.compile("[ _]([a-zA-Z0-9])");
 
     @Override
     public void transform(Context context, JsonNode in, Receiver<JsonNode> out) {
@@ -57,7 +57,7 @@ public final class CamelCase implements Transformer<JsonNode, JsonNode> {
     }
 
     private String camelCase(String string) {
-        Matcher matcher = SNAKE_CASE_PATTERN.matcher(string);
+        Matcher matcher = PATTERN.matcher(string);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {
             matcher.appendReplacement(result, matcher.group(1).toUpperCase(Locale.ENGLISH));
