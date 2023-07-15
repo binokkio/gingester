@@ -13,6 +13,7 @@ public final class JdbcProvider implements Provider {
         return List.of(
                 Dml.class,
                 Dql.class,
+                LoadJson.class,
                 Tables.class
         );
     }
