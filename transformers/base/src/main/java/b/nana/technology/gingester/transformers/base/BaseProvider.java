@@ -78,6 +78,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.json.Copy.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Def.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.ForceArrays.class,
+                b.nana.technology.gingester.transformers.base.transformers.json.Flatten.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Internpret.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.ObjectToArray.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Path.class,
