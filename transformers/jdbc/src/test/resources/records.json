@@ -1,0 +1,12 @@
+[
+  {
+    "hello": "world",
+    "int": 123,
+    "float": 234.567
+  },
+  {
+    "bye": "world",
+    "int": 234,
+    "float": 345
+  }
+]

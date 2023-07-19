@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 import java.util.Map;
+import java.util.Queue;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -67,5 +68,46 @@ class SqliteTest {
         assertEquals(2, result.remove().get("refs").get("last_insert_rowid()"));
         assertEquals(3, result.getFirst().get("data").get("last_insert_rowid()"));
         assertEquals(3, result.remove().get("refs").get("last_insert_rowid()"));
+    }
+
+    @Test
+    void testLoadJson_newTable() {
+
+        Queue<String> results = new ArrayDeque<>();
+
+        new FlowBuilder().cli("" +
+                "-sft ResourceOpen /records.json " +
+                "-t JsonStream $[*] " +
+                "-t JdbcLoadJson '{table:\"testing\"}' " +
+                "-stt OnFinish " +
+                "-t JdbcDql '{dql: \"SELECT * FROM testing\", columnsOnly: true}' " +
+                "-t ObjectToString")
+                .add(results::add)
+                .run();
+
+        assertEquals(2, results.size());
+        assertEquals("{hello=world, int=123, float=234.567, bye=null}", results.remove());
+        assertEquals("{hello=null, int=234, float=345.0, bye=world}", results.remove());
+    }
+
+    @Test
+    void testLoadJson_existingTable() {
+
+        Queue<String> results = new ArrayDeque<>();
+
+        new FlowBuilder().cli("" +
+                "-t JdbcDml '{ddl:\"CREATE TABLE testing (foo TEXT)\",dml:[]}' " +
+                "-sft ResourceOpen /records.json " +
+                "-t JsonStream $[*] " +
+                "-t JdbcLoadJson '{table:\"testing\"}' " +
+                "-stt OnFinish " +
+                "-t JdbcDql '{dql: \"SELECT * FROM testing\", columnsOnly: true}' " +
+                "-t ObjectToString")
+                .add(results::add)
+                .run();
+
+        assertEquals(2, results.size());
+        assertEquals("{foo=null, hello=world, int=123, float=234.567, bye=null}", results.remove());
+        assertEquals("{foo=null, hello=null, int=234, float=345.0, bye=world}", results.remove());
     }
 }

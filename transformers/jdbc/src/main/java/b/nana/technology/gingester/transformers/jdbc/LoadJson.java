@@ -1,6 +1,5 @@
 package b.nana.technology.gingester.transformers.jdbc;
 
-import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
@@ -10,19 +9,18 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-@Passthrough
 public final class LoadJson implements Transformer<JsonNode, JsonNode> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadJson.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final JavaType OBJECT_TYPE = OBJECT_MAPPER.constructType(Object.class);
 
@@ -31,11 +29,13 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
     private final Template urlTemplate;
     private final Template tableNameTemplate;
     private final CommitMode commitMode;
+    private final char identifierQuote;
 
     public LoadJson(Parameters parameters) {
         urlTemplate = Context.newTemplate(parameters.url);
-        tableNameTemplate = Context.newTemplate(parameters.tableName);
+        tableNameTemplate = Context.newTemplate(parameters.table);
         commitMode = parameters.commitMode;
+        identifierQuote = parameters.identifierQuote;
     }
 
     @Override
@@ -48,8 +48,10 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
         ));
     }
 
-    private void onConnectionCreated(ConnectionWith<PreparedStatementWith> connectionWith) {
-
+    private void onConnectionCreated(ConnectionWith<PreparedStatementWith> connectionWith) throws SQLException {
+        if (commitMode == CommitMode.PER_CONNECTION) {
+            connectionWith.getConnection().setAutoCommit(false);
+        }
     }
 
     private void onConnectionMoribund(ConnectionWith<PreparedStatementWith> connection) throws SQLException {
@@ -74,16 +76,16 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
                 PreparedStatementWith insert = connectionWith.getSingleton();
 
                 if (insert == null) {
-                    insert = createTable(context, in, connectionWith.getConnection());
+                    insert = initTable(context, in, connectionWith.getConnection());
                     connectionWith.setSingleton(insert);
                 }
-
-                insert.preparedStatement.clearParameters();
 
                 if (!tryInsert(in, insert)) {
                     insert = alterTable(in, connectionWith);
                     connectionWith.setSingleton(insert);
-                    tryInsert(in, insert);
+                    if (!tryInsert(in, insert)) {
+                        throw new IllegalStateException("Data does not match table after table alteration");
+                    }
                 }
 
             } finally {
@@ -92,40 +94,63 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
         });
     }
 
-    private PreparedStatementWith createTable(Context context, JsonNode in, Connection connection) throws SQLException {
+    private PreparedStatementWith initTable(Context context, JsonNode in, Connection connection) throws SQLException {
+
         String tableName = tableNameTemplate.render(context);
+        StringBuilder dml = new StringBuilder("INSERT INTO ").append(quoteIdentifier(tableName)).append(" (");
         List<String> keys = new ArrayList<>();
-        StringBuilder ddl = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
-        StringBuilder dml = new StringBuilder("INSERT INTO ").append(tableName).append(" VALUES (");
 
-        Iterator<Map.Entry<String, JsonNode>> iterator = in.fields();
-        while (iterator.hasNext()) {
-            Map.Entry<String, JsonNode> entry = iterator.next();
-            String key = entry.getKey();
-            JsonNode value = entry.getValue();
-
-            if (!value.isNull()) {
-
-                keys.add(key);
-
-                ddl
-                        .append(key)
-                        .append(' ')
-                        .append(getSqlType(key, value))
-                        .append(", ");
-
-                dml.append("?, ");
+        try (ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, null)) {
+            while (columns.next()) {
+                String columnName = columns.getString("COLUMN_NAME");
+                dml.append(quoteIdentifier(columnName)).append(", ");
+                keys.add(columnName);
             }
         }
 
-        ddl.setLength(ddl.length() - 2);
-        ddl.append(')');
+        if (keys.isEmpty()) {
+
+            StringBuilder ddl = new StringBuilder("CREATE TABLE ").append(identifierQuote).append(tableName).append(identifierQuote).append(" (");
+
+            Iterator<Map.Entry<String, JsonNode>> iterator = in.fields();
+            while (iterator.hasNext()) {
+                Map.Entry<String, JsonNode> entry = iterator.next();
+                String key = entry.getKey();
+                JsonNode value = entry.getValue();
+
+                if (!value.isNull()) {
+
+                    keys.add(key);
+
+                    ddl
+                            .append(quoteIdentifier(key))
+                            .append(' ')
+                            .append(getSqlType(key, value))
+                            .append(", ");
+
+                    dml
+                            .append(quoteIdentifier(key))
+                            .append(", ");
+                }
+            }
+
+            ddl.setLength(ddl.length() - 2);
+            ddl.append(')');
+
+            LOGGER.debug("Creating table: " + ddl);
+
+            try (Statement s = connection.createStatement()) {
+                s.execute(ddl.toString());
+            }
+        }
+
+        dml.setLength(dml.length() - 2);
+        dml.append(") VALUES (");
+        keys.forEach(key -> dml.append("?, "));
         dml.setLength(dml.length() - 2);
         dml.append(')');
 
-        try (Statement s = connection.createStatement()) {
-            s.execute(ddl.toString());
-        }
+        LOGGER.debug("Changing insert: " + dml);
 
         return new PreparedStatementWith(
                 connection.prepareStatement(dml.toString()),
@@ -135,6 +160,9 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
     }
 
     private boolean tryInsert(JsonNode in, PreparedStatementWith insert) throws SQLException {
+        for (int i = 0; i < insert.keys.size(); i++) {
+            insert.preparedStatement.setObject(i + 1, null);
+        }
         Iterator<Map.Entry<String, JsonNode>> iterator = in.fields();
         while (iterator.hasNext()) {
             Map.Entry<String, JsonNode> entry = iterator.next();
@@ -162,22 +190,33 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
             JsonNode value = entry.getValue();
             if (!value.isNull() && !keys.contains(key)) {
                 try (Statement s = connection.createStatement()) {
-                    s.execute("ALTER TABLE " + tableName + " ADD COLUMN " + key + " " + getSqlType(key, value));
+                    String ddl = "ALTER TABLE " + quoteIdentifier(tableName) + " ADD COLUMN " + quoteIdentifier(key) + " " + getSqlType(key, value);
+                    LOGGER.debug("Altering table: " + ddl);
+                    s.execute(ddl);
                 }
                 keys.add(entry.getKey());
             }
         }
 
-        StringBuilder dml = new StringBuilder("INSERT INTO ").append(tableName).append(" VALUES (");
-        for (String ignored : keys) dml.append("?, ");
+        StringBuilder dml = new StringBuilder("INSERT INTO ").append(quoteIdentifier(tableName)).append(" (");
+        keys.forEach(key -> dml.append(quoteIdentifier(key)).append(", "));
+        dml.setLength(dml.length() - 2);
+        dml.append(") VALUES (");
+        keys.forEach(key -> dml.append("?, "));
         dml.setLength(dml.length() - 2);
         dml.append(')');
+
+        LOGGER.debug("Changing insert: " + dml);
 
         return new PreparedStatementWith(
                 connection.prepareStatement(dml.toString()),
                 tableName,
                 keys
         );
+    }
+
+    private String quoteIdentifier(String identifier) {
+        return identifierQuote + identifier + identifierQuote;
     }
 
     private String getSqlType(String key, JsonNode value) {
@@ -208,8 +247,9 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
 
     public static class Parameters {
         public TemplateParameters url = new TemplateParameters("jdbc:sqlite:file::memory:?cache=shared", true);
-        public TemplateParameters tableName;
+        public TemplateParameters table;
         public CommitMode commitMode = CommitMode.PER_TRANSFORM;
+        public char identifierQuote = '"';
     }
 
     public enum CommitMode {
