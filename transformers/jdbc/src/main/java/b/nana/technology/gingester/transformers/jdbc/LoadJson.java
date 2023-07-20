@@ -92,6 +92,8 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
                 state.release(connectionWith);
             }
         });
+
+        out.accept(context, in);
     }
 
     private PreparedStatementWith initTable(Context context, JsonNode in, Connection connection) throws SQLException {
