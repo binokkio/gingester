@@ -87,6 +87,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.json.Set.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.SnakeCase.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Stream.class,
+                b.nana.technology.gingester.transformers.base.transformers.json.TextValues.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.ToString.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Trim.class,
                 b.nana.technology.gingester.transformers.base.transformers.json.Wrap.class,
