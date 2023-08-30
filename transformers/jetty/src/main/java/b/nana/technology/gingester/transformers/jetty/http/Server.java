@@ -21,6 +21,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+ * Run the following command to create a compatible keystore:
+ *
+ * keytool -genkey -keyalg RSA -alias XXX -keystore keystore.jks -storepass password -validity 360 -keysize 2048
+ *
+ * Give the desired domain as answer to the first question, the rest are irrelevant.
+ * Run the command multiple times with varying aliases to accept connections for multiple domains.
+ */
+
 public final class Server implements Transformer<Object, InputStream> {
 
     private final int port;

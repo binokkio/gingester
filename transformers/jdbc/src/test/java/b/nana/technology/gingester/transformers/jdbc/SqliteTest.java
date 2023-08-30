@@ -86,8 +86,8 @@ class SqliteTest {
                 .run();
 
         assertEquals(2, results.size());
-        assertEquals("{hello=world, int=123, float=234.567, bye=null}", results.remove());
-        assertEquals("{hello=null, int=234, float=345.0, bye=world}", results.remove());
+        assertEquals("{hello=world, int=123, float=234.567, boolean=true, bye=null}", results.remove());
+        assertEquals("{hello=null, int=234, float=345.0, boolean=false, bye=world}", results.remove());
     }
 
     @Test
@@ -107,7 +107,7 @@ class SqliteTest {
                 .run();
 
         assertEquals(2, results.size());
-        assertEquals("{foo=null, hello=world, int=123, float=234.567, bye=null}", results.remove());
-        assertEquals("{foo=null, hello=null, int=234, float=345.0, bye=world}", results.remove());
+        assertEquals("{foo=null, hello=world, int=123, float=234.567, boolean=true, bye=null}", results.remove());
+        assertEquals("{foo=null, hello=null, int=234, float=345.0, boolean=false, bye=world}", results.remove());
     }
 }

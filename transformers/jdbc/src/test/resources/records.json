@@ -2,11 +2,13 @@
   {
     "hello": "world",
     "int": 123,
-    "float": 234.567
+    "float": 234.567,
+    "boolean": true
   },
   {
     "bye": "world",
     "int": 234,
-    "float": 345
+    "float": 345,
+    "boolean": false
   }
 ]

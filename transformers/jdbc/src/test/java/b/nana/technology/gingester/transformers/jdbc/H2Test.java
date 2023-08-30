@@ -79,18 +79,18 @@ class H2Test {
         Queue<String> results = new ArrayDeque<>();
 
         new FlowBuilder().cli("" +
-                        "-sft ResourceOpen /records.json " +
-                        "-t JsonStream $[*] " +
-                        "-t JdbcLoadJson '{url:\"" + H2_URL + "\",table:\"testing\"}' " +
-                        "-stt OnFinish " +
-                        "-t JdbcDql '{url:\"" + H2_URL + "\",dql:\"SELECT * FROM testing\",columnsOnly:true}' " +
-                        "-t ObjectToString")
+                "-sft ResourceOpen /records.json " +
+                "-t JsonStream $[*] " +
+                "-t JdbcLoadJson '{url:\"" + H2_URL + "\",table:\"testing\"}' " +
+                "-stt OnFinish " +
+                "-t JdbcDql '{url:\"" + H2_URL + "\",dql:\"SELECT * FROM testing\",columnsOnly:true}' " +
+                "-t ObjectToString")
                 .add(results::add)
                 .run();
 
         assertEquals(2, results.size());
-        assertEquals("{hello=world, int=123, float=234.567, bye=null}", results.remove());
-        assertEquals("{hello=null, int=234, float=345.0, bye=world}", results.remove());
+        assertEquals("{hello=world, int=123, float=234.567, boolean=true, bye=null}", results.remove());
+        assertEquals("{hello=null, int=234, float=345.0, boolean=false, bye=world}", results.remove());
     }
 
     @Test
@@ -99,18 +99,18 @@ class H2Test {
         Queue<String> results = new ArrayDeque<>();
 
         new FlowBuilder().cli("" +
-                        "-t JdbcDml '{url:\"" + H2_URL + "\",ddl:\"CREATE TABLE testing (foo TEXT)\",dml:[]}' " +
-                        "-sft ResourceOpen /records.json " +
-                        "-t JsonStream $[*] " +
-                        "-t JdbcLoadJson '{url:\"" + H2_URL + "\",table:\"testing\"}' " +
-                        "-stt OnFinish " +
-                        "-t JdbcDql '{url:\"" + H2_URL + "\",dql:\"SELECT * FROM testing\",columnsOnly:true}' " +
-                        "-t ObjectToString")
+                "-t JdbcDml '{url:\"" + H2_URL + "\",ddl:\"CREATE TABLE testing (foo TEXT)\",dml:[]}' " +
+                "-sft ResourceOpen /records.json " +
+                "-t JsonStream $[*] " +
+                "-t JdbcLoadJson '{url:\"" + H2_URL + "\",table:\"testing\"}' " +
+                "-stt OnFinish " +
+                "-t JdbcDql '{url:\"" + H2_URL + "\",dql:\"SELECT * FROM testing\",columnsOnly:true}' " +
+                "-t ObjectToString")
                 .add(results::add)
                 .run();
 
         assertEquals(2, results.size());
-        assertEquals("{foo=null, hello=world, int=123, float=234.567, bye=null}", results.remove());
-        assertEquals("{foo=null, hello=null, int=234, float=345.0, bye=world}", results.remove());
+        assertEquals("{foo=null, hello=world, int=123, float=234.567, boolean=true, bye=null}", results.remove());
+        assertEquals("{foo=null, hello=null, int=234, float=345.0, boolean=false, bye=world}", results.remove());
     }
 }

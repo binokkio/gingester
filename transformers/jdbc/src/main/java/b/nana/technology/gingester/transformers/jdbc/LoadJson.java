@@ -231,6 +231,8 @@ public final class LoadJson implements Transformer<JsonNode, JsonNode> {
             return "REAL";
         } else if (value.isTextual()) {
             return "TEXT";
+        } else if (value.isBoolean()) {
+            return "BOOLEAN";
         }
 
         throw new IllegalArgumentException("No sql type mapping for " + value.getNodeType().name());
