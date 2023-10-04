@@ -1,9 +1,4 @@
-FROM openjdk:11
-
-RUN mkdir gingester
-COPY executable gingester/executable
-
-WORKDIR /
-RUN ln -s gingester/executable/target/gingester-*.jar gingester.jar
-
+FROM eclipse-temurin:17-jre-centos7
+COPY executable/target/gingester-*.jar /
+RUN ln -s gingester-*.jar gingester.jar
 ENTRYPOINT ["java", "-jar", "gingester.jar"]
