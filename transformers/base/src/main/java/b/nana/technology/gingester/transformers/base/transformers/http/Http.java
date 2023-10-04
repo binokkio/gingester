@@ -12,12 +12,18 @@ import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,6 +36,7 @@ public final class Http implements Transformer<Object, InputStream> {
     private final Map<String, Template> headers;
     private final HttpClient httpClient;
     private final Function<Object, HttpRequest.BodyPublisher> bodyPublisher;
+    private final boolean stashPeerCertificates;
 
     public Http(Parameters parameters) {
         method = parameters.method;
@@ -41,6 +48,7 @@ public final class Http implements Transformer<Object, InputStream> {
                 ));
         httpClient = HttpClient.newBuilder().followRedirects(parameters.followRedirects).build();
         bodyPublisher = getBodyPublisher();
+        stashPeerCertificates = parameters.stashPeerCertificates;
     }
 
     @Override
@@ -96,11 +104,35 @@ public final class Http implements Transformer<Object, InputStream> {
         HttpResponse<InputStream> response =
                 httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
 
-        Context.Builder contextBuilder = context.stash(Map.of(
-                "description", uri,
-                "status", response.statusCode(),
-                "headers", response.headers().map()
-        ));
+        Context.Builder contextBuilder;
+
+        if (stashPeerCertificates) {
+
+            List<Certificate> peerCertificates = response.sslSession()
+                    .map(s -> {
+                        try {
+                            return s.getPeerCertificates();
+                        } catch (SSLPeerUnverifiedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .map(Arrays::asList)
+                    .orElse(List.of());
+
+
+            contextBuilder = context.stash(Map.of(
+                    "description", uri,
+                    "status", response.statusCode(),
+                    "headers", response.headers().map(),
+                    "peerCertificates", peerCertificates
+            ));
+        } else {
+            contextBuilder = context.stash(Map.of(
+                    "description", uri,
+                    "status", response.statusCode(),
+                    "headers", response.headers().map()
+            ));
+        }
 
         try (InputStream body = response.body()) {
             out.accept(contextBuilder, body);
@@ -114,5 +146,6 @@ public final class Http implements Transformer<Object, InputStream> {
         public TemplateParameters uri;
         public Map<String, TemplateParameters> headers = Collections.emptyMap();
         public HttpClient.Redirect followRedirects = HttpClient.Redirect.NORMAL;
+        public boolean stashPeerCertificates;
     }
 }
