@@ -6,6 +6,8 @@ import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.template.TemplateMapper;
+import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.transformers.base.common.iostream.Splitter;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,11 +24,11 @@ import java.util.Optional;
 @Example(example = "DELIM 2", description = "Split InputStream at most twice on \"DELIM\"")
 public final class Split implements Transformer<InputStream, InputStream> {
 
-    private final byte[] delimiter;
+    private final TemplateMapper<byte[]> delimiterTemplate;
     private final long maxSplits;
 
     public Split(Parameters parameters) {
-        delimiter = parameters.delimiter.getBytes(StandardCharsets.UTF_8);
+        delimiterTemplate = Context.newTemplateMapper(parameters.delimiter, s -> s.getBytes(StandardCharsets.UTF_8));
         maxSplits = parameters.maxSplits;
     }
 
@@ -37,6 +39,7 @@ public final class Split implements Transformer<InputStream, InputStream> {
 
     @Override
     public void transform(Context context, InputStream in, Receiver<InputStream> out) throws Exception {
+        byte[] delimiter = delimiterTemplate.render(context);
         Splitter splitter = new Splitter(in, delimiter);
         Optional<InputStream> split;
         long counter = 0;
@@ -61,7 +64,7 @@ public final class Split implements Transformer<InputStream, InputStream> {
             }
         }
 
-        public String delimiter = "\n";
+        public TemplateParameters delimiter = new TemplateParameters("\n");
         public long maxSplits;
     }
 }
