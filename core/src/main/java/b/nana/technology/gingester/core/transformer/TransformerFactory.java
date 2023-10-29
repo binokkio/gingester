@@ -253,6 +253,7 @@ public final class TransformerFactory {
                     });
 
                     List<String> characteristics = new ArrayList<>();
+                    if (transformer.getAnnotation(Experimental.class) != null) characteristics.add("experimental");
                     if (transformer.getAnnotation(Passthrough.class) != null) characteristics.add("passthrough");
                     if (transformer.getAnnotation(Pure.class) != null) characteristics.add("pure");
                     if (Transformers.isSyncAware(transformer)) characteristics.add("sync-aware");
