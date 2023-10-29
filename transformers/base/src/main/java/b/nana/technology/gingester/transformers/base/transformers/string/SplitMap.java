@@ -16,8 +16,9 @@ import java.util.Map;
 
 @Experimental
 @Example(example = ", a b", description = "Split input on ',' and map the values in order to keys 'a' and 'b'")
-@Example(example = ", a! b", description = "Same as above but accumulating under 'a' if split produces too many values")
-@Example(example = ", a b", description = "Same as above but defaulting to accumulate under 'b'")
+@Example(example = ", a! b", description = "Same as above but accumulating in 'a' if split produces too many values")
+@Example(example = "'{delimiter: \",\", keys: [\"a\", \"b\"], accumulator: \"a\"}'", description = "Same as above")
+@Example(example = ", a b", description = "Same as above but defaulting to accumulate in the last key, in this case 'b'")
 public final class SplitMap implements Transformer<String, Map<String, String>> {
 
     private final char delimiter;
@@ -27,17 +28,15 @@ public final class SplitMap implements Transformer<String, Map<String, String>> 
     public SplitMap(Parameters parameters) {
         delimiter = parameters.delimiter;
         keys = parameters.keys;
-        Integer accumulator = null;
-        for (int i = 0; i < keys.size(); i++) {
-            if (keys.get(i).endsWith("!")) {
-                String accumulatorInstruction = keys.get(i);
-                String key = accumulatorInstruction.substring(0, accumulatorInstruction.length() - 1);
-                keys.set(i, key);
-                accumulator = i;
-                break;
+
+        if (parameters.accumulator == null) {
+            accumulator = keys.size() - 1;
+        } else {
+            accumulator = keys.indexOf(parameters.accumulator);
+            if (accumulator == -1) {
+                throw new IllegalArgumentException("Accumulator not present in keys");
             }
         }
-        this.accumulator = accumulator == null ? keys.size() - 1 : accumulator;
     }
 
     @Override
@@ -80,11 +79,25 @@ public final class SplitMap implements Transformer<String, Map<String, String>> 
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
-                rule(JsonNode::isArray, array -> o("delimiter", array.get(0), "keys", as((ArrayNode) array, 1)));
+                rule(JsonNode::isArray, array -> {
+                    ArrayNode keys = a();
+                    String accumulator = null;
+                    for (int i = 1; i < array.size(); i++) {
+                        String item = array.get(i).asText();
+                        if (item.endsWith("!")) {
+                            accumulator = item.substring(0, item.length() - 1);
+                            keys.add(accumulator);
+                        } else {
+                            keys.add(item);
+                        }
+                    }
+                    return o("delimiter", array.get(0), "keys", keys, "accumulator", accumulator);
+                });
             }
         }
 
         public char delimiter;
         public List<String> keys;
+        public String accumulator;
     }
 }
