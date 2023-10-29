@@ -175,12 +175,11 @@ public final class Context implements Iterable<Context> {
                     .map(s -> {
                         Object result = s;
                         for (String n : fetchKey.getNames()) {
-                            if (result instanceof Map) {
-                                result = ((Map<?, ?>) result).get(n);
-                            } else if (result instanceof List) {
-                                result = ((List<?>) result).get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
-                            } else if (result instanceof JsonNode) {
-                                JsonNode jsonNode = (JsonNode) result;
+                            if (result instanceof Map<?, ?> map) {
+                                result = map.get(n);
+                            } else if (result instanceof List<?> list) {
+                                result = list.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
+                            } else if (result instanceof JsonNode jsonNode) {
                                 if (jsonNode.isObject()) {
                                     result = jsonNode.get(n);
                                 } else if (jsonNode.isArray()) {

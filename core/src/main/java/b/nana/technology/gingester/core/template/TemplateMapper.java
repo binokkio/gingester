@@ -34,6 +34,10 @@ public class TemplateMapper<T> {
 
     public TemplateMapper(TemplateParameters parameters, Mapper<T> mapper) {
 
+        if (parameters == null) {
+            throw new IllegalArgumentException("Template parameters is null");
+        }
+
         this.kwargs = parameters.kwargs;
         this.mapper = mapper;
 
