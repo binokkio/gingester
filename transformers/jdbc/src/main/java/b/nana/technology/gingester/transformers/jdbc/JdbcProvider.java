@@ -14,6 +14,7 @@ public final class JdbcProvider implements Provider {
                 Dml.class,
                 Dql.class,
                 LoadJson.class,
+                LoadMap.class,
                 Tables.class
         );
     }
