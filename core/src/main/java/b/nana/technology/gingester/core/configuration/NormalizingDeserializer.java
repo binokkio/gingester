@@ -146,6 +146,16 @@ public abstract class NormalizingDeserializer<T> extends StdDeserializer<T> {
         return objectNode;
     }
 
+    public static ArrayNode as(ArrayNode arrayNode, int start) {
+        return as(arrayNode, start, arrayNode.size());
+    }
+
+    public static ArrayNode as(ArrayNode arrayNode, int start, int end) {
+        ArrayNode slice = JsonNodeFactory.instance.arrayNode(end - start);
+        for (int i = start; i < end; i++) slice.add(arrayNode.get(i));
+        return slice;
+    }
+
     private static JsonNode v(Object o) {
         if (o == null) {
             return JsonNodeFactory.instance.nullNode();

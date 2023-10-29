@@ -142,6 +142,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.string.FilterEmptyOut.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Lowercase.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.Split.class,
+                b.nana.technology.gingester.transformers.base.transformers.string.SplitMap.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToBigDecimal.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToBytes.class,
                 b.nana.technology.gingester.transformers.base.transformers.string.ToInputStream.class,
