@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class EncodeTest {
+class DecodeTest {
 
     @Test
     void testSingleLine() {
@@ -15,13 +15,13 @@ class EncodeTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World!' " +
-                "-t Base64Encode " +
+                "-t StringDef 'SGVsbG8sIFdvcmxkIQ==' " +
+                "-t Base64Decode " +
                 "-t BytesToString")
                 .add(result::set)
                 .run();
 
-        assertEquals("SGVsbG8sIFdvcmxkIQ==", result.get());
+        assertEquals("Hello, World!", result.get());
     }
 
     @Test
@@ -30,12 +30,12 @@ class EncodeTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World!' " +
-                "-t Base64Encode 8 " +
+                "-t StringDef 'SGVsbG8s\r\nIFdvcmxk\r\nIQ==' " +
+                "-t Base64Decode mime " +
                 "-t BytesToString")
                 .add(result::set)
                 .run();
 
-        assertEquals("SGVsbG8s\r\nIFdvcmxk\r\nIQ==", result.get());
+        assertEquals("Hello, World!", result.get());
     }
 }
