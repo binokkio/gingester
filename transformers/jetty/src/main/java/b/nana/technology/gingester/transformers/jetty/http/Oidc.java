@@ -11,27 +11,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.requireNonNull;
 
-// this is a very quick and dirty implementation only tested to work with a specific use case
-
-@Deprecated
 @Passthrough
-public final class Keycloak implements Transformer<Object, Object> {
+public final class Oidc implements Transformer<Object, Object> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Oidc.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
@@ -40,43 +39,48 @@ public final class Keycloak implements Transformer<Object, Object> {
     private final FetchKey fetchHttpResponse = new FetchKey("http.response");
     private final FetchKey fetchHttpRequestMethod = new FetchKey("http.request.method");
     private final FetchKey fetchHttpRequestPath = new FetchKey("http.request.path");
+    private final FetchKey fetchHttpRequestQueryString = new FetchKey("http.request.queryString");
     private final FetchKey fetchHttpRequestQueryCode = new FetchKey("http.request.query.code");
     private final FetchKey fetchHttpRequestCookiesCookieName;
 
+    private final String clientId;
+    private final List<String> scopes;
     private final String authUrl;
     private final String tokenUrl;
+    private final String userInfoUrl;
     private final String redirectUrl;
+    private final String redirectPath;
     private final String cookieName;
     private final String tokenRequestStart;
     private final boolean optional;
+    private final boolean accessTokenIsJwt;
 
-    public Keycloak(Parameters parameters) {
+    public Oidc(Parameters parameters) {
 
-        requireNonNull(parameters.authUrl, "Missing authUrl parameter");
-        requireNonNull(parameters.realm, "Missing realm parameter");
-        requireNonNull(parameters.clientId, "Missing clientId parameter");
-        requireNonNull(parameters.redirectUrl, "Missing redirectUrl parameter");
-        requireNonNull(parameters.cookieName, "Missing cookieName parameter");
-
-        String baseUrl = stripTrailingSlash(parameters.authUrl) + "/realms/" + parameters.realm + "/protocol/openid-connect";
-        authUrl = baseUrl + "/auth?client_id=" + parameters.clientId + "&response_type=code";
-        tokenUrl = baseUrl + "/token";
-        redirectUrl = stripTrailingSlash(parameters.redirectUrl);
-        cookieName = parameters.cookieName;
+        clientId = requireNonNull(parameters.clientId, "Missing clientId parameter");
+        scopes = requireNonNull(parameters.scopes, "Missing scopes parameter");
+        authUrl = requireNonNull(parameters.authUrl, "Missing authUrl parameter");
+        tokenUrl = requireNonNull(parameters.tokenUrl, "Missing tokenUrl parameter");
+        userInfoUrl = parameters.userInfoUrl;
+        redirectUrl = requireNonNull(parameters.redirectUrl, "Missing redirectUrl parameter");
+        redirectPath = getUrlPath(redirectUrl);
+        cookieName = requireNonNull(parameters.cookieName, "Missing cookieName parameter");
         optional = parameters.optional;
+        accessTokenIsJwt = parameters.accessTokenIsJwt;
 
         fetchHttpRequestCookiesCookieName = new FetchKey("http.request.cookies." + cookieName);
 
-        StringBuilder tokenRequestStartBuilder = new StringBuilder()
-                .append("client_id=")
-                .append(parameters.clientId);
+        tokenRequestStart =
+                "client_id=" + parameters.clientId +
+                "&client_secret=" + requireNonNull(parameters.clientSecret, "Missing clientSecret parameter");
+    }
 
-        if (parameters.clientSecret != null)
-            tokenRequestStartBuilder
-                    .append("&client_secret=")
-                    .append(parameters.clientSecret);
-
-        tokenRequestStart = tokenRequestStartBuilder.toString();
+    private String getUrlPath(String url) {
+        try {
+            return new URL(url).getPath();
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @Override
@@ -88,6 +92,7 @@ public final class Keycloak implements Transformer<Object, Object> {
         Cookie cookie = (Cookie) context.fetch(fetchHttpRequestCookiesCookieName)
                 .orElseGet(() -> new Cookie(cookieName, UUID.randomUUID().toString()));
 
+        cookie.setPath("/");
         cookie.setMaxAge(2592000);
         response.addCookie(cookie);
 
@@ -95,17 +100,17 @@ public final class Keycloak implements Transformer<Object, Object> {
         Session session = sessions.computeIfAbsent(sessionId, uuid -> new Session());
 
         Optional<Object> optionalCode = context.fetch(fetchHttpRequestQueryCode);
-        if (optionalCode.isPresent()) {
+        if (context.require(fetchHttpRequestPath).equals(redirectPath) && optionalCode.isPresent()) {
 
             session.handleTokenResponse(requestToken(String.format(
                     "%s&grant_type=authorization_code&code=%s&redirect_uri=%s",
                     tokenRequestStart,
                     optionalCode.get(),
-                    getRedirectUrl(context)
+                    redirectUrl
             )));
 
             response.setStatus(302);
-            response.addHeader("Location", getRedirectUrl(context));
+            response.addHeader("Location", session.returnTo);
             response.finish();
 
         } else {
@@ -125,9 +130,23 @@ public final class Keycloak implements Transformer<Object, Object> {
             } else if (optional) {
                 out.accept(context, in);
             } else if (context.require(fetchHttpRequestMethod).equals("GET")) {
+
+                session.returnTo = (String) context.require(fetchHttpRequestPath);
+                context.fetch(fetchHttpRequestQueryString).ifPresent(queryString -> {
+                    session.returnTo += "?" + queryString;
+                });
+
+                String location = authUrl +
+                        "?client_id=" + clientId +
+                        "&scope=" + String.join("%20", scopes) +
+                        "&state=" + Long.toHexString(sessionId.getLeastSignificantBits()) +
+                        "&response_type=code" +
+                        "&redirect_uri=" + redirectUrl;
+
                 response.setStatus(302);
-                response.addHeader("Location", authUrl + "&redirect_uri=" + getRedirectUrl(context));
+                response.addHeader("Location", location);
                 response.finish();
+
             } else {
                 throw new IllegalStateException("No access token available");
             }
@@ -141,20 +160,9 @@ public final class Keycloak implements Transformer<Object, Object> {
         return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
     }
 
-    private String getRedirectUrl(Context context) {
-        return redirectUrl + context.require(fetchHttpRequestPath);
-    }
+    private class Session {
 
-    private static String stripTrailingSlash(String input) {
-        if (input.charAt(input.length() - 1) == '/') {
-            return input.substring(0, input.length() - 1);
-        } else {
-            return input;
-        }
-    }
-
-    private static class Session {
-
+        private String returnTo;
         private String accessToken;
         private Instant accessExpiresAt;
         private String refreshToken;
@@ -177,7 +185,13 @@ public final class Keycloak implements Transformer<Object, Object> {
 
             JsonNode root = OBJECT_MAPPER.readTree(tokenResponse);
 
+            if (!root.has("access_token"))
+                throw new IllegalStateException("Token response did not contain access_token: " + root);
+
             accessToken = root.get("access_token").asText();
+
+            stash = new HashMap<>();
+            stash.put("accessToken", accessToken);
 
             JsonNode accessExpiresAtNode = root.path("expires_in");
             if (accessExpiresAtNode.isValueNode())
@@ -191,24 +205,40 @@ public final class Keycloak implements Transformer<Object, Object> {
             if (refreshExpiresAtNode.isValueNode())
                 refreshExpiresAt = Instant.now().plus(Duration.ofSeconds(refreshExpiresAtNode.asInt())).minus(Duration.ofSeconds(30));
 
-            DecodedJWT decoded = JWT.decode(accessToken);
-            HashMap<String, JsonNode> claims = new HashMap<>();
-            decoded.getClaims().forEach((key, value) -> claims.put(key, value.as(JsonNode.class)));
+            if (accessTokenIsJwt) {
+                DecodedJWT decoded = JWT.decode(accessToken);
+                HashMap<String, JsonNode> claims = new HashMap<>();
+                decoded.getClaims().forEach((key, value) -> claims.put(key, value.as(JsonNode.class)));
+                stash.put("claims", claims);
+            }
 
-            stash = Map.of(
-                    "accessToken", accessToken,
-                    "claims", claims
-            );
+            if (userInfoUrl != null) {
+                try {
+                    stash.put("userInfo", OBJECT_MAPPER.readTree(requestUserInfo()));
+                } catch (IOException | InterruptedException e) {
+                    LOGGER.warn("Exception while getting user info", e);
+                }
+            }
+        }
+
+        private String requestUserInfo() throws IOException, InterruptedException {
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(userInfoUrl));
+            requestBuilder.header("Authorization", "Bearer " + accessToken);
+            requestBuilder.GET();
+            return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
         }
     }
 
     public static class Parameters {
-        public String authUrl;
-        public String redirectUrl;
-        public String realm;
         public String clientId;
         public String clientSecret;
-        public String cookieName = "gingester-keycloak";
+        public List<String> scopes = List.of("openid");
+        public String authUrl;
+        public String tokenUrl;
+        public String userInfoUrl;
+        public String redirectUrl;
+        public String cookieName = "gingester-oidc";
         public boolean optional;
+        public boolean accessTokenIsJwt;
     }
 }
