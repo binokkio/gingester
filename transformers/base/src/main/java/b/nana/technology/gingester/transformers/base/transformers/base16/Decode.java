@@ -7,10 +7,10 @@ import b.nana.technology.gingester.core.transformer.Transformer;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
-public final class Encode implements Transformer<byte[], String> {
+public final class Decode implements Transformer<String, byte[]> {
 
     @Override
-    public void transform(Context context, byte[] in, Receiver<String> out) {
-        out.accept(context, HexFormat.of().formatHex(in));
+    public void transform(Context context, String in, Receiver<byte[]> out) {
+        out.accept(context, HexFormat.of().parseHex(in));
     }
 }
