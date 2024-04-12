@@ -132,14 +132,13 @@ public final class Oidc implements Transformer<Object, Object> {
             } else if (context.require(fetchHttpRequestMethod).equals("GET")) {
 
                 session.returnTo = (String) context.require(fetchHttpRequestPath);
-                context.fetch(fetchHttpRequestQueryString).ifPresent(queryString -> {
-                    session.returnTo += "?" + queryString;
-                });
+                context.fetch(fetchHttpRequestQueryString).ifPresent(
+                        queryString -> session.returnTo += "?" + queryString);
 
                 String location = authUrl +
                         "?client_id=" + clientId +
                         "&scope=" + String.join("%20", scopes) +
-                        "&state=" + Long.toHexString(sessionId.getLeastSignificantBits()) +
+                        "&state=" + Long.toHexString(sessionId.getLeastSignificantBits()) +  // TODO improve value and verify on callback
                         "&response_type=code" +
                         "&redirect_uri=" + redirectUrl;
 

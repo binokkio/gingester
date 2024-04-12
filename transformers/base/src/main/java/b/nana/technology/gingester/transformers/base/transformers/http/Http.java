@@ -19,8 +19,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -58,35 +56,19 @@ public final class Http implements Transformer<Object, InputStream> {
 
     @Override
     public Class<?> getInputType() {
-        switch (method) {
-
-            case "HEAD":
-            case "GET":
-            case "DELETE":
-                return Object.class;
-
-            case "PATCH":
-            case "POST":
-            case "PUT":
-                return InputStream.class;
-
-            default: throw new IllegalStateException("No case for " + method);
-        }
+        return switch (method) {
+            case "HEAD", "GET", "DELETE" -> Object.class;
+            case "PATCH", "POST", "PUT" -> InputStream.class;
+            default -> throw new IllegalStateException("No case for " + method);
+        };
     }
 
     private Function<Object, HttpRequest.BodyPublisher> getBodyPublisher() {
-        switch (method) {
-
-            case "GET":
-            case "DELETE":
-                return o -> HttpRequest.BodyPublishers.noBody();
-
-            case "POST":
-            case "PUT":
-                return o -> HttpRequest.BodyPublishers.ofInputStream(() -> (InputStream) o);
-
-            default: throw new IllegalStateException("No case for " + method);
-        }
+        return switch (method) {
+            case "HEAD", "GET", "DELETE" -> o -> HttpRequest.BodyPublishers.noBody();
+            case "PATCH", "POST", "PUT" -> o -> HttpRequest.BodyPublishers.ofInputStream(() -> (InputStream) o);
+            default -> throw new IllegalStateException("No case for " + method);
+        };
     }
 
     @Override
