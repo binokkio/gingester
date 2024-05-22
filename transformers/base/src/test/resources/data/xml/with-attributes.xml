@@ -1,7 +1,8 @@
 <body>
-    <message audience="world">Hello, World!</message>
-    <list>
-        <item>Hello</item>
-        <item>World</item>
-    </list>
+    <message audience="world" type="hello">Hello, World 1!</message>
+    <message audience="world" type="hello">Hello, World 2!</message>
+    <message audience="group" type="hello">Hello, Group 1!</message>
+    <message audience="world" type="bye">Bye, World 1!</message>
+    <message audience="world" type="bye">Bye, World 2!</message>
+    <message audience="group" type="bye">Bye, Group 1!</message>
 </body>
