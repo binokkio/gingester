@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.28.6</version>
+        <version>0.28.7-SNAPSHOT</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -35,7 +35,7 @@
         <dependency>
             <groupId>org.apache.james</groupId>
             <artifactId>apache-mime4j-core</artifactId>
-            <version>0.8.10</version>
+            <version>0.8.11</version>
         </dependency>
 
         <dependency>

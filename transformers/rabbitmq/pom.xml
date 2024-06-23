@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.28.6</version>
+        <version>0.28.7-SNAPSHOT</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
-            <version>5.18.0</version>
+            <version>5.21.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

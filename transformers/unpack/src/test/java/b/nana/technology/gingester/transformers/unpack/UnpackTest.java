@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicReference;
@@ -88,5 +89,25 @@ class UnpackTest {
 
         assertEquals(1, results.size());
         assertEquals("/tmp/test.rar :: nested.tgz :: hello-world.txt -> Hello, World!", results.remove());
+    }
+
+    @Test
+    void testUnpackMultistreamXml() {
+
+        Deque<String> results = new ArrayDeque<>();
+
+        new FlowBuilder().cli("""
+                -t ResourceOpen /multistream.xml.bz2
+                -t Unpack
+                -t XmlStream /document/body/item
+                -t ObjectToString
+                """)
+                .add(results::add)
+                .run();
+
+        assertEquals(3, results.size());
+        assertEquals("<item>1</item>", results.pop());
+        assertEquals("<item>2</item>", results.pop());
+        assertEquals("<item>3</item>", results.pop());
     }
 }

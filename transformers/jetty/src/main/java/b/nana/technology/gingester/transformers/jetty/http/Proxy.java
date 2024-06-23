@@ -27,11 +27,15 @@ public final class Proxy implements Transformer<InputStream, InputStream> {
     private static final Set<String> RESTRICTED_HEADERS = Set.of("Connection", "Host");
     private static final FetchKey FETCH_HTTP = new FetchKey("http");
 
+    private final HttpClient httpClient;
     private final String proxyRoot;
     private final Map<String, Template> extraHeaders;
     private final boolean prepareProxyResponse;
 
     public Proxy(Parameters parameters) {
+        httpClient = HttpClient.newBuilder()
+                .version(parameters.enableHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
+                .build();
         proxyRoot = requireNonNull(parameters.proxyRoot);
         extraHeaders = parameters.extraHeaders.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> Context.newTemplate(e.getValue())));
@@ -78,8 +82,7 @@ public final class Proxy implements Transformer<InputStream, InputStream> {
         extraHeaders.forEach(
                 (name, value) -> proxyRequestBuilder.setHeader(name, value.render(context, in)));
 
-        // proxy the request, TODO look into HttpClient thread safety
-        HttpClient httpClient = HttpClient.newHttpClient();
+        // proxy the request
         java.net.http.HttpResponse<InputStream> proxyResponse = httpClient.send(proxyRequestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofInputStream());
         int proxyResponseStatus = proxyResponse.statusCode();
         Map<String, List<String>> proxyResponseHeaders = proxyResponse.headers().map();
@@ -114,5 +117,6 @@ public final class Proxy implements Transformer<InputStream, InputStream> {
         public String proxyRoot;
         public Map<String, TemplateParameters> extraHeaders = Map.of();
         public boolean prepareProxyResponse = true;
+        public boolean enableHttp2;
     }
 }

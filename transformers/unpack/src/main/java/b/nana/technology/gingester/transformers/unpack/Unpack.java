@@ -42,11 +42,13 @@ import java.util.zip.InflaterInputStream;
 public final class Unpack implements Transformer<InputStream, InputStream> {
 
     private final Template descriptionTemplate;
+    private final boolean supportMultistream;
     private final int maxDepth;
 
     public Unpack(Parameters parameters) {
         descriptionTemplate = Context.newTemplate(parameters.description);
         maxDepth = parameters.maxDepth != null ? parameters.maxDepth : -1;
+        supportMultistream = parameters.supportMultistream;
     }
 
     @Override
@@ -76,19 +78,19 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
         if (tailLowerCase.endsWith(".bz2")) {
             Deque<String> copy = new ArrayDeque<>(descriptions);
             copy.add(trim(descriptions.getLast(), 4));
-            unpack(context, new BZip2CompressorInputStream(in), out, copy);
+            unpack(context, supportMultistream ? new Multistream(in, BZip2CompressorInputStream::new) : new BZip2CompressorInputStream(in), out, copy);
         } else if (tailLowerCase.endsWith(".gz")) {
             Deque<String> copy = new ArrayDeque<>(descriptions);
             copy.add(trim(descriptions.getLast(), 3));
-            unpack(context, new GZIPInputStream(in), out, copy);
+            unpack(context, supportMultistream ? new Multistream(in, GZIPInputStream::new) : new GZIPInputStream(in), out, copy);
         } else if (tailLowerCase.endsWith(".xz")) {
             Deque<String> copy = new ArrayDeque<>(descriptions);
             copy.add(trim(descriptions.getLast(), 3));
-            unpack(context, new XZCompressorInputStream(in), out, copy);
+            unpack(context, supportMultistream ? new Multistream(in, XZCompressorInputStream::new) : new XZCompressorInputStream(in), out, copy);
         } else if (tailLowerCase.endsWith(".zz")) {
             Deque<String> copy = new ArrayDeque<>(descriptions);
             copy.add(trim(descriptions.getLast(), 3));
-            unpack(context, new InflaterInputStream(in), out, copy);
+            unpack(context, supportMultistream ? new Multistream(in, InflaterInputStream::new) : new InflaterInputStream(in), out, copy);
         } else if (tailLowerCase.endsWith(".7z")) {
             byte[] bytes = in.readAllBytes();  // not ideal, should add an alternative Unpack7Z transformer
             SevenZFile sevenZFile = new SevenZFile(new SeekableInMemoryByteChannel(bytes));
@@ -103,7 +105,7 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
         } else if (tailLowerCase.endsWith(".tar")) {
             TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in);
             TarArchiveEntry tarArchiveEntry;
-            while ((tarArchiveEntry = tarArchiveInputStream.getNextTarEntry()) != null) {
+            while ((tarArchiveEntry = tarArchiveInputStream.getNextEntry()) != null) {
                 if (tarArchiveEntry.isFile()) {
                     Deque<String> copy = new ArrayDeque<>(descriptions);
                     copy.add(tarArchiveEntry.getName());
@@ -113,7 +115,7 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
         } else if (tailLowerCase.endsWith(".tgz")) {
             TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(in));
             TarArchiveEntry tarArchiveEntry;
-            while ((tarArchiveEntry = tarArchiveInputStream.getNextTarEntry()) != null) {
+            while ((tarArchiveEntry = tarArchiveInputStream.getNextEntry()) != null) {
                 if (tarArchiveEntry.isFile()) {
                     Deque<String> copy = new ArrayDeque<>(descriptions);
                     copy.add(tarArchiveEntry.getName());
@@ -123,7 +125,7 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
         } else if (tailLowerCase.endsWith(".zip")) {
             ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(in);
             ZipArchiveEntry zipArchiveEntry;
-            while ((zipArchiveEntry = zipArchiveInputStream.getNextZipEntry()) != null) {
+            while ((zipArchiveEntry = zipArchiveInputStream.getNextEntry()) != null) {
                 if (!zipArchiveEntry.isDirectory()) {
                     Deque<String> copy = new ArrayDeque<>(descriptions);
                     copy.add(zipArchiveEntry.getName());
@@ -157,14 +159,19 @@ public final class Unpack implements Transformer<InputStream, InputStream> {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
-                rule(JsonNode::isTextual, text -> o("description", text));
                 rule(JsonNode::isInt, int_ -> o("maxDepth", int_));
+                rule(JsonNode::isTextual, text -> switch (text.textValue()) {
+                    case "supportMultistream" -> o("supportMultistream", true);
+                    case "!supportMultistream" -> o("supportMultistream", false);
+                    default -> o("description", text);
+                });
                 rule(JsonNode::isArray, array -> o("description", array.get(0), "maxDepth", array.get(1)));
             }
         }
 
         public TemplateParameters description = new TemplateParameters("${description}", false);
         public Integer maxDepth;
+        public boolean supportMultistream = true;
     }
 
     private static class NoCloseInputStream extends FilterInputStream {
