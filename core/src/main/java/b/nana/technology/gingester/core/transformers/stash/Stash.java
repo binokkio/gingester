@@ -12,36 +12,36 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 @Passthrough
 public final class Stash implements Transformer<Object, Object> {
 
-    private final String name;
+    private final String key;
 
     public Stash(Parameters parameters) {
 
-        if (!Character.isLowerCase(parameters.name.charAt(0)))
-            throw new IllegalArgumentException("Stash name must start with lowercase character: " + parameters.name);
+        if (!Character.isLowerCase(parameters.key.charAt(0)))
+            throw new IllegalArgumentException("Stash key must start with lowercase character: " + parameters.key);
 
-        name = parameters.name;
+        key = parameters.key;
     }
 
     @Override
     public StashDetails getStashDetails() {
-        return StashDetails.ofOrdinal(name, "__input__");
+        return StashDetails.ofOrdinal(key, "__input__");
     }
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        out.accept(context.stash(name, in), in);
+        out.accept(context.stash(key, in), in);
     }
 
     public static class Parameters {
 
-        public String name = "stash";
+        public String key = "stash";
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(String name) {
-            this.name = name;
+        public Parameters(String key) {
+            this.key = key;
         }
     }
 }

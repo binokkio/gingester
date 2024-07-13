@@ -17,7 +17,7 @@ public final class Fetch implements Transformer<Object, Object> {
     private final boolean optional;
 
     public Fetch(Parameters parameters) {
-        fetchKey = new FetchKey(parameters.fetchKey);
+        fetchKey = new FetchKey(parameters.key);
         optional = parameters.optional;
     }
 
@@ -47,10 +47,10 @@ public final class Fetch implements Transformer<Object, Object> {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
             public Deserializer() {
                 super(Parameters.class);
-                rule(JsonNode::isTextual, fetchKey -> o("fetchKey", fetchKey));
+                rule(JsonNode::isTextual, key -> o("key", key));
                 rule(JsonNode::isArray, array -> {
                     if (array.size() == 2 && array.get(1).asText().equals("optional")) {
-                        return o("fetchKey", array.get(0), "optional", true);
+                        return o("key", array.get(0), "optional", true);
                     } else {
                         throw new IllegalArgumentException("Invalid parameters: " + array);
                     }
@@ -58,7 +58,7 @@ public final class Fetch implements Transformer<Object, Object> {
             }
         }
 
-        public String fetchKey = "stash";
+        public String key = "stash";
         public boolean optional;
 
         @JsonCreator
@@ -66,8 +66,8 @@ public final class Fetch implements Transformer<Object, Object> {
 
         }
 
-        public Parameters(String fetchKey) {
-            this.fetchKey = fetchKey;
+        public Parameters(String key) {
+            this.key = key;
         }
     }
 }
