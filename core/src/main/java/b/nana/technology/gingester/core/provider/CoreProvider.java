@@ -44,7 +44,9 @@ public final class CoreProvider implements Provider {
                 b.nana.technology.gingester.core.transformers.stash.Swap.class,
                 b.nana.technology.gingester.core.transformers.string.Def.class,
                 b.nana.technology.gingester.core.transformers.Throw.class,
-                b.nana.technology.gingester.core.transformers.Void.class
+                b.nana.technology.gingester.core.transformers.Void.class,
+                b.nana.technology.gingester.core.transformers.wormhole.In.class,
+                b.nana.technology.gingester.core.transformers.wormhole.Out.class
         );
     }
 }

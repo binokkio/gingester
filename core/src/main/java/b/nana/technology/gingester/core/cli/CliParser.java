@@ -213,6 +213,16 @@ public final class CliParser {
                     i = addNode(target.node().name("Swap"), args, i, false);
                     break;
 
+                case "-wi":
+                case "--wormhole-in":
+                    i = addNode(target.node().name("WormholeIn"), args, i, false);
+                    break;
+
+                case "-wo":
+                case "--wormhole-out":
+                    i = addNode(target.node().name("WormholeOut"), args, i, false);
+                    break;
+
                 case "--":
                     target.linkFrom(List.of());
                     break;
