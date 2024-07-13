@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.transformers.stash;
+package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
@@ -11,12 +11,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Names(1)
-public final class Fetch implements Transformer<Object, Object> {
+public final class OnFinishFetch implements Transformer<Object, Object> {
 
     private final FetchKey fetchKey;
     private final boolean optional;
 
-    public Fetch(Parameters parameters) {
+    public OnFinishFetch(Parameters parameters) {
         fetchKey = new FetchKey(parameters.key);
         optional = parameters.optional;
     }
@@ -27,7 +27,12 @@ public final class Fetch implements Transformer<Object, Object> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<Object> out) {
+    public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
+
+    }
+
+    @Override
+    public void finish(Context context, Receiver<Object> out) throws Exception {
         if (!optional) {
             out.accept(
                     context,

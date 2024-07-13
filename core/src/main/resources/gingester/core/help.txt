@@ -28,11 +28,8 @@ General usage:
         exceptions are routed to the builtin error logging transformer if no links are provided
         provide [<link1> [<link2> [...]]] to route the exceptions to those links
 
-    -f/--fetch [<name>]
-        fetch value from stash by name
-
-    -fa/--fetch-all [<name>]
-        fetch all values from stash by name
+    -f/--fetch [<key>]
+        fetch value from stash by key
 
     -gs/--graceful-sigint
         enable graceful handling of sigint
@@ -51,26 +48,37 @@ General usage:
     -r/--report
         the interval in seconds at which to report throughput, 0 to disable
 
-    -s/--stash [<name>]
-        stash value
+    -s/--stash [<key>]
+        stash value under key
 
     -sf/--sync-from <link1> [<link2> [...]]
-        mark the linked transformers to be synced with when -stt or -stft is used later
-
-    -sft/--sync-from-transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
-        equal to -t but marks the transformer to be synced with when -stt or -stft is used later
+        mark the linked transformers to be synced with when -stf/-stft/-stof/-stt is used later
 
     -sfpt/--sync-from-point/--sync-from-passthrough [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>[!]]
-        equal to -pt but marks the transformer to be synced with when -stt or -stft is used later
+        equal to -pt but marks the transformer to be synced with when -stf/-stft/-stof/-stt is used later
+
+    -sfs/--sync-from-stash [<key>]
+        stash value under key and mark this point to be synced with when -stf/-stft/-stof/-stt is used later
+
+    -sft/--sync-from-transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
+        equal to -t but marks the transformer to be synced with when -stf/-stft/-stof/-stt is used later
+
+    -stf/--sync-to-fetch [<key>]
+        fetch value from stash by key everytime any of the transformers most recently marked by
+        -sf/-sfpt/-sfs/sft/stft finishes, or the ingest-seed if there are no marks
 
     -stft/--sync-to-and-from-transformer
             [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
-        equal to -t but syncs the transformer with those most recently marked by -sf, -sft or -stft, or the
-        ingest-seed if there are no marks, also marks the transformer to be synced with when -stt or -stft is
-        used later
+        equal to -t but syncs the transformer with those most recently marked by -sf/-sfpt/-sfs/sft/stft, or the
+        ingest-seed if there are no marks, also marks the transformer to be synced with when
+        -stf/-stft/-stof/-stt is used later
+
+    -stof/--sync-to-on-finish
+        yield a finish signal everytime any of the transformers most recently marked by -sf/-sfpt/-sfs/sft/stft
+        finishes, or the ingest-seed if there are no marks
 
     -stt/--sync-to-transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
-        equal to -t but syncs the transformer with those most recently marked by -sf, -sft or -stft, or the
+        equal to -t but syncs the transformer with those most recently marked by -sf/-sfpt/-sfs/sft/stft, or the
         ingest-seed if there are no marks
 
     -t/--transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
@@ -82,8 +90,14 @@ General usage:
         provide [!] to enable throughput reporting for the transformer
         provide [<parameters>] to configure the transformer
 
-    -w/--swap [<name>]
+    -w/--swap [<key>]
         stash value and fetch previous value
+
+    -wi/--wormhole-in
+        passthrough items and send values to the closest upstream -wo/--wormhole-out
+
+    -wo/--wormhole-out
+        passthrough items and yield values from the closest downstream -wi/--wormhole-in
 
     --
         prevent the previous transformer from automatically being linked to the next transformer
@@ -95,7 +109,7 @@ General usage:
         print this help and exit
 
 
-Terminology:
+Concepts:
 
     Flow: the network of transformers processing the items.
     Item: a value and associated context in the flow.
@@ -170,3 +184,39 @@ Terminology:
         the GroupByCountLimit transformer counts the items flowing through it and assigns them the same
         synchronization context until it hits the given limit, at which point it switches to a new
         synchronization context. A synced-to ListCollect transformer would then output a list for every group.
+
+
+    Wormhole:
+
+        Flows are directed and acyclic, which makes it hard to create flows for some cases. Consuming a paginated
+        JSON API for example, where each page contains a reference to the next page. A try at consuming such an
+        API could look like this:
+
+        -t Http GET 'https://example.org/json-api?search=example'
+        -t InputStreamToJson -s page
+        ++ process page here ++
+        -t Http GET '${page.next}'
+        -t InputStreamToJson -s page
+        ++ process page here ++
+        -t Http GET '${page.next}'
+        ++ and so forth ++
+
+        The first Http transformer yields the URL of the second page, and since that can not flow back to the
+        first Http transformer, a second Http transformer must be defined to get the second page, and so forth. A
+        wormhole solves this issue by allowing values to travel upstream.
+
+        -t StringDef 'https://example.org/json-api?search=example'
+        --wormhole-out
+        -t Http GET '${__in__}'
+        -t InputStreamToJson
+        --sync-from-stash page
+        -t JsonPath '$.next' optional
+        --wormhole-in
+        --sync-to-fetch page
+        ++ process pages here ++
+
+        Here the URL for the next page travels through the wormhole and gets processed by the same Http transformer.
+
+        The transformers between the 2 points of the wormhole must not have their own workers. Only a single value
+        can travel through the wormhole for each item that --wormhole-out yields. The value loses the context it
+        gained between --wormhole-out and --wormhole-in.

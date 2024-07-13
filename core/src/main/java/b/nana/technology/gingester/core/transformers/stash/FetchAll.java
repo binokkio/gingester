@@ -15,7 +15,7 @@ public final class FetchAll implements Transformer<Object, Object> {  // TODO im
     private final FetchKey fetchKey;
 
     public FetchAll(Parameters parameters) {
-        fetchKey = requireNonNull(parameters.stash);
+        fetchKey = requireNonNull(parameters.key);
     }
 
     @Override
@@ -25,14 +25,14 @@ public final class FetchAll implements Transformer<Object, Object> {  // TODO im
 
     public static class Parameters {
 
-        public FetchKey stash = new FetchKey("stash");
+        public FetchKey key = new FetchKey("stash");
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(FetchKey stash) {
-            this.stash = stash;
+        public Parameters(FetchKey key) {
+            this.key = key;
         }
     }
 }

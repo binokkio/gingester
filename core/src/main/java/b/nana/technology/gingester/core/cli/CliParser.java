@@ -146,10 +146,28 @@ public final class CliParser {
                     target.syncFrom(syncFrom);
                     break;
 
+                case "-sfs":
+                case "--sync-from-stash":
+                    i = addNode(target.node().name("Stash"), args, i, false);
+                    target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
                 case "-sft":
                 case "--sync-from-transformer":
                     i = addNode(target.node(), args, i, true);
                     target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
+                case "-stf":
+                case "--sync-to-fetch":
+                    i = addNode(target.node().name("OnFinishFetch"), args, i, false);
+                    target.sync();
+                    break;
+
+                case "-stof":
+                case "--sync-to-on-finish":
+                    i = addNode(target.node().name("OnFinish"), args, i, false);
+                    target.sync();
                     break;
 
                 case "-stt":
@@ -188,11 +206,6 @@ public final class CliParser {
                     i = addNode(target.node().name("Fetch"), args, i, false);
                     break;
 
-                case "-fa":
-                case "--fetch-all":
-                    i = addNode(target.node().name("FetchAll"), args, i, false);
-                    break;
-
                 case "-p":
                 case "--probe":
                     i = addNode(target.node().name("Probe"), args, i, false);
@@ -213,6 +226,16 @@ public final class CliParser {
                     i = addNode(target.node().name("Swap"), args, i, false);
                     break;
 
+                case "-wi":
+                case "--wormhole-in":
+                    i = addNode(target.node().name("WormholeIn"), args, i, false);
+                    break;
+
+                case "-wo":
+                case "--wormhole-out":
+                    i = addNode(target.node().name("WormholeOut"), args, i, false);
+                    break;
+
                 case "--":
                     target.linkFrom(List.of());
                     break;
@@ -220,6 +243,12 @@ public final class CliParser {
                 case "+":  // TODO remove, replace `.matches("[+-].*")` with ~ `.charAt(0) != '-'`
                     LOGGER.warn("The CLI arg \"+\" will be removed in a future version, use block style comments instead");
                     i++;
+                    break;
+
+                case "-fa":
+                case "--fetch-all":
+                    LOGGER.warn("The CLI arg \"" + args[i] + "\" will be removed in a future version, use `-t FetchAll` instead");
+                    i = addNode(target.node().name("FetchAll"), args, i, false);
                     break;
 
                 case "-fg":
