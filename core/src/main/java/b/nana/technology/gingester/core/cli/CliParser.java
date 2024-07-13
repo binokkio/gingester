@@ -206,11 +206,6 @@ public final class CliParser {
                     i = addNode(target.node().name("Fetch"), args, i, false);
                     break;
 
-                case "-fa":
-                case "--fetch-all":
-                    i = addNode(target.node().name("FetchAll"), args, i, false);
-                    break;
-
                 case "-p":
                 case "--probe":
                     i = addNode(target.node().name("Probe"), args, i, false);
@@ -248,6 +243,12 @@ public final class CliParser {
                 case "+":  // TODO remove, replace `.matches("[+-].*")` with ~ `.charAt(0) != '-'`
                     LOGGER.warn("The CLI arg \"+\" will be removed in a future version, use block style comments instead");
                     i++;
+                    break;
+
+                case "-fa":
+                case "--fetch-all":
+                    LOGGER.warn("The CLI arg \"" + args[i] + "\" will be removed in a future version, use `-t FetchAll` instead");
+                    i = addNode(target.node().name("FetchAll"), args, i, false);
                     break;
 
                 case "-fg":
