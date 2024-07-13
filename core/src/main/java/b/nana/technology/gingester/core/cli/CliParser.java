@@ -146,10 +146,28 @@ public final class CliParser {
                     target.syncFrom(syncFrom);
                     break;
 
+                case "-sfs":
+                case "--sync-from-stash":
+                    i = addNode(target.node().name("Stash"), args, i, false);
+                    target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
                 case "-sft":
                 case "--sync-from-transformer":
                     i = addNode(target.node(), args, i, true);
                     target.syncFrom(target.getLastId().getGlobalId());
+                    break;
+
+                case "-stf":
+                case "--sync-to-fetch":
+                    i = addNode(target.node().name("OnFinishFetch"), args, i, false);
+                    target.sync();
+                    break;
+
+                case "-stof":
+                case "--sync-to-on-finish":
+                    i = addNode(target.node().name("OnFinish"), args, i, false);
+                    target.sync();
                     break;
 
                 case "-stt":
