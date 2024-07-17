@@ -201,7 +201,7 @@ Concepts:
         -t Http GET '${page.next}'
         ++ and so forth ++
 
-        The first Http transformer yields the URL of the second page, and since that can not flow back to the
+        The first Http transformer yields the URL for the second page, and since that can not flow back to the
         first Http transformer, a second Http transformer must be defined to get the second page, and so forth. A
         wormhole solves this issue by allowing values to travel upstream.
 
@@ -215,7 +215,7 @@ Concepts:
         --sync-to-fetch page
         ++ process pages here ++
 
-        Here the URL for the next page travels through the wormhole and gets processed by the same Http transformer.
+        Here the URL for the next page travels through the wormhole back to the same Http transformer.
 
         The transformers between the 2 points of the wormhole must not have their own workers. Only a single value
         can travel through the wormhole for each item that --wormhole-out yields. The value loses the context it

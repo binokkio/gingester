@@ -14,6 +14,7 @@ public final class JettyProvider implements Provider {
         return List.of(
                 BasicAuth.class,
                 Keycloak.class,
+                OAuth2.class,
                 Oidc.class,
                 Proxy.class,
                 Respond.class,
