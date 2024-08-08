@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
@@ -16,23 +17,26 @@ import java.util.concurrent.TimeUnit;
 @Names(1)
 @Passthrough
 @Example(example = "10", description = "Slow the flow down to a maximum of 10 items per second")
+@Example(example = "'{\"permits\": 10, \"rate\": \"1M\"}'", description = "Slow the flow down to a maximum of 10 items per minute")
 public final class Throttle implements Transformer<Object, Object> {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final Semaphore semaphore;
-    private final int perSecond;
+    private final int permits;
+    private final Duration rate;
 
     public Throttle(Parameters parameters) {
-        perSecond = parameters.perSecond;
-        semaphore = new Semaphore(perSecond, true);
+        permits = parameters.permits;
+        semaphore = new Semaphore(permits, true);
+        rate = Duration.parse("PT" + parameters.rate);
     }
 
     @Override
     public void open() {
         scheduler.scheduleAtFixedRate(() -> {
             semaphore.drainPermits();
-            semaphore.release(perSecond);
-        }, 1, 1, TimeUnit.SECONDS);
+            semaphore.release(permits);
+        }, rate.toMillis(), rate.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -48,14 +52,15 @@ public final class Throttle implements Transformer<Object, Object> {
 
     public static class Parameters {
 
-        public int perSecond = 1;
+        public int permits = 1;
+        public String rate = "1S";
 
         @JsonCreator
         public Parameters() {}
 
         @JsonCreator
-        public Parameters(int perSecond) {
-            this.perSecond = perSecond;
+        public Parameters(int permits) {
+            this.permits = permits;
         }
     }
 }
