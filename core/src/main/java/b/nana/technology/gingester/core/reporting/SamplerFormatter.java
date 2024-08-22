@@ -5,7 +5,8 @@ import java.util.function.Function;
 
 public class SamplerFormatter {
 
-    private static final DecimalFormat DEFAULT_SAMPLE_FORMATTER = new DecimalFormat("#,##0.##");
+    public static final DecimalFormat DEFAULT_SAMPLE_FORMATTER = new DecimalFormat("#,##0.##");
+    private static final DurationFormatter durationFormatter = new DurationFormatter(true);
 
     private final String subject;
     private final Function<Double, String> sampleFormatter;
@@ -22,7 +23,7 @@ public class SamplerFormatter {
         this(
                 subject,
                 sampleFormatter,
-                SamplerFormatter::humanize
+                durationFormatter::format
         );
     }
 
@@ -44,22 +45,5 @@ public class SamplerFormatter {
                 sampleFormatter.apply(sampler.getEpochChangePerSecond()),
                 nanosFormatter.apply(sampler.getEpochNanos())
         );
-    }
-
-    private static String humanize(long nanos) {
-        long asSeconds = Math.round(nanos / 1_000_000_000d);
-        long days = asSeconds / 86400;
-        long hours = asSeconds % 86400 / 3600;
-        long minutes = asSeconds % 86400 % 3600 / 60;
-        long seconds = asSeconds % 86400 % 3600 % 60;
-        if (days != 0) {
-            return days + "d" + hours + "h" + minutes + "m" + seconds + "s";
-        } else if (hours != 0) {
-            return hours + "h" + minutes + "m" + seconds + "s";
-        } else if (minutes != 0) {
-            return minutes + "m" + seconds + "s";
-        } else {
-            return seconds + "s";
-        }
     }
 }
