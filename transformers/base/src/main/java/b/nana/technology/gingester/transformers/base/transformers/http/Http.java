@@ -192,7 +192,7 @@ public final class Http implements Transformer<Object, InputStream> {
 
                     for (int j = 0; j < retries[i].length && retries[i][j] != 0; j++) {
 
-                        total = total.plus(backoff.get(j));
+                        total = total.plus(backoff.get(j).multipliedBy(retries[i][j]));
 
                         stringBuilder
                                 .append(SamplerFormatter.DEFAULT_SAMPLE_FORMATTER.format(retries[i][j]))
