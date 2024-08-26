@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.29.7-SNAPSHOT</version>
+        <version>0.29.7</version>
     </parent>
 
     <artifactId>core</artifactId>
