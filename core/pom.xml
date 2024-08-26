@@ -29,6 +29,10 @@
             <artifactId>freemarker</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.github.victools</groupId>
+            <artifactId>jsonschema-generator</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.binokkio</groupId>
             <artifactId>graphtxt</artifactId>
         </dependency>
