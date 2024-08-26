@@ -8,7 +8,7 @@
 
     <groupId>b.nana.technology.gingester</groupId>
     <artifactId>gingester</artifactId>
-    <version>0.29.6</version>
+    <version>0.29.7-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -54,6 +54,11 @@
                 <groupId>net.jodah</groupId>
                 <artifactId>typetools</artifactId>
                 <version>0.6.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.victools</groupId>
+                <artifactId>jsonschema-generator</artifactId>
+                <version>4.36.0</version>
             </dependency>
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
