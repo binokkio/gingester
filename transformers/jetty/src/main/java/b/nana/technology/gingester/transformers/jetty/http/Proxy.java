@@ -24,7 +24,7 @@ import static java.util.Objects.requireNonNull;
 
 public final class Proxy implements Transformer<InputStream, InputStream> {
 
-    private static final Set<String> RESTRICTED_HEADERS = Set.of("Connection", "Host");
+    private static final Set<String> RESTRICTED_HEADERS = Set.of("Connection", "Content-Length", "Host");
     private static final FetchKey FETCH_HTTP = new FetchKey("http");
 
     private final HttpClient httpClient;
