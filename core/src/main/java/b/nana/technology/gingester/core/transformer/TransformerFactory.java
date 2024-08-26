@@ -302,7 +302,7 @@ public final class TransformerFactory {
                 .sorted();
     }
 
-    private static <I, O> Optional<? extends Constructor<? extends Transformer<I, O>>> getParameterRichConstructor(Class<? extends Transformer<I, O>> transformerClass) {
+    public static <I, O> Optional<? extends Constructor<? extends Transformer<I, O>>> getParameterRichConstructor(Class<? extends Transformer<I, O>> transformerClass) {
         // noinspection unchecked
         return Arrays.stream(transformerClass.getConstructors())
                 .map(c -> (Constructor<? extends Transformer<I, O>>) c)
