@@ -22,7 +22,8 @@ public final class Gcls implements Transformer<Object, Object> {
 
         configBuilder
                 .without(Option.SCHEMA_VERSION_INDICATOR)
-                .with(Option.INLINE_ALL_SCHEMAS);
+                .with(Option.INLINE_ALL_SCHEMAS)
+                .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
 
         configBuilder.forTypesInGeneral().withPropertySorter((a, b) -> 0);
 
