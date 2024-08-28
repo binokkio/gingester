@@ -86,4 +86,17 @@ class DefTest {
 
         assertEquals("Hello, World!", result.get());
     }
+
+    @Test
+    void testStringDefFullParameters() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t StringDef '{template: {template: \"Hello, World!\", is: \"STRING\"}}'")
+                .add(result::set)
+                .run();
+
+        assertEquals("Hello, World!", result.get());
+    }
 }
