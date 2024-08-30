@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 public final class Gcli implements Transformer<Object, Object> {
 
     private final List<BiFunction<Context, Object, String>> segments;
+    private final boolean giveContext;
     private final Map<String, Object> kwargs;
 
     public Gcli(Parameters parameters) {
@@ -39,6 +40,8 @@ public final class Gcli implements Transformer<Object, Object> {
         segments = parameters.segments.stream()
                 .map(Gcli::getGcliSupplier)
                 .collect(Collectors.toList());
+
+        giveContext = parameters.giveContext;
 
         kwargs = parameters.kwargs;
     }
@@ -84,19 +87,17 @@ public final class Gcli implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
+        FlowBuilder flowBuilder = new FlowBuilder().seedValue(in);
+        if (giveContext) flowBuilder.parentContext(context);
         if (kwargs.isEmpty()) {
             ContextPlus contextPlus = new ContextPlus(context, in);
-            FlowBuilder flowBuilder = new FlowBuilder().seed(context, in);
             segments.forEach(gs -> flowBuilder.cli(gs.apply(context, in), contextPlus));
-            flowBuilder.add(o -> out.accept(context, o)).run();
         } else {
-            Context.Builder contextBuilder = context.stash(kwargs);
-            Context gcliContext = contextBuilder.buildForSelf();
-            ContextPlus contextPlus = new ContextPlus(gcliContext, in);
-            FlowBuilder flowBuilder = new FlowBuilder().seed(gcliContext, in);
-            segments.forEach(gs -> flowBuilder.cli(gs.apply(gcliContext, in), contextPlus));
-            flowBuilder.add(o -> out.accept(contextBuilder, o)).run();
+            Context contextWithKwargs = context.stash(kwargs).buildForSelf();
+            ContextPlus contextPlus = new ContextPlus(contextWithKwargs, in);
+            segments.forEach(gs -> flowBuilder.cli(gs.apply(contextWithKwargs, in), contextPlus));
         }
+        flowBuilder.add(o -> out.accept(context, o)).run();
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)
@@ -119,6 +120,7 @@ public final class Gcli implements Transformer<Object, Object> {
         }
 
         public List<SourceParameters> segments;
+        public boolean giveContext;
         public Map<String, Object> kwargs = Map.of();
     }
 

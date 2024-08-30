@@ -40,12 +40,12 @@ public final class Context implements Iterable<Context> {
         return new TemplateMapper<>(templateParameters, mapper);
     }
 
-    public static Context newSeedContext(Controller<?, ?> seedController, Context parent) {
-        return new Context(seedController, parent);
+    public static Context newSeedContext(Controller<?, ?> seedController, Context parent, Map<String, ?> stash) {
+        return new Context(seedController, parent, stash);
     }
 
     public static Context newTestContext() {
-        return new Context(new Controller<>(Id.newTransientId("$__test_seed__")), null);
+        return new Context(new Controller<>(Id.newTransientId("$__test_seed__")), null, null);
     }
 
     final Controller<?, ?> controller;
@@ -57,11 +57,11 @@ public final class Context implements Iterable<Context> {
     private final boolean isSeed;
     private volatile boolean isFlawed;
 
-    private Context(Controller<?, ?> controller, Context parent) {
+    private Context(Controller<?, ?> controller, Context parent, Map<String, ?> stash) {
         this.controller = controller;
         this.parent = parent;
         this.group = null;
-        this.stash = null;
+        this.stash = stash;
         this.isSynced = true;
         this.isSeed = true;
     }

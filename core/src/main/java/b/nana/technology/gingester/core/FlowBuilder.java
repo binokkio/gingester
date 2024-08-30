@@ -27,7 +27,8 @@ public final class FlowBuilder {
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
-    Context seedContext = null;
+    Context parentContext = null;
+    Map<String, ?> seedStash = null;
     Object seedValue = "seed signal";
 
     private Node last;
@@ -49,15 +50,20 @@ public final class FlowBuilder {
         last = seed;
     }
 
-    public FlowBuilder seed(Object seedValue) {
-        this.seedValue = seedValue;
-        this.seedTransformer.setOutputType(seedValue.getClass());
+    public FlowBuilder parentContext(Context parentContext) {
+        this.parentContext = parentContext;
         return this;
     }
 
-    public FlowBuilder seed(Context seedContext, Object seedValue) {
-        this.seedContext = seedContext;
-        return seed(seedValue);
+    public FlowBuilder seedStash(Map<String, ?> seedStash) {
+        this.seedStash = seedStash;
+        return this;
+    }
+
+    public FlowBuilder seedValue(Object seedValue) {
+        this.seedValue = seedValue;
+        this.seedTransformer.setOutputType(seedValue.getClass());
+        return this;
     }
 
     public FlowBuilder enterScope(String scope) {
