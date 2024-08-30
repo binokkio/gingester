@@ -278,7 +278,9 @@ public final class FlowBuilder {
             Node removed = nodes.remove(targetId);
             if (removed == null)
                 throw new IllegalArgumentException("No transformer has id " + targetId);
-            nextTargetIds.addAll(removed.getLinks().values());
+            removed.getLinks().values().stream()
+                    .filter(id -> !nodes.containsKey(idFactory.getId(id)))
+                    .forEach(nextTargetIds::add);
             nodes.forEach((id, node) -> node.updateLinks(targetId.getGlobalId(), "$__void__"));
         }
 
