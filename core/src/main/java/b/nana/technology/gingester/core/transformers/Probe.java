@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -22,27 +23,32 @@ public final class Probe implements Transformer<Object, Object> {
 
     private final FetchKey fetchDescription = new FetchKey("description");
     private final int limit;
-    private final FetchKey fetchTarget;
-    private final Function<Context, Consumer<String>> targetSupplier;
+    private final FetchKey fetchKey;
+    private final Function<Context, Target> targetSupplier;
 
     public Probe(Parameters parameters) {
         limit = parameters.limit;
 
         if (parameters.target.equals("stdout")) {
-            fetchTarget = null;
-            targetSupplier = context -> System.out::print;
+            fetchKey = null;
+            targetSupplier = context -> new ConsumerTarget(System.out::print);
         } else if (parameters.target.equals("stderr")) {
-            fetchTarget = null;
-            targetSupplier = context -> System.err::print;
+            fetchKey = null;
+            targetSupplier = context -> new ConsumerTarget(System.err::print);
         } else {
-            fetchTarget = new FetchKey(parameters.target);
-            targetSupplier = context -> message -> {
-                OutputStream outputStream = (OutputStream) context.require(fetchTarget);
-                //noinspection SynchronizationOnLocalVariableOrMethodParameter, TODO think of something nicer
-                synchronized (outputStream) {
-                    PrintStream printStream = new PrintStream(outputStream, false);
-                    printStream.print(message);
-                    printStream.flush();
+            fetchKey = new FetchKey(parameters.target);
+            targetSupplier = context -> {
+                Optional<Object> fetch = context.fetch(fetchKey);
+                if (fetch.isPresent() && fetch.get() instanceof OutputStream outputStream) {
+                    return new ConsumerTarget(message -> {
+                        synchronized (outputStream) {
+                            PrintStream printStream = new PrintStream(outputStream, false);
+                            printStream.print(message);
+                            printStream.flush();
+                        }
+                    });
+                } else {
+                    return new StringBuilderTarget();
                 }
             };
         }
@@ -51,7 +57,7 @@ public final class Probe implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
 
-        Consumer<String> target = targetSupplier.apply(context);
+        Target target = targetSupplier.apply(context);
 
         String description = context.fetchReverse(fetchDescription)
                 .map(Object::toString)
@@ -61,7 +67,7 @@ public final class Probe implements Transformer<Object, Object> {
 
         if (limit > 0) {
             target.accept(
-                    "---- " + description + " ----\nTrace " +
+                    "---- " + description + " ----\nTrace: " +
                     trace + "\n\n" +
                     context.prettyStash(limit) + '\n' +
                     in + '\n' +
@@ -69,14 +75,61 @@ public final class Probe implements Transformer<Object, Object> {
             );
         } else {
             target.accept(
-                    "---- " + description + " ----\nTrace " +
+                    "---- " + description + " ----\nTrace: " +
                     trace + "\n\n" +
                     in + '\n' +
                     "-".repeat(description.length() + 10) + '\n'
             );
         }
 
-        out.accept(context, in);
+        if (target.stash()) {
+            out.accept(context.stash(fetchKey.toString(), target.toString()), in);
+        } else {
+            out.accept(context, in);
+        }
+    }
+
+    private interface Target {
+        void accept(String string);
+        boolean stash();
+    }
+
+    private static class ConsumerTarget implements Probe.Target {
+
+        private final Consumer<String> consumer;
+
+        public ConsumerTarget(Consumer<String> consumer) {
+            this.consumer = consumer;
+        }
+
+        public void accept(String string) {
+            consumer.accept(string);
+        }
+
+        @Override
+        public boolean stash() {
+            return false;
+        }
+    }
+
+    private static class StringBuilderTarget implements Probe.Target {
+
+        private final StringBuilder stringBuilder = new StringBuilder();
+
+        @Override
+        public void accept(String string) {
+            stringBuilder.append(string);
+        }
+
+        @Override
+        public boolean stash() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return stringBuilder.toString();
+        }
     }
 
     @JsonDeserialize(using = Parameters.Deserializer.class)

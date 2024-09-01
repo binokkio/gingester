@@ -39,7 +39,7 @@ General usage:
 
     -p/--probe [<target>] [<contextLimit>]
         print the items flowing through this point in the flow
-        provide "err" for [<target>] to print to stderr instead of stdout
+        provide "stderr" for [<target>] to print to stderr instead of stdout
         provide an integer for [<contextLimit>] to control the amount of context printed
 
     -pt/--point/--passthrough [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>[!]]

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +39,22 @@ class FlowBuilderTest {
                 .run();
 
         assertEquals(10, result.get());
+    }
+
+    @Test
+    void testDivertConvergingAsymmetricFlow() {
+
+        Deque<String> results = new ArrayDeque<>();
+
+        new FlowBuilder()
+                .cli("-t StringDef 'Hello, World!' -l A B -pt A -pt -l C -pt B -pt -pt -l C -pt C")
+                .divert(List.of("A", "B"))
+                .add(results::add)
+                .run();
+
+        assertEquals(2, results.size());
+        assertEquals("Hello, World!", results.remove());
+        assertEquals("Hello, World!", results.remove());
     }
 
     @Test
