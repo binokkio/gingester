@@ -120,7 +120,7 @@ public final class Gcli implements Transformer<Object, Object> {
         }
 
         public List<SourceParameters> segments;
-        public boolean giveContext;
+        public boolean giveContext = true;
         public Map<String, Object> kwargs = Map.of();
     }
 
