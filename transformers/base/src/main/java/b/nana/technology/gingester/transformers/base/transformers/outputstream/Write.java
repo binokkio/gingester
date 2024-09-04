@@ -36,8 +36,8 @@ public final class Write implements Transformer<Object, Object> {
         synchronized (outputStream) {
             outputStream.write(messageTemplate.render(context, in).getBytes(StandardCharsets.UTF_8));
             if (newline) outputStream.write('\n');
-            out.accept(context, in);
         }
+        out.accept(context, in);
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)
