@@ -170,62 +170,76 @@ public final class Context implements Iterable<Context> {
             return Stream.empty();
         } else {
             return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller.id)) : stream())
-                    .map(c -> c.stash)
-                    .filter(Objects::nonNull)
-                    .map(s -> {
-                        Object result = s;
-                        for (String n : fetchKey.getNames()) {
-                            if (result instanceof Map<?, ?> map) {
-                                result = map.get(n);
-                            } else if (result instanceof List<?> list) {
-                                result = list.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
-                            } else if (result instanceof JsonNode jsonNode) {
-                                if (jsonNode.isObject()) {
-                                    result = jsonNode.get(n);
-                                } else if (jsonNode.isArray()) {
-                                    result = jsonNode.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
-                                } else {
-                                    return null;
-                                }
-                            } else if (result != null) {
-                                try {
-                                    Class<?> c = result.getClass();
-
-                                    // try and get value from field
-                                    try {
-                                        result = c.getField(n).get(result);
-                                        continue;
-                                    } catch (NoSuchFieldException e) {
-                                        // ignore
-                                    }
-
-                                    // try and get value from specific getter
-                                    try {
-                                        result = c.getMethod("get" + Character.toUpperCase(n.charAt(0)) + n.substring(1)).invoke(result);
-                                        continue;
-                                    } catch (NoSuchMethodException | InvocationTargetException e) {
-                                        // ignore
-                                    }
-
-                                    // try and get value from generic getter
-                                    try {
-                                        result = c.getMethod("get", new Class[] { String.class }).invoke(result, n);
-                                        continue;
-                                    } catch (NoSuchMethodException | InvocationTargetException e) {
-                                        // ignore
-                                    }
-
-                                    return null;
-
-                                } catch (IllegalAccessException e) {
-                                    return null;  // TODO
-                                }
-                            }
-                        }
-                        return result;
-                    })
-                    .filter(Objects::nonNull);
+                    .map(c -> c.fetchLocal(fetchKey))
+                    .flatMap(Optional::stream);
         }
+    }
+
+    /**
+     * Fetch object from the stash that belongs to this Context.
+     * <p>
+     * The Gingester context is implemented as a singly linked list of Context instances with each context
+     * having a pointer to its parent context. The {@link #fetch(FetchKey)} method iterates this list when
+     * fetching, whereas this method does not, it will only consider the stash of this Context instance.
+     * <p>
+     * Passing an ordinal {@link FetchKey} to this method is an error. The FetchKey transformer target, if
+     * any, is ignored. See {@link #fetchAll(FetchKey)} for more details on FetchKey handling.
+     *
+     * @param fetchKey descriptor of the object to fetch
+     * @return the object that is stashed at the given fetch key, or empty
+     */
+    public Optional<Object> fetchLocal(FetchKey fetchKey) {
+        if (stash == null) return Optional.empty();
+        Object result = stash;
+        for (String n : fetchKey.getNames()) {
+            if (result instanceof Map<?, ?> map) {
+                result = map.get(n);
+            } else if (result instanceof List<?> list) {
+                result = list.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
+            } else if (result instanceof JsonNode jsonNode) {
+                if (jsonNode.isObject()) {
+                    result = jsonNode.get(n);
+                } else if (jsonNode.isArray()) {
+                    result = jsonNode.get(Integer.parseInt(n));  // TODO surround with try-catch-ignore?
+                } else {
+                    return Optional.empty();
+                }
+            } else if (result != null) {
+                try {
+                    Class<?> c = result.getClass();
+
+                    // try and get value from field
+                    try {
+                        result = c.getField(n).get(result);
+                        continue;
+                    } catch (NoSuchFieldException e) {
+                        // ignore
+                    }
+
+                    // try and get value from specific getter
+                    try {
+                        result = c.getMethod("get" + Character.toUpperCase(n.charAt(0)) + n.substring(1)).invoke(result);
+                        continue;
+                    } catch (NoSuchMethodException | InvocationTargetException e) {
+                        // ignore
+                    }
+
+                    // try and get value from generic getter
+                    try {
+                        result = c.getMethod("get", String.class).invoke(result, n);
+                        continue;
+                    } catch (NoSuchMethodException | InvocationTargetException e) {
+                        // ignore
+                    }
+
+                    return Optional.empty();
+
+                } catch (IllegalAccessException e) {
+                    return Optional.empty();  // TODO
+                }
+            }
+        }
+        return Optional.ofNullable(result);
     }
 
     /**
