@@ -39,9 +39,7 @@ public final class Merge implements Transformer<Object, Object> {
         instructions = parameters.instructions;
         for (Instruction instruction : instructions) {
             requireNonNull(instruction.fetch);
-            if (instruction.fetch.isOrdinal()) {
-                requireNonNull(instruction.stash);
-            } else if (instruction.stash == null) {
+            if (!instruction.fetch.isOrdinal() && instruction.stash == null) {
                 instruction.stash = instruction.fetch.toString();
             }
         }
@@ -78,6 +76,15 @@ public final class Merge implements Transformer<Object, Object> {
                 if (instruction.collect != null) {
                     context.fetch(instruction.fetch).ifPresent(
                             object -> state.collections.get(instruction.stash).add(object));
+                } else if (instruction.fetch.isOrdinal() && instruction.stash == null) {
+                    context.fetchOrdinal(instruction.fetch).ifPresent(
+                            ordinalFetchResult -> {
+                                String key = ordinalFetchResult.fetchKey.toString();
+                                Object collision = state.singles.put(key, ordinalFetchResult.result);
+                                if (collision != null && !Objects.equals(collision, ordinalFetchResult.result)) {
+                                    throw new IllegalStateException("Multiple values for " + key);
+                                }
+                            });
                 } else {
                     context.fetch(instruction.fetch).ifPresent(
                             object -> {
@@ -95,25 +102,24 @@ public final class Merge implements Transformer<Object, Object> {
     public void finish(Context context, Receiver<Object> out) {
 
         State state = states.remove(context);
-        Map<String, Object> stash = new HashMap<>(instructions.size());
+        Map<String, Object> stash = new HashMap<>();
 
         for (Instruction instruction : instructions) {
             if (instruction.collect != null) {
                 Collection<Object> values = state.collections.get(instruction.stash);
-                if (!instruction.optional && values.isEmpty()) {
+                if (!instruction.optional && values.isEmpty())
                     throw new IllegalStateException("No values for \"" + instruction + "\"");
-                }
                 stash.put(instruction.stash, state.collections.get(instruction.stash));
-            } else {
+            } else if (instruction.stash != null) {
                 Object value = state.singles.get(instruction.stash);
-                if (!instruction.optional && value == null) {
+                if (!instruction.optional && value == null)
                     throw new IllegalStateException("No value for \"" + instruction + "\"");
-                }
-                stash.put(instruction.stash, value);
             }
         }
 
-        out.accept(context.stash(stash), "merge signal");
+        stash.putAll(state.singles);
+
+        out.accept(context.stash(stash), stash);
     }
 
     private static class State {
@@ -132,7 +138,7 @@ public final class Merge implements Transformer<Object, Object> {
             }
         }
 
-        public List<Instruction> instructions;
+        public List<Instruction> instructions = List.of(new Instruction("^"));
     }
 
     public static class Instruction {
@@ -191,7 +197,7 @@ public final class Merge implements Transformer<Object, Object> {
                 case "[linked]": return LinkedList::new;
                 case "{}":
                 case "{hash}": return HashSet::new;
-                case "{Linked}": return LinkedHashSet::new;
+                case "{linked}": return LinkedHashSet::new;
                 case "{tree}": return TreeSet::new;
                 default: throw new IllegalArgumentException("Invalid collect instruction: " + description);
             }

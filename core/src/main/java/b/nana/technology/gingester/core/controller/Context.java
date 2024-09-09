@@ -154,25 +154,43 @@ public final class Context implements Iterable<Context> {
      */
     public Stream<Object> fetchAll(FetchKey fetchKey) {
         if (fetchKey.isOrdinal()) {
-            int ordinal = 1;
-            Controller<?, ?> last = null;
-            for (Context context : this) {
-                Optional<FetchKey> ordinalFetchKey = context.controller.stashDetails.getOrdinal();
-                if (ordinalFetchKey.isPresent()) {
-                    if (ordinal == fetchKey.ordinal()) {
-                        return context.fetchAll(ordinalFetchKey.get()).limit(1);
-                    } else if (context.controller != last) {  // prevent counting grouped contexts twice
-                        ordinal++;
-                        last = context.controller;
-                    }
-                }
-            }
-            return Stream.empty();
+            return fetchOrdinal(fetchKey).stream().map(ofr -> ofr.result);
         } else {
             return (fetchKey.hasTarget() ? stream().filter(c -> fetchKey.matchesTarget(c.controller.id)) : stream())
                     .map(c -> c.fetchLocal(fetchKey))
                     .flatMap(Optional::stream);
         }
+    }
+
+    /**
+     * Ordinally fetch key and object from stash.
+     * <p>
+     * Transformers can mark one of the keys in their stash as to be included in ordinal fetches. This method
+     * iterates through the context counting the number of transformers it passes that have marked a key as
+     * such. Once the count matches the fetchKey parameter this method returns the marked key and
+     * corresponding value.
+     * <p>
+     * Passing a non-ordinal {@link FetchKey} to this method is an error.
+     *
+     * @param fetchKey the ordinal fetch key
+     * @return the object that is stashed at the given fetch key, or empty
+     */
+    public Optional<OrdinalFetchResult> fetchOrdinal(FetchKey fetchKey) {
+        int ordinal = 1;
+        Controller<?, ?> last = null;
+        for (Context context : this) {
+            Optional<FetchKey> optionalOrdinalFetchKey = context.controller.stashDetails.getOrdinal();
+            if (optionalOrdinalFetchKey.isPresent()) {
+                if (ordinal == fetchKey.ordinal()) {
+                    FetchKey ordinalFetchKey = optionalOrdinalFetchKey.get();
+                    return context.fetchLocal(ordinalFetchKey).map(r -> new OrdinalFetchResult(ordinalFetchKey, r));
+                } else if (context.controller != last) {  // prevent counting grouped contexts twice
+                    ordinal++;
+                    last = context.controller;
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /**
@@ -562,6 +580,17 @@ public final class Context implements Iterable<Context> {
         Context build(Controller<?, ?> controller) {
             this.controller = controller;
             return new Context(controller, parent, group, synced, stash);
+        }
+    }
+
+    public static class OrdinalFetchResult {
+
+        public final FetchKey fetchKey;
+        public final Object result;
+
+        private OrdinalFetchResult(FetchKey fetchKey, Object result) {
+            this.fetchKey = fetchKey;
+            this.result = result;
         }
     }
 
