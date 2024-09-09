@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -159,5 +160,22 @@ class MergeTest {
         assertEquals("A", iterator.next());
         assertEquals("B", iterator.next());
         assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    void testImplicit() {
+
+        AtomicReference<Object> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("""
+                -ss a A -l Merge
+                -ss b B
+                -t Merge
+                """)
+                .add(result::set)
+                .run();
+
+        assertEquals("A", ((Map<?, ?>) result.get()).get("a"));
+        assertEquals("B", ((Map<?, ?>) result.get()).get("b"));
     }
 }
