@@ -32,4 +32,22 @@ class DefTest {
         assertEquals(1, results.getLast().size());
         assertEquals("Hello, World 1!", results.getLast().get(0).asText());
     }
+
+    @Test
+    void testTrailingComma() {
+
+
+        Deque<JsonNode> results = new ArrayDeque<>();
+
+        new FlowBuilder().cli("""
+                        -t JsonDef @ '[1,2,]' -l FIN
+                        -t JsonDef @ '{hello:"world",}'
+                        -pt FIN
+                        """)
+                .add(results::add)
+                .run();
+
+        assertEquals("[1,2]", results.remove().toString());
+        assertEquals("{\"hello\":\"world\"}", results.remove().toString());
+    }
 }

@@ -34,9 +34,9 @@ public final class CliParser {
             .enable(JsonParser.Feature.ALLOW_COMMENTS)
             .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
-//            .enable(JsonParser.Feature.ALLOW_TRAILING_COMMA)
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CliParser.class);

@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.30.1</version>
+        <version>0.30.2-SNAPSHOT</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.26.1</version>
+            <version>1.27.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.junrar</groupId>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.tukaani</groupId>
             <artifactId>xz</artifactId>
-            <version>1.9</version>
+            <version>1.10</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
