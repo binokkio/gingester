@@ -7,6 +7,8 @@ import b.nana.technology.gingester.core.controller.Controller;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import b.nana.technology.gingester.core.transformers.As;
+import b.nana.technology.gingester.core.transformers.Is;
 import b.nana.technology.graphtxt.GraphTxt;
 import b.nana.technology.graphtxt.Node;
 import b.nana.technology.graphtxt.SimpleNode;
@@ -108,11 +110,7 @@ public final class FlowRunner {
         flowBuilder.nodes.forEach((id, node) -> {
 
             @SuppressWarnings("unchecked")
-            ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>(
-                    id,
-                    (Transformer<I, O>) node.requireTransformer(),
-                    new ControllerConfigurationInterface()
-            );
+            ControllerConfiguration<I, O> configuration = configure(id, (Transformer<I, O>) node.requireTransformer());
 
             configuration
                     .links(node.getLinks(), idFactory)
@@ -134,6 +132,14 @@ public final class FlowRunner {
                     .filter(c -> c.getLinks().isEmpty())
                     .forEach(c -> c.report(true));
         }
+    }
+
+    private <I, O> ControllerConfiguration<I, O> configure(Id id, Transformer<I, O> transformer) {
+        return new ControllerConfiguration<>(
+                id,
+                transformer,
+                new ControllerConfigurationInterface()
+        );
     }
 
     private void setupElog() {
@@ -174,7 +180,7 @@ public final class FlowRunner {
             throw new IllegalStateException("Circular route detected: " + route.stream().map(Id::toString).collect(Collectors.joining(" -> ")) + " -> " + nextId);
         } else {
             if (!configurations.containsKey(nextId)) throw new IllegalStateException(route.getLast() + " links to " + nextId + " which does not exist");
-            if (maybeBridge) maybeBridge(route.getLast(), nextName, nextId);
+            if (maybeBridge) seen.addAll(maybeBridge(route.getLast(), nextName, nextId));
             route.add(nextId);
             configurations.get(nextId).getLinks().forEach((name, id) -> explore(name, id, new ArrayDeque<>(route), true, seen));
             Iterator<Id> iterator = route.descendingIterator();
@@ -190,7 +196,7 @@ public final class FlowRunner {
         }
     }
 
-    private <I, O> void maybeBridge(Id upstreamId, String linkName, Id downstreamId) {
+    private <I, O> Set<Id> maybeBridge(Id upstreamId, String linkName, Id downstreamId) {
 
         ControllerConfiguration<?, ?> upstream = configurations.get(upstreamId);
         ControllerConfiguration<?, ?> downstream = configurations.get(downstreamId);
@@ -198,37 +204,51 @@ public final class FlowRunner {
         Class<?> output = upstream.getOutputType();
         Class<?> input = downstream.getInputType();
 
-        if (Stream.of(output, input).noneMatch(c -> c.equals(TypeResolver.Unknown.class) || c.equals(Object.class))) {
-            if (!input.isAssignableFrom(output)) {
+        if (input.equals(TypeResolver.Unknown.class) || input.isAssignableFrom(output)) return Set.of();
 
-                Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
-                        .orElseThrow(() -> new IllegalStateException("Transformations from " + upstreamId + " to " + downstreamId + " must be specified"));  // TODO
+        if (output.equals(TypeResolver.Unknown.class) || output.equals(Object.class)) {
 
-                if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with a dynamic bridge, consider using -i/--is if you know the correct type");
 
-                ControllerConfiguration<?, ?> pointer = upstream;
-                for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
+            @SuppressWarnings("unchecked")
+            Transformer<I, O> as = (Transformer<I, O>) new As(input);
+            Id id = flowBuilder.splice(as, upstream.getId().getGlobalId(), linkName).getLastId();
 
-                    @SuppressWarnings("unchecked")
-                    Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
+            configurations.put(id, configure(id, as).links(Map.of(linkName, downstreamId)));
+            upstream.updateLink(linkName, id);
 
-                    Id id = flowBuilder
-                            .splice(transformer, pointer.getId().getGlobalId(), linkName)
-                            .getLastId();
+            return Set.of(id);
 
-                    // TODO converge with similar code in configure()
-                    ControllerConfiguration<I, O> configuration = new ControllerConfiguration<>(
-                            id,
-                            transformer,
-                            new ControllerConfigurationInterface()
-                    ).links(Map.of(linkName, downstreamId));
+        } else {
 
-                    configurations.put(id, configuration);
-                    pointer.updateLink(linkName, id);
-                    pointer = configuration;
-                }
+            Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
+                    .orElseThrow(() -> new IllegalStateException("Transformations from " + upstreamId + " to " + downstreamId + " must be specified"));  // TODO
+
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
+
+            Set<Id> bridgeIds = new HashSet<>();
+            ControllerConfiguration<?, ?> pointer = upstream;
+            for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
+
+                @SuppressWarnings("unchecked")
+                Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
+                Id id = flowBuilder.splice(transformer, pointer.getId().getGlobalId(), linkName).getLastId();
+
+                ControllerConfiguration<I, O> configuration = configure(id, transformer).links(Map.of(linkName, downstreamId));
+                configurations.put(id, configuration);
+                pointer.updateLink(linkName, id);
+                pointer = configuration;
+
+                bridgeIds.add(id);
             }
+
+            // dynamic bridging provided by As not necessary, swap for Is
+            if (downstream.getTransformer() instanceof As)
+                downstream.updateTransformer(new Is(output));
+
+            return bridgeIds;
         }
     }
 
@@ -255,7 +275,7 @@ public final class FlowRunner {
                 } else if (setupControls.getRequireOutgoingAsync()) {
                     String incompatible = outgoingConfigurations
                             .peek(o -> { if (o.getMaxWorkers().isEmpty()) o.maxWorkers(1); })
-                            .filter(o -> o.getMaxWorkers().get() == 0)
+                            .filter(o -> o.getMaxWorkers().orElseThrow() == 0)
                             .map(ControllerConfiguration::getId)
                             .map(Id::toString)
                             .collect(Collectors.joining(", "));

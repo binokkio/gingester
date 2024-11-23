@@ -17,7 +17,7 @@ public final class ControllerConfiguration<I, O> {
     private final FlowRunner.ControllerConfigurationInterface gingester;
 
     private final Id id;
-    private final Transformer<I, O> transformer;
+    private Transformer<I, O> transformer;
     private final StashDetails stashDetails;
     private Integer maxWorkers;
     private Integer maxQueueSize;
@@ -97,6 +97,11 @@ public final class ControllerConfiguration<I, O> {
     }
 
 
+
+    public void updateTransformer(Transformer<?, ?> transformer) {
+        //noinspection unchecked
+        this.transformer = (Transformer<I, O>) transformer;
+    }
 
     public void updateLink(String linkName, Id target) {
         links.replace(linkName, target);

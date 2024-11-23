@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.base.transformers.inputstream;
 
 import b.nana.technology.gingester.core.annotations.Pure;
 import b.nana.technology.gingester.transformers.base.common.json.IteratingToJsonTransformer;
-import b.nana.technology.gingester.transformers.base.common.json.ToJsonTransformer;
+import b.nana.technology.gingester.transformers.base.common.json.ReadingToJsonTransformer;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectReader;
 
@@ -12,7 +12,7 @@ import java.io.InputStream;
 @Pure
 public final class ToJson extends IteratingToJsonTransformer<InputStream> {
 
-    public ToJson(ToJsonTransformer.Parameters parameters) {
+    public ToJson(ReadingToJsonTransformer.Parameters parameters) {
         super(parameters);
     }
 

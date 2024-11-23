@@ -11,11 +11,11 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class ToJsonTransformer<I> implements Transformer<I, JsonNode> {
+public abstract class ReadingToJsonTransformer<I> implements Transformer<I, JsonNode> {
 
     private final ObjectReader objectReader;
 
-    protected ToJsonTransformer(Parameters parameters) {
+    protected ReadingToJsonTransformer(Parameters parameters) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
         parameters.features.forEach(feature -> objectMapper.enable(feature.mappedFeature()));

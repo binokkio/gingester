@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
 import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.controller.Context;
@@ -12,6 +13,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.Map;
 import java.util.Objects;
 
+@Example(example = "", description = "Collect a map of item value -> most recently stashed value")
+@Example(example = "hello", description = "Collect a map of item value -> fetch `hello`")
 public final class Collect implements Transformer<Object, Map<Object, Object>> {
 
     private final ContextMap<Map<Object, Object>> maps = new ContextMap<>();
