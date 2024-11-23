@@ -3,7 +3,7 @@ package b.nana.technology.gingester.transformers.base.transformers.json;
 import b.nana.technology.gingester.core.annotations.Description;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
-import b.nana.technology.gingester.transformers.base.common.json.ToJsonTransformer;
+import b.nana.technology.gingester.transformers.base.common.json.ReadingToJsonTransformer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Iterator;
 
 @Description("Interpret nested (internal) JSON strings")
-public final class Internpret extends ToJsonTransformer<JsonNode> {
+public final class Internpret extends ReadingToJsonTransformer<JsonNode> {
 
     public Internpret(Parameters parameters) {
         super(parameters);

@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 
 import java.io.IOException;
 
-public abstract class IteratingToJsonTransformer<T> extends ToJsonTransformer<T> {
+public abstract class IteratingToJsonTransformer<T> extends ReadingToJsonTransformer<T> {
 
     protected IteratingToJsonTransformer(Parameters parameters) {
         super(parameters);
