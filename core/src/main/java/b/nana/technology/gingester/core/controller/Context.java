@@ -360,16 +360,17 @@ public final class Context implements Iterable<Context> {
 
     private void pretty(Object object, int limit, int indentation, boolean root, StringBuilder stringBuilder) {
 
-        if (object instanceof Map) {
+        if (object instanceof Map<?, ?> map) {
 
             stringBuilder.append("{\n");
 
-            int size = ((Map<?, ?>) object).size();
-            Stream<? extends Map.Entry<?, ?>> stream = ((Map<?, ?>) object).entrySet().stream();
-            if (!root)
-                stream = stream
-                        .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
-                        .limit(size > limit + 1 ? limit : size);
+            int size = map.size();
+            Stream<? extends Map.Entry<?, ?>> stream = map.entrySet().stream();
+            if (!root) {
+                if (!(object instanceof LinkedHashMap))
+                    stream = stream.sorted(Comparator.comparing(entry -> entry.getKey().toString()));
+                stream = stream.limit(size > limit + 1 ? limit : size);
+            }
 
             stream.forEach(e -> {
                 stringBuilder
@@ -390,13 +391,13 @@ public final class Context implements Iterable<Context> {
                     .append(" ".repeat(indentation))
                     .append("}\n");
 
-        } else if (object instanceof List) {
-            int size = ((List<?>) object).size();
-            Stream<?> stream = ((List<?>) object).stream();
+        } else if (object instanceof List<?> list) {
+            int size = list.size();
+            Stream<?> stream = list.stream();
             prettyEntries(indentation, '[', ']', size, limit, stream, stringBuilder);
-        } else if (object instanceof Set) {
-            int size = ((Set<?>) object).size();
-            Stream<?> stream = ((Set<?>) object).stream();
+        } else if (object instanceof Set<?> set) {
+            int size = set.size();
+            Stream<?> stream = set.stream();
             prettyEntries(indentation, '{', '}', size, limit, stream, stringBuilder);
         } else {
 
