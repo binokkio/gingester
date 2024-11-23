@@ -17,6 +17,7 @@ public final class CoreProvider implements Provider {
                 b.nana.technology.gingester.core.transformers.Gcli.class,
                 b.nana.technology.gingester.core.transformers.Gcls.class,
                 b.nana.technology.gingester.core.transformers.Head.class,
+                b.nana.technology.gingester.core.transformers.Is.class,
                 b.nana.technology.gingester.core.transformers.Log.class,
                 b.nana.technology.gingester.core.transformers.Merge.class,
                 b.nana.technology.gingester.core.transformers.Monkey.class,

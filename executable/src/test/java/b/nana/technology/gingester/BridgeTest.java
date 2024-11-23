@@ -109,4 +109,37 @@ class BridgeTest {
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
         assertEquals("Transformations from StringDef to PathMove must be specified", e.getMessage());
     }
+
+    @Test
+    void testDynamicBridge1() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("""
+                -t Gcli @ '-t StringDef "Hello, World!" -t ListCollect'
+                -t JsonWrap 'greetings'
+                --as String
+                """)
+                .add(result::set)
+                .run();
+
+        assertEquals("{\"greetings\":[\"Hello, World!\"]}", result.get());
+    }
+
+    @Test
+    void testDynamicBridge2() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("""
+                -t JsonDef @ '{foo:{bar:123}}'
+                -s json
+                -f json.foo.bar
+                -t StringAppend '!'
+                """)
+                .add(result::set)
+                .run();
+
+        assertEquals("123!", result.get());
+    }
 }

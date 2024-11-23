@@ -203,9 +203,19 @@ public final class CliParser {
                     i = addNode(target.node(), args, i, true);
                     break;
 
+                case "-a":
+                case "--as":
+                    i = addNode(target.node().name("As"), args, i, false);
+                    break;
+
                 case "-f":
                 case "--fetch":
                     i = addNode(target.node().name("Fetch"), args, i, false);
+                    break;
+
+                case "-i":
+                case "--is":
+                    i = addNode(target.node().name("Is"), args, i, false);
                     break;
 
                 case "-p":
