@@ -275,7 +275,7 @@ public final class FlowRunner {
                 } else if (setupControls.getRequireOutgoingAsync()) {
                     String incompatible = outgoingConfigurations
                             .peek(o -> { if (o.getMaxWorkers().isEmpty()) o.maxWorkers(1); })
-                            .filter(o -> o.getMaxWorkers().get() == 0)
+                            .filter(o -> o.getMaxWorkers().orElseThrow() == 0)
                             .map(ControllerConfiguration::getId)
                             .map(Id::toString)
                             .collect(Collectors.joining(", "));
