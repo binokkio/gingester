@@ -109,6 +109,9 @@ public final class FlagOrderDeserializer<T> extends StdDeserializer<T> implement
                 }
 
                 // at this point, the entry is not a flag, so assign it to the next ordered field
+                if (orderCounter >= order.size())
+                    throw new IllegalArgumentException("More arguments than expected");
+
                 result.set(order.get(orderCounter++), entry);
             }
 
