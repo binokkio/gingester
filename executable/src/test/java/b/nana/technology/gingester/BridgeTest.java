@@ -17,10 +17,10 @@ class BridgeTest {
     @Test
     void testShortBridge() throws IOException {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World!' " +
-                "-t Pack greeting.txt -t Compress " +
-                "-t InputStreamToBytes");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("""
+                -t StringDef 'Hello, World!'
+                -t Pack greeting.txt -t Compress
+                -t InputStreamToBytes""");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
         flowBuilder.add(result::set);
@@ -28,7 +28,7 @@ class BridgeTest {
         flowBuilder.run();
 
         TarArchiveInputStream tar = new TarArchiveInputStream(new GZIPInputStream(new ByteArrayInputStream(result.get())));
-        TarArchiveEntry entry = tar.getNextTarEntry();
+        TarArchiveEntry entry = tar.getNextEntry();
 
         assertEquals("greeting.txt", entry.getName());
         assertEquals("Hello, World!", new String(tar.readAllBytes()));
@@ -37,11 +37,11 @@ class BridgeTest {
     @Test
     void testShortBridgeWithPassthroughs() throws IOException {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World!' " +
-                "-s -t Passthrough " +
-                "-t Pack greeting.txt -t Compress " +
-                "-t InputStreamToBytes");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("""
+                -t StringDef 'Hello, World!'
+                -s -t Passthrough
+                -t Pack greeting.txt -t Compress
+                -t InputStreamToBytes""");
 
         AtomicReference<byte[]> result = new AtomicReference<>();
         flowBuilder.add(result::set);
@@ -49,7 +49,7 @@ class BridgeTest {
         flowBuilder.run();
 
         TarArchiveInputStream tar = new TarArchiveInputStream(new GZIPInputStream(new ByteArrayInputStream(result.get())));
-        TarArchiveEntry entry = tar.getNextTarEntry();
+        TarArchiveEntry entry = tar.getNextEntry();
 
         assertEquals("greeting.txt", entry.getName());
         assertEquals("Hello, World!", new String(tar.readAllBytes()));
@@ -58,10 +58,10 @@ class BridgeTest {
     @Test
     void testLongBridge() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef @ '{hello:1,world:2}' " +
-                "-t InputStreamAppend '!!!' " +
-                "-t InputStreamToString");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("""
+                -t JsonDef @ '{hello:1,world:2}'
+                -t InputStreamAppend '!!!'
+                -t InputStreamToString""");
 
         AtomicReference<String> result = new AtomicReference<>();
         flowBuilder.add(result::set);
@@ -74,11 +74,11 @@ class BridgeTest {
     @Test
     void testLongBridgeWithPassthroughs() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t JsonDef @ '{hello:1,world:2}' " +
-                "-s -t Passthrough " +
-                "-t InputStreamAppend '!!!' " +
-                "-t InputStreamToString");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("""
+                -t JsonDef @ '{hello:1,world:2}'
+                -s -t Passthrough
+                -t InputStreamAppend '!!!'
+                -t InputStreamToString""");
 
         AtomicReference<String> result = new AtomicReference<>();
         flowBuilder.add(result::set);
@@ -91,9 +91,9 @@ class BridgeTest {
     @Test
     void testNoBridgingSolutionFoundThrows1() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t TimeNow " +
-                "-t PathSize");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("""
+                -t TimeNow
+                -t PathSize""");
 
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
         assertEquals("Transformations from TimeNow to PathSize must be specified", e.getMessage());
@@ -102,9 +102,9 @@ class BridgeTest {
     @Test
     void testNoBridgingSolutionFoundThrows2() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef hello " +
-                "-t PathMove /tmp/foo");
+        FlowBuilder flowBuilder = new FlowBuilder().cli("""
+                -t StringDef hello
+                -t PathMove /tmp/foo""");
 
         IllegalStateException e = assertThrows(IllegalStateException.class, flowBuilder::run);
         assertEquals("Transformations from StringDef to PathMove must be specified", e.getMessage());
