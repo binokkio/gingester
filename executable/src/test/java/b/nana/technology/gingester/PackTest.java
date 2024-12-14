@@ -35,7 +35,7 @@ class PackTest {
             assertTrue(Files.exists(result));
 
             TarArchiveInputStream tar = new TarArchiveInputStream(new GZIPInputStream(Files.newInputStream(result)));
-            TarArchiveEntry entry = tar.getNextTarEntry();
+            TarArchiveEntry entry = tar.getNextEntry();
             assertNotNull(entry);
             assertEquals("hello.txt", entry.getName());
 
@@ -102,7 +102,7 @@ class PackTest {
 
         for (int i = 0; i < 1000; i++) {
 
-            TarArchiveEntry entry = tar.getNextTarEntry();
+            TarArchiveEntry entry = tar.getNextEntry();
             assertNotNull(entry);
             assertEquals("hello-" + i + ".txt", entry.getName());
 
