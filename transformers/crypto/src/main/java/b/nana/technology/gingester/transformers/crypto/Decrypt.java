@@ -26,10 +26,12 @@ public final class Decrypt implements Transformer<InputStream, InputStream> {
 
     private final FetchKey fetchKey;
     private final FetchKey fetchIv;
+    private final TransformationSpec transformationSpec;
 
     public Decrypt(Parameters parameters) {
         fetchKey = parameters.key;
         fetchIv = parameters.iv;
+        transformationSpec = new TransformationSpec(parameters.transformation);
     }
 
     @Override
@@ -39,18 +41,31 @@ public final class Decrypt implements Transformer<InputStream, InputStream> {
 
         if (key instanceof SecretKey) {
 
-            key = new SecretKeySpec(key.getEncoded(), "AES");
+            key = new SecretKeySpec(key.getEncoded(), transformationSpec.getAlgorithm()
+                    .orElse("AES"));
 
-            byte[] iv;
-            if (fetchIv != null) iv = (byte[]) context.require(fetchIv);
-            else iv = readExactly(in, 16);
+            Cipher cipher = Cipher.getInstance(transformationSpec.getTransformation()
+                    .orElse("AES/CBC/PKCS5Padding"));
 
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
-            CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
-            out.accept(context.stash("iv", iv), cipherInputStream);
+            if (cipher.getAlgorithm().equals("AES") || cipher.getAlgorithm().contains("ECB")) {
+
+                cipher.init(Cipher.DECRYPT_MODE, key);
+                CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
+                out.accept(context, cipherInputStream);
+
+            } else {
+
+                byte[] iv;
+                if (fetchIv != null) iv = (byte[]) context.require(fetchIv);
+                else iv = readExactly(in, 16);
+
+                cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
+                CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
+                out.accept(context.stash("iv", iv), cipherInputStream);
+            }
+
         } else {
-            Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+            Cipher cipher = Cipher.getInstance(transformationSpec.getTransformation().orElse(key.getAlgorithm()));
             cipher.init(Cipher.DECRYPT_MODE, key);
             CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
             out.accept(context, cipherInputStream);
@@ -58,9 +73,10 @@ public final class Decrypt implements Transformer<InputStream, InputStream> {
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)
-    @Order({"key"})
+    @Order({"key", "transformation"})
     public static class Parameters {
         public FetchKey key;
         public FetchKey iv;
+        public String transformation;
     }
 }

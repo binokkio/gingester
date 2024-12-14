@@ -49,4 +49,26 @@ class SymmetricEncryptionTest {
 
         assertEquals("My secret message.", decrypted.get());
     }
+
+    @Test
+    void testPbkdf2EcbEncryptDecrypt() {
+
+        AtomicReference<String> decrypted = new AtomicReference<>();
+
+        new FlowBuilder().cli("""
+                -t BytesRandom 16 -s salt
+                -t StringDef 'password' -t Pbkdf2 -s key
+                -t StringDef 'My secret message.'
+                -t Encrypt ^ AES/ECB/PKCS5Padding piv!
+                -t Base64Encode
+                -a String
+                -t Base64Decode
+                -t Decrypt ^ AES/ECB/PKCS5Padding
+                -a String
+                """)
+                .add(decrypted::set)
+                .run();
+
+        assertEquals("My secret message.", decrypted.get());
+    }
 }
