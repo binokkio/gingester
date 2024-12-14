@@ -27,7 +27,7 @@ public final class As implements Transformer<Object, Object> {
 
     private Class<?> getType(String type) throws ClassNotFoundException {
         return switch (type) {
-            case "byte[]" -> byte[].class;
+            case "Bytes" -> byte[].class;
             case "InputStream" -> InputStream.class;
             case "Json" -> JsonNode.class;
             case "String" -> String.class;
