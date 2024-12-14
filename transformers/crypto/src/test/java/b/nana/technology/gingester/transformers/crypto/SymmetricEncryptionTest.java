@@ -58,12 +58,18 @@ class SymmetricEncryptionTest {
         new FlowBuilder().cli("""
                 -t BytesRandom 16 -s salt
                 -t StringDef 'password' -t Pbkdf2 -s key
+                -t KeyToBytes -s keyBytes
                 -t StringDef 'My secret message.'
-                -t Encrypt ^ AES/ECB/PKCS5Padding piv!
+                -t Encrypt key AES/ECB/PKCS5Padding piv!
                 -t Base64Encode
                 -a String
+                -s encoded
+                -f keyBytes
+                -t BytesToKey
+                -s decodedKey
+                -f encoded
                 -t Base64Decode
-                -t Decrypt ^ AES/ECB/PKCS5Padding
+                -t Decrypt decodedKey AES/ECB/PKCS5Padding
                 -a String
                 """)
                 .add(decrypted::set)
