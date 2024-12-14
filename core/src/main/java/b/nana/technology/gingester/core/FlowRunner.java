@@ -246,7 +246,7 @@ public final class FlowRunner {
 
             // dynamic bridging provided by As not necessary, swap for Is
             if (downstream.getTransformer() instanceof As)
-                downstream.updateTransformer(new Is(output));
+                downstream.updateTransformer(new Is(input));
 
             return bridgeIds;
         }

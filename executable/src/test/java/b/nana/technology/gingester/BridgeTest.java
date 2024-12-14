@@ -142,4 +142,21 @@ class BridgeTest {
 
         assertEquals("123!", result.get());
     }
+
+    @Test
+    void testDynamicBridge3() {
+
+        AtomicReference<String> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("""
+                -t JsonDef @ '[1,2,3]'
+                -a String
+                -pt
+                -a String
+                """)
+                .add(result::set)
+                .run();
+
+        assertEquals("[1,2,3]", result.get());
+    }
 }
