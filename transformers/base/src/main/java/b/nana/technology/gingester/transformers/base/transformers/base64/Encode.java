@@ -18,6 +18,9 @@ public final class Encode implements Transformer<InputStream, OutputStreamWrappe
 
     public Encode(Parameters parameters) {
 
+        if (parameters.readBufferSize % 3 != 0)
+            throw new IllegalArgumentException("readBufferSize must be a multiple of 3");
+
         if (parameters.style.equals("basic")) {
             encoder = Base64.getEncoder();
         } else if (parameters.style.equals("url")) {
@@ -44,23 +47,28 @@ public final class Encode implements Transformer<InputStream, OutputStreamWrappe
 
             BufferPair buffers = bufferPairs.get();
 
-            int readLength;
-            while ((readLength = in.read(buffers.readBuffer)) == buffers.readBuffer.length) {
-                int writeLength = encoder.encode(buffers.readBuffer, buffers.writeBuffer);
-                outputStreamWrapper.write(buffers.writeBuffer, 0, writeLength);
+            int offset = 0;
+            int read;
+            while ((read = in.read(buffers.readBuffer, offset, buffers.readBuffer.length - offset)) != -1) {
+                offset += read;
+                if (offset == buffers.readBuffer.length) {
+                    int write = encoder.encode(buffers.readBuffer, buffers.writeBuffer);
+                    outputStreamWrapper.write(buffers.writeBuffer, 0, write);
+                    offset = 0;
+                }
             }
 
-            if (readLength > 0 ) {
-                byte[] remaining = Arrays.copyOf(buffers.readBuffer, readLength);
-                int writeLength = encoder.encode(remaining, buffers.writeBuffer);
-                outputStreamWrapper.write(buffers.writeBuffer, 0, writeLength);
+            if (offset > 0 ) {
+                byte[] remaining = Arrays.copyOf(buffers.readBuffer, offset);
+                int write = encoder.encode(remaining, buffers.writeBuffer);
+                outputStreamWrapper.write(buffers.writeBuffer, 0, write);
             }
         }
     }
 
     public static class Parameters {
 
-        public int readBufferSize = 8192;
+        public int readBufferSize = 3000;
         public String style = "basic";
 
         @JsonCreator
@@ -84,7 +92,7 @@ public final class Encode implements Transformer<InputStream, OutputStreamWrappe
 
         BufferPair(int readBufferSize) {
             readBuffer = new byte[readBufferSize];
-            writeBuffer = new byte[readBufferSize * 2];
+            writeBuffer = new byte[readBufferSize * 2];  // allow for 3/4 encoding ratio and newlines overhead
         }
     }
 }

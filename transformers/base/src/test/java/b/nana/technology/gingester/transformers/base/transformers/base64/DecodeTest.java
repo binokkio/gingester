@@ -14,10 +14,10 @@ class DecodeTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new FlowBuilder().cli("" +
-                "-t StringDef 'SGVsbG8sIFdvcmxkIQ==' " +
-                "-t Base64Decode " +
-                "-t BytesToString")
+        new FlowBuilder().cli("""
+                -t StringDef 'SGVsbG8sIFdvcmxkIQ=='
+                -t Base64Decode
+                -t BytesToString""")
                 .add(result::set)
                 .run();
 
@@ -29,10 +29,10 @@ class DecodeTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new FlowBuilder().cli("" +
-                "-t StringDef 'SGVsbG8s\r\nIFdvcmxk\r\nIQ==' " +
-                "-t Base64Decode mime " +
-                "-t BytesToString")
+        new FlowBuilder().cli("""
+                -t StringDef 'SGVsbG8s\r\nIFdvcmxk\r\nIQ=='
+                -t Base64Decode mime
+                -t BytesToString""")
                 .add(result::set)
                 .run();
 

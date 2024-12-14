@@ -17,14 +17,14 @@ public final class Decode implements Transformer<InputStream, OutputStreamWrappe
 
     public Decode(Parameters parameters) {
 
-        if (parameters.style.equals("basic")) {
-            decoder = Base64.getDecoder();
-        } else if (parameters.style.equals("url")) {
-            decoder = Base64.getUrlDecoder();
-        } else if (parameters.style.equals("mime")) {
-            decoder = Base64.getMimeDecoder();
-        } else {
-            throw new IllegalArgumentException("Unknown style: \"" + parameters.style + "\"");
+        if (parameters.readBufferSize % 4 != 0)
+            throw new IllegalArgumentException("readBufferSize must be a multiple of 4");
+
+        switch (parameters.style) {
+            case "basic" -> decoder = Base64.getDecoder();
+            case "url" -> decoder = Base64.getUrlDecoder();
+            case "mime" -> decoder = Base64.getMimeDecoder();
+            default -> throw new IllegalArgumentException("Unknown style: \"" + parameters.style + "\"");
         }
 
         bufferPairs = ThreadLocal.withInitial(() ->
@@ -40,23 +40,28 @@ public final class Decode implements Transformer<InputStream, OutputStreamWrappe
 
             BufferPair buffers = bufferPairs.get();
 
-            int readLength;
-            while ((readLength = in.read(buffers.readBuffer)) == buffers.readBuffer.length) {
-                int writeLength = decoder.decode(buffers.readBuffer, buffers.writeBuffer);
-                outputStreamWrapper.write(buffers.writeBuffer, 0, writeLength);
+            int offset = 0;
+            int read;
+            while ((read = in.read(buffers.readBuffer, offset, buffers.readBuffer.length - offset)) != -1) {
+                offset += read;
+                if (offset == buffers.readBuffer.length) {
+                    int write = decoder.decode(buffers.readBuffer, buffers.writeBuffer);
+                    outputStreamWrapper.write(buffers.writeBuffer, 0, write);
+                    offset = 0;
+                }
             }
 
-            if (readLength > 0 ) {
-                byte[] remaining = Arrays.copyOf(buffers.readBuffer, readLength);
-                int writeLength = decoder.decode(remaining, buffers.writeBuffer);
-                outputStreamWrapper.write(buffers.writeBuffer, 0, writeLength);
+            if (offset > 0 ) {
+                byte[] remaining = Arrays.copyOf(buffers.readBuffer, offset);
+                int write = decoder.decode(remaining, buffers.writeBuffer);
+                outputStreamWrapper.write(buffers.writeBuffer, 0, write);
             }
         }
     }
 
     public static class Parameters {
 
-        public int readBufferSize = 8192;
+        public int readBufferSize = 4000;
         public String style = "basic";
 
         @JsonCreator
@@ -80,7 +85,7 @@ public final class Decode implements Transformer<InputStream, OutputStreamWrappe
 
         BufferPair(int readBufferSize) {
             readBuffer = new byte[readBufferSize];
-            writeBuffer = new byte[readBufferSize * 2];
+            writeBuffer = new byte[readBufferSize];
         }
     }
 }
