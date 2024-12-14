@@ -2,7 +2,7 @@ package b.nana.technology.gingester.transformers.crypto;
 
 import java.util.Optional;
 
-public class TransformationSpec {
+public final class TransformationSpec {
 
     private final String transformation;
     private final String algorithm;
