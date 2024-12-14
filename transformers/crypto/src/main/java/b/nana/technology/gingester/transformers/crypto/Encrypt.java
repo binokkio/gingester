@@ -27,10 +27,12 @@ public final class Encrypt implements Transformer<InputStream, InputStream> {
 
     private final SecureRandom secureRandom = new SecureRandom();
     private final FetchKey fetchKey;
+    private final TransformationSpec transformationSpec;
     private final boolean piv;  // Prepend Initialization Vector
 
     public Encrypt(Parameters parameters) {
         fetchKey = parameters.key;
+        transformationSpec = new TransformationSpec(parameters.transformation);
         piv = parameters.piv;
     }
 
@@ -40,16 +42,32 @@ public final class Encrypt implements Transformer<InputStream, InputStream> {
         Key key = (Key) context.require(fetchKey);
 
         if (key instanceof SecretKey) {
-            key = new SecretKeySpec(key.getEncoded(), "AES");
-            byte[] iv = new byte[16];
-            secureRandom.nextBytes(iv);
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
-            InputStream result =  new CipherInputStream(in, cipher);
-            if (piv) result = new SequenceInputStream(new ByteArrayInputStream(iv), result);
-            out.accept(context.stash("iv", iv), result);
+
+            key = new SecretKeySpec(key.getEncoded(), transformationSpec.getAlgorithm()
+                    .orElse("AES"));
+
+            Cipher cipher = Cipher.getInstance(transformationSpec.getTransformation()
+                    .orElse("AES/CBC/PKCS5Padding"));
+
+            if (cipher.getAlgorithm().equals("AES") || cipher.getAlgorithm().contains("ECB")) {
+
+                cipher.init(Cipher.ENCRYPT_MODE, key);
+                CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
+                out.accept(context, cipherInputStream);
+
+            } else {
+
+                byte[] iv = new byte[16];
+                secureRandom.nextBytes(iv);
+
+                cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
+                InputStream result =  new CipherInputStream(in, cipher);
+                if (piv) result = new SequenceInputStream(new ByteArrayInputStream(iv), result);
+                out.accept(context.stash("iv", iv), result);
+            }
+
         } else {
-            Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+            Cipher cipher = Cipher.getInstance(transformationSpec.getTransformation().orElse(key.getAlgorithm()));
             cipher.init(Cipher.ENCRYPT_MODE, key);
             CipherInputStream cipherInputStream = new CipherInputStream(in, cipher);
             out.accept(context, cipherInputStream);
@@ -57,9 +75,10 @@ public final class Encrypt implements Transformer<InputStream, InputStream> {
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)
-    @Order({"key"})
+    @Order({"key", "transformation"})
     public static class Parameters {
         public FetchKey key;
+        public String transformation;
         public boolean piv;
     }
 }
