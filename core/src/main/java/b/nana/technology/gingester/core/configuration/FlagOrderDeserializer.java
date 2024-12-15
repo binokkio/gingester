@@ -19,8 +19,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * Iffy deserializer that adds support for flags and key-less ordered
  * fields during deserialization. Meant to be used for Gingester transformer
@@ -48,7 +46,7 @@ public final class FlagOrderDeserializer<T> extends StdDeserializer<T> implement
         super(target);
         this.target = target;
         this.javaType = TypeFactory.defaultInstance().constructType(target);
-        this.order = Arrays.asList(requireNonNull(target.getAnnotation(Order.class), target + " is missing @Order annotation").value());
+        this.order = Optional.ofNullable(target.getAnnotation(Order.class)).map(Order::value).map(Arrays::asList).orElse(List.of());
         this.allFields = Arrays.stream(this.target.getFields())
                 .map(Field::getName).collect(Collectors.toSet());
         this.booleanFields = Arrays.stream(this.target.getFields())

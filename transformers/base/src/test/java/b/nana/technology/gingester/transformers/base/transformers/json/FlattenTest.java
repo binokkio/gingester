@@ -19,7 +19,7 @@ class FlattenTest {
 
         new FlowBuilder().cli("" +
                 "-t ResourceOpen /data/json/array-wrapped-objects.json " +
-                "-t JsonFlatten")
+                "-t JsonFlatten -p")
                 .add(result::set)
                 .run();
 
@@ -29,5 +29,24 @@ class FlattenTest {
         assertEquals("Hello, World 2!", result.get().get("array[1].message").textValue());
         assertEquals(345, result.get().get("array[2].id").intValue());
         assertEquals("Hello, World 3!", result.get().get("array[2].message").textValue());
+    }
+
+    @Test
+    void testUsePointers() {
+
+        AtomicReference<JsonNode> result = new AtomicReference<>();
+
+        new FlowBuilder().cli("" +
+                "-t ResourceOpen /data/json/array-wrapped-objects.json " +
+                "-t JsonFlatten usePointers!")
+                .add(result::set)
+                .run();
+
+        assertEquals(123, result.get().get("/array/0/id").intValue());
+        assertEquals("Hello, World 1!", result.get().get("/array/0/message").textValue());
+        assertEquals(234, result.get().get("/array/1/id").intValue());
+        assertEquals("Hello, World 2!", result.get().get("/array/1/message").textValue());
+        assertEquals(345, result.get().get("/array/2/id").intValue());
+        assertEquals("Hello, World 3!", result.get().get("/array/2/message").textValue());
     }
 }
