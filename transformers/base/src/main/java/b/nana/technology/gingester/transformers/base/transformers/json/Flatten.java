@@ -47,10 +47,8 @@ public final class Flatten implements Transformer<JsonNode, JsonNode> {
                 keys.removeLast();
             }
 
-        } else if (usePointers) {
-            valueConsumer.accept('/' + String.join("/", keys), jsonNode);
         } else {
-            valueConsumer.accept(String.join("", keys), jsonNode);
+            valueConsumer.accept(String.join(usePointers ? "/" : "", keys), jsonNode);
         }
     }
 
