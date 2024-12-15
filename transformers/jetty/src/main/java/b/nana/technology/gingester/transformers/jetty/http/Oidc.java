@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.util.Objects.requireNonNull;
 
 @Passthrough
@@ -58,11 +59,29 @@ public final class Oidc implements Transformer<Object, Object> {
 
     public Oidc(Parameters parameters) {
 
+        if (parameters.configUrl != null) {
+
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .GET().uri(URI.create(parameters.configUrl)).header("Accept", "application/json");
+
+            JsonNode response;
+            try {
+                response = OBJECT_MAPPER.readTree(HTTP_CLIENT.send(requestBuilder.build(), ofString()).body());
+            } catch (IOException | InterruptedException e) {
+                throw new IllegalStateException("Failed to load config from configUrl", e);
+            }
+
+            authUrl = response.get("authorization_endpoint").textValue();
+            tokenUrl = response.get("token_endpoint").textValue();
+            userInfoUrl = response.path("userinfo_endpoint").textValue();
+        } else {
+            authUrl = requireNonNull(parameters.authUrl, "Missing authUrl parameter");
+            tokenUrl = requireNonNull(parameters.tokenUrl, "Missing tokenUrl parameter");
+            userInfoUrl = parameters.userInfoUrl;
+        }
+
         clientId = requireNonNull(parameters.clientId, "Missing clientId parameter");
         scopes = requireNonNull(parameters.scopes, "Missing scopes parameter");
-        authUrl = requireNonNull(parameters.authUrl, "Missing authUrl parameter");
-        tokenUrl = requireNonNull(parameters.tokenUrl, "Missing tokenUrl parameter");
-        userInfoUrl = parameters.userInfoUrl;
         redirectUrl = requireNonNull(parameters.redirectUrl, "Missing redirectUrl parameter");
         redirectPath = getUrlPath(redirectUrl);
         cookieName = requireNonNull(parameters.cookieName, "Missing cookieName parameter");
@@ -157,7 +176,7 @@ public final class Oidc implements Transformer<Object, Object> {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(tokenUrl));
         requestBuilder.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
         requestBuilder.POST(HttpRequest.BodyPublishers.ofString(requestBody));
-        return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
+        return HTTP_CLIENT.send(requestBuilder.build(), ofString()).body();
     }
 
     private class Session {
@@ -225,7 +244,7 @@ public final class Oidc implements Transformer<Object, Object> {
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(userInfoUrl));
             requestBuilder.header("Authorization", "Bearer " + accessToken);
             requestBuilder.GET();
-            return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
+            return HTTP_CLIENT.send(requestBuilder.build(), ofString()).body();
         }
     }
 
