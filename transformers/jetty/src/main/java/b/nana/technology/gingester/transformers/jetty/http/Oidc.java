@@ -24,27 +24,32 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
+import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.util.Objects.requireNonNull;
+import static java.util.function.Predicate.not;
 
 @Passthrough
 public final class Oidc implements Transformer<Object, Object> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Oidc.class);
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final Logger logger = LoggerFactory.getLogger(Oidc.class);
+    private static final HttpClient httpClient = HttpClient.newHttpClient();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Map<UUID, Session> staticSessions = new ConcurrentHashMap<>();
 
-    private final Map<UUID, Session> sessions = new ConcurrentHashMap<>();
+    private final Map<UUID, Session> sessions;
 
-    private final FetchKey fetchHttpResponse = new FetchKey("http.response");
-    private final FetchKey fetchHttpRequestMethod = new FetchKey("http.request.method");
-    private final FetchKey fetchHttpRequestPath = new FetchKey("http.request.path");
-    private final FetchKey fetchHttpRequestQueryString = new FetchKey("http.request.queryString");
-    private final FetchKey fetchHttpRequestQueryCode = new FetchKey("http.request.query.code");
-    private final FetchKey fetchHttpRequestCookiesCookieName;
+    private final FetchKey fetchResponse = new FetchKey("http.response");
+    private final FetchKey fetchRequestMethod = new FetchKey("http.request.method");
+    private final FetchKey fetchRequestPath = new FetchKey("http.request.path");
+    private final FetchKey fetchRequestQueryString = new FetchKey("http.request.queryString");
+    private final FetchKey fetchRequestQueryCode = new FetchKey("http.request.query.code");
+    private final FetchKey fetchRequestQueryLogin;
+    private final FetchKey fetchRequestCookie;
 
     private final String clientId;
-    private final List<String> scopes;
+    private final String scopes;
     private final String authUrl;
     private final String tokenUrl;
     private final String userInfoUrl;
@@ -52,23 +57,48 @@ public final class Oidc implements Transformer<Object, Object> {
     private final String redirectPath;
     private final String cookieName;
     private final String tokenRequestStart;
+    private final Pattern loginParamPattern;
     private final boolean optional;
     private final boolean accessTokenIsJwt;
 
     public Oidc(Parameters parameters) {
 
+        sessions = parameters.staticSessions ? staticSessions : new ConcurrentHashMap<>();
+
+        if (parameters.configUrl != null) {
+
+            JsonNode response;
+            try {
+                response = objectMapper.readTree(httpClient.send(HttpRequest.newBuilder()
+                        .GET().uri(URI.create(parameters.configUrl))
+                        .header("Accept", "application/json")
+                        .build(), ofString()).body());
+            } catch (IOException | InterruptedException e) {
+                throw new IllegalStateException("Failed to load config from configUrl", e);
+            }
+
+            authUrl = response.get("authorization_endpoint").textValue();
+            tokenUrl = response.get("token_endpoint").textValue();
+            userInfoUrl = response.path("userinfo_endpoint").textValue();
+        } else {
+            authUrl = requireNonNull(parameters.authUrl, "Missing authUrl parameter");
+            tokenUrl = requireNonNull(parameters.tokenUrl, "Missing tokenUrl parameter");
+            userInfoUrl = parameters.userInfoUrl;
+        }
+
+        String loginParam = requireNonNull(parameters.loginParam, "Missing loginParam parameter");
+
         clientId = requireNonNull(parameters.clientId, "Missing clientId parameter");
-        scopes = requireNonNull(parameters.scopes, "Missing scopes parameter");
-        authUrl = requireNonNull(parameters.authUrl, "Missing authUrl parameter");
-        tokenUrl = requireNonNull(parameters.tokenUrl, "Missing tokenUrl parameter");
-        userInfoUrl = parameters.userInfoUrl;
+        scopes = String.join("%20", requireNonNull(parameters.scopes, "Missing scopes parameter"));
         redirectUrl = requireNonNull(parameters.redirectUrl, "Missing redirectUrl parameter");
         redirectPath = getUrlPath(redirectUrl);
         cookieName = requireNonNull(parameters.cookieName, "Missing cookieName parameter");
+        loginParamPattern = Pattern.compile("&?" + loginParam + "(?:=[^&]*)?&?");
         optional = parameters.optional;
         accessTokenIsJwt = parameters.accessTokenIsJwt;
 
-        fetchHttpRequestCookiesCookieName = new FetchKey("http.request.cookies." + cookieName);
+        fetchRequestQueryLogin = new FetchKey("http.request.query." + loginParam);
+        fetchRequestCookie = new FetchKey("http.request.cookies." + cookieName);
 
         tokenRequestStart =
                 "client_id=" + parameters.clientId +
@@ -86,10 +116,10 @@ public final class Oidc implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        HttpResponse response = (HttpResponse) context.fetch(fetchHttpResponse)
+        HttpResponse response = (HttpResponse) context.fetch(fetchResponse)
                 .orElseThrow(() -> new IllegalStateException("Context did not come from HttpServer"));
 
-        Cookie cookie = (Cookie) context.fetch(fetchHttpRequestCookiesCookieName)
+        Cookie cookie = (Cookie) context.fetch(fetchRequestCookie)
                 .orElseGet(() -> new Cookie(cookieName, UUID.randomUUID().toString()));
 
         cookie.setPath("/");
@@ -99,8 +129,8 @@ public final class Oidc implements Transformer<Object, Object> {
         UUID sessionId = UUID.fromString(cookie.getValue());
         Session session = sessions.computeIfAbsent(sessionId, uuid -> new Session());
 
-        Optional<Object> optionalCode = context.fetch(fetchHttpRequestQueryCode);
-        if (context.require(fetchHttpRequestPath).equals(redirectPath) && optionalCode.isPresent()) {
+        Optional<Object> optionalCode = context.fetch(fetchRequestQueryCode);
+        if (context.require(fetchRequestPath).equals(redirectPath) && optionalCode.isPresent()) {
 
             session.handleTokenResponse(requestToken(String.format(
                     "%s&grant_type=authorization_code&code=%s&redirect_uri=%s",
@@ -125,19 +155,23 @@ public final class Oidc implements Transformer<Object, Object> {
                 )));
             }
 
-            if (session.hasAccess(now)) {
+            boolean loginRequestParamIsPresent = context.fetch(fetchRequestQueryLogin).isPresent();
+            if (session.hasAccess(now) && !loginRequestParamIsPresent) {
                 out.accept(context.stash(session.stash), in);
-            } else if (optional) {
+            } else if (optional && !loginRequestParamIsPresent) {
                 out.accept(context, in);
-            } else if (context.require(fetchHttpRequestMethod).equals("GET")) {
+            } else if (context.require(fetchRequestMethod).equals("GET")) {
 
-                session.returnTo = (String) context.require(fetchHttpRequestPath);
-                context.fetch(fetchHttpRequestQueryString).ifPresent(
-                        queryString -> session.returnTo += "?" + queryString);
+                session.returnTo = (String) context.require(fetchRequestPath);
+                context.fetch(fetchRequestQueryString)
+                        .map(String.class::cast)
+                        .map(queryString -> loginParamPattern.matcher(queryString).replaceAll(m -> m.group().startsWith("&") && m.group().endsWith("&") ? "&" : ""))
+                        .filter(not(String::isEmpty))
+                        .ifPresent(queryString -> session.returnTo += "?" + queryString);
 
                 String location = authUrl +
                         "?client_id=" + clientId +
-                        "&scope=" + String.join("%20", scopes) +
+                        "&scope=" + scopes +
                         "&state=" + Long.toHexString(sessionId.getLeastSignificantBits()) +  // TODO improve value and verify on callback
                         "&response_type=code" +
                         "&redirect_uri=" + redirectUrl;
@@ -153,10 +187,10 @@ public final class Oidc implements Transformer<Object, Object> {
     }
 
     private String requestToken(String requestBody) throws IOException, InterruptedException {
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(tokenUrl));
-        requestBuilder.header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-        requestBuilder.POST(HttpRequest.BodyPublishers.ofString(requestBody));
-        return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
+        return httpClient.send(HttpRequest.newBuilder()
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody)).uri(URI.create(tokenUrl))
+                .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .build(), ofString()).body();
     }
 
     private class Session {
@@ -182,7 +216,7 @@ public final class Oidc implements Transformer<Object, Object> {
 
         private void handleTokenResponse(String tokenResponse) throws JsonProcessingException {
 
-            JsonNode root = OBJECT_MAPPER.readTree(tokenResponse);
+            JsonNode root = objectMapper.readTree(tokenResponse);
 
             if (!root.has("access_token"))
                 throw new IllegalStateException("Token response did not contain access_token: " + root);
@@ -213,31 +247,34 @@ public final class Oidc implements Transformer<Object, Object> {
 
             if (userInfoUrl != null) {
                 try {
-                    stash.put("userInfo", OBJECT_MAPPER.readTree(requestUserInfo()));
+                    stash.put("userInfo", objectMapper.readTree(requestUserInfo()));
                 } catch (IOException | InterruptedException e) {
-                    LOGGER.warn("Exception while getting user info", e);
+                    logger.warn("Exception while getting user info", e);
                 }
             }
         }
 
         private String requestUserInfo() throws IOException, InterruptedException {
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(userInfoUrl));
-            requestBuilder.header("Authorization", "Bearer " + accessToken);
-            requestBuilder.GET();
-            return HTTP_CLIENT.send(requestBuilder.build(), java.net.http.HttpResponse.BodyHandlers.ofString()).body();
+            return httpClient.send(HttpRequest.newBuilder()
+                    .GET().uri(URI.create(userInfoUrl))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .build(), ofString()).body();
         }
     }
 
     public static class Parameters {
         public String clientId;
         public String clientSecret;
-        public List<String> scopes = List.of("openid");
+        public String configUrl;
         public String authUrl;
         public String tokenUrl;
         public String userInfoUrl;
         public String redirectUrl;
+        public String loginParam = "login";
         public String cookieName = "gingester-oidc";
+        public List<String> scopes = List.of("openid");
         public boolean optional;
+        public boolean staticSessions;
         public boolean accessTokenIsJwt;
     }
 }
