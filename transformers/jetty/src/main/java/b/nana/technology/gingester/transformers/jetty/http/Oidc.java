@@ -40,6 +40,7 @@ public final class Oidc implements Transformer<Object, Object> {
     private final FetchKey fetchHttpRequestMethod = new FetchKey("http.request.method");
     private final FetchKey fetchHttpRequestPath = new FetchKey("http.request.path");
     private final FetchKey fetchHttpRequestQueryString = new FetchKey("http.request.queryString");
+    private final FetchKey fetchHttpRequestQueryLogin = new FetchKey("http.request.query.gingester-oidc-login");
     private final FetchKey fetchHttpRequestQueryCode = new FetchKey("http.request.query.code");
     private final FetchKey fetchHttpRequestCookiesCookieName;
 
@@ -127,7 +128,7 @@ public final class Oidc implements Transformer<Object, Object> {
 
             if (session.hasAccess(now)) {
                 out.accept(context.stash(session.stash), in);
-            } else if (optional) {
+            } else if (optional && context.fetch(fetchHttpRequestQueryLogin).isEmpty()) {
                 out.accept(context, in);
             } else if (context.require(fetchHttpRequestMethod).equals("GET")) {
 
@@ -232,6 +233,7 @@ public final class Oidc implements Transformer<Object, Object> {
         public String clientId;
         public String clientSecret;
         public List<String> scopes = List.of("openid");
+        public String configUrl;
         public String authUrl;
         public String tokenUrl;
         public String userInfoUrl;
