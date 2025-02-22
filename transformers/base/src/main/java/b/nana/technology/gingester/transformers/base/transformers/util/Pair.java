@@ -13,11 +13,11 @@ import java.util.Map;
 @Names(1)
 public final class Pair implements Transformer<Object, Object> {
 
-    private final ContextMap<Object[]> previous = new ContextMap<>();
+    private final ContextMap<GroupContextAndPreviousValue> previous = new ContextMap<>();
 
     @Override
     public void prepare(Context context, Receiver<Object> out) throws Exception {
-        previous.put(context, new Object[1]);
+        previous.put(context, new GroupContextAndPreviousValue(context));
     }
 
     @Override
@@ -25,27 +25,36 @@ public final class Pair implements Transformer<Object, Object> {
 
         Map<String, Object> output = previous.apply(context, holder -> {
 
-            if (holder[0] == null) {
-                holder[0] = in;
+            if (holder.previousValue == null) {
+                holder.previousValue = in;
                 return null;
             }
 
             Map<String, Object> o = Map.of(
-                    "a", holder[0],
+                    "a", holder.previousValue,
                     "b", in
             );
 
-            holder[0] = in;
+            holder.previousValue = in;
 
             return o;
         });
 
         if (output != null)
-            out.accept(context.stash(output), output);
+            out.accept(context.stash(output), output);  // TODO maybe use group context?
     }
 
     @Override
     public void finish(Context context, Receiver<Object> out) throws Exception {
         previous.remove(context);
+    }
+
+    private static class GroupContextAndPreviousValue {
+        private final Context groupContext;
+        private Object previousValue;
+
+        private GroupContextAndPreviousValue(Context groupContext) {
+            this.groupContext = groupContext;
+        }
     }
 }
