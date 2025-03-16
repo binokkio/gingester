@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.crypto;
 
+import b.nana.technology.gingester.core.annotations.Example;
 import b.nana.technology.gingester.core.annotations.Experimental;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.controller.Context;
@@ -13,6 +14,7 @@ import java.util.Base64;
 
 @Experimental
 @Names(1)
+@Example(example = "", description = "Encode private or public key input and yield PEM")
 public final class KeyToPem implements Transformer<Key, String> {
 
     @Override

@@ -16,8 +16,8 @@ import java.util.Map;
 
 @Experimental
 @Names(1)
-@Example(example = "", description = "Generate an RSA keypair")
-public final class GenKeyPair implements Transformer<Object, KeyPair> {
+@Example(example = "", description = "Generate and stash an RSA keypair, yield private key")
+public final class GenKeyPair implements Transformer<Object, Key> {
 
     private final String algorithm;
     private final int size;
@@ -36,7 +36,7 @@ public final class GenKeyPair implements Transformer<Object, KeyPair> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<KeyPair> out) throws NoSuchAlgorithmException {
+    public void transform(Context context, Object in, Receiver<Key> out) throws NoSuchAlgorithmException {
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
         keyPairGenerator.initialize(size);
@@ -46,7 +46,7 @@ public final class GenKeyPair implements Transformer<Object, KeyPair> {
         out.accept(context.stash(Map.of(
                 "privk", keyPair.getPrivate(),
                 "pubk", keyPair.getPublic()
-        )), keyPair);
+        )), keyPair.getPrivate());
     }
 
     @JsonDeserialize(using = FlagOrderDeserializer.class)
