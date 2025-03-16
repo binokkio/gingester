@@ -59,7 +59,6 @@ public final class Oidc implements Transformer<Object, Object> {
     private final String tokenRequestStart;
     private final Pattern loginParamPattern;
     private final boolean optional;
-    private final boolean accessTokenIsJwt;
 
     public Oidc(Parameters parameters) {
 
@@ -95,7 +94,6 @@ public final class Oidc implements Transformer<Object, Object> {
         cookieName = requireNonNull(parameters.cookieName, "Missing cookieName parameter");
         loginParamPattern = Pattern.compile("&?" + loginParam + "(?:=[^&]*)?&?");
         optional = parameters.optional;
-        accessTokenIsJwt = parameters.accessTokenIsJwt;
 
         fetchRequestQueryLogin = new FetchKey("http.request.query." + loginParam);
         fetchRequestCookie = new FetchKey("http.request.cookies." + cookieName);
@@ -238,11 +236,13 @@ public final class Oidc implements Transformer<Object, Object> {
             if (refreshExpiresAtNode.isValueNode())
                 refreshExpiresAt = Instant.now().plus(Duration.ofSeconds(refreshExpiresAtNode.asInt())).minus(Duration.ofSeconds(30));
 
-            if (accessTokenIsJwt) {
+            try {
                 DecodedJWT decoded = JWT.decode(accessToken);
                 HashMap<String, JsonNode> claims = new HashMap<>();
                 decoded.getClaims().forEach((key, value) -> claims.put(key, value.as(JsonNode.class)));
                 stash.put("claims", claims);
+            } catch (Exception e) {
+                // ignore, probably not a JWT access token
             }
 
             if (userInfoUrl != null) {
@@ -275,6 +275,5 @@ public final class Oidc implements Transformer<Object, Object> {
         public List<String> scopes = List.of("openid");
         public boolean optional;
         public boolean staticSessions;
-        public boolean accessTokenIsJwt;
     }
 }

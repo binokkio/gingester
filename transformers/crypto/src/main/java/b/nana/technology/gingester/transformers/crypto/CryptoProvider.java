@@ -18,7 +18,7 @@ public final class CryptoProvider implements Provider {
                 KeyToBytes.class,
                 KeyToPem.class,
                 Pbkdf2.class,
-                PemToKeyPair.class
+                PemToKey.class
         );
     }
 }
