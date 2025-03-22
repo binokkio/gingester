@@ -23,25 +23,25 @@ public final class Pair implements Transformer<Object, Object> {
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) throws Exception {
 
-        Map<String, Object> output = previous.apply(context, holder -> {
+        GroupContextAndPair groupContextAndPair = previous.apply(context, holder -> {
 
             if (holder.previousValue == null) {
                 holder.previousValue = in;
                 return null;
             }
 
-            Map<String, Object> o = Map.of(
+            Map<String, Object> pair = Map.of(
                     "a", holder.previousValue,
                     "b", in
             );
 
             holder.previousValue = in;
 
-            return o;
+            return new GroupContextAndPair(holder.groupContext, pair);
         });
 
-        if (output != null)
-            out.accept(context.stash(output), output);  // TODO maybe use group context?
+        if (groupContextAndPair != null)
+            out.accept(groupContextAndPair.groupContext.stash(groupContextAndPair.pair), groupContextAndPair.pair);
     }
 
     @Override
@@ -55,6 +55,16 @@ public final class Pair implements Transformer<Object, Object> {
 
         private GroupContextAndPreviousValue(Context groupContext) {
             this.groupContext = groupContext;
+        }
+    }
+
+    private static class GroupContextAndPair {
+        private final Context groupContext;
+        private final Map<String, Object> pair;
+
+        private GroupContextAndPair(Context groupContext, Map<String, Object> pair) {
+            this.groupContext = groupContext;
+            this.pair = pair;
         }
     }
 }
