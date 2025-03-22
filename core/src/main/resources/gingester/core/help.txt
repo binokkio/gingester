@@ -45,11 +45,11 @@ General usage:
     -pt/--point/--passthrough [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>[!]]
         add a passthrough transformer to the flow, see -t for further details
 
-    -r/--report
-        the interval in seconds at which to report throughput, 0 to disable
+    -r/--report <interval>
+        set the interval in seconds at which to report throughput, 0 to disable
 
     -s/--stash [<key>]
-        stash value under key
+        stash value under key, key must not be capitalized
 
     -sf/--sync-from <link1> [<link2> [...]]
         mark the linked transformers to be synced with when -stf/-stft/-stof/-stt is used later
@@ -86,7 +86,7 @@ General usage:
         provide [<workers>] to enable async execution for the transformer by the provided number of workers
         provide [<queueSize>] to set the queue size for this transformer
         provide [<maxBatchSize>] to limit the maximum batch size for this transformer
-        provide [<id>] to be able to refer to this transformer by the provided id
+        provide [<id>] to be able to refer to this transformer by the provided id, id must be capitalized
         provide [!] to enable throughput reporting for the transformer
         provide [<parameters>] to configure the transformer
 

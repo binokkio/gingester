@@ -294,7 +294,7 @@ public final class FlowBuilder {
      * Replace a transformer.
      *
      * @param targetId the id of the node whose transformer to replace
-     * @param transformer the transformer
+     * @param transformer the transformer to use as replacement
      */
     public FlowBuilder replace(String targetId, Transformer<?, ?> transformer) {
 

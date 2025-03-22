@@ -47,9 +47,8 @@ public final class FlowRunner {
         setupElog();
         setupSeed();
 
-        if (flowBuilder.goal == Goal.VIEW_BRIDGES) {
+        if (flowBuilder.goal == Goal.VIEW_BRIDGES)
             explore();
-        }
 
         List<Node> nodes = flowBuilder.nodes.entrySet().stream()
                 .map(entry -> SimpleNode.of(
@@ -63,16 +62,23 @@ public final class FlowRunner {
     }
 
     public void run() {
-        if (flowBuilder.goal == Goal.RUN) {
-            configure();
-            setupElog();
-            setupSeed();
-            explore();
-            align();
-            initialize();
-            start();
-        } else {
-            System.out.println(render());
+
+        switch (flowBuilder.goal) {
+
+            case RUN:
+                configure();
+                setupElog();
+                setupSeed();
+                explore();
+                align();
+                initialize();
+                start();
+                break;
+
+            case VIEW:
+            case VIEW_BRIDGES:
+                System.out.println(render());
+                break;
         }
     }
 
