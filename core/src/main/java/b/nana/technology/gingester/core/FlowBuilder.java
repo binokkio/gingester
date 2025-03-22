@@ -248,8 +248,15 @@ public final class FlowBuilder {
 
         for (Id id : this.divertFrom) {
             Collection<String> links = getNode(id).getLinks().values();
-            if (links.isEmpty()) throw new IllegalArgumentException("Can't divert from " + id + ", it has no links");
-            knifeTargets.addAll(links);
+            if (links.isEmpty()) {
+                Node dummy = new Node(this).name("Dummy");
+                Id dummyId = getId(dummy);
+                nodes.put(dummyId, node());
+                getNode(id).addLink(dummyId.toString(), dummyId.getGlobalId());
+                knifeTargets.add(dummyId.getGlobalId());
+            } else {
+                knifeTargets.addAll(links);
+            }
         }
 
         knife(knifeTargets);
