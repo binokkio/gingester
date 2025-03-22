@@ -159,6 +159,9 @@ public final class Node {
     }
 
 
+    public FlowBuilder getTarget() {
+        return target;
+    }
 
     public Optional<String> getId() {
         return Optional.ofNullable(id);

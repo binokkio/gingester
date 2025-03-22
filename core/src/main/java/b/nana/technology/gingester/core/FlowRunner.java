@@ -32,12 +32,14 @@ public final class FlowRunner {
     private final AtomicBoolean stopping = new AtomicBoolean();
 
     private final FlowBuilder flowBuilder;
+    private final TransformerFactory transformerFactory;
     private final IdFactory idFactory;
 
     private Thread seedThread;
 
     public FlowRunner(FlowBuilder flowBuilder) {
         this.flowBuilder = flowBuilder;
+        this.transformerFactory = flowBuilder.getTransformerFactory();
         this.idFactory = flowBuilder.getIdFactory();
     }
 
@@ -228,18 +230,18 @@ public final class FlowRunner {
 
         } else {
 
-            Collection<Class<? extends Transformer<?, ?>>> bridge = TransformerFactory.getBridge(output, input)
+            Collection<Class<? extends Transformer<?, ?>>> bridge = transformerFactory.getBridge(output, input)
                     .orElseThrow(() -> new IllegalStateException("Transformations from " + upstreamId + " to " + downstreamId + " must be specified"));  // TODO
 
             if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(TransformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
+                LOGGER.debug("Bridging from " + upstreamId + " to " + downstreamId + " with " + bridge.stream().map(transformerFactory::getUniqueName).collect(Collectors.joining(" -> ")));
 
             Set<Id> bridgeIds = new HashSet<>();
             ControllerConfiguration<?, ?> pointer = upstream;
             for (Class<? extends Transformer<?, ?>> transformerClass : bridge) {
 
                 @SuppressWarnings("unchecked")
-                Transformer<I, O> transformer = TransformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
+                Transformer<I, O> transformer = transformerFactory.instance((Class<? extends Transformer<I, O>>) transformerClass, null);
                 Id id = flowBuilder.splice(transformer, pointer.getId().getGlobalId(), linkName).getLastId();
 
                 ControllerConfiguration<I, O> configuration = configure(id, transformer).links(Map.of(linkName, downstreamId));

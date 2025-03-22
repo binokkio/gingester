@@ -7,20 +7,21 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class ExamplesTest {
 
     @Test
     void testAllExampleChecksAreOkay() {
 
-        List<TransformerFactory.CheckExampleException> exceptions = TransformerFactory.getTransformers()
+        TransformerFactory transformerFactory = new TransformerFactory();
+
+        List<TransformerFactory.CheckExampleException> exceptions = transformerFactory.getTransformers()
                 .flatMap(transformer -> Arrays.stream(transformer.getAnnotationsByType(Example.class))
-                        .map(example -> TransformerFactory.checkExample(transformer, example))
+                        .map(example -> transformerFactory.checkExample(transformer, example))
                         .flatMap(Optional::stream))
-                .collect(Collectors.toList());
+                .toList();
 
         if (!exceptions.isEmpty()) {
 

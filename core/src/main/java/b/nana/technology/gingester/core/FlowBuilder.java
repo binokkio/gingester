@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 public final class FlowBuilder {
 
+    private final TransformerFactory transformerFactory = new TransformerFactory();
     private final IdFactory idFactory = new IdFactory();
     private final Deque<String> scopes = new ArrayDeque<>();
     private final Seed seedTransformer = new Seed();
@@ -443,6 +444,10 @@ public final class FlowBuilder {
         return build().render();
     }
 
+    public TransformerFactory getTransformerFactory() {
+        return transformerFactory;
+    }
+
     IdFactory getIdFactory() {
         return idFactory;
     }
@@ -473,7 +478,7 @@ public final class FlowBuilder {
             return id;
         } else {
             String name = node.getName()
-                    .orElseGet(() -> TransformerFactory.getUniqueName(node.requireTransformer()));
+                    .orElseGet(() -> transformerFactory.getUniqueName(node.requireTransformer()));
             Id id = idFactory.getId(name, scopes);
             int i = 1;
             while (nodes.containsKey(id))

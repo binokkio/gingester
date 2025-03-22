@@ -14,6 +14,8 @@ import java.util.Optional;
 @Names(1)
 public final class Gcls implements Transformer<Object, Object> {
 
+    private final TransformerFactory transformerFactory = new TransformerFactory();
+
     private final SchemaGenerator schemaGenerator;
 
     public Gcls() {
@@ -37,13 +39,13 @@ public final class Gcls implements Transformer<Object, Object> {
 
     private <I, O> void transform(Context context, Receiver<Object> out) throws Exception {
 
-        List<Class<? extends Transformer<?, ?>>> transformers = TransformerFactory.getTransformers().toList();
+        List<Class<? extends Transformer<?, ?>>> transformers = transformerFactory.getTransformers().toList();
         for (Class<? extends Transformer<?, ?>> transformer : transformers) {
 
-            String name = TransformerFactory.getUniqueName(transformer);
+            String name = transformerFactory.getUniqueName(transformer);
 
             //noinspection unchecked
-            Optional<Class<?>> optParametersClass = TransformerFactory
+            Optional<Class<?>> optParametersClass = transformerFactory
                     .getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer)
                     .map(constructor -> constructor.getParameterTypes()[0]);
 
