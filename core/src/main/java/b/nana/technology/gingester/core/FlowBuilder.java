@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.jsongraph.JsonGraph;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Elog;
@@ -442,6 +443,21 @@ public final class FlowBuilder {
      */
     public String render() {
         return build().render();
+    }
+
+    public String toJsonGraph() {
+        JsonGraph jsonGraph = new JsonGraph();
+        nodes.forEach((id, node) -> {
+            if (!id.isSystemId()) {
+                jsonGraph.add(
+                        id.getGlobalId().substring(1),
+                        transformerFactory.getUniqueName(node.requireTransformer()),
+                        transformerFactory.getParameters(node.requireTransformer()).orElse(null),
+                        node.getLinks().values().stream().map(v -> v.substring(1)).toList()
+                );
+            }
+        });
+        return jsonGraph.toString();
     }
 
     public TransformerFactory getTransformerFactory() {
