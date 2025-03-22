@@ -331,12 +331,13 @@ public final class CliParser {
             }
         }
 
+        TransformerFactory transformerFactory = node.getTarget().getTransformerFactory();
         if (parameters.size() > 1) {
-            node.transformer(TransformerFactory.instance(node.getName().orElseThrow(), parameters));
+            node.transformer(transformerFactory.instance(node.getName().orElseThrow(), parameters));
         } else if (!parameters.isEmpty()) {
-            node.transformer(TransformerFactory.instance(node.getName().orElseThrow(), parameters.get(0)));
+            node.transformer(transformerFactory.instance(node.getName().orElseThrow(), parameters.get(0)));
         } else {
-            node.transformer(TransformerFactory.instance(node.getName().orElseThrow()));
+            node.transformer(transformerFactory.instance(node.getName().orElseThrow()));
         }
 
         node.add();

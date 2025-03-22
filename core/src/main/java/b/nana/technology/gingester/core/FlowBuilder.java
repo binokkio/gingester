@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.jsongraph.JsonGraph;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.Elog;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 public final class FlowBuilder {
 
+    private final TransformerFactory transformerFactory = new TransformerFactory();
     private final IdFactory idFactory = new IdFactory();
     private final Deque<String> scopes = new ArrayDeque<>();
     private final Seed seedTransformer = new Seed();
@@ -248,8 +250,15 @@ public final class FlowBuilder {
 
         for (Id id : this.divertFrom) {
             Collection<String> links = getNode(id).getLinks().values();
-            if (links.isEmpty()) throw new IllegalArgumentException("Can't divert from " + id + ", it has no links");
-            knifeTargets.addAll(links);
+            if (links.isEmpty()) {
+                Node dummy = new Node(this).name("Dummy");
+                Id dummyId = getId(dummy);
+                nodes.put(dummyId, node());
+                getNode(id).addLink(dummyId.toString(), dummyId.getGlobalId());
+                knifeTargets.add(dummyId.getGlobalId());
+            } else {
+                knifeTargets.addAll(links);
+            }
         }
 
         knife(knifeTargets);
@@ -294,7 +303,7 @@ public final class FlowBuilder {
      * Replace a transformer.
      *
      * @param targetId the id of the node whose transformer to replace
-     * @param transformer the transformer
+     * @param transformer the transformer to use as replacement
      */
     public FlowBuilder replace(String targetId, Transformer<?, ?> transformer) {
 
@@ -436,6 +445,25 @@ public final class FlowBuilder {
         return build().render();
     }
 
+    public String toJsonGraph() {
+        JsonGraph jsonGraph = new JsonGraph();
+        nodes.forEach((id, node) -> {
+            if (!id.isSystemId()) {
+                jsonGraph.add(
+                        id.getGlobalId().substring(1),
+                        transformerFactory.getUniqueName(node.requireTransformer()),
+                        transformerFactory.getParameters(node.requireTransformer()).orElse(null),
+                        node.getLinks().values().stream().map(v -> v.substring(1)).toList()
+                );
+            }
+        });
+        return jsonGraph.toString();
+    }
+
+    public TransformerFactory getTransformerFactory() {
+        return transformerFactory;
+    }
+
     IdFactory getIdFactory() {
         return idFactory;
     }
@@ -466,7 +494,7 @@ public final class FlowBuilder {
             return id;
         } else {
             String name = node.getName()
-                    .orElseGet(() -> TransformerFactory.getUniqueName(node.requireTransformer()));
+                    .orElseGet(() -> transformerFactory.getUniqueName(node.requireTransformer()));
             Id id = idFactory.getId(name, scopes);
             int i = 1;
             while (nodes.containsKey(id))

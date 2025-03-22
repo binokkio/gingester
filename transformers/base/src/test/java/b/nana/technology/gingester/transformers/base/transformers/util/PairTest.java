@@ -1,12 +1,9 @@
 package b.nana.technology.gingester.transformers.base.transformers.util;
 
 import b.nana.technology.gingester.core.FlowBuilder;
-import b.nana.technology.gingester.core.controller.Context;
-import b.nana.technology.gingester.core.receiver.UniReceiver;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
-import java.util.Queue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,7 +19,6 @@ class PairTest {
                 -f description
                 -t Pair
                 -t StringDef '${a}-${b}'
-                -t StdOut
                 """)
                 .add(result::add)
                 .run();

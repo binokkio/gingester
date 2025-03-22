@@ -11,10 +11,11 @@ public final class CoreProvider implements Provider {
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
                 b.nana.technology.gingester.core.transformers.As.class,
-                b.nana.technology.gingester.core.transformers.CliToGraphTxt.class,
                 b.nana.technology.gingester.core.transformers.CycleRoute.class,
                 b.nana.technology.gingester.core.transformers.FinishGate.class,
                 b.nana.technology.gingester.core.transformers.Gcli.class,
+                b.nana.technology.gingester.core.transformers.GcliToGraphTxt.class,
+                b.nana.technology.gingester.core.transformers.GcliToJsonGraph.class,
                 b.nana.technology.gingester.core.transformers.Gcls.class,
                 b.nana.technology.gingester.core.transformers.Head.class,
                 b.nana.technology.gingester.core.transformers.Is.class,

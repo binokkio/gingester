@@ -26,6 +26,7 @@ public final class FreemarkerTemplateFactory {
         CONFIGURATION.setLogTemplateExceptions(false);
         CONFIGURATION.setTagSyntax(Configuration.ANGLE_BRACKET_TAG_SYNTAX);
         CONFIGURATION.setInterpolationSyntax(Configuration.DOLLAR_INTERPOLATION_SYNTAX);
+        CONFIGURATION.setOutputEncoding("UTF-8");
         CONFIGURATION.setNumberFormat("computer");
         CONFIGURATION.setBooleanFormat("c");
         CONFIGURATION.setObjectWrapper(OBJECT_WRAPPER);
@@ -35,6 +36,7 @@ public final class FreemarkerTemplateFactory {
         CLI_CONFIGURATION.setLogTemplateExceptions(false);
         CLI_CONFIGURATION.setTagSyntax(Configuration.SQUARE_BRACKET_TAG_SYNTAX);
         CLI_CONFIGURATION.setInterpolationSyntax(Configuration.SQUARE_BRACKET_INTERPOLATION_SYNTAX);
+        CLI_CONFIGURATION.setOutputEncoding("UTF-8");
         CLI_CONFIGURATION.setNumberFormat("computer");
         CLI_CONFIGURATION.setBooleanFormat("c");
         CLI_CONFIGURATION.setObjectWrapper(OBJECT_WRAPPER);

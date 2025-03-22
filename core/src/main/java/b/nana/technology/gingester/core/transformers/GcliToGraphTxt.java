@@ -7,7 +7,7 @@ import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
 @Names(1)
-public final class CliToGraphTxt implements Transformer<String, String> {
+public final class GcliToGraphTxt implements Transformer<String, String> {
 
     @Override
     public void transform(Context context, String in, Receiver<String> out) throws Exception {

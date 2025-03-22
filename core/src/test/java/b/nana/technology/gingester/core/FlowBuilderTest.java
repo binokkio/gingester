@@ -58,6 +58,22 @@ class FlowBuilderTest {
     }
 
     @Test
+    void testDivertFromLinkLessTransformers() {
+
+        Deque<String> result = new ArrayDeque<>();
+
+        new FlowBuilder()
+                .cli("-t StringDef 'Hello, World' -l E Q -t E:StringDef '${__in__}!' -t StringDef foo -l End -- -t Q:StringDef '${__in__}?' -t StringDef bar -pt End")
+                .divert(List.of("E", "Q"))
+                .cli("-t StringDef '${__in__}!'")
+                .add(result::add)
+                .run();
+
+        assertEquals("Hello, World!!", result.remove());
+        assertEquals("Hello, World?!", result.remove());
+    }
+
+    @Test
     void testReplace() {
 
         Deque<String> results = new ArrayDeque<>();

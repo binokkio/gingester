@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-// TODO instance instead of static and allow providers to be supplied, maybe through Gingester constructor to prevent lazy loading implementation
+// TODO allow providers to be supplied, maybe through Gingester constructor to prevent lazy loading implementation
 
 public final class TransformerFactory {
 
@@ -54,20 +54,20 @@ public final class TransformerFactory {
                         return a;
                     }));
 
-    private TransformerFactory() {}
+    private final Map<Transformer<?, ?>, Object> parameters = new HashMap<>();
 
-    public static <I, O> Transformer<I, O> instance(String name) {
+    public <I, O> Transformer<I, O> instance(String name) {
         return instance(name, null);
     }
 
-    public static <I, O> Transformer<I, O> instance(String name, JsonNode jsonParameters) {
+    public <I, O> Transformer<I, O> instance(String name, JsonNode jsonParameters) {
 
         List<Class<? extends Transformer<?, ?>>> transformerClasses =
-                getTransformersByName(name).collect(Collectors.toList());
+                getTransformersByName(name).toList();
 
         if (transformerClasses.isEmpty()) {
             List<String> options = getTransformers()
-                    .map(TransformerFactory::getUniqueName)
+                    .map(this::getUniqueName)
                     .filter(s -> s.endsWith(name))
                     .sorted()
                     .collect(Collectors.toList());
@@ -91,7 +91,7 @@ public final class TransformerFactory {
             }
         } else if (transformerClasses.size() > 1) {
             String uniqueNames = transformerClasses.stream()
-                    .map(TransformerFactory::getUniqueName)
+                    .map(this::getUniqueName)
                     .sorted()
                     .collect(Collectors.joining(", "));
             throw new IllegalArgumentException(String.format(
@@ -106,7 +106,7 @@ public final class TransformerFactory {
         return instance(transformerClass, jsonParameters);
     }
 
-    public static <I, O> Transformer<I, O> instance(Class<? extends Transformer<I, O>> transformerClass, JsonNode jsonParameters) {
+    public <I, O> Transformer<I, O> instance(Class<? extends Transformer<I, O>> transformerClass, JsonNode jsonParameters) {
 
         if (transformerClass.getAnnotation(Deprecated.class) != null) {
             LOGGER.warn("Instancing deprecated transformer " + getUniqueName(transformerClass));
@@ -147,13 +147,19 @@ public final class TransformerFactory {
         }
 
         try {
-            return constructor.newInstance(parameters);
+            Transformer<I, O> instance = constructor.newInstance(parameters);
+            this.parameters.put(instance, parameters);
+            return instance;
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
             throw new IllegalStateException("Calling parameter-rich constructor on " + transformerClass.getCanonicalName() + " failed", e);
         }
     }
 
-    public static <I, O> Optional<ArrayDeque<Class<? extends Transformer<?, ?>>>> getBridge(Class<I> from, Class<O> to) {
+    public Optional<Object> getParameters(Transformer<?, ?> transformer) {
+        return Optional.ofNullable(parameters.get(transformer));
+    }
+
+    public <I, O> Optional<ArrayDeque<Class<? extends Transformer<?, ?>>>> getBridge(Class<I> from, Class<O> to) {
 
         List<ArrayDeque<Class<? extends Transformer<?, ?>>>> options = PURE_TRANSFORMERS.stream()
                 .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].isAssignableFrom(from))
@@ -189,30 +195,30 @@ public final class TransformerFactory {
                                         return next;
                                     });
                         })
-                        .collect(Collectors.toList());
+                        .toList();
             }
         }
 
         return Optional.empty();
     }
 
-    public static String getUniqueName(Transformer<?, ?> transformer) {
+    public String getUniqueName(Transformer<?, ?> transformer) {
         // noinspection unchecked
         return getUniqueName((Class<? extends Transformer<?, ?>>) transformer.getClass());
     }
 
-    public static String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
+    public String getUniqueName(Class<? extends Transformer<?, ?>> transformer) {
         if (transformer.getCanonicalName() == null) return "__anonymous__";
         return getNames(transformer)
                 .filter(name -> getTransformersByName(name).skip(1).findFirst().isEmpty())
                 .findFirst().orElseThrow(() -> new IllegalStateException("No unique name for " + transformer.getCanonicalName()));
     }
 
-    private static Stream<Class<? extends Transformer<?, ?>>> getTransformersByName(String query) {
+    private Stream<Class<? extends Transformer<?, ?>>> getTransformersByName(String query) {
         return TRANSFORMERS.stream().filter(c -> getNames(c).anyMatch(query::equals));
     }
 
-    private static Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
+    private Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
         Names names = transformer.getAnnotation(Names.class);
         int skip = names == null ? 1 : names.value() - 1;
         String[] parts = transformer.getCanonicalName().split("\\.");
@@ -224,11 +230,11 @@ public final class TransformerFactory {
                 .skip(skip);
     }
 
-    public static Stream<Class<? extends Transformer<?, ?>>> getTransformers() {
+    public Stream<Class<? extends Transformer<?, ?>>> getTransformers() {
         return TRANSFORMERS.stream();
     }
 
-    public static <I, O> Stream<String> getTransformerHelps() {
+    public <I, O> Stream<String> getTransformerHelps() {
         return TRANSFORMERS.stream()
                 .filter(c -> c.getAnnotation(Deprecated.class) == null)
                 .map(transformer -> {
@@ -302,7 +308,7 @@ public final class TransformerFactory {
                 .sorted();
     }
 
-    public static <I, O> Optional<? extends Constructor<? extends Transformer<I, O>>> getParameterRichConstructor(Class<? extends Transformer<I, O>> transformerClass) {
+    public <I, O> Optional<? extends Constructor<? extends Transformer<I, O>>> getParameterRichConstructor(Class<? extends Transformer<I, O>> transformerClass) {
         // noinspection unchecked
         return Arrays.stream(transformerClass.getConstructors())
                 .map(c -> (Constructor<? extends Transformer<I, O>>) c)
@@ -310,17 +316,17 @@ public final class TransformerFactory {
                 .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } );
     }
 
-    private static String camelCase(String name) {
+    private String camelCase(String name) {
         return CASE_HINTS.getOrDefault(name, Character.toUpperCase(name.charAt(0)) + name.substring(1));
     }
 
 
 
-    public static Optional<CheckExampleException> checkExample(Class<? extends Transformer<?, ?>> transformer, Example example) {
+    public Optional<CheckExampleException> checkExample(Class<? extends Transformer<?, ?>> transformer, Example example) {
         return checkExample(getUniqueName(transformer), example);
     }
 
-    public static Optional<CheckExampleException> checkExample(String uniqueName, Example example) {
+    public Optional<CheckExampleException> checkExample(String uniqueName, Example example) {
         if (example.test()) {
             String cli = getExampleCli(uniqueName, example);
             try {
@@ -332,7 +338,7 @@ public final class TransformerFactory {
         return Optional.empty();
     }
 
-    private static String getExampleCli(String uniqueName, Example example) {
+    private String getExampleCli(String uniqueName, Example example) {
         if (!example.example().isEmpty()) {
             return "-t " + uniqueName + " " + example.example();
         } else {

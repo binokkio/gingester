@@ -45,11 +45,11 @@ General usage:
     -pt/--point/--passthrough [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>[!]]
         add a passthrough transformer to the flow, see -t for further details
 
-    -r/--report
-        the interval in seconds at which to report throughput, 0 to disable
+    -r/--report <interval>
+        set the interval in seconds at which to report throughput, 0 to disable
 
     -s/--stash [<key>]
-        stash value under key
+        stash value under key, key must not be capitalized
 
     -sf/--sync-from <link1> [<link2> [...]]
         mark the linked transformers to be synced with when -stf/-stft/-stof/-stt is used later
@@ -74,7 +74,7 @@ General usage:
         -stf/-stft/-stof/-stt is used later
 
     -stof/--sync-to-on-finish
-        yield a finish signal everytime any of the transformers most recently marked by -sf/-sfpt/-sfs/sft/stft
+        output a finish signal everytime any of the transformers most recently marked by -sf/-sfpt/-sfs/sft/stft
         finishes, or the ingest-seed if there are no marks
 
     -stt/--sync-to-transformer [<workers>][.[<queueSize>][.<maxBatchSize>]] [<id>:]<name>[!] [<parameters>]
@@ -86,7 +86,7 @@ General usage:
         provide [<workers>] to enable async execution for the transformer by the provided number of workers
         provide [<queueSize>] to set the queue size for this transformer
         provide [<maxBatchSize>] to limit the maximum batch size for this transformer
-        provide [<id>] to be able to refer to this transformer by the provided id
+        provide [<id>] to be able to refer to this transformer by the provided id, id must be capitalized
         provide [!] to enable throughput reporting for the transformer
         provide [<parameters>] to configure the transformer
 
@@ -97,7 +97,7 @@ General usage:
         passthrough items and send values to the closest upstream -wo/--wormhole-out
 
     -wo/--wormhole-out
-        passthrough items and yield values from the closest downstream -wi/--wormhole-in
+        passthrough items and output values from the closest downstream -wi/--wormhole-in
 
     --
         prevent the previous transformer from automatically being linked to the next transformer
@@ -115,7 +115,8 @@ Concepts:
     Item: a value and associated context in the flow.
     Seed: a special item used to start the flow by passing it to all transformers without incoming links.
     Transformer: a node in the flow that processes items.
-    Yield: the result of a transformer.
+    Output: the item produced by a transformer.
+    Input: the item consumed by a transformer, equal to the output of the transformer upstream of it.
 
 
     Upstream/Downstream:
@@ -125,12 +126,18 @@ Concepts:
         StringAppend transformer are the Join and Speak transformers.
 
 
+    Bridging
+
+        If the output type of a transformer does not match the input type of an immediate downstream transformer
+        then Gingester will use pure transformers to bridge the gap.
+
+
     Context/Stash:
 
         Every item in the flow has context. This context contains key-value pairs that were stashed upstream.
         The values can be fetched and continue as items in the flow, used in transformer argument templates, and
         used by transformers internally. Take for example `-t StringDef hello -t Repeat 3 --probe`. StringDef
-        will yield "hello" and Repeat will repeat it 3 times, each time stashing the zero-based repetition
+        will output "hello" and Repeat will repeat it 3 times, each time stashing the zero-based repetition
         number as "description". The probe by default writes the item context followed by the item value to
         stdout. The first output of the above flow is:
 
@@ -201,7 +208,7 @@ Concepts:
         -t Http GET '${page.next}'
         ++ and so forth ++
 
-        The first Http transformer yields the URL for the second page, and since that can not flow back to the
+        The first Http transformer outputs the URL for the second page, and since that can not flow back to the
         first Http transformer, a second Http transformer must be defined to get the second page, and so forth. A
         wormhole solves this issue by allowing values to travel upstream.
 
@@ -218,5 +225,5 @@ Concepts:
         Here the URL for the next page travels through the wormhole back to the same Http transformer.
 
         The transformers between the 2 points of the wormhole must not have their own workers. Only a single value
-        can travel through the wormhole for each item that --wormhole-out yields. The value loses the context it
+        can travel through the wormhole for each item that --wormhole-out outputs. The value loses the context it
         gained between --wormhole-out and --wormhole-in.

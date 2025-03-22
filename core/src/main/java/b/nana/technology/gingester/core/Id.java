@@ -43,6 +43,10 @@ public final class Id {
         return localId;
     }
 
+    public boolean isSystemId() {
+        return globalId.startsWith("$__");
+    }
+
     @Override
     public String toString() {
         return toString;
