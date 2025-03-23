@@ -21,7 +21,7 @@ import static java.util.function.Predicate.not;
 
 public final class FlowBuilder {
 
-    private final TransformerFactory transformerFactory = new TransformerFactory();
+    private final TransformerFactory transformerFactory = TransformerFactory.withSpiProviders();
     private final IdFactory idFactory = new IdFactory();
     private final Deque<String> scopes = new ArrayDeque<>();
     private final Seed seedTransformer = new Seed();

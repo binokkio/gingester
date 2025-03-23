@@ -14,7 +14,7 @@ import java.util.Optional;
 @Names(1)
 public final class Gcls implements Transformer<Object, Object> {
 
-    private final TransformerFactory transformerFactory = new TransformerFactory();
+    private final TransformerFactory transformerFactory = TransformerFactory.withSpiProviders();
 
     private final SchemaGenerator schemaGenerator;
 

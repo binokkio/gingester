@@ -2,11 +2,12 @@ package b.nana.technology.gingester.core.transformer;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TransformerFactoryTest {
 
-    private final TransformerFactory transformerFactory = new TransformerFactory();
+    private final TransformerFactory transformerFactory = TransformerFactory.withSpiProviders();
 
     @Test
     void testUnknownName() {
