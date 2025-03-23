@@ -35,7 +35,7 @@ public final class Main {
         }
 
         System.out.println("\nAvailable transformers:\n");
-        new TransformerFactory().getTransformerHelps().forEach(help ->
+        TransformerFactory.withSpiProviders().getTransformerHelps().forEach(help ->
                 System.out.println("    " + help));
     }
 }

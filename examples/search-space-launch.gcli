@@ -1,0 +1,19 @@
+++ Define the URL using `searchTerm` and `year` from kwargs ++
+-t StringDef https://lldev.thespacedevs.com/2.2.0/launch?search=[=searchTerm?url]&year=[=year]
+
+++ Use a wormhole to iterate over the result pages ++
+--wormhole-out
+-t PageRequest:Http! GET '${__in__}'
+-a String -p
+-t InputStreamToJson
+--sync-from-stash page
+-t JsonPath '$.next' optional
+--wormhole-in
+--sync-to-fetch page
+
+++ Iterate the results of each page and write them to separate files ++
+-t JsonPath $.results[*] optional
+-s result
+-t JsonToString pretty
+-t PathOverwrite! '/tmp/space/${result.slug}.json'  ++ Use `result.slug` from context as part of the filename ++
+-t Log info ${path.absolute}

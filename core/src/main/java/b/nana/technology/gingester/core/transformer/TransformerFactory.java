@@ -21,9 +21,31 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-// TODO allow providers to be supplied, maybe through Gingester constructor to prevent lazy loading implementation
-
 public final class TransformerFactory {
+
+    private static Materials spiMaterials;
+
+    public static TransformerFactory withSpiProviders() {
+        if (spiMaterials == null) spiMaterials = new Materials();
+        return new TransformerFactory(spiMaterials);
+    }
+
+    public static TransformerFactory withProviders(List<Provider> providers) {
+        return new TransformerFactory(new Materials(providers));
+    }
+
+    public static TransformerFactory withProvidersByFqdn(List<String> providers) {
+        return withProviders(providers.stream()
+                .map(fqdn -> {
+                    try {
+                        return Class.forName(fqdn).getConstructor().newInstance();
+                    } catch (ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .map(Provider.class::cast)
+                .toList());
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformerFactory.class);
 
@@ -31,30 +53,18 @@ public final class TransformerFactory {
             .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
             .disable(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature());
 
-    private static final Set<Class<? extends Transformer<?, ?>>> TRANSFORMERS = ServiceLoader.load(Provider.class)
-            .stream()
-            .map(ServiceLoader.Provider::get)
-            .map(Provider::getTransformerClasses)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
 
-    private static final Set<Class<? extends Transformer<?, ?>>> PURE_TRANSFORMERS = TRANSFORMERS
-            .stream()
-            .filter(c -> c.getAnnotation(Pure.class) != null)
-            .collect(Collectors.toSet());
-
-    private static final Map<String, String> CASE_HINTS = ServiceLoader.load(Provider.class)
-            .stream()
-            .map(ServiceLoader.Provider::get)
-            .map(Provider::getCaseHints)
-            .flatMap(map -> map.entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                    (a, b) -> {
-                        if (!a.equals(b)) throw new IllegalStateException("Conflicting case hints: " + a + " and " + b);
-                        return a;
-                    }));
+    private final Set<Class<? extends Transformer<?, ?>>> transformers;
+    private final Set<Class<? extends Transformer<?, ?>>> pureTransformers;
+    private final Map<String, String> caseHints;
 
     private final Map<Transformer<?, ?>, Object> parameters = new HashMap<>();
+
+    private TransformerFactory(Materials materials) {
+        transformers = materials.transformers;
+        pureTransformers = materials.pure;
+        caseHints = materials.caseHints;
+    }
 
     public <I, O> Transformer<I, O> instance(String name) {
         return instance(name, null);
@@ -161,7 +171,7 @@ public final class TransformerFactory {
 
     public <I, O> Optional<ArrayDeque<Class<? extends Transformer<?, ?>>>> getBridge(Class<I> from, Class<O> to) {
 
-        List<ArrayDeque<Class<? extends Transformer<?, ?>>>> options = PURE_TRANSFORMERS.stream()
+        List<ArrayDeque<Class<? extends Transformer<?, ?>>>> options = pureTransformers.stream()
                 .filter(c -> TypeResolver.resolveRawArguments(Transformer.class, c)[0].isAssignableFrom(from))
                 .map(c -> new ArrayDeque<Class<? extends Transformer<?, ?>>>(Collections.singleton(c)))
                 .collect(Collectors.toList());
@@ -178,7 +188,7 @@ public final class TransformerFactory {
                 options = options.stream()
                         .flatMap(b -> {
                             Class<?> tailType = TypeResolver.resolveRawArguments(Transformer.class, b.getLast())[1];
-                            return PURE_TRANSFORMERS.stream()
+                            return pureTransformers.stream()
                                     .filter(c -> {
                                         Class<?>[] types = TypeResolver.resolveRawArguments(Transformer.class, c);
                                         Class<?> in = types[0];
@@ -215,7 +225,7 @@ public final class TransformerFactory {
     }
 
     private Stream<Class<? extends Transformer<?, ?>>> getTransformersByName(String query) {
-        return TRANSFORMERS.stream().filter(c -> getNames(c).anyMatch(query::equals));
+        return transformers.stream().filter(c -> getNames(c).anyMatch(query::equals));
     }
 
     private Stream<String> getNames(Class<? extends Transformer<?, ?>> transformer) {
@@ -231,11 +241,11 @@ public final class TransformerFactory {
     }
 
     public Stream<Class<? extends Transformer<?, ?>>> getTransformers() {
-        return TRANSFORMERS.stream();
+        return transformers.stream();
     }
 
     public <I, O> Stream<String> getTransformerHelps() {
-        return TRANSFORMERS.stream()
+        return transformers.stream()
                 .filter(c -> c.getAnnotation(Deprecated.class) == null)
                 .map(transformer -> {
 
@@ -317,7 +327,7 @@ public final class TransformerFactory {
     }
 
     private String camelCase(String name) {
-        return CASE_HINTS.getOrDefault(name, Character.toUpperCase(name.charAt(0)) + name.substring(1));
+        return caseHints.getOrDefault(name, Character.toUpperCase(name.charAt(0)) + name.substring(1));
     }
 
 

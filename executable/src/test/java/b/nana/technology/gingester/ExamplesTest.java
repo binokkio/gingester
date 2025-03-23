@@ -15,7 +15,7 @@ class ExamplesTest {
     @Test
     void testAllExampleChecksAreOkay() {
 
-        TransformerFactory transformerFactory = new TransformerFactory();
+        TransformerFactory transformerFactory = TransformerFactory.withSpiProviders();
 
         List<TransformerFactory.CheckExampleException> exceptions = transformerFactory.getTransformers()
                 .flatMap(transformer -> Arrays.stream(transformer.getAnnotationsByType(Example.class))

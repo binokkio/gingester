@@ -17,9 +17,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static java.util.function.Predicate.not;
+
 public final class FlowBuilder {
 
-    private final TransformerFactory transformerFactory = new TransformerFactory();
+    private final TransformerFactory transformerFactory = TransformerFactory.withSpiProviders();
     private final IdFactory idFactory = new IdFactory();
     private final Deque<String> scopes = new ArrayDeque<>();
     private final Seed seedTransformer = new Seed();
@@ -280,21 +282,26 @@ public final class FlowBuilder {
      * @param targetIds the ids of the nodes to knife
      */
     public FlowBuilder knife(Set<String> targetIds) {
+        return knife(targetIds, true);
+    }
+
+    private FlowBuilder knife(Set<String> targetIds, boolean check) {
 
         Set<String> nextTargetIds = new HashSet<>();
 
-        for (Id targetId : idFactory.getIds(targetIds, scopes)) {
+        List<Id> ids = idFactory.getIds(targetIds, scopes);
+        linkFrom = linkFrom.stream().filter(not(ids::contains)).toList();
+        for (Id targetId : ids) {
             Node removed = nodes.remove(targetId);
-            if (removed == null)
-                throw new IllegalArgumentException("No transformer has id " + targetId);
-            removed.getLinks().values().stream()
-                    .filter(id -> !nodes.containsKey(idFactory.getId(id)))
-                    .forEach(nextTargetIds::add);
+            if (check && removed == null) throw new IllegalArgumentException("No transformer has id " + targetId);
+            else if (removed == null) continue;
+            if (last == removed) last = null;
+            nextTargetIds.addAll(removed.getLinks().values());
             nodes.forEach((id, node) -> node.updateLinks(targetId.getGlobalId(), "$__void__"));
         }
 
         if (!nextTargetIds.isEmpty())
-            knife(nextTargetIds);
+            knife(nextTargetIds, false);
 
         return this;
     }
