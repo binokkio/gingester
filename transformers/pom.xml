@@ -18,6 +18,7 @@
     <modules>
         <module>audio</module>
         <module>base</module>
+        <module>claude</module>
         <module>crypto</module>
         <module>elasticsearch7</module>
         <module>git</module>

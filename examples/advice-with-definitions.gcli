@@ -1,7 +1,7 @@
 -r 0  ++ Turn off throughput reporting ++
 
 ++ Get a random bit of advice, interpret the response JSON, and stash it as `advice` ++
--sft Http GET 'https://api.adviceslip.com/advice'
+-sft AdviceRequest:Http! GET 'https://api.adviceslip.com/advice'
 -t InputStreamToJson
 -s advice
 
@@ -18,11 +18,11 @@
 -s word
 
 ++ Get the dictionary definition for `word`, iterate through the different meanings ++
--t Http GET 'https://api.dictionaryapi.dev/api/v2/entries/en/${word}'
+-t DictionaryRequest:Http! GET 'https://api.dictionaryapi.dev/api/v2/entries/en/${word?url}'
 -t JsonPath '$..meanings[*]' 'optional'
 -s meaning
 
-++ Get the first definition ++
+++ Get the first definition of `meaning` ++
 -t JsonPath '$.definitions[0]'
 -s definition
 
