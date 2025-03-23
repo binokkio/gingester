@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -49,6 +48,7 @@ public final class GcliHelper implements Transformer<Object, String> {
     private final Template userPromptOverride;
     private final Template gcliPrelude;
     private final Template gcliEditable;
+    private final Map<String, String> mask;
 
     public GcliHelper(Parameters parameters) {
         apiKey = requireNonNull(parameters.apiKey);
@@ -58,6 +58,7 @@ public final class GcliHelper implements Transformer<Object, String> {
         userPromptOverride = parameters.userPromptOverride == null ? null : Context.newTemplate(parameters.userPromptOverride);
         gcliPrelude = parameters.gcliPrelude == null ? null : Context.newTemplate(parameters.gcliPrelude);
         gcliEditable = parameters.gcliEditable == null ? null : Context.newTemplate(parameters.gcliEditable);
+        mask = parameters.mask;
 
         try {
 
@@ -130,10 +131,10 @@ public final class GcliHelper implements Transformer<Object, String> {
                     .header("x-api-key", apiKey)
                     .header("anthropic-version", anthropicVersion)
                     .header("content-type", "application/json")
-                    .method("POST", HttpRequest.BodyPublishers.ofByteArray(objectMapper.writeValueAsBytes(prompt)));
+                    .method("POST", HttpRequest.BodyPublishers.ofString(mask(objectMapper.writeValueAsString(prompt))));
 
-            HttpResponse<InputStream> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
-            JsonNode json = objectMapper.readTree(response.body());
+            HttpResponse<String> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            JsonNode json = objectMapper.readTree(unmask(response.body()));
             logger.info("Claude: {}", json.toPrettyString());
 
             if (json.get("type").asText().equals("error"))
@@ -157,6 +158,20 @@ public final class GcliHelper implements Transformer<Object, String> {
         } while (loop);
 
         out.accept(context, gcli.toString());
+    }
+
+    private String mask(String string) {
+        if (mask == null) return string;
+        String[] holder = new String[] { string };
+        mask.forEach((replace, with) -> holder[0] = holder[0].replaceAll(replace, with));
+        return holder[0];
+    }
+
+    private String unmask(String string) {
+        if (mask == null) return string;
+        String[] holder = new String[] { string };
+        mask.forEach((with, replace) -> holder[0] = holder[0].replaceAll(replace, with));
+        return holder[0];
     }
 
     private JsonNode prune(JsonNode response) {
@@ -250,6 +265,7 @@ public final class GcliHelper implements Transformer<Object, String> {
         public TemplateParameters userPromptOverride;
         public TemplateParameters gcliPrelude;
         public TemplateParameters gcliEditable;
+        public Map<String, String> mask;
     }
 
     private static final String TOOLS = """
