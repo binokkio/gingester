@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 
 @Experimental
-public final class GcliHelper implements Transformer<Object, JsonNode> {
+public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
     private static final Logger logger = LoggerFactory.getLogger(GcliHelper.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -102,7 +102,7 @@ public final class GcliHelper implements Transformer<Object, JsonNode> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<JsonNode> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<ArrayNode> out) throws Exception {
 
         ArrayNode messages = JsonNodeFactory.instance.arrayNode();
         if (in instanceof String string) messages.add(string);
@@ -273,7 +273,7 @@ public final class GcliHelper implements Transformer<Object, JsonNode> {
     }
 
     private JsonNode createToolResultMessage(String toolUseId, String content) throws JsonProcessingException {
-        JsonNode message = objectMapper.readTree("{\"role\": \"user\", \"content\": [{ \"type\": \"tool_result\", \"tool_use_id\": \"1\" }]}");
+        JsonNode message = objectMapper.readTree("{\"role\": \"user\", \"content\": [{ \"type\": \"tool_result\" }]}");
         ((ObjectNode) message.get("content").get(0)).put("tool_use_id", toolUseId);
         ((ObjectNode) message.get("content").get(0)).put("content", content);
         return message;
