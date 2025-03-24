@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 
 @Experimental
-public final class GcliHelper implements Transformer<Object, String> {
+public final class GcliHelper implements Transformer<Object, JsonNode> {
 
     private static final Logger logger = LoggerFactory.getLogger(GcliHelper.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -45,9 +46,9 @@ public final class GcliHelper implements Transformer<Object, String> {
     private final int maxTokens;
     private final ArrayNode tools;
     private final ArrayNode system;
-    private final Template userPromptOverride;
     private final Template gcliPrelude;
     private final Template gcliEditable;
+    private final boolean interactive;
     private final Map<String, String> mask;
 
     public GcliHelper(Parameters parameters) {
@@ -55,9 +56,9 @@ public final class GcliHelper implements Transformer<Object, String> {
         anthropicVersion = requireNonNull(parameters.anthropicVersion);
         model = requireNonNull(parameters.model);
         maxTokens = parameters.maxTokens;
-        userPromptOverride = parameters.userPromptOverride == null ? null : Context.newTemplate(parameters.userPromptOverride);
         gcliPrelude = parameters.gcliPrelude == null ? null : Context.newTemplate(parameters.gcliPrelude);
         gcliEditable = parameters.gcliEditable == null ? null : Context.newTemplate(parameters.gcliEditable);
+        interactive = parameters.interactive;
         mask = parameters.mask;
 
         try {
@@ -101,63 +102,87 @@ public final class GcliHelper implements Transformer<Object, String> {
     }
 
     @Override
-    public void transform(Context context, Object in, Receiver<String> out) throws Exception {
+    public void transform(Context context, Object in, Receiver<JsonNode> out) throws Exception {
 
-        String gcliPrelude = this.gcliPrelude != null ? this.gcliPrelude.render(context, in) : null;
-        StringBuilder gcli = new StringBuilder();
+        ArrayNode messages = JsonNodeFactory.instance.arrayNode();
+        if (in instanceof String string) messages.add(string);
+        else if (in instanceof TextNode textNode) messages.add(textNode);
+        else if (in instanceof ArrayNode arrayNode) messages = arrayNode;
+        else throw new IllegalArgumentException("Unexpected input: " + in);
 
-        ArrayNode messages = (ArrayNode) objectMapper.readTree("[{\"role\": \"user\", \"content\": [{ \"type\": \"text\" }]}]");
-        ((ObjectNode) messages.get(0).get("content").get(0)).put("text", userPromptOverride != null ? userPromptOverride.render(context, in) : DEFAULT_USER_PROMPT);
-
-        if (gcliEditable != null) {
-            gcli.append(gcliEditable.render(context, in));
-            messages.add(objectMapper.readTree("{\"role\": \"assistant\", \"content\": [{ \"type\": \"tool_use\", \"id\": \"1\", \"name\": \"str_replace_editor\", \"input\": {\"command\": \"view\", \"path\": \"/main.gcli\" }}]}"));
-            messages.add(createToolResultMessage("1", gcli.toString()));
+        for (int i = 0; i < messages.size(); i++) {
+            JsonNode message = messages.get(i);
+            if (message.isTextual()) {
+                message = upgrade(message);
+                messages.set(i, message);
+            }
         }
 
-        ObjectNode prompt = JsonNodeFactory.instance.objectNode();
-        prompt.put("model", model);
-        prompt.put("max_tokens", maxTokens);
-        prompt.set("tools", tools);
-        prompt.set("system", system);
-        prompt.set("messages", messages);
+        String gcliPrelude = this.gcliPrelude != null ? this.gcliPrelude.render(context) : null;
+        StringBuilder gcli = new StringBuilder();
+        if (gcliEditable != null) gcli.append(gcliEditable.render(context));
 
         boolean loop;
         do {
             loop = false;
 
-            HttpRequest.Builder requestBuilder = HttpRequest
-                    .newBuilder(URI.create("https://api.anthropic.com/v1/messages"))
-                    .header("x-api-key", apiKey)
-                    .header("anthropic-version", anthropicVersion)
-                    .header("content-type", "application/json")
-                    .method("POST", HttpRequest.BodyPublishers.ofString(mask(objectMapper.writeValueAsString(prompt))));
+            JsonNode lastMessage = messages.get(messages.size() - 1);
 
-            HttpResponse<String> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-            JsonNode json = objectMapper.readTree(unmask(response.body()));
-            logger.info("Claude: {}", json.toPrettyString());
+            switch (lastMessage.get("role").asText()) {
 
-            if (json.get("type").asText().equals("error"))
-                throw new IllegalStateException("Received error response");
+                case "user":
 
-            messages.add(prune(json));
+                    ObjectNode prompt = JsonNodeFactory.instance.objectNode();
+                    prompt.put("model", model);
+                    prompt.put("max_tokens", maxTokens);
+                    prompt.set("tools", tools);
+                    prompt.set("system", system);
+                    prompt.set("messages", messages);
 
-            for (JsonNode content : json.get("content")) {
-                if (content.get("type").asText().equals("tool_use")) {
-                    loop = true;
-                    String toolUseId = content.get("id").asText();
-                    JsonNode input = content.get("input");
-                    switch (content.get("name").asText()) {
-                        case "str_replace_editor": handleStrReplaceEditorUse(toolUseId, input, gcli, messages); break;
-                        case "gingester": handleGingesterUse(toolUseId, input, gcliPrelude, gcli, messages); break;
-                        default: throw new UnsupportedOperationException("Unsupported tool: " + content.get("name"));
+                    HttpRequest.Builder requestBuilder = HttpRequest
+                            .newBuilder(URI.create("https://api.anthropic.com/v1/messages"))
+                            .header("x-api-key", apiKey)
+                            .header("anthropic-version", anthropicVersion)
+                            .header("content-type", "application/json")
+                            .method("POST", HttpRequest.BodyPublishers.ofString(mask(objectMapper.writeValueAsString(prompt))));
+
+                    HttpResponse<String> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+                    JsonNode json = objectMapper.readTree(unmask(response.body()));
+                    messages.add(prune(json));
+
+                    loop = !interactive;
+
+                    break;
+
+                case "assistant":
+
+                    for (JsonNode content : lastMessage.get("content")) {
+                        if (content.get("type").asText().equals("tool_use")) {
+                            loop = true;
+                            String toolUseId = content.get("id").asText();
+                            JsonNode input = content.get("input");
+                            switch (content.get("name").asText()) {
+                                case "str_replace_editor": handleStrReplaceEditorUse(toolUseId, input, gcli, messages); break;
+                                case "gingester": handleGingesterUse(toolUseId, input, gcliPrelude, gcli, messages); break;
+                                default: throw new UnsupportedOperationException("Unsupported tool: " + content.get("name"));
+                            }
+                        }
                     }
-                }
+
+                    break;
+
+                default: throw new UnsupportedOperationException("Unknown role: " + lastMessage.get("role"));
             }
 
         } while (loop);
 
-        out.accept(context, gcli.toString());
+        out.accept(context, messages);
+    }
+
+    private JsonNode upgrade(JsonNode jsonNode) throws JsonProcessingException {
+        JsonNode result = objectMapper.readTree("{\"role\": \"user\", \"content\": [{ \"type\": \"text\" }]}");
+        ((ObjectNode) result.get("content").get(0)).set("text", jsonNode);
+        return result;
     }
 
     private String mask(String string) {
@@ -262,9 +287,9 @@ public final class GcliHelper implements Transformer<Object, String> {
         public List<String> providers;
         public String examplesPath;
         public String systemPromptOverride;
-        public TemplateParameters userPromptOverride;
         public TemplateParameters gcliPrelude;
         public TemplateParameters gcliEditable;
+        public boolean interactive;
         public Map<String, String> mask;
     }
 
@@ -274,7 +299,7 @@ public final class GcliHelper implements Transformer<Object, String> {
                 "name": "str_replace_editor"
             }, {
                 "name": "gingester",
-                "description": "Get an example of the output for the given transformer if \\"/main.gcli\\" was run with the given kwargs and context.",
+                "description": "Get an example of the input or output for the given transformer if \\"/main.gcli\\" was run with the given kwargs and context.",
                 "input_schema": {
                     "type": "object",
                     "properties": {
@@ -301,8 +326,5 @@ public final class GcliHelper implements Transformer<Object, String> {
             """;
 
     private static final String DEFAULT_SYSTEM_PROMPT =
-            "You are an AI assistant tasked with writing and improving Gingester GCLI code in the file \"/main.gcli\". Don't use pure transformers unless necessary. Don't write GCLI for anything you are not explicitly asked for. Don't add error handling unless explicitly asked for. Keep it minimal. Get user input from kwargs, e.g. [=foo] to get the value of the `foo` kwarg. Build the GCLI in small steps, add a few transformers at most each step. Don't guess the structure of transformer outputs, use the \"get_output\" tool to get the output of the last transformer to figure out the next step (make sure to give it an id in GCLI).";
-
-    private static final String DEFAULT_USER_PROMPT =
-            "Please help me write GCLI to look up the capital of a country using https://restcountries.com/v3.1/name/{countryName}";
+            "You are an AI assistant tasked with writing and improving Gingester GCLI code in the file \"/main.gcli\". Don't use pure transformers unless necessary. Don't write GCLI for anything you are not explicitly asked for. Don't handle edge cases unless explicitly asked for. Don't add error handling unless explicitly asked for. Keep it minimal. Get user input from kwargs, e.g. [=foo] to get the value of the `foo` kwarg. Build the GCLI in small steps, add a few transformers at most each step. Don't guess the structure of transformer outputs, use the \"get_output\" tool to get the output of the last transformer to figure out the next step (make sure to give it an id in GCLI).";
 }
