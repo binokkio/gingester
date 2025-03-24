@@ -11,6 +11,7 @@ public final class ClaudeProvider implements Provider {
     @Override
     public Collection<Class<? extends Transformer<?, ?>>> getTransformerClasses() {
         return List.of(
+                GcliExtractor.class,
                 GcliHelper.class
         );
     }
