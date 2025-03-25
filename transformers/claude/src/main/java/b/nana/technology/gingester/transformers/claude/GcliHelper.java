@@ -16,8 +16,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,7 +33,6 @@ import static java.util.Objects.requireNonNull;
 @Experimental
 public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
-    private static final Logger logger = LoggerFactory.getLogger(GcliHelper.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -120,7 +117,13 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
         String gcliPrelude = this.gcliPrelude != null ? this.gcliPrelude.render(context) : null;
         StringBuilder gcli = new StringBuilder();
-        if (gcliEditable != null) gcli.append(gcliEditable.render(context));
+        if (gcliEditable != null) {
+            gcli.append(gcliEditable.render(context));
+            if (messages.size() == 1) {
+                messages.add(objectMapper.readTree("{\"role\": \"assistant\", \"content\": [{ \"type\": \"tool_use\", \"id\": \"1\", \"name\": \"str_replace_editor\", \"input\": {\"command\": \"view\", \"path\": \"/main.gcli\" }}]}"));
+                messages.add(createToolResultMessage("1", gcli.toString()));
+            }
+        }
 
         boolean loop;
         do {
@@ -148,9 +151,13 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
                     HttpResponse<String> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
                     JsonNode json = objectMapper.readTree(unmask(response.body()));
-                    messages.add(prune(json));
 
-                    loop = !interactive;
+                    if (json.get("type").asText().equals("error")) {
+                        messages.add(json);
+                    } else {
+                        messages.add(prune(json));
+                        loop = !interactive;
+                    }
 
                     break;
 
@@ -228,8 +235,6 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
             default: throw new UnsupportedOperationException("Unsupported command: " + input.get("command"));
         }
-
-        logger.info("GCLI: {}", gcli);
     }
 
     private void handleGingesterUse(String toolUseId, JsonNode input, String gcliPrelude, StringBuilder gcli, ArrayNode messages) throws JsonProcessingException {
@@ -248,23 +253,27 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
                 else if (input.get("command").asText().startsWith("get_output")) flowBuilder.divert(input.get("transformer").asText());
                 else throw new UnsupportedOperationException("Unsupported command: " + input.get("command"));
             }
-            flowBuilder.cli("-a String -t Head 1 interrupt").add((context, value) -> {
-                    switch (input.get("command").asText()) {
-                        case "get_input_value":
-                        case "get_output_value":
-                            result[0] = (String) value;
-                            break;
-                        case "get_input_context":
-                        case "get_output_context":
-                            result[0] = context.prettyStash(999);
-                            break;
-                        default: throw new UnsupportedOperationException("Unsupported command: " + input.get("command"));
-                    }
-                }).run();
+            switch (input.get("command").asText()) {
+                case "get_input_value":
+                case "get_output_value":
+                    flowBuilder.cli("-a String -t Head 1 interrupt").add((context, value) -> result[0] = (String) value).run();
+                    break;
+                case "get_input_context":
+                case "get_output_context":
+                    flowBuilder.cli("-t Head 1 interrupt").add((context, value) -> result[0] = context.prettyStash(999)).run();
+                    break;
+                default: throw new UnsupportedOperationException("Unsupported command: " + input.get("command"));
+            }
         } catch (Exception e) {
             PrintStream printStream = new PrintStream(errorStream, false);
-            printStream.println(e.getMessage());
-            e.printStackTrace(printStream);
+            Throwable pointer = e;
+            String prefix = "";
+            while (pointer != null) {
+                printStream.println(prefix + e);
+                printStream.println("\tat " + e.getStackTrace()[0]);
+                pointer = e.getCause();
+                prefix = "Caused by: ";
+            }
         }
 
         if (result[0] != null) messages.add(createToolResultMessage(toolUseId, result[0]));
