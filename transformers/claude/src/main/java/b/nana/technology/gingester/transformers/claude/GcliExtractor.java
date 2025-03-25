@@ -19,9 +19,11 @@ public final class GcliExtractor implements Transformer<ArrayNode, String> {
         // create a set of str_replace_editor usages
         Set<String> strReplaceEditorUsages = new HashSet<>();
         for (JsonNode message : in) {
-            for (JsonNode content : message.get("content")) {
-                if (content.get("type").asText().equals("tool_use") && content.get("name").asText().equals("str_replace_editor")) {
-                    strReplaceEditorUsages.add(content.get("id").asText());
+            if (in.has("content")) {
+                for (JsonNode content : message.get("content")) {
+                    if (content.get("type").asText().equals("tool_use") && content.get("name").asText().equals("str_replace_editor")) {
+                        strReplaceEditorUsages.add(content.get("id").asText());
+                    }
                 }
             }
         }
@@ -29,12 +31,14 @@ public final class GcliExtractor implements Transformer<ArrayNode, String> {
         // find the latest tool_result for any of the str_replace_editor usages
         for (int i = in.size() - 1; i >= 0; i--) {
             JsonNode message = in.get(i);
-            JsonNode content = message.get("content");
-            for (int j = content.size() - 1; j >= 0; j--) {
-                JsonNode part = content.get(j);
-                if (part.get("type").asText().equals("tool_result") && strReplaceEditorUsages.contains(part.get("tool_use_id").asText())) {
-                    out.accept(context, part.get("content").asText());
-                    return;
+            JsonNode content = message.path("content");
+            if (!content.isMissingNode()) {
+                for (int j = content.size() - 1; j >= 0; j--) {
+                    JsonNode part = content.get(j);
+                    if (part.get("type").asText().equals("tool_result") && strReplaceEditorUsages.contains(part.get("tool_use_id").asText())) {
+                        out.accept(context, part.get("content").asText());
+                        return;
+                    }
                 }
             }
         }
