@@ -216,6 +216,10 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
     private void handleStrReplaceEditorUse(String toolUseId, JsonNode input, StringBuilder gcli, ArrayNode messages) throws JsonProcessingException {
         switch (input.get("command").asText()) {
 
+            case "view":
+                messages.add(createToolResultMessage(toolUseId, gcli.toString()));
+                break;
+
             case "create":
                 gcli.setLength(0);
                 gcli.append(input.get("file_text").asText());
@@ -243,7 +247,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
 
         try {
-            FlowBuilder flowBuilder = new FlowBuilder().seedValue(errorStream).cli("-s errorStream -e errorStream");
+            FlowBuilder flowBuilder = new FlowBuilder().seedStash(Map.of("errorStream", errorStream)).cli("-e errorStream");
             if (gcliPrelude != null) flowBuilder.cli(gcliPrelude);
             if (!input.get("transformer").asText().equals("__seed__")) {
                 if (input.has("kwargs")) flowBuilder.cli(gcli.toString(), input.get("kwargs"));
