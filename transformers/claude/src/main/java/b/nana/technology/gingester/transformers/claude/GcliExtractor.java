@@ -11,15 +11,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Experimental
-public final class GcliExtractor implements Transformer<ArrayNode, String> {
+public final class GcliExtractor implements Transformer<JsonNode, String> {
 
     @Override
-    public void transform(Context context, ArrayNode in, Receiver<String> out) {
+    public void transform(Context context, JsonNode in, Receiver<String> out) {
 
         // create a set of str_replace_editor usages
         Set<String> strReplaceEditorUsages = new HashSet<>();
         for (JsonNode message : in) {
-            if (in.has("content")) {
+            if (message.has("content")) {
                 for (JsonNode content : message.get("content")) {
                     if (content.get("type").asText().equals("tool_use") && content.get("name").asText().equals("str_replace_editor")) {
                         strReplaceEditorUsages.add(content.get("id").asText());
