@@ -8,6 +8,7 @@ import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
+import b.nana.technology.gingester.core.transformers.stash.StaticStash;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -245,9 +246,9 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
             FlowBuilder flowBuilder = new FlowBuilder().seedStash(Map.of("errorStream", errorStream)).cli("-e errorStream");
             if (gcliPrelude != null) flowBuilder.cli(gcliPrelude);
             if (!input.get("transformer").asText().equals("__seed__")) {
-                if (input.has("kwargs")) flowBuilder.cli(gcli.toString(), input.get("kwargs"));
+                if (input.path("context").isObject()) flowBuilder.add(new StaticStash(objectMapper.treeToValue(input.get("context"), new TypeReference<>() {})));
+                if (input.path("kwargs").isObject()) flowBuilder.cli(gcli.toString(), input.get("kwargs"));
                 else flowBuilder.cli(gcli.toString());
-                if (input.has("context")) flowBuilder.seedStash(objectMapper.treeToValue(input.get("context"), new TypeReference<Map<String, Object>>(){}));
                 if (input.get("command").asText().startsWith("get_input")) flowBuilder.knife(input.get("transformer").asText());
                 else if (input.get("command").asText().startsWith("get_output")) flowBuilder.divert(input.get("transformer").asText());
                 else throw new UnsupportedOperationException("Unsupported command: " + input.get("command"));
