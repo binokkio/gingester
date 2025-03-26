@@ -278,11 +278,12 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
                 pointer = e.getCause();
                 prefix = "Caused by: ";
             }
+            printStream.flush();
         }
 
         if (result[0] != null) messages.add(createToolResultMessage(toolUseId, result[0]));
         else if (errorStream.size() > 0) messages.add(createToolResultMessage(toolUseId, errorStream.toString()));
-        else messages.add(createToolResultMessage(toolUseId, "Transformer " + input.get("transformer") + "did not produce output"));
+        else messages.add(createToolResultMessage(toolUseId, "Transformer " + input.get("transformer") + " did not produce output"));
     }
 
     private JsonNode createToolResultMessage(String toolUseId, String content) throws JsonProcessingException {
