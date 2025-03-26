@@ -17,9 +17,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -121,7 +119,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
             gcli.append(gcliEditable.render(context));
             if (messages.size() == 1) {
                 messages.add(objectMapper.readTree("{\"role\": \"assistant\", \"content\": [{ \"type\": \"tool_use\", \"id\": \"1\", \"name\": \"str_replace_editor\", \"input\": {\"command\": \"view\", \"path\": \"/main.gcli\" }}]}"));
-                messages.add(createToolResultMessage("1", gcli.toString()));
+                messages.add(createToolResultMessage("1", gcli.toString(), false));
             }
         }
 
@@ -169,8 +167,8 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
                             String toolUseId = content.get("id").asText();
                             JsonNode input = content.get("input");
                             switch (content.get("name").asText()) {
-                                case "str_replace_editor": handleStrReplaceEditorUse(toolUseId, input, gcli, messages); break;
-                                case "gingester": handleGingesterUse(toolUseId, input, gcliPrelude, gcli, messages); break;
+                                case "str_replace_editor": messages.add(handleStrReplaceEditorUse(toolUseId, input, gcli)); break;
+                                case "gingester": messages.add(handleGingesterUse(toolUseId, input, gcliPrelude, gcli)); break;
                                 default: throw new UnsupportedOperationException("Unsupported tool: " + content.get("name"));
                             }
                         }
@@ -213,35 +211,32 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         return pruned;
     }
 
-    private void handleStrReplaceEditorUse(String toolUseId, JsonNode input, StringBuilder gcli, ArrayNode messages) throws JsonProcessingException {
+    private JsonNode handleStrReplaceEditorUse(String toolUseId, JsonNode input, StringBuilder gcli) throws JsonProcessingException {
         switch (input.get("command").asText()) {
 
             case "view":
-                messages.add(createToolResultMessage(toolUseId, gcli.toString()));
-                break;
+                return createToolResultMessage(toolUseId, gcli.toString(), false);
 
             case "create":
                 gcli.setLength(0);
                 gcli.append(input.get("file_text").asText());
-                messages.add(createToolResultMessage(toolUseId, gcli.toString()));
-                break;
+                return createToolResultMessage(toolUseId, gcli.toString(), false);
 
             case "str_replace":
                 String oldStr = input.get("old_str").asText();
                 int indexOf = gcli.indexOf(oldStr);
-                if (indexOf == -1) throw new IllegalStateException("No occurrences of old_str");
+                if (indexOf == -1) return createToolResultMessage(toolUseId, "Error: No match found for replacement. Please check your text and try again.", true);
                 int lastIndexOf = gcli.lastIndexOf(oldStr);
-                if (indexOf != lastIndexOf) throw new IllegalStateException("Multiple occurrences of old_str");
+                if (indexOf != lastIndexOf) return createToolResultMessage(toolUseId, "Error: Found multiple matches for replacement text. Please provide more context to make a unique match.", true);
                 String newStr = input.get("new_str").asText();
                 gcli.replace(indexOf, indexOf + oldStr.length(), newStr);
-                messages.add(createToolResultMessage(toolUseId, gcli.toString()));
-                break;
+                return createToolResultMessage(toolUseId, gcli.toString(), false);
 
             default: throw new UnsupportedOperationException("Unsupported command: " + input.get("command"));
         }
     }
 
-    private void handleGingesterUse(String toolUseId, JsonNode input, String gcliPrelude, StringBuilder gcli, ArrayNode messages) throws JsonProcessingException {
+    private JsonNode handleGingesterUse(String toolUseId, JsonNode input, String gcliPrelude, StringBuilder gcli) throws JsonProcessingException {
 
         String[] result = new String[1];
         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
@@ -270,26 +265,20 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
             }
         } catch (Exception e) {
             PrintStream printStream = new PrintStream(errorStream, false);
-            Throwable pointer = e;
-            String prefix = "";
-            while (pointer != null) {
-                printStream.println(prefix + e);
-                printStream.println("\tat " + e.getStackTrace()[0]);
-                pointer = e.getCause();
-                prefix = "Caused by: ";
-            }
+            e.printStackTrace(printStream);
             printStream.flush();
         }
 
-        if (result[0] != null) messages.add(createToolResultMessage(toolUseId, result[0]));
-        else if (errorStream.size() > 0) messages.add(createToolResultMessage(toolUseId, errorStream.toString()));
-        else messages.add(createToolResultMessage(toolUseId, "Transformer " + input.get("transformer") + " did not produce output"));
+        if (result[0] != null) return createToolResultMessage(toolUseId, result[0], false);
+        else if (errorStream.size() > 0) return createToolResultMessage(toolUseId, ErrorStringPruner.prune(errorStream.toString()), true);
+        else return createToolResultMessage(toolUseId, "Transformer " + input.get("transformer") + " did not " + (input.get("command").asText().startsWith("get_input") ? "receive input" : "produce output"), true);
     }
 
-    private JsonNode createToolResultMessage(String toolUseId, String content) throws JsonProcessingException {
+    private JsonNode createToolResultMessage(String toolUseId, String content, boolean isError) throws JsonProcessingException {
         JsonNode message = objectMapper.readTree("{\"role\": \"user\", \"content\": [{ \"type\": \"tool_result\" }]}");
         ((ObjectNode) message.get("content").get(0)).put("tool_use_id", toolUseId);
         ((ObjectNode) message.get("content").get(0)).put("content", content);
+        if (isError) ((ObjectNode) message.get("content").get(0)).put("is_error", true);
         return message;
     }
 
