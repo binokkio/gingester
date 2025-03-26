@@ -1,7 +1,7 @@
 # Upgrading Gingester from a previous version
 This document describes changes between Gingester versions that need to be taken into account when updating Gingester.
 
-## From 0.28.4 t0 0.28.5
+## From 0.28.4 to 0.28.5
 The HttpKeycloak transformer has been deprecated and will log a warning when used, use HttpOidc instead.
 
 ## From 0.26 to 0.27
