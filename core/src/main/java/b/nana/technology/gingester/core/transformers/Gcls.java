@@ -1,6 +1,7 @@
 package b.nana.technology.gingester.core.transformers;
 
 import b.nana.technology.gingester.core.annotations.Names;
+import b.nana.technology.gingester.core.annotations.SchemaSupplier;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -8,28 +9,40 @@ import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.victools.jsonschema.generator.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Optional;
 
 @Names(1)
 public final class Gcls implements Transformer<Object, Object> {
 
-    private final TransformerFactory transformerFactory = TransformerFactory.withSpiProviders();
-
     private final SchemaGenerator schemaGenerator;
+    private final TransformerFactory transformerFactory;
 
-    public Gcls() {
+    public Gcls(Parameters parameters) {
 
-        SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-
-        configBuilder
+        SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON)
                 .without(Option.SCHEMA_VERSION_INDICATOR)
                 .with(Option.INLINE_ALL_SCHEMAS)
                 .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
 
         configBuilder.forTypesInGeneral().withPropertySorter((a, b) -> 0);
 
+        configBuilder.forFields().withCustomDefinitionProvider((scope, context) -> {
+                    SchemaSupplier schemaSupplierAnnotation = scope.getAnnotationConsideringFieldAndGetter(SchemaSupplier.class);
+                    if (schemaSupplierAnnotation == null) return null;
+                    try {
+                        return new CustomPropertyDefinition(schemaSupplierAnnotation.value().getConstructor().newInstance().get());
+                    } catch (IllegalAccessException | InstantiationException | InvocationTargetException  | NoSuchMethodException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
         schemaGenerator = new SchemaGenerator(configBuilder.build());
+
+        transformerFactory = parameters.providers == null ?
+                TransformerFactory.withSpiProviders() :
+                TransformerFactory.withProvidersByFqdn(parameters.providers);
     }
 
     @Override
@@ -56,6 +69,10 @@ public final class Gcls implements Transformer<Object, Object> {
                 out.accept(context, new Output(name));
             }
         }
+    }
+
+    public static class Parameters {
+        public List<String> providers;
     }
 
     public static class Output {
