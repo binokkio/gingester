@@ -460,7 +460,8 @@ public final class FlowBuilder {
                         id.getGlobalId().substring(1),
                         transformerFactory.getUniqueName(node.requireTransformer()),
                         transformerFactory.getParameters(node.requireTransformer()).orElse(null),
-                        node.getLinks().values().stream().map(v -> v.substring(1)).toList()
+                        node.getLinks().values().stream().map(v -> v.substring(1)).toList(),
+                        node.getSyncs().stream().map(v -> v.substring(1)).toList()
                 );
             }
         });
