@@ -13,7 +13,7 @@ public class JsonGraph {
     public Map<String, Node> nodes = new LinkedHashMap<>();
     public List<Edge> edges = new ArrayList<>();
 
-    public void add(String id, String transformer, Object parameters, List<String> links) {
+    public void add(String id, String transformer, Object parameters, List<String> links, List<String> syncs) {
         nodes.put(id, new Node(id, transformer, parameters));
         links.forEach(linkId -> edges.add(new Edge(id, linkId)));
     }
