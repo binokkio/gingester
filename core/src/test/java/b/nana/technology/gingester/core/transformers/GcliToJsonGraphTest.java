@@ -15,18 +15,17 @@ class GcliToJsonGraphTest {
         AtomicReference<String> result = new AtomicReference<>();
 
         String gcli = """
-                -t StringDef 'Hello, World!'
-                -t StringDef 'Bye, World!'
+                -sfpt
+                -ss message 'Hello, World!'
+                -stt Merge message
                 """;
 
         new FlowBuilder()
                 .seedValue(gcli)
-                .cli("""
-                -t GcliToJsonGraph
-                """)
+                .cli("-t GcliToJsonGraph")
                 .add(result::set)
                 .run();
 
-        assertEquals("{\"graph\":{\"nodes\":{\"StringDef\":{\"label\":\"StringDef\",\"metadata\":{\"transformer\":\"StringDef\",\"parameters\":{\"template\":{\"template\":\"Hello, World!\",\"is\":\"STRING\",\"invariant\":null,\"kwargs\":{}}}}},\"StringDef_1\":{\"label\":\"StringDef\",\"metadata\":{\"transformer\":\"StringDef\",\"parameters\":{\"template\":{\"template\":\"Bye, World!\",\"is\":\"STRING\",\"invariant\":null,\"kwargs\":{}}}}}},\"edges\":[{\"source\":\"StringDef\",\"target\":\"StringDef_1\"}]}}", result.get());
+        assertEquals("{\"graph\":{\"nodes\":{\"Passthrough\":{\"label\":\"Passthrough\",\"metadata\":{\"transformer\":\"Passthrough\",\"parameters\":null}},\"StashString\":{\"label\":\"StashString\",\"metadata\":{\"transformer\":\"StashString\",\"parameters\":{\"stash\":\"message\",\"template\":{\"template\":\"Hello, World!\",\"is\":\"STRING\",\"invariant\":null,\"kwargs\":{}}}}},\"Merge\":{\"label\":\"Merge\",\"metadata\":{\"transformer\":\"Merge\",\"parameters\":{\"instructions\":[\"message > message\"]}}}},\"edges\":[{\"source\":\"Passthrough\",\"target\":\"StashString\",\"relation\":\"link\"},{\"source\":\"StashString\",\"target\":\"Merge\",\"relation\":\"link\"},{\"source\":\"Passthrough\",\"target\":\"Merge\",\"relation\":\"sync\"}]}}", result.get());
     }
 }

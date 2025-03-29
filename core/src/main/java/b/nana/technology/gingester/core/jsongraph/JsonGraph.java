@@ -15,15 +15,16 @@ public class JsonGraph {
 
     public void add(String id, String transformer, Object parameters, List<String> links, List<String> syncs) {
         nodes.put(id, new Node(id, transformer, parameters));
-        links.forEach(linkId -> edges.add(new Edge(id, linkId)));
+        links.forEach(linkId -> edges.add(new Edge(id, linkId, "link")));
+        syncs.forEach(linkId -> edges.add(new Edge(linkId, id, "sync")));
     }
 
     @Override
     public String toString() {
         try {
-            return "{\"graph\":" + new ObjectMapper().writeValueAsString(this) + "}";  // TODO
+            return new ObjectMapper().writeValueAsString(Map.of("graph", this));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);  // TODO
+            throw new RuntimeException(e);
         }
     }
 
@@ -53,10 +54,12 @@ public class JsonGraph {
 
         public String source;
         public String target;
+        public String relation;
 
-        Edge(String source, String target) {
+        Edge(String source, String target, String relation) {
             this.source = source;
             this.target = target;
+            this.relation = relation;
         }
     }
 }
