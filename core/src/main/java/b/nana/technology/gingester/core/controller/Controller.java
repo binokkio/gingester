@@ -31,15 +31,15 @@ public final class Controller<I, O> {
     final boolean async;
     volatile int batchSize = 1;
 
-    public final Map<String, Controller<O, ?>> links = new LinkedHashMap<>();
-    public final Map<Id, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
+    final Map<String, Controller<O, ?>> links = new LinkedHashMap<>();
+    final Map<Id, Controller<Exception, ?>> excepts = new LinkedHashMap<>();
     final List<Controller<?, ?>> syncs = new ArrayList<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> syncedThrough = new HashMap<>();
     final Set<Controller<?, ?>> indicatesCoarse = new HashSet<>();
     final Map<Controller<?, ?>, Set<Controller<?, ?>>> indicates = new HashMap<>();
     private final Set<Controller<?, ?>> incoming = new HashSet<>();
     private final Set<Controller<?, ?>> downstream = new HashSet<>();
-    public final boolean isExceptionHandler;
+    final boolean isExceptionHandler;
 
     final ReentrantLock lock = new ReentrantLock();
     final Condition queueNotEmpty = lock.newCondition();
@@ -53,6 +53,7 @@ public final class Controller<I, O> {
     public final Counter dealt;
     public final Counter acks;
 
+    @SuppressWarnings("unchecked")
     public Controller(ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface flowRunner) {
 
         this.configuration = configuration;
@@ -61,7 +62,6 @@ public final class Controller<I, O> {
         id = configuration.getId();
         transformer = configuration.getTransformer();
         stashDetails = configuration.getStashDetails();
-        receiver = new ControllerReceiver<>(this, configuration, flowRunner);
         maxWorkers = configuration.getMaxWorkers().orElse(0);
         maxQueueSize = configuration.getMaxQueueSize().orElse(100);
         maxBatchSize = configuration.getMaxBatchSize().orElse(65536);
@@ -71,14 +71,16 @@ public final class Controller<I, O> {
         dealt = new SimpleCounter(acks != null || report);
         isExceptionHandler = flowRunner.isExceptionHandler();
 
+        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) flowRunner.getController(id)));
+        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) flowRunner.getController(id)));
+
+        receiver = new ControllerReceiver<>(this, configuration, flowRunner);
+
         phaser = flowRunner.getPhaser();
         phaser.bulkRegister(maxWorkers);
     }
 
-    @SuppressWarnings("unchecked")
     public void initialize() {
-        configuration.getLinks().forEach((linkName, id) -> links.put(linkName, (Controller<O, ?>) flowRunner.getController(id)));
-        configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) flowRunner.getController(id)));
         configuration.getSyncs().forEach(syncId -> flowRunner.getController(syncId).syncs.add(this));
     }
 

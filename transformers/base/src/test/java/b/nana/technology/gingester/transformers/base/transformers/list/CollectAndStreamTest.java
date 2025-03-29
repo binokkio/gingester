@@ -14,13 +14,13 @@ class CollectAndStreamTest {
 
         ArrayDeque<String> result = new ArrayDeque<>();
 
-        new FlowBuilder().cli("" +
-                "-t Repeat 9 " +
-                "-t Cycle A B C " +
-                "-s letter " +
-                "-t StringDef '${letter}-${Repeat.description}' " +
-                "-t ListCollect " +
-                "-t ListStream")
+        new FlowBuilder().cli("""
+                -t Repeat 9 \
+                -t Cycle A B C \
+                -s letter \
+                -t StringDef '${letter}-${Repeat.description}' \
+                -t ListCollect '{type:"array"}'\
+                -t ListStream""")
                 .add(result::add)
                 .run();
 

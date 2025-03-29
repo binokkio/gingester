@@ -5,7 +5,6 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,13 +31,11 @@ public final class GcliExtractor implements Transformer<JsonNode, String> {
         for (int i = in.size() - 1; i >= 0; i--) {
             JsonNode message = in.get(i);
             JsonNode content = message.path("content");
-            if (!content.isMissingNode()) {
-                for (int j = content.size() - 1; j >= 0; j--) {
-                    JsonNode part = content.get(j);
-                    if (part.get("type").asText().equals("tool_result") && strReplaceEditorUsages.contains(part.get("tool_use_id").asText())) {
-                        out.accept(context, part.get("content").asText());
-                        return;
-                    }
+            for (int j = content.size() - 1; j >= 0; j--) {
+                JsonNode part = content.get(j);
+                if (part.get("type").asText().equals("tool_result") && strReplaceEditorUsages.contains(part.get("tool_use_id").asText())) {
+                    out.accept(context, part.get("content").asText());
+                    return;
                 }
             }
         }

@@ -107,10 +107,24 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         else throw new IllegalArgumentException("Unexpected input: " + in);
 
         for (int i = 0; i < messages.size(); i++) {
+
             JsonNode message = messages.get(i);
+
             if (message.isTextual()) {
                 message = upgrade(message);
                 messages.set(i, message);
+            }
+
+            for (JsonNode content : message.path("content")) {
+                if (content.path("type").asText().equals("tool_use")) {
+                    if (i != messages.size() - 1) {
+                        messages.insert(i + 1, createToolResultMessage(
+                                content.get("id").asText(),
+                                "Error: Tool use cancelled by user.",
+                                true
+                        ));
+                    }
+                }
             }
         }
 
