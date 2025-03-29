@@ -34,7 +34,7 @@ class GetTest {
         new FlowBuilder().cli("""
                 -t Repeat 5
                 -t StringDef 'Hello, ${description}!'
-                -t ListCollect
+                -t ListCollect 'linked'
                 -t ListGet @ -1
                 """)
                 .add(result::set)

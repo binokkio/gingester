@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 
 public enum ListType {
 
-    @JsonProperty("hash")
+    @JsonProperty("array")
     ARRAY_LIST(ArrayList::new),
 
     @JsonProperty("linked")
