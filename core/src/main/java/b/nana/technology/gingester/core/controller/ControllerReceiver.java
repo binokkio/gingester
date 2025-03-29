@@ -12,6 +12,7 @@ import java.util.Set;
 final class ControllerReceiver<I, O> implements Receiver<O> {
 
     private final Controller<I, O> controller;
+    private final Controller<O, ?> soleLink;
     private final HashMap<Context, Integer> activeSyncs = new HashMap<>();
     private final int controllerSyncs;
     private final boolean controllerHasSyncs;
@@ -20,6 +21,7 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
 
     ControllerReceiver(Controller<I, O> controller, ControllerConfiguration<I, O> configuration, FlowRunner.ControllerInterface controllerInterface) {
         this.controller = controller;
+        this.soleLink = controller.links.size() == 1 ? controller.links.values().iterator().next() : null;
         this.controllerSyncs = (int) controllerInterface.getConfigurations().stream()
                 .filter(c -> c.getSyncs().contains(controller.id))
                 .count();
@@ -32,9 +34,9 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     public void accept(Context context, O output) {
         context = maybeExtend(context);
         prepare(context);
-        for (Controller<O, ?> target : controller.links.values()) {
+        if (soleLink != null) accept(context, output, soleLink);
+        else for (Controller<O, ?> target : controller.links.values())
             accept(context, output, target);
-        }
         finish(context);
     }
 
@@ -42,9 +44,9 @@ final class ControllerReceiver<I, O> implements Receiver<O> {
     public void accept(Context.Builder contextBuilder, O output) {
         Context context = contextBuilder.synced(!contextBuilder.hasGroup() && controllerHasSyncs).build(controller);
         prepare(context);
-        for (Controller<O, ?> target : controller.links.values()) {
+        if (soleLink != null) accept(context, output, soleLink);
+        else for (Controller<O, ?> target : controller.links.values())
             accept(context, output, target);
-        }
         finish(context);
     }
 

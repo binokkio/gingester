@@ -297,8 +297,10 @@ public final class FlowRunner {
 
     private void initialize() {
 
-        configurations.forEach((id, configuration) ->
-                controllers.put(id, new Controller<>(configuration, new ControllerInterface(id))));
+        configurations.forEach((id, configuration) -> {
+            Controller<?, ?> controller = controllers.get(id);
+            if (controller == null) controllers.put(id ,new Controller<>(configuration, new ControllerInterface(id)));
+        });
 
         controllers.values().forEach(Controller::initialize);
         controllers.values().forEach(Controller::discoverIncoming);
@@ -365,7 +367,12 @@ public final class FlowRunner {
 
         public Controller<?, ?> getController(Id id) {
             Controller<?, ?> controller = controllers.get(id);
-            if (controller == null) throw new IllegalArgumentException("No controller has id " + id);
+            if (controller == null) {
+                ControllerConfiguration<?, ?> configuration = configurations.get(id);
+                if (configuration == null) throw new IllegalArgumentException("No controller has id " + id);
+                controller = new Controller<>(configuration, new ControllerInterface(id));
+                controllers.put(id, controller);
+            }
             return controller;
         }
 
