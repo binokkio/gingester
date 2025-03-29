@@ -117,7 +117,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
             for (JsonNode content : message.path("content")) {
                 if (content.path("type").asText().equals("tool_use")) {
-                    if (i != messages.size() - 1) {
+                    if (i != messages.size() - 1 && !messages.get(i + 1).path("content").path(0).path("type").asText().equals("tool_result")) {
                         messages.insert(i + 1, createToolResultMessage(
                                 content.get("id").asText(),
                                 "Error: Tool use cancelled by user.",
