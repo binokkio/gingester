@@ -55,6 +55,8 @@ public final class FreemarkerTemplateFactory {
         });
         CLI_CONFIGURATION.setSharedVariable(KWARGS_DIRECTIVE, (TemplateDirectiveModel) (env, params, loopVars, body) -> {
 
+            // TODO this doesn't always work, because ContextPlus does not implement TemplateHashModelEx
+
             ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
 
             //noinspection unchecked
