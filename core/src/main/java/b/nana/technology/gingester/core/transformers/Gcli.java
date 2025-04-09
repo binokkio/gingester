@@ -3,8 +3,10 @@ package b.nana.technology.gingester.core.transformers;
 import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.NormalizingDeserializer;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.FetchKey;
+import b.nana.technology.gingester.core.controller.Held;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.ContextPlus;
 import b.nana.technology.gingester.core.template.Template;
@@ -32,6 +34,8 @@ public final class Gcli implements Transformer<Object, Object> {
     private final boolean giveContext;
     private final Map<String, Object> kwargs;
 
+    private Held held;
+
     public Gcli(Parameters parameters) {
 
         if (parameters.segments.isEmpty())
@@ -44,6 +48,11 @@ public final class Gcli implements Transformer<Object, Object> {
         giveContext = parameters.giveContext;
 
         kwargs = parameters.kwargs;
+    }
+
+    @Override
+    public void setup(SetupControls controls) {
+        this.held = controls.getHeld();
     }
 
     private static BiFunction<Context, Object, String> getGcliSupplier(SourceParameters sourceParameters) {
@@ -87,7 +96,7 @@ public final class Gcli implements Transformer<Object, Object> {
 
     @Override
     public void transform(Context context, Object in, Receiver<Object> out) {
-        FlowBuilder flowBuilder = new FlowBuilder().seedValue(in);
+        FlowBuilder flowBuilder = new FlowBuilder(held).seedValue(in);
         if (giveContext) flowBuilder.parentContext(context);
         if (kwargs.isEmpty()) {
             ContextPlus contextPlus = new ContextPlus(context, in);

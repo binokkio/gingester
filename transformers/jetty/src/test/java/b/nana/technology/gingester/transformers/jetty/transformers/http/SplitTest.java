@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.transformers.jetty.transformers.http;
 
-import b.nana.technology.gingester.core.batch.Item;
+import b.nana.technology.gingester.core.item.Item;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.BiReceiver;
 import b.nana.technology.gingester.transformers.jetty.http.Split;

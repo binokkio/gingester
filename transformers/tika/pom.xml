@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>transformers</artifactId>
-        <version>0.34.1</version>
+        <version>0.34.2-SNAPSHOT</version>
     </parent>
 
     <groupId>b.nana.technology.gingester.transformers</groupId>
@@ -32,11 +32,6 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
             <version>2.9.2</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.17.0</version>
         </dependency>
 
 

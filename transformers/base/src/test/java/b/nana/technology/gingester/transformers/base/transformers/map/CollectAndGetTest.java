@@ -1,7 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.map;
 
 import b.nana.technology.gingester.core.FlowBuilder;
-import b.nana.technology.gingester.core.Node;
 import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,8 @@ import java.util.Queue;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CollectAndGetTest {
 
@@ -75,16 +75,18 @@ class CollectAndGetTest {
 
         AtomicReference<Exception> result = new AtomicReference<>();
 
-        new FlowBuilder().cli("" +
-                "-e ExceptionHandler " +
-                "-t Repeat 3 " +
-                "-t Cycle A B " +
-                "-s " +
-                "-t MapCollect Repeat.description " +
-                "--")
-                .add(new Node()
+        new FlowBuilder().cli("""
+                -e ExceptionHandler
+                -t Repeat 3
+                -t Cycle A B
+                -s
+                -t MapCollect Repeat.description
+                --
+                """)
+                .node()
                         .id("ExceptionHandler")
-                        .transformer(new ConsumerPassthrough<>(result::set)))
+                        .transformer(new ConsumerPassthrough<>(result::set))
+                        .add()
                 .run();
 
         assertEquals("Collision for key: A", result.get().getMessage());

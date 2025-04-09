@@ -21,9 +21,10 @@ public final class Node {
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
+    private Integer maxCacheEntries;
     private Boolean report;
 
-    public Node() {
+    Node() {
         target = null;
     }
 
@@ -60,6 +61,11 @@ public final class Node {
 
     public Node maxBatchSize(int maxBatchSize) {
         this.maxBatchSize = maxBatchSize;
+        return this;
+    }
+
+    public Node maxCacheEntries(int maxCacheEntries) {
+        this.maxCacheEntries = maxCacheEntries;
         return this;
     }
 
@@ -205,6 +211,10 @@ public final class Node {
 
     public Optional<Integer> getMaxBatchSize() {
         return Optional.ofNullable(maxBatchSize);
+    }
+
+    public Optional<Integer> getMaxCacheEntries() {
+        return Optional.ofNullable(maxCacheEntries);
     }
 
     public Optional<Boolean> getReport() {

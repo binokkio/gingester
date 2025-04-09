@@ -22,6 +22,7 @@ public final class ControllerConfiguration<I, O> {
     private Integer maxWorkers;
     private Integer maxQueueSize;
     private Integer maxBatchSize;
+    private Integer maxCacheEntries;
     private Map<String, Id> links = Collections.emptyMap();
     private List<Id> syncs = Collections.emptyList();
     private List<Id> excepts = Collections.emptyList();
@@ -47,6 +48,11 @@ public final class ControllerConfiguration<I, O> {
 
     public ControllerConfiguration<I, O> maxBatchSize(int maxBatchSize) {
         this.maxBatchSize = maxBatchSize;
+        return this;
+    }
+
+    public ControllerConfiguration<I, O> maxCacheEntries(int maxCacheEntries) {
+        this.maxCacheEntries = maxCacheEntries;
         return this;
     }
 
@@ -131,6 +137,10 @@ public final class ControllerConfiguration<I, O> {
 
     public Optional<Integer> getMaxBatchSize() {
         return Optional.ofNullable(maxBatchSize);
+    }
+
+    public Optional<Integer> getMaxCacheEntries() {
+        return Optional.ofNullable(maxCacheEntries);
     }
 
     public Map<String, Id> getLinks() {

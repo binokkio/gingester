@@ -2,7 +2,9 @@ package b.nana.technology.gingester.transformers.claude;
 
 import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.annotations.Experimental;
+import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.Held;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
@@ -18,7 +20,9 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -46,6 +50,8 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
     private final Template gcliEditable;
     private final boolean interactive;
     private final Map<String, String> mask;
+
+    private Held held;
 
     public GcliHelper(Parameters parameters) {
         apiKey = requireNonNull(parameters.apiKey);
@@ -95,6 +101,11 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         } catch (IOException e) {
             throw new RuntimeException(e);  // TODO
         }
+    }
+
+    @Override
+    public void setup(SetupControls controls) {
+        this.held = held;
     }
 
     @Override
@@ -257,7 +268,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
 
         try {
-            FlowBuilder flowBuilder = new FlowBuilder().seedStash(Map.of("errorStream", errorStream)).cli("-e errorStream");
+            FlowBuilder flowBuilder = new FlowBuilder(held).seedStash(Map.of("errorStream", errorStream)).cli("-e errorStream");
             if (gcliPrelude != null) flowBuilder.cli(gcliPrelude);
             if (!input.get("transformer").asText().equals("__seed__")) {
                 if (input.path("context").isObject()) flowBuilder.add(new StaticStash(objectMapper.treeToValue(input.get("context"), new TypeReference<>() {})));

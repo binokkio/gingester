@@ -3,6 +3,7 @@ package b.nana.technology.gingester.core.transformer;
 import b.nana.technology.gingester.core.annotations.Passthrough;
 import b.nana.technology.gingester.core.annotations.Stashes;
 import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.CacheKey;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import net.jodah.typetools.TypeResolver;
@@ -49,6 +50,10 @@ public interface Transformer<I, O> {
 
     default boolean isSyncAware() {
         return Transformers.isSyncAware(getClass());
+    }
+
+    default boolean supportsCaching() {
+        return Transformers.supportsCaching(getClass());
     }
 
     @SuppressWarnings("unchecked")
@@ -112,6 +117,11 @@ public interface Transformer<I, O> {
 
     default void beforeBatch(Context context) throws Exception {}
     default void afterBatch(Context context) throws Exception {}
+
+    // TODO document
+    default CacheKey getCacheKey(Context context, I in) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Transformer transform.

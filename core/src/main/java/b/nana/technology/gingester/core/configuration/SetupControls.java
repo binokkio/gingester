@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core.configuration;
 
 import b.nana.technology.gingester.core.Id;
 import b.nana.technology.gingester.core.Node;
+import b.nana.technology.gingester.core.controller.Held;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
@@ -22,6 +23,13 @@ public final class SetupControls {
         if (transformer.isSyncAware()) {
             node.addSync(Id.SEED.getGlobalId());
         }
+    }
+
+
+
+    // TODO move to optional constructor parameter
+    public Held getHeld() {
+        return node.getTarget().getHeld();
     }
 
 

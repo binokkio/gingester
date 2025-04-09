@@ -1,5 +1,6 @@
 package b.nana.technology.gingester.transformers.base.transformers.hash;
 
+import b.nana.technology.gingester.core.controller.CacheKey;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
@@ -16,6 +17,11 @@ abstract class Hash implements Transformer<InputStream, byte[]> {
 
     public Hash(Parameters parameters) {
         buffer = new byte[parameters.bufferSize];
+    }
+
+    @Override
+    public CacheKey getCacheKey(Context context, InputStream in) {
+        return new CacheKey().add(in);
     }
 
     @Override

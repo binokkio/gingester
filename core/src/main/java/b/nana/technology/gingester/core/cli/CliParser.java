@@ -85,12 +85,6 @@ public final class CliParser {
                     target.setReportIntervalSeconds(Integer.parseInt(args[++i]));
                     break;
 
-                case "-v":
-                case "--view":
-                    boolean viewBridges = i + 1 < args.length && !args[i + 1].matches("[+-].*") && Boolean.parseBoolean(args[++i]);
-                    target.setGoal(viewBridges ? FlowRunner.Goal.VIEW_BRIDGES : FlowRunner.Goal.VIEW);
-                    break;
-
                 case "-cf":
                 case "--cli-file":
                     i = handleCliFile(target, args, i);
@@ -258,7 +252,7 @@ public final class CliParser {
                     break;
 
                 case "-fa":
-                case "--fetch-all":
+                case "--fetch-all":  // TODO remove
                     LOGGER.warn("The CLI arg \"" + args[i] + "\" will be removed in a future version, use `-t FetchAll` instead");
                     i = addNode(target.node().name("FetchAll"), args, i, false);
                     break;
@@ -288,6 +282,7 @@ public final class CliParser {
             if (parts.length > 0 && !parts[0].isEmpty()) node.maxWorkers(Integer.parseInt(parts[0]));
             if (parts.length > 1 && !parts[1].isEmpty()) node.maxQueueSize(Integer.parseInt(parts[1]));
             if (parts.length > 2 && !parts[2].isEmpty()) node.maxBatchSize(Integer.parseInt(parts[2]));
+            if (parts.length > 3 && !parts[3].isEmpty()) node.maxCacheEntries(Integer.parseInt(parts[3]));
         }
 
         if (maybeNamed && args.length > i + 1 && Character.isUpperCase(args[i + 1].charAt(0))) {

@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
 import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.configuration.SetupControls;
+import b.nana.technology.gingester.core.controller.CacheKey;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.reporting.DurationFormatter;
@@ -82,6 +83,24 @@ public final class Http implements Transformer<Object, InputStream> {
             case "PATCH", "POST", "PUT" -> o -> HttpRequest.BodyPublishers.ofInputStream(() -> (InputStream) o);
             default -> throw new IllegalStateException("No case for " + method);
         };
+    }
+
+    @Override
+    public CacheKey getCacheKey(Context context, Object in) {
+
+        CacheKey cacheKey = new CacheKey()
+                .add(method)
+                .add(uriTemplate.render(context, in));
+
+        // TODO allow parameters to influence which headers are added
+        headers.values().stream()
+                .map(t -> t.render(context, in))
+                .forEach(cacheKey::add);
+
+        // add input value for PATCH, POST, and PUT
+        if (method.charAt(0) == 'P') cacheKey.add(in);
+
+        return cacheKey;
     }
 
     @Override
