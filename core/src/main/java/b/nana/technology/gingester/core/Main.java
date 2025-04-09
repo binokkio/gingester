@@ -15,6 +15,7 @@ public final class Main {
     public static void main(String[] args) {
         if (args.length == 0 || Arrays.stream(args).anyMatch(s -> s.equals("-h") || s.equals("--help"))) {
             printHelp();
+        // TODO handle -v/--view
         } else {
             new FlowBuilder()
                     .setReportIntervalSeconds(2)

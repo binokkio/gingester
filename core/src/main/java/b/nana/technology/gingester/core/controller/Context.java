@@ -499,7 +499,6 @@ public final class Context implements Iterable<Context> {
         private final Context parent;
         private Context group;
         private boolean synced;
-        private Controller<?, ?> controller;
         private Map<String, ?> stash;
 
         private Builder(Context parent) {
@@ -564,8 +563,7 @@ public final class Context implements Iterable<Context> {
          * @return the context
          */
         public Context buildForTesting() {
-            this.controller = new Controller<>(Id.newTransientId("$__test__"));
-            return new Context(controller, parent, group, synced, stash);
+            return new Context(new Controller<>(Id.newTransientId("$__test__")), parent, group, synced, stash);
         }
 
         /**
@@ -574,12 +572,10 @@ public final class Context implements Iterable<Context> {
          * @return the context
          */
         public Context buildForSelf() {
-            this.controller = new Controller<>(Id.newTransientId("$__self__"));
-            return new Context(controller, parent, group, synced, stash);
+            return new Context(new Controller<>(Id.newTransientId("$__self__")), parent, group, synced, stash);
         }
 
         Context build(Controller<?, ?> controller) {
-            this.controller = controller;
             return new Context(controller, parent, group, synced, stash);
         }
     }

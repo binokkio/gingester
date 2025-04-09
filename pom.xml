@@ -81,6 +81,11 @@
                 <version>2.3.33</version>
             </dependency>
             <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.18.0</version>
+            </dependency>
+            <dependency>
                 <groupId>com.github.binokkio</groupId>
                 <artifactId>graphtxt</artifactId>
                 <version>v0.0.7</version>

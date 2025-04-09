@@ -1,7 +1,7 @@
 package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.FlowRunner;
-import b.nana.technology.gingester.core.batch.Batch;
+import b.nana.technology.gingester.core.item.Batch;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.receiver.Receiver;
 

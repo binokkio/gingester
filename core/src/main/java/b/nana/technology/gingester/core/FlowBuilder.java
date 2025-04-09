@@ -2,6 +2,7 @@ package b.nana.technology.gingester.core;
 
 import b.nana.technology.gingester.core.cli.CliParser;
 import b.nana.technology.gingester.core.controller.Context;
+import b.nana.technology.gingester.core.controller.Held;
 import b.nana.technology.gingester.core.jsongraph.JsonGraph;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
@@ -10,12 +11,15 @@ import b.nana.technology.gingester.core.transformers.Seed;
 import b.nana.technology.gingester.core.transformers.Void;
 import b.nana.technology.gingester.core.transformers.passthrough.BiConsumerPassthrough;
 import b.nana.technology.gingester.core.transformers.passthrough.ConsumerPassthrough;
+import b.nana.technology.graphtxt.GraphTxt;
+import b.nana.technology.graphtxt.SimpleNode;
 
 import java.net.URL;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 
@@ -26,8 +30,8 @@ public final class FlowBuilder {
     private final Deque<String> scopes = new ArrayDeque<>();
     private final Seed seedTransformer = new Seed();
 
+    final Held held;
     final Map<Id, Node> nodes = new LinkedHashMap<>();
-    FlowRunner.Goal goal = FlowRunner.Goal.RUN;
     int reportIntervalSeconds;
     boolean debugMode;
     boolean shutdownHook;
@@ -41,6 +45,12 @@ public final class FlowBuilder {
     private List<Id> divertFrom = List.of();
 
     public FlowBuilder() {
+        this(Held.getDefaultHeld());
+    }
+
+    public FlowBuilder(Held held) {
+
+        this.held = held;
 
         Node elog = new Node();
         elog.transformer(new Elog());
@@ -52,6 +62,10 @@ public final class FlowBuilder {
         nodes.put(Id.SEED, seed);
 
         last = seed;
+    }
+
+    public Held getHeld() {
+        return held;
     }
 
     public FlowBuilder parentContext(Context parentContext) {
@@ -88,7 +102,7 @@ public final class FlowBuilder {
         return new Node(this);
     }
 
-    public FlowBuilder add(Node node) {
+    void add(Node node) {
 
         Id id = getId(node);
         nodes.put(id, node);
@@ -101,20 +115,18 @@ public final class FlowBuilder {
 
         divertFrom.stream().map(this::getNode).forEach(n -> n.updateLinks(id.getGlobalId()));
         divertFrom = List.of();
-
-        return this;
     }
 
     public FlowBuilder add(Transformer<?, ?> transformer) {
-        return add(new Node().transformer(transformer));
+        return node().transformer(transformer).add();
     }
 
     public <T> FlowBuilder add(Consumer<T> consumer) {
-        return add(new Node().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)));
+        return node().name("Consumer").transformer(new ConsumerPassthrough<>(consumer)).add();
     }
 
     public <T> FlowBuilder add(BiConsumer<Context, T> biConsumer) {
-        return add(new Node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)));
+        return node().name("BiConsumer").transformer(new BiConsumerPassthrough<>(biConsumer)).add();
     }
 
     /**
@@ -403,16 +415,6 @@ public final class FlowBuilder {
     }
 
     /**
-     * Set the goal for the FlowRunner.
-     *
-     * @param goal the goal
-     */
-    public FlowBuilder setGoal(FlowRunner.Goal goal) {
-        this.goal = goal;
-        return this;
-    }
-
-    /**
      * Enable debug mode.
      * <p>
      * When enabled the FlowRunner will not optimize transformers out of the context stack and will therefore
@@ -435,23 +437,22 @@ public final class FlowBuilder {
     }
 
     /**
-     * Construct a FlowRunner for the current state of this FlowBuilder and run it.
-     * <p>
-     * Further use of this FlowBuilder is an error leading to undefined behavior.
+     * Create a plain text representation of the current state of this FlowBuilder.
      */
-    public void run() {
-        build().run();
+    public String toTxtGraph() {
+        List<b.nana.technology.graphtxt.Node> nodes = this.nodes.entrySet().stream()
+                .map(entry -> SimpleNode.of(
+                        entry.getKey().toString(),
+                        Stream.concat(entry.getValue().getLinks().values().stream(), entry.getValue().getExcepts().stream())
+                                .map(s -> s.substring(1))  // remove leading scope delimiter, TODO
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+        return new GraphTxt(nodes).getText();
     }
 
     /**
-     * Create a plain text representation of the current state of this FlowBuilder.
-     * <p>
-     * Further use of this FlowBuilder is an error leading to undefined behavior.
+     * Create a JSON graph representation of the current state of this FlowBuilder.
      */
-    public String render() {
-        return build().render();
-    }
-
     public String toJsonGraph() {
         JsonGraph jsonGraph = new JsonGraph();
         nodes.forEach((id, node) -> {
@@ -466,6 +467,15 @@ public final class FlowBuilder {
             }
         });
         return jsonGraph.toString();
+    }
+
+    /**
+     * Construct a FlowRunner for the current state of this FlowBuilder and run it.
+     * <p>
+     * Further use of this FlowBuilder is an error leading to undefined behavior.
+     */
+    public void run() {
+        build().run();
     }
 
     public TransformerFactory getTransformerFactory() {

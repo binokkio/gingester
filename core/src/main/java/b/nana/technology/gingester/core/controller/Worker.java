@@ -1,6 +1,6 @@
 package b.nana.technology.gingester.core.controller;
 
-import b.nana.technology.gingester.core.batch.Batch;
+import b.nana.technology.gingester.core.item.Batch;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

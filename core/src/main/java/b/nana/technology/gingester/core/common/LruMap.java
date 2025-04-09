@@ -9,10 +9,6 @@ public class LruMap<K, V> extends LinkedHashMap<K, V> {
     private final int maxSize;
     private final BiConsumer<K, V> onExpelLru;
 
-    public LruMap(int maxSize) {
-        this(maxSize, null);
-    }
-
     public LruMap(int maxSize, BiConsumer<K, V> onExpelLru) {
         super(16, .75F, true);
         this.maxSize = maxSize;

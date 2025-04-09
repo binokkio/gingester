@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WriteTest {
 
@@ -28,5 +28,9 @@ class WriteTest {
         Path expected = tempDir.resolve("dir-to-be-made/logs.txt");
 
         assertEquals("Writing to " + expected, Files.readString(expected));
+
+        Files.delete(tempDir.resolve("dir-to-be-made/logs.txt"));
+        Files.delete(tempDir.resolve("dir-to-be-made"));
+        Files.delete(tempDir);
     }
 }

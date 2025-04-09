@@ -26,4 +26,16 @@ public final class Transformers {
             throw new IllegalStateException(e);
         }
     }
+
+    public static boolean supportsCaching(Class<? extends Transformer> transformerClass) {
+        try {
+
+            Method getCacheKey = transformerClass.getMethod("getCacheKey", Context.class, Object.class);
+
+            return !getCacheKey.getDeclaringClass().equals(Transformer.class);
+
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 }

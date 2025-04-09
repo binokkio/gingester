@@ -4,14 +4,12 @@ import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
 import b.nana.technology.gingester.core.configuration.SetupControls;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.Controller;
+import b.nana.technology.gingester.core.controller.Held;
 import b.nana.technology.gingester.core.reporting.Reporter;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import b.nana.technology.gingester.core.transformers.As;
 import b.nana.technology.gingester.core.transformers.Is;
-import b.nana.technology.graphtxt.GraphTxt;
-import b.nana.technology.graphtxt.Node;
-import b.nana.technology.graphtxt.SimpleNode;
 import net.jodah.typetools.TypeResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +24,7 @@ public final class FlowRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FlowRunner.class);
 
+    // optimization worth testing is to merge configurations and controllers, and have 1 map that holds a holder of config and nullable controller e.g. record Holder(Configuration config, Controller controller), but mutable since controller can be instanced and set at a later point
     private final LinkedHashMap<Id, ControllerConfiguration<?, ?>> configurations = new LinkedHashMap<>();
     private final LinkedHashMap<Id, Controller<?, ?>> controllers = new LinkedHashMap<>();
     private final Phaser phaser = new Phaser(1);
@@ -43,44 +42,18 @@ public final class FlowRunner {
         this.idFactory = flowBuilder.getIdFactory();
     }
 
-    public String render() {
-
-        configure();
-        setupElog();
-        setupSeed();
-
-        if (flowBuilder.goal == Goal.VIEW_BRIDGES)
-            explore();
-
-        List<Node> nodes = flowBuilder.nodes.entrySet().stream()
-                .map(entry -> SimpleNode.of(
-                        entry.getKey().toString(),
-                        Stream.concat(entry.getValue().getLinks().values().stream(), entry.getValue().getExcepts().stream())
-                                .map(s -> s.substring(1))  // remove leading scope delimiter, TODO
-                                .collect(Collectors.toList())))
-                .collect(Collectors.toList());
-
-        return new GraphTxt(nodes).getText();
-    }
-
     public void run() {
-
-        switch (flowBuilder.goal) {
-
-            case RUN:
-                configure();
-                setupElog();
-                setupSeed();
-                explore();
-                align();
-                initialize();
-                start();
-                break;
-
-            case VIEW:
-            case VIEW_BRIDGES:
-                System.out.println(render());
-                break;
+        flowBuilder.held.registerUser();
+        try {
+            configure();
+            setupElog();
+            setupSeed();
+            explore();
+            align();
+            initialize();
+            start();
+        } finally {
+            flowBuilder.held.deregisterUser();
         }
     }
 
@@ -128,6 +101,7 @@ public final class FlowRunner {
             node.getMaxWorkers().ifPresent(configuration::maxWorkers);
             node.getMaxQueueSize().ifPresent(configuration::maxQueueSize);
             node.getMaxBatchSize().ifPresent(configuration::maxBatchSize);
+            node.getMaxCacheEntries().ifPresent(configuration::maxCacheEntries);
             node.getReport().ifPresent(configuration::report);
             node.getSetupControls().getAcksCounter().ifPresent(configuration::acksCounter);
 
@@ -299,7 +273,7 @@ public final class FlowRunner {
 
         configurations.forEach((id, configuration) -> {
             Controller<?, ?> controller = controllers.get(id);
-            if (controller == null) controllers.put(id ,new Controller<>(configuration, new ControllerInterface(id)));
+            if (controller == null) controllers.put(id, new Controller<>(configuration, new ControllerInterface(id)));
         });
 
         controllers.values().forEach(Controller::initialize);
@@ -353,6 +327,10 @@ public final class FlowRunner {
             this.controllerId = controllerId;
         }
 
+        public Held getHeld() {
+            return flowBuilder.getHeld();
+        }
+
         public Phaser getPhaser() {
             return phaser;
         }
@@ -383,11 +361,5 @@ public final class FlowRunner {
         public boolean isExceptionHandler() {
             return configurations.values().stream().anyMatch(c -> c.getExcepts().contains(controllerId));
         }
-    }
-
-    public enum Goal {
-        VIEW,
-        VIEW_BRIDGES,
-        RUN
     }
 }

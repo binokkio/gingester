@@ -1,4 +1,4 @@
-package b.nana.technology.gingester.core.batch;
+package b.nana.technology.gingester.core.item;
 
 import b.nana.technology.gingester.core.controller.Context;
 

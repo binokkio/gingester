@@ -11,6 +11,6 @@ public final class GcliToGraphTxt implements Transformer<String, String> {
 
     @Override
     public void transform(Context context, String in, Receiver<String> out) throws Exception {
-        out.accept(context, new FlowBuilder().cli(in).render());
+        out.accept(context, new FlowBuilder().cli(in).toTxtGraph());
     }
 }

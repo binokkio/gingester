@@ -2,14 +2,18 @@ package b.nana.technology.gingester.core.controller;
 
 import b.nana.technology.gingester.core.FlowRunner;
 import b.nana.technology.gingester.core.Id;
-import b.nana.technology.gingester.core.batch.Batch;
-import b.nana.technology.gingester.core.batch.Item;
+import b.nana.technology.gingester.core.common.InputStreamReplicator;
+import b.nana.technology.gingester.core.common.LruMap;
 import b.nana.technology.gingester.core.configuration.ControllerConfiguration;
+import b.nana.technology.gingester.core.item.Batch;
+import b.nana.technology.gingester.core.item.CachedItem;
+import b.nana.technology.gingester.core.item.Item;
 import b.nana.technology.gingester.core.reporting.Counter;
 import b.nana.technology.gingester.core.reporting.SimpleCounter;
 import b.nana.technology.gingester.core.transformer.StashDetails;
 import b.nana.technology.gingester.core.transformer.Transformer;
 
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.locks.Condition;
@@ -48,6 +52,8 @@ public final class Controller<I, O> {
     final Map<Context, FinishTracker> finishing = new LinkedHashMap<>();
     public final List<Worker> workers = new ArrayList<>();
     final ControllerReceiver<I, O> receiver;
+    private final Held held;
+    final LruMap<CacheKey, List<CachedItem<O>>> cache;
 
     public final boolean report;
     public final Counter dealt;
@@ -75,6 +81,12 @@ public final class Controller<I, O> {
         configuration.getExcepts().forEach(id -> excepts.put(id, (Controller<Exception, ?>) flowRunner.getController(id)));
 
         receiver = new ControllerReceiver<>(this, configuration, flowRunner);
+        held = flowRunner.getHeld();
+
+        int maxCacheEntries = configuration.getMaxCacheEntries().orElse(0);
+        cache = maxCacheEntries != 0 ?
+                held.getCache(id.getGlobalId(), maxCacheEntries) :
+                null;
 
         phaser = flowRunner.getPhaser();
         phaser.bulkRegister(maxWorkers);
@@ -291,8 +303,10 @@ public final class Controller<I, O> {
                 receiver.except("beforeBatch", peek, e);
             }
             for (Item<I> item : batch) {
+
                 try {
-                    transformer.transform(item.getContext(), item.getValue(), receiver);
+                    if (cache != null) transformWithCache(item);
+                    else transformer.transform(item.getContext(), item.getValue(), receiver);
                 } catch (Exception e) {
                     receiver.except("transform", item.getContext(), item.getValue(), e);
                 }
@@ -312,7 +326,8 @@ public final class Controller<I, O> {
             long batchStarted = System.nanoTime();
             for (Item<I> item : batch) {
                 try {
-                    transformer.transform(item.getContext(), item.getValue(), receiver);
+                    if (cache != null) transformWithCache(item);
+                    else transformer.transform(item.getContext(), item.getValue(), receiver);
                 } catch (Exception e) {
                     receiver.except("transform", item.getContext(), item.getValue(), e);
                 }
@@ -354,7 +369,8 @@ public final class Controller<I, O> {
             receiver.except("beforeBatch", context, in, e);
         }
         try {
-            transformer.transform(context, in, receiver);
+            if (cache != null) transformWithCache(new Item<>(context, in));
+            else transformer.transform(context, in, receiver);
         } catch (Exception e) {
             receiver.except("transform", context, in, e);
         }
@@ -364,6 +380,53 @@ public final class Controller<I, O> {
             receiver.except("afterBatch", context, in, e);
         }
         if (report) dealt.count();
+    }
+
+    private void transformWithCache(Item<I> item) throws Exception {
+
+        CacheKey cacheKey = transformer.getCacheKey(item.getContext(), item.getValue());
+        cacheKey.setTransformerClass(transformer.getClass());
+
+        // hacky solution for InputStreams
+        // TODO consider throwing instead when caching is enabled for a transformer with InputStream typed input or output
+        // TODO forcing the use of InputStreamReplicator (or maybe GInputStream ;)?) when creating cache compatible transformer
+        // TODO with @Pure transformers between InputStream and GInputStream?
+        if (item.getValue() instanceof InputStream inputStream) {
+            int indexOfInputValue = cacheKey.indexOf(item.getValue());
+            if (indexOfInputValue != -1) {
+                InputStreamReplicator isr = held.wrap(inputStream, true);
+                cacheKey.set(indexOfInputValue, isr);
+                //noinspection unchecked
+                item = new Item<>(item.getContext(), (I) isr.replicate());
+            }
+        }
+
+        List<CachedItem<O>> cached;
+        synchronized (cache) {
+            cached = cache.get(cacheKey);
+            if (cached == null) {
+                CachingReceiver<O> cachingReceiver = new CachingReceiver<>(held, receiver);
+                transformer.transform(item.getContext(), item.getValue(), cachingReceiver);
+                cache.put(cacheKey, cachingReceiver.getCacheItems());
+                return;
+            }
+        }
+
+        for (CachedItem<O> cacheItem : cached) {
+            if (cacheItem.getStash() == null) {
+                if (cacheItem.getTargetId() == null) {
+                    receiver.accept(item.getContext(), cacheItem.getValue());
+                } else {
+                    receiver.accept(item.getContext(), cacheItem.getValue(), cacheItem.getTargetId());
+                }
+            } else {
+                if (cacheItem.getTargetId() == null) {
+                    receiver.accept(item.getContext().stash(cacheItem.getStash()), cacheItem.getValue());
+                } else {
+                    receiver.accept(item.getContext().stash(cacheItem.getStash()), cacheItem.getValue(), cacheItem.getTargetId());
+                }
+            }
+        }
     }
 
     public void finish(Context context) {
@@ -388,6 +451,8 @@ public final class Controller<I, O> {
         transformer = null;
         stashDetails = StashDetails.of();
         receiver = null;
+        held = null;
+        cache = null;
         phaser = null;
         maxWorkers = 0;
         maxQueueSize = 0;
