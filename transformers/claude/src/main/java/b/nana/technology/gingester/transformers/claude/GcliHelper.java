@@ -105,7 +105,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
     @Override
     public void setup(SetupControls controls) {
-        this.held = held;
+        this.held = controls.getHeld();
     }
 
     @Override

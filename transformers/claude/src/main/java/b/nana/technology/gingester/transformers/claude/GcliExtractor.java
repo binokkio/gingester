@@ -33,7 +33,7 @@ public final class GcliExtractor implements Transformer<JsonNode, String> {
             JsonNode content = message.path("content");
             for (int j = content.size() - 1; j >= 0; j--) {
                 JsonNode part = content.get(j);
-                if (part.get("type").asText().equals("tool_result") && strReplaceEditorUsages.contains(part.get("tool_use_id").asText())) {
+                if (part.get("type").asText().equals("tool_result") && !part.get("is_error").asBoolean() && strReplaceEditorUsages.contains(part.get("tool_use_id").asText())) {
                     out.accept(context, part.get("content").asText());
                     return;
                 }
