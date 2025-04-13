@@ -90,7 +90,8 @@ public final class Http implements Transformer<Object, InputStream> {
 
         CacheKey cacheKey = new CacheKey()
                 .add(method)
-                .add(uriTemplate.render(context, in));
+                .add(uriTemplate.render(context, in))
+                .add(retry);
 
         // TODO allow parameters to influence which headers are added
         headers.values().stream()
