@@ -247,15 +247,15 @@ public final class TransformerFactory {
     public <I, O> Stream<String> getTransformerHelps() {
         return transformers.stream()
                 .filter(c -> c.getAnnotation(Deprecated.class) == null)
-                .map(transformer -> {
+                .map(transformerClass -> {
 
                     // TODO indenting is now spread out over the Main class and here, would be nice to consolidate
 
-                    String uniqueName = getUniqueName(transformer);
+                    String uniqueName = getUniqueName(transformerClass);
                     StringBuilder help = new StringBuilder(uniqueName);
 
                     // noinspection unchecked
-                    getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformer).ifPresent(constructor -> {
+                    getParameterRichConstructor((Class<? extends Transformer<I, O>>) transformerClass).ifPresent(constructor -> {
                         Class<?> parametersClass = constructor.getParameterTypes()[0];
                         try {
                             Object parameters = parametersClass.getConstructor().newInstance();
@@ -268,21 +268,15 @@ public final class TransformerFactory {
                         }
                     });
 
-                    List<String> characteristics = new ArrayList<>();
-                    if (transformer.getAnnotation(Experimental.class) != null) characteristics.add("experimental");
-                    if (transformer.getAnnotation(Passthrough.class) != null) characteristics.add("passthrough");
-                    if (transformer.getAnnotation(Pure.class) != null) characteristics.add("pure");
-                    if (Transformers.isSyncAware(transformer)) characteristics.add("sync-aware");
-                    if (!characteristics.isEmpty())
-                        help
-                                .append("  # ")
-                                .append(String.join(", ", characteristics));
+                    String traits = getTraits(transformerClass).toString();
+                    if (!traits.isEmpty())
+                        help.append("  ++ ").append(traits).append(" ++");
 
-                    Optional.ofNullable(transformer.getAnnotation(Description.class))
+                    Optional.ofNullable(transformerClass.getAnnotation(Description.class))
                             .map(description -> "\n        " + description.value())
                             .ifPresent(help::append);
 
-                    Arrays.stream(transformer.getAnnotationsByType(Example.class))
+                    Arrays.stream(transformerClass.getAnnotationsByType(Example.class))
                             .map(example -> {
 
                                 StringBuilder stringBuilder = new StringBuilder("\n");
@@ -304,8 +298,9 @@ public final class TransformerFactory {
 
                                 if (!example.description().isEmpty()) {
                                     stringBuilder
-                                            .append("  # ")
-                                            .append(example.description());
+                                            .append("  ++ ")
+                                            .append(example.description())
+                                            .append(" ++");
                                 }
 
                                 return stringBuilder.toString();
@@ -324,6 +319,10 @@ public final class TransformerFactory {
                 .map(c -> (Constructor<? extends Transformer<I, O>>) c)
                 .filter(method -> method.getParameterCount() == 1 && method.getParameterTypes()[0].getSimpleName().equals("Parameters"))
                 .reduce((a, b) -> { throw new IllegalStateException("Found multiple constructors accepting Parameters"); } );
+    }
+
+    public Traits getTraits(Class<? extends Transformer<?, ?>> transformerClass) {
+        return new Traits(transformerClass);
     }
 
     private String camelCase(String name) {
