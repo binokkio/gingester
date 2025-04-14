@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.annotations.Names;
 import b.nana.technology.gingester.core.annotations.SchemaSupplier;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
+import b.nana.technology.gingester.core.transformer.Traits;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.transformer.TransformerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -59,6 +60,7 @@ public final class Gcls implements Transformer<Object, Object> {
         for (Class<? extends Transformer<?, ?>> transformer : transformers) {
 
             String name = transformerFactory.getUniqueName(transformer);
+            Traits traits = transformerFactory.getTraits(transformer);
 
             //noinspection unchecked
             Optional<Class<?>> optParametersClass = transformerFactory
@@ -67,9 +69,9 @@ public final class Gcls implements Transformer<Object, Object> {
 
             if (optParametersClass.isPresent()) {
                 Class<?> parametersClass = optParametersClass.get();
-                out.accept(context, new Output(name, schemaGenerator.generateSchema(parametersClass), parametersClass.getConstructor().newInstance()));
+                out.accept(context, new Output(name, traits, schemaGenerator.generateSchema(parametersClass), parametersClass.getConstructor().newInstance()));
             } else {
-                out.accept(context, new Output(name));
+                out.accept(context, new Output(name, traits));
             }
         }
     }
@@ -81,15 +83,17 @@ public final class Gcls implements Transformer<Object, Object> {
     public static class Output {
 
         public String name;
+        public Traits traits;
         public JsonNode schema;
         public Object defaultParameters;
 
-        public Output(String name) {
-            this(name, null, null);
+        public Output(String name, Traits traits) {
+            this(name, traits, null, null);
         }
 
-        public Output(String name, JsonNode schema, Object defaultParameters) {
+        public Output(String name, Traits traits, JsonNode schema, Object defaultParameters) {
             this.name = name;
+            this.traits = traits;
             this.schema = schema;
             this.defaultParameters = defaultParameters;
         }
