@@ -14,15 +14,15 @@ class FilterTest {
     @Test
     void testFilterIn() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t Repeat 11 " +
-                "-t StringDef 'Hello, World ${description}!' " +
-                "-t RegexFilterIn '.*1.*'");
-
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.add(result::add);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t Repeat 11
+                -t StringDef 'Hello, World ${description}!'
+                -t RegexFilterIn '.*1.*'
+                """)
+                .add(result::add)
+                .run();
 
         assertEquals(List.of("Hello, World 1!", "Hello, World 10!"), List.copyOf(result));
     }
@@ -30,15 +30,15 @@ class FilterTest {
     @Test
     void testFilterOut() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t Repeat 11 " +
-                "-t StringDef 'Hello, World ${description}!' " +
-                "-t RegexFilterOut '.*1.*'");
-
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.add(result::add);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t Repeat 11
+                -t StringDef 'Hello, World ${description}!'
+                -t RegexFilterOut '.*1.*'
+                """)
+                .add(result::add)
+                .run();
 
         assertEquals(
                 List.of(
@@ -59,19 +59,19 @@ class FilterTest {
     @Test
     void testFilterInWithTemplatedRegex() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t Repeat 11 " +
-                "-t StringDef 'Hello, World ${description}!' " +
-                "-s " +
-                "-t StringDef '\"1\"' " +
-                "-s needle " +
-                "-f " +
-                "-t RegexFilterIn '.*${needle}.*'");
-
         ArrayDeque<String> result = new ArrayDeque<>();
-        flowBuilder.add(result::add);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t Repeat 11
+                -t StringDef 'Hello, World ${description}!'
+                -s
+                -t StringDef '"1"'
+                -s needle
+                -f
+                -t RegexFilterIn '.*${needle}.*'
+                """)
+                .add(result::add)
+                .run();
 
         assertEquals(List.of("Hello, World 1!", "Hello, World 10!"), List.copyOf(result));
     }
@@ -81,14 +81,15 @@ class FilterTest {
 
         AtomicReference<String> result = new AtomicReference<>();
 
-        new FlowBuilder().cli("" +
-                "-t Repeat 11 " +
-                "-t StringDef 'Hello, World ${description}!' " +
-                "-s input " +
-                "-f Repeat.description " +
-                "-t RegexFilterIn '${input}' 'World 1' " +
-                "-t InputStreamJoin , " +
-                "-t InputStreamToString")
+        new FlowBuilder().cli("""
+                -t Repeat 11
+                -t StringDef 'Hello, World ${description}!'
+                -s input
+                -f Repeat.description
+                -t RegexFilterIn '${input}' 'World 1'
+                -t InputStreamJoin ,
+                -t InputStreamToString
+                """)
                 .add(result::set)
                 .run();
 

@@ -15,12 +15,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.regex.Pattern;
 
-@Description("Pass only items of which a subsequence matches any of the given regexes")
+@Description("Pass only items when the given regex matches")
 @Example(example = "hello", description = "Pass only items containing \"hello\"")
 @Example(example = "'hello|bye'", description = "Pass only items containing \"hello\" or \"bye\"")
 @Example(example = "'^Hello, World!$'", description = "Pass only exactly \"Hello, World!\"")
-@Example(example = "'Hello.*!'", description = "Pass only items containing \"Hello\" followed by an '!' anywhere on the same line")
-@Example(example = "'(?s)Hello.*!'", description = "Pass only items containing \"Hello\" followed by an '!' anywhere")
+@Example(example = "'Hello.*!'", description = "Pass only items containing \"Hello\" followed by \"!\" anywhere on the same line")
+@Example(example = "'(?s)Hello.*!'", description = "Pass only items containing \"Hello\" followed by an \"!\" anywhere")
 @Passthrough
 public final class FilterIn implements Transformer<Object, Object> {
 

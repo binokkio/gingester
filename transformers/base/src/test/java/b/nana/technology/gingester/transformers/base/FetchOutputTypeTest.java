@@ -12,16 +12,16 @@ class FetchOutputTypeTest {
     @Test
     void testBasic() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World' " +
-                "-t StringToBytes " +
-                "-s -f " +
-                "-t StringAppend '!'");
-
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.add(result::set);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t StringDef 'Hello, World'
+                -t StringToBytes
+                -s -f
+                -t StringAppend '!'
+                """)
+                .add(result::set)
+                .run();
 
         assertEquals("Hello, World!", result.get());
     }
@@ -29,16 +29,16 @@ class FetchOutputTypeTest {
     @Test
     void testWithStashName() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World' -t StringToBytes -s hello " +
-                "-t StringDef 'Bye, World' -t StringToBytes -s bye " +
-                "-f hello " +
-                "-t StringAppend '!'");
-
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.add(result::set);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t StringDef 'Hello, World' -t StringToBytes -s hello
+                -t StringDef 'Bye, World' -t StringToBytes -s bye
+                -f hello
+                -t StringAppend '!'
+                """)
+                .add(result::set)
+                .run();
 
         assertEquals("Hello, World!", result.get());
     }
@@ -46,16 +46,16 @@ class FetchOutputTypeTest {
     @Test
     void testWithInputStasherId() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World' -t StringToBytes -t Target:Stash " +
-                "-t StringDef 'Bye, World' -t StringToBytes -t Distraction:Stash " +
-                "-f Target.stash " +
-                "-t StringAppend '!'");
-
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.add(result::set);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t StringDef 'Hello, World' -t StringToBytes -t Target:Stash
+                -t StringDef 'Bye, World' -t StringToBytes -t Distraction:Stash
+                -f Target.stash
+                -t StringAppend '!'
+                """)
+                .add(result::set)
+                .run();
 
         assertEquals("Hello, World!", result.get());
     }
@@ -63,16 +63,16 @@ class FetchOutputTypeTest {
     @Test
     void testWithStashNameAndInputStasherId() {
 
-        FlowBuilder flowBuilder = new FlowBuilder().cli("" +
-                "-t StringDef 'Hello, World' -t StringToBytes -t Target:Stash hello " +
-                "-t StringDef 'Bye, World' -t StringToBytes -t Distraction:Stash bye " +
-                "-f Target.hello " +
-                "-t StringAppend '!'");
-
         AtomicReference<String> result = new AtomicReference<>();
-        flowBuilder.add(result::set);
 
-        flowBuilder.run();
+        new FlowBuilder().cli("""
+                -t StringDef 'Hello, World' -t StringToBytes -t Target:Stash hello
+                -t StringDef 'Bye, World' -t StringToBytes -t Distraction:Stash bye
+                -f Target.hello
+                -t StringAppend '!'
+                """)
+                .add(result::set)
+                .run();
 
         assertEquals("Hello, World!", result.get());
     }
