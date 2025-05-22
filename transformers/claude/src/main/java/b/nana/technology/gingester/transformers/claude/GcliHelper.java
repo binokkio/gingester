@@ -65,7 +65,10 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
 
         try {
 
-            tools = (ArrayNode) objectMapper.readTree(TOOLS);
+            // prepare tools
+            tools = JsonNodeFactory.instance.arrayNode();
+            tools.add(objectMapper.readTree(getEditorTool(model)));
+            tools.add(objectMapper.readTree(GINGESTER_TOOL));
 
             // prepare system prompt
             system = (ArrayNode) objectMapper.readTree("[{\"type\": \"text\"}]");
@@ -101,6 +104,13 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         } catch (IOException e) {
             throw new RuntimeException(e);  // TODO
         }
+    }
+
+    private String getEditorTool(String model) {
+        if (model.contains("-4-")) return CLAUDE_4_0_TEXT_EDITOR_TOOL;
+        else if (model.contains("-3-7-")) return CLAUDE_3_7_TEXT_EDITOR_TOOL;
+        else if (model.contains("-3-5-")) return CLAUDE_3_5_TEXT_EDITOR_TOOL;
+        else throw new IllegalArgumentException("Unknown model: " + model);
     }
 
     @Override
@@ -144,7 +154,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         if (gcliEditable != null) {
             gcli.append(gcliEditable.render(context));
             if (messages.size() == 1) {
-                messages.add(objectMapper.readTree("{\"role\": \"assistant\", \"content\": [{ \"type\": \"tool_use\", \"id\": \"1\", \"name\": \"str_replace_editor\", \"input\": {\"command\": \"view\", \"path\": \"/main.gcli\" }}]}"));
+                messages.add(objectMapper.readTree("{\"role\": \"assistant\", \"content\": [{ \"type\": \"tool_use\", \"id\": \"1\", \"name\": \"" + tools.get(0).get("name").asText() + "\", \"input\": {\"command\": \"view\", \"path\": \"/main.gcli\" }}]}"));
                 messages.add(createToolResultMessage("1", gcli.toString(), false));
             }
         }
@@ -193,7 +203,8 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
                             String toolUseId = content.get("id").asText();
                             JsonNode input = content.get("input");
                             switch (content.get("name").asText()) {
-                                case "str_replace_editor": messages.add(handleStrReplaceEditorUse(toolUseId, input, gcli)); break;
+                                case "str_replace_editor":
+                                case "str_replace_based_edit_tool": messages.add(handleEditorUse(toolUseId, input, gcli)); break;
                                 case "gingester": messages.add(handleGingesterUse(toolUseId, input, gcliPrelude, gcli)); break;
                                 default: throw new UnsupportedOperationException("Unsupported tool: " + content.get("name"));
                             }
@@ -237,7 +248,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         return pruned;
     }
 
-    private JsonNode handleStrReplaceEditorUse(String toolUseId, JsonNode input, StringBuilder gcli) throws JsonProcessingException {
+    private JsonNode handleEditorUse(String toolUseId, JsonNode input, StringBuilder gcli) throws JsonProcessingException {
         switch (input.get("command").asText()) {
 
             case "view":
@@ -322,11 +333,29 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
         public Map<String, String> mask;
     }
 
-    private static final String TOOLS = """
-            [{
+    private static final String CLAUDE_3_5_TEXT_EDITOR_TOOL = """
+            {
+                "type": "text_editor_20241022",
+                "name": "str_replace_editor"
+            }
+            """;
+
+    private static final String CLAUDE_3_7_TEXT_EDITOR_TOOL = """
+            {
                 "type": "text_editor_20250124",
                 "name": "str_replace_editor"
-            }, {
+            }
+            """;
+
+    private static final String CLAUDE_4_0_TEXT_EDITOR_TOOL = """
+            {
+                "type": "text_editor_20250429",
+                    "name": "str_replace_based_edit_tool"
+            }
+            """;
+
+    private static final String GINGESTER_TOOL = """
+            {
                 "name": "gingester",
                 "description": "Get an example of the input or output for the given transformer if \\"/main.gcli\\" was run with the given kwargs and context.",
                 "input_schema": {
@@ -351,7 +380,7 @@ public final class GcliHelper implements Transformer<Object, ArrayNode> {
                     },
                     "required": ["command", "transformer"]
                 }
-            }]
+            }
             """;
 
     private static final String DEFAULT_SYSTEM_PROMPT =
