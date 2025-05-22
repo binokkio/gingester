@@ -120,6 +120,7 @@ public final class BaseProvider implements Provider {
                 b.nana.technology.gingester.transformers.base.transformers.path.FilterExistsOut.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.LastModified.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Link.class,
+                b.nana.technology.gingester.transformers.base.transformers.path.MakeDir.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Move.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.Overwrite.class,
                 b.nana.technology.gingester.transformers.base.transformers.path.OverwriteSync.class,
