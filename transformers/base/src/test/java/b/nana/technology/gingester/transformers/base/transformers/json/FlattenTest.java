@@ -17,7 +17,8 @@ class FlattenTest {
 
         new FlowBuilder().cli("""
                 -t ResourceOpen /data/json/array-wrapped-objects.json
-                -t JsonFlatten""")
+                -t JsonFlatten
+                """)
                 .add(result::set)
                 .run();
 
@@ -36,7 +37,8 @@ class FlattenTest {
 
         new FlowBuilder().cli("""
                 -t ResourceOpen /data/json/array-wrapped-objects.json
-                -t JsonFlatten usePointers!""")
+                -t JsonFlatten '/'
+                """)
                 .add(result::set)
                 .run();
 

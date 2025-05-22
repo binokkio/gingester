@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
@@ -56,8 +55,8 @@ public class Search implements Transformer<Object, Path> {
 
     public Search(Parameters parameters) {
         rootTemplate = Context.newTemplate(parameters.root);
-        globTemplates = parameters.globs.stream().map(Context::newTemplate).collect(Collectors.toList());
-        regexTemplates = parameters.regexes.stream().map(Context::newTemplate).collect(Collectors.toList());
+        globTemplates = parameters.globs.stream().map(Context::newTemplate).toList();
+        regexTemplates = parameters.regexes.stream().map(Context::newTemplate).toList();
         findDirs = parameters.findDirs;
         checkRootIsDir = parameters.checkRootIsDir;
         checkGlobs = parameters.checkGlobs;
@@ -67,9 +66,9 @@ public class Search implements Transformer<Object, Path> {
     public final void transform(Context context, Object in, Receiver<Path> out) throws Exception {
         Path root = Path.of(rootTemplate.render(context, in)).toAbsolutePath();
         if (checkRootIsDir && !Files.isDirectory(root)) LOGGER.warn("PathSearch root is not a directory: " + root);
-        List<String> globs = globTemplates.stream().map(t -> t.render(context, in)).collect(Collectors.toList());
+        List<String> globs = globTemplates.stream().map(t -> t.render(context, in)).toList();
         if (checkGlobs) globs.stream().filter(glob -> BAD_GLOBS.stream().anyMatch(bg -> bg.test(glob))).forEach(glob -> LOGGER.warn("Glob '{}' will not match anything, use '{root:\"\",globs:\"\"}' to search outside of the working directory and use globs without \".\", \"..\", \"/\" as path elements", glob));
-        List<String> regexes = regexTemplates.stream().map(t -> t.render(context, in)).collect(Collectors.toList());
+        List<String> regexes = regexTemplates.stream().map(t -> t.render(context, in)).toList();
         Files.walkFileTree(root, new Visitor(root, globs, regexes, context, out));
     }
 
@@ -99,7 +98,7 @@ public class Search implements Transformer<Object, Path> {
             this.pathMatchers = Stream.concat(
                     globs.stream().map(s -> "glob:" + s).map(fileSystem::getPathMatcher),
                     regexes.stream().map(s -> "regex:" + s).map(fileSystem::getPathMatcher)
-            ).collect(Collectors.toList());
+            ).toList();
             this.maxDepth = calculateMaxDepth(globs, regexes);
             this.context = context;
             this.out = out;
@@ -108,14 +107,15 @@ public class Search implements Transformer<Object, Path> {
         @Override
         public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) {
             Path relative = root.relativize(path);
-            handle(path, relative);
+            handle(path, relative, false);
             return CONTINUE;
         }
 
         @Override
         public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes basicFileAttributes) {
+            if (path.equals(root)) return CONTINUE;
             Path relative = root.relativize(path);
-            if (findDirs) handle(path, relative);
+            if (findDirs) handle(path, relative, true);
             return relative.getNameCount() > maxDepth ? SKIP_SUBTREE : CONTINUE;  // TODO this can be done better
         }
 
@@ -129,7 +129,7 @@ public class Search implements Transformer<Object, Path> {
             return CONTINUE;  // TODO log? throw?
         }
 
-        private void handle(Path path, Path relative) {
+        private void handle(Path path, Path relative, boolean isDirectory) {
             for (PathMatcher pathMatcher : pathMatchers) {
                 if (pathMatcher.matches(relative)) {
                     Map<String, Object> stash = new HashMap<>();
@@ -139,6 +139,7 @@ public class Search implements Transformer<Object, Path> {
                     pathStash.put("tail", path.getFileName());
                     pathStash.put("relative", relative);
                     pathStash.put("absolute", path);
+                    if (findDirs) pathStash.put("isDirectory", isDirectory);
                     enrich(relative, stash);
                     out.accept(context.stash(stash), path);
                     return;

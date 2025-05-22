@@ -36,7 +36,7 @@ public final class Reporter {
         this.targets = targets.stream().filter(c -> c.report).collect(Collectors.toMap(
                 c -> c,
                 c -> new Sampler(c.acks != null ? c.acks : c.dealt),
-                (a, b) -> { throw new UnsupportedOperationException("Not implemented"); },
+                (a, b) -> { throw new IllegalStateException(); },
                 LinkedHashMap::new
         ));
     }

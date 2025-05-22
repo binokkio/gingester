@@ -20,7 +20,7 @@ public final class GcliExtractor implements Transformer<JsonNode, String> {
         for (JsonNode message : in) {
             if (message.has("content")) {
                 for (JsonNode content : message.get("content")) {
-                    if (content.get("type").asText().equals("tool_use") && content.get("name").asText().equals("str_replace_editor")) {
+                    if (content.get("type").asText().equals("tool_use") && isEditor(content.get("name"))) {
                         strReplaceEditorUsages.add(content.get("id").asText());
                     }
                 }
@@ -39,5 +39,10 @@ public final class GcliExtractor implements Transformer<JsonNode, String> {
                 }
             }
         }
+    }
+
+    private boolean isEditor(JsonNode nameNode) {
+        String asText = nameNode.asText();
+        return asText.equals("str_replace_editor") || asText.equals("str_replace_based_edit_tool");
     }
 }
