@@ -15,13 +15,17 @@ import b.nana.technology.gingester.core.template.TemplateParameters;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,10 +47,26 @@ public final class Http implements Transformer<Object, InputStream> {
     private final List<Integer> retry;
     private final List<Duration> backoff;
     private final boolean stashPeerCertificates;
-
     private final long[][] retries;
 
     public Http(Parameters parameters) {
+
+
+        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+                .followRedirects(parameters.followRedirects);
+
+        if (parameters.allowUntrusted) {
+            try {
+                SSLContext sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+                httpClientBuilder.sslContext(sslContext);
+            } catch (Exception e) {
+                throw new RuntimeException(e);  // TODO
+            }
+        }
+
+        httpClient = httpClientBuilder.build();
+
         method = parameters.method;
         uriTemplate = Context.newTemplateMapper(parameters.uri, URI::create);
         headers = parameters.headers.entrySet().stream()
@@ -54,12 +74,10 @@ public final class Http implements Transformer<Object, InputStream> {
                         Map.Entry::getKey,
                         e -> Context.newTemplate(e.getValue())
                 ));
-        httpClient = HttpClient.newBuilder().followRedirects(parameters.followRedirects).build();
         bodyPublisher = getBodyPublisher();
         retry = parameters.retry;
         backoff = parameters.backoff.stream().map(durationFormatter::parse).toList();
         stashPeerCertificates = parameters.stashPeerCertificates;
-
         retries = new long[retry.size()][backoff.size()];
     }
 
@@ -237,6 +255,19 @@ public final class Http implements Transformer<Object, InputStream> {
         }
     }
 
+    // Thank you https://stackoverflow.com/questions/1201048/allowing-java-to-use-an-untrusted-certificate-for-ssl-https-connection/1201102#1201102 !
+    private static final TrustManager[] trustAllCerts = new TrustManager[]{
+            new X509TrustManager() {
+
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+            }
+    };
+
     @JsonDeserialize(using = FlagOrderDeserializer.class)
     @Order({ "method", "uri", "headers", "followRedirects" })
     public static class Parameters {
@@ -244,6 +275,7 @@ public final class Http implements Transformer<Object, InputStream> {
         public TemplateParameters uri;
         public Map<String, TemplateParameters> headers = Collections.emptyMap();
         public HttpClient.Redirect followRedirects = HttpClient.Redirect.NORMAL;
+        public boolean allowUntrusted;
         public boolean stashPeerCertificates;
         public List<Integer> retry = List.of(429, 503);
         public List<String> backoff = List.of("5s", "15s", "30s", "1m");
