@@ -2,7 +2,6 @@ package b.nana.technology.gingester.transformers.poi;
 
 import b.nana.technology.gingester.core.provider.Provider;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import b.nana.technology.gingester.transformers.poi.xls.ToCsv;
 
 import java.util.Collection;
 import java.util.List;
