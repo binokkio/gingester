@@ -5,7 +5,7 @@ import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.template.Template;
 import b.nana.technology.gingester.core.template.TemplateParameters;
-import b.nana.technology.gingester.core.transformer.Transformer;
+import b.nana.technology.gingester.transformers.base.common.string.CharsetTransformer;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -14,13 +14,14 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Names(1)
-public class Tika implements Transformer<InputStream, InputStream> {
+public class Tika extends CharsetTransformer<InputStream, InputStream> {
 
     private final org.apache.tika.Tika tika = new org.apache.tika.Tika();
     private final Template resourceNameKeyTemplate;
     private final Template contentTypeHintTemplate;
 
     public Tika(Parameters parameters) {
+        super(parameters);
 
         resourceNameKeyTemplate = parameters.name == null ? null:
                 Context.newTemplate(parameters.name);
@@ -42,11 +43,14 @@ public class Tika implements Transformer<InputStream, InputStream> {
 
         out.accept(
                 context,
-                new ReaderInputStream(tika.parse(in, metadata), StandardCharsets.UTF_8)
+                ReaderInputStream.builder()
+                        .setReader(tika.parse(in, metadata))
+                        .setCharset(StandardCharsets.UTF_8)
+                        .getInputStream()
         );
     }
 
-    public static class Parameters {
+    public static class Parameters extends CharsetTransformer.Parameters {
         public TemplateParameters name = new TemplateParameters("${description!''}");
         public TemplateParameters type;
     }

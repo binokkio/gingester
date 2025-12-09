@@ -9,7 +9,7 @@
     <parent>
         <groupId>b.nana.technology.gingester</groupId>
         <artifactId>gingester</artifactId>
-        <version>0.34.6</version>
+        <version>0.34.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>core</artifactId>
@@ -43,10 +43,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
         </dependency>
 
         <dependency>
