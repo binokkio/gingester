@@ -42,6 +42,7 @@ public final class CoreProvider implements Provider {
                 b.nana.technology.gingester.core.transformers.primitive.LongToString.class,
                 b.nana.technology.gingester.core.transformers.RatioRoute.class,
                 b.nana.technology.gingester.core.transformers.Repeat.class,
+                b.nana.technology.gingester.core.transformers.Skip.class,
                 b.nana.technology.gingester.core.transformers.stash.FetchAll.class,
                 b.nana.technology.gingester.core.transformers.stash.Fetch.class,
                 b.nana.technology.gingester.core.transformers.stash.FetchMap.class,
