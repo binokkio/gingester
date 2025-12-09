@@ -11,7 +11,7 @@ import java.util.Set;
 
 public final class FreemarkerTemplateFactory {
 
-    private static final Version FREEMARKER_VERSION = Configuration.VERSION_2_3_31;
+    private static final Version FREEMARKER_VERSION = Configuration.VERSION_2_3_34;
     private static final String DEFAULT_DIRECTIVE = "default";
     private static final String KWARGS_DIRECTIVE = "kwargs";
     private static final Set<String> NOT_KWARGS = Set.of(DEFAULT_DIRECTIVE, KWARGS_DIRECTIVE, "capture_output", "compress", "html_escape", "normalize_newlines", "xml_escape");
