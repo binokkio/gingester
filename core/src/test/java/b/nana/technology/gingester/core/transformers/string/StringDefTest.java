@@ -4,6 +4,7 @@ import b.nana.technology.gingester.core.FlowBuilder;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.UniReceiver;
 import b.nana.technology.gingester.core.template.TemplateParameters;
+import b.nana.technology.gingester.core.transformers.primitive.StringDef;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
@@ -12,17 +13,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DefTest {
+class StringDefTest {
 
     @Test
     void testStringDef() throws InterruptedException {
 
         Queue<String> result = new ArrayDeque<>();
 
-        Def.Parameters parameters = new Def.Parameters();
+        StringDef.Parameters parameters = new StringDef.Parameters();
         parameters.template = new TemplateParameters("Hello, World!");
 
-        Def create = new Def(parameters);
+        StringDef create = new StringDef(parameters);
         create.transform(Context.newTestContext(), null, (UniReceiver<String>) result::add);
 
         assertEquals(1, result.size());
@@ -34,10 +35,10 @@ class DefTest {
 
         Queue<String> result = new ArrayDeque<>();
 
-        Def.Parameters parameters = new Def.Parameters();
+        StringDef.Parameters parameters = new StringDef.Parameters();
         parameters.template = new TemplateParameters("Hello, ${target}!");
 
-        Def create = new Def(parameters);
+        StringDef create = new StringDef(parameters);
         create.transform(Context.newTestContext().stash("target", "World").buildForTesting(), null, (UniReceiver<String>) result::add);
 
         assertEquals(1, result.size());
