@@ -163,6 +163,7 @@ public final class TimeInterval implements Transformer<Object, Object> {
         }
     }
 
+    // TODO replace with FlagOrderDeserializer
     @JsonDeserialize(using = Parameters.Deserializer.class)
     public static class Parameters {
         public static class Deserializer extends NormalizingDeserializer<Parameters> {
