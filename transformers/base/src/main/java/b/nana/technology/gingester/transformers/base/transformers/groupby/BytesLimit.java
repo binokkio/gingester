@@ -1,12 +1,15 @@
 package b.nana.technology.gingester.transformers.base.transformers.groupby;
 
 import b.nana.technology.gingester.core.annotations.Passthrough;
+import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
+import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.controller.ContextMap;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
 import b.nana.technology.gingester.core.common.ByteCountFormat;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Passthrough
 public final class BytesLimit implements Transformer<byte[], byte[]> {
@@ -67,16 +70,9 @@ public final class BytesLimit implements Transformer<byte[], byte[]> {
         }
     }
 
+    @JsonDeserialize(using = FlagOrderDeserializer.class)
+    @Order({ "limit" })
     public static class Parameters {
-
         public String limit;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(String limit) {
-            this.limit = limit;
-        }
     }
 }

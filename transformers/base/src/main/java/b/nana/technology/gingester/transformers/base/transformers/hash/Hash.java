@@ -1,10 +1,12 @@
 package b.nana.technology.gingester.transformers.base.transformers.hash;
 
+import b.nana.technology.gingester.core.configuration.FlagOrderDeserializer;
+import b.nana.technology.gingester.core.configuration.Order;
 import b.nana.technology.gingester.core.controller.CacheKey;
 import b.nana.technology.gingester.core.controller.Context;
 import b.nana.technology.gingester.core.receiver.Receiver;
 import b.nana.technology.gingester.core.transformer.Transformer;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.InputStream;
 import java.security.DigestInputStream;
@@ -34,16 +36,9 @@ abstract class Hash implements Transformer<InputStream, byte[]> {
 
     protected abstract MessageDigest getMessageDigest() throws NoSuchAlgorithmException;
 
+    @JsonDeserialize(using = FlagOrderDeserializer.class)
+    @Order({ "bufferSize "})
     public static class Parameters {
-
         public int bufferSize = 8192;
-
-        @JsonCreator
-        public Parameters() {}
-
-        @JsonCreator
-        public Parameters(int bufferSize) {
-            this.bufferSize = bufferSize;
-        }
     }
 }
